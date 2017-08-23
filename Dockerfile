@@ -1,13 +1,17 @@
-FROM alpine
+# build stage
+FROM golang:alpine AS build-env
+RUN apk --no-cache add build-base git bzr mercurial gcc
+ENV D=/go/src/github.com/fnproject/cli
+# If dep ever gets decent enough to use, try `dep ensure --vendor-only` from here: https://medium.com/travis-on-docker/triple-stage-docker-builds-with-go-and-angular-1b7d2006cb88
+RUN go get -u github.com/Masterminds/glide
+ADD glide.* $D/
+RUN cd $D && glide install -v
+ADD . $D
+RUN cd $D && go build -o fn-alpine && cp fn-alpine /tmp/
 
-
-RUN apk --update upgrade && \
-    apk add curl ca-certificates && \
-    update-ca-certificates && \
-    rm -rf /var/cache/apk/*
-
-COPY entrypoint.sh /
-COPY fn /
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
+# final stage
+FROM golang:alpine
+RUN apk add --no-cache ca-certificates curl
+WORKDIR /app
+COPY --from=build-env /tmp/fn-alpine /app/fn
+ENTRYPOINT ["./fn"]

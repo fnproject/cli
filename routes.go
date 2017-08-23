@@ -12,7 +12,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	client "github.com/fnproject/fn/cli/client"
+	client "github.com/fnproject/cli/client"
 	fnclient "github.com/funcy/functions_go/client"
 	apiroutes "github.com/funcy/functions_go/client/routes"
 	fnmodels "github.com/funcy/functions_go/models"

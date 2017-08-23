@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fnproject/fn/cli/client"
+	"github.com/fnproject/cli/client"
 	functions "github.com/funcy/functions_go"
 	"github.com/onsi/gomega"
 	"github.com/urfave/cli"

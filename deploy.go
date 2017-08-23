@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
-	client "github.com/fnproject/fn/cli/client"
+	client "github.com/fnproject/cli/client"
 	functions "github.com/funcy/functions_go"
 	"github.com/funcy/functions_go/models"
 	"github.com/urfave/cli"

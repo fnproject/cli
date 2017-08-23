@@ -53,3 +53,8 @@ curl --data-binary "@fn_alpine" -H "Content-Type: application/octet-stream" -u $
 # sed "s/release=.*/release=\"$version\"/g" install.sh > install.sh.tmp
 # mv install.sh.tmp install.sh
 # TODO: then git commit and push?  Would be nice to do that along with the vrsion git push above
+
+docker build -t fnproject/fn:latest .
+docker tag fnproject/fn:latest fnproject/fn:$version
+docker push fnproject/fn:$version
+docker push fnproject/fn:latest

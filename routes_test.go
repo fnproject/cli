@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/fnproject/fn/cli/client"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/fnproject/cli/client"
 )
 
 func TestEnvAsHeader(t *testing.T) {

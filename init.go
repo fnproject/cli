@@ -17,7 +17,7 @@ import (
 
 	"strings"
 
-	"github.com/fnproject/fn/cli/langs"
+	"github.com/fnproject/cli/langs"
 	"github.com/funcy/functions_go/models"
 	"github.com/urfave/cli"
 )

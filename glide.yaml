@@ -1,11 +1,5 @@
-package: github.com/fnproject/fn/cli
+package: github.com/fnproject/cli
 import:
-- package: github.com/Sirupsen/logrus
-  repo: https://github.com/sirupsen/logrus
-  vcs: git
-  version: v0.11.5
-- package: github.com/sirupsen/logrus
-  version: v0.11.5
 - package: github.com/aws/aws-sdk-go
   version: ^1.8.36
   subpackages:
@@ -36,7 +30,7 @@ import:
 - package: github.com/go-openapi/strfmt
 - package: github.com/jmoiron/jsonq
 - package: github.com/moby/moby
-  version: ^17.5.0-ce-rc3
+  version: cdf870bd0b5fa678b10ef2708cca7ad776b4913c
   subpackages:
   - pkg/jsonmessage
 - package: github.com/urfave/cli

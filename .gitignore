@@ -6,3 +6,4 @@
 tmp/
 vendor/
 _vendor*/
+/cli
