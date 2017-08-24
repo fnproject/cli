@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
@@ -28,13 +29,14 @@ func TestMainCommands(t *testing.T) {
 	}
 	tmp := os.TempDir()
 	fnTestBin := path.Join(tmp, "fn-test")
-	if err := os.Chdir(tmp); err != nil {
-		t.Fatal(err)
-	}
-
-	err := exec.Command("go", "build", "-o", fnTestBin).Run()
+	res, err := exec.Command("go", "build", "-o", fnTestBin).CombinedOutput()
+	fmt.Println(string(res))
 	if err != nil {
 		t.Fatalf("Failed to build fn: err: %s", err)
+	}
+	// Change to the tmp dir that contains the cli to run tests
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
 	}
 
 	for _, cmd := range testCommands {
