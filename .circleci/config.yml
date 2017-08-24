@@ -21,7 +21,7 @@ jobs:
           # mkdir -p $HOME/golang
           # tar -C $HOME/golang -xzf go1.8.3.linux-amd64.tar.gz
           sudo tar -C /usr/local -xzf go$GOVERSION.$OS-$ARCH.tar.gz
-          go get -u github.com/golang/dep/...
+          go get -u github.com/Masterminds/glide
       - run: go version
       # update Docker
       - run: |
@@ -31,6 +31,7 @@ jobs:
       - run: docker version
       # login here for tests
       - run: docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - run: glide install -v
       - run: ./test.sh
       - deploy:
           command: |
