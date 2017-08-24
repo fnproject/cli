@@ -1,5 +1,5 @@
-hash: 99d603b3ca21cb073224320d3f33c31d3412b282e90a0e55cd56b7638eaee3a7
-updated: 2017-08-23T15:54:13.415559936-07:00
+hash: 7c2f789d8f4972b1cb81cc2581f8e481cc815b40b7715c0fb9aa94cf3c1bfd8e
+updated: 2017-08-23T16:53:46.159402157-07:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 15028e809df8c71964e8efa6c11e81d5c0262302
@@ -106,7 +106,7 @@ imports:
 - name: github.com/mitchellh/mapstructure
   version: d0303fe809921458f417bcf828397a65db30a7e4
 - name: github.com/moby/moby
-  version: 90d35abf7b3535c1c319c872900fbd76374e521c
+  version: cdf870bd0b5fa678b10ef2708cca7ad776b4913c
   subpackages:
   - pkg/jsonmessage
 - name: github.com/Nvveen/Gotty
@@ -129,8 +129,14 @@ imports:
   version: 7cf257f0a33260797b0febf39f95fccd86aab2a3
 - name: github.com/PuerkitoBio/urlesc
   version: de5bf2ad457846296e2031421a34e2568e304e35
+- name: github.com/sirupsen/logrus
+  version: 89742aefa4b206dcf400792f3bd35b542998eb3b
 - name: github.com/urfave/cli
   version: f017f86fccc5a039a98f23311f34fdf78b014f78
+- name: golang.org/x/crypto
+  version: 1351f936d976c60a0a48d728281922cf63eafb8d
+  subpackages:
+  - ssh/terminal
 - name: golang.org/x/net
   version: 1c05540f6879653db88113bc4a2b70aec4bd491f
   subpackages:
