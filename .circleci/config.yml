@@ -11,6 +11,7 @@ jobs:
     steps:
       - checkout
       - run: |
+          export PATH=$PATH:$HOME/go/bin
           env
           go get -u github.com/Masterminds/glide
           which go
@@ -26,7 +27,7 @@ jobs:
           # mkdir -p $HOME/golang
           # tar -C $HOME/golang -xzf go1.8.3.linux-amd64.tar.gz
           sudo tar -C /usr/local -xzf go$GOVERSION.$OS-$ARCH.tar.gz
-          export PATH=$PATH:$HOME/go/bin
+          
           go get -u github.com/Masterminds/glide
       - run: go version
       # update Docker
