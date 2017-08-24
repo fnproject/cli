@@ -10,7 +10,7 @@ jobs:
       - ARCH=amd64
     steps:
       - checkout
-      -run: |
+      - run: |
           env
           go get -u github.com/Masterminds/glide
           which go
