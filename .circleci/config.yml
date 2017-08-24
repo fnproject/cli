@@ -10,6 +10,11 @@ jobs:
       - ARCH=amd64
     steps:
       - checkout
+      -run: |
+          env
+          go get -u github.com/Masterminds/glide
+          which go
+          glide version
       # update Go
       - run: |
           go version
