@@ -26,8 +26,11 @@ func TestMainCommands(t *testing.T) {
 		"calls",
 		"call",
 	}
-
-	fnTestBin := path.Join(os.TempDir(), "fn-test")
+	tmp := os.TempDir()
+	fnTestBin := path.Join(tmp, "fn-test")
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
 
 	err := exec.Command("go", "build", "-o", fnTestBin).Run()
 	if err != nil {
