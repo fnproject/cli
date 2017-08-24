@@ -34,7 +34,9 @@ jobs:
       - run: docker version
       # login here for tests
       - run: docker login -u $DOCKER_USER -p $DOCKER_PASS
-      - run: glide install -v
+      - run: |
+          export PATH=$PATH:$HOME/go/bin
+          glide install -v
       - run: ./test.sh
       - deploy:
           command: |
