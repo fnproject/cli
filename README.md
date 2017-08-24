@@ -1,4 +1,4 @@
-# Oracle Functions CLI
+# Fn CLI
 
 ## Creating Functions
 
@@ -12,13 +12,15 @@ if you are using Node, put the code that you want to execute in the file `func.j
 Run:
 
 ```sh
-fn init [<FUNCTION_NAME>]
+fn init [FUNCTION_NAME]
 ```
+
+If you don't specify a name, the current directory name will be used.
 
 If you want to override the convention with configuration, you can do that as well using:
 
 ```sh
-fn init [--runtime node] [--entrypoint "node hello.js"] [<FUNCTION_NAME>]
+fn init [--runtime node] [--entrypoint "node hello.js"] [FUNCTION_NAME]
 ```
 
 Or, if you want full control, just make a Dockerfile. If `init` finds a Dockerfile, it will use that instead of runtime and entrypoint.
@@ -53,7 +55,7 @@ fn push
 
 ## Using the API
 
-You can operate Oracle Functions from the command line.
+You can interact with an `fn` server from the command line.
 
 ```sh
 $ fn apps list                                  # list apps
@@ -82,7 +84,6 @@ $ fn routes delete otherapp hello              # delete route
 $ fn routes headers set otherapp hello header-name value         # add HTTP header to response
 otherapp /hello headers updated header-name with value
 
-
 $ fn calls list myapp /hello                     # lists all available calls for /hello route from myapp
 ID: 45bd486b-6eec-548a-bc1a-94d59deef4ac
 App: myapp
@@ -100,7 +101,6 @@ Created At: 2017-06-02T15:23:53.263+03:00
 Started At: 2017-06-02T15:23:53.263+03:00
 Completed At: 2017-06-02T15:23:53.532+03:00
 Status: success
-
 
 $ fn version                                   # shows version both of client and server
 Client version: 0.3.7
@@ -154,26 +154,12 @@ To understand how each configuration affect your function checkout the [Definiti
 
 `fn` is configured by default to talk http://localhost:8080.
 You may reconfigure it to talk to a remote installation by updating a local
-environment variable (`$API_URL`):
-```sh
-$ export API_URL="http://myfunctions.example.org/"
-$ fn ...
-```
-
-## Bulk deploy
-
-Also there is the `deploy` command that is going to scan all local directory for
-functions, rebuild them and push them to Docker Hub and update them in
-Oracle Functions. It will use the `route` entry in the existing function file to
-see the update in the daemon.
-
+environment variable (`API_URL`):
 
 ```sh
-$ fn deploy APP
+export API_URL="http://myfunctions.example.org/"
+fn ...
 ```
-
-`fn deploy` expects that each directory to contain a file `func.yaml`
-which instructs `fn` on how to act with that particular update.
 
 ## Testing functions
 
@@ -181,12 +167,13 @@ If you added `tests` to the `func.yaml` file, you can have them tested using
 `fn test`.
 
 ```sh
-$ fn test
+fn test
 ```
 
 During local development cycles, you can easily force a build before test:
+
 ```sh
-$ fn test -b
+fn test -b
 ```
 
 When preparing to deploy you application, remember adding `path` to `func.yaml`,
@@ -198,43 +185,35 @@ version: 1.0.0
 path: /myfunc
 ```
 
-Once you application is done and deployed, you can run tests remotely:
-```
-# test the function locally first
-$ fn test -b
-
-# push it to Docker Hub and Oracle Functions
-$ fn push
-$ fn routes create myapp
-
-# test it remotely
-$ fn test --remote myapp
-```
-
 ## Other examples of usage
 
 ### Creating a new function from source
+
 ```
-fn init fnproject/hello --runtime ruby
+fn init hello --runtime ruby
 fn deploy myapp /hello
 ```
 
 ### Updating function
+
 ```
-fn deploy myapp (discover route path if available in func.yaml)
+fn deploy myapp
 ```
 
 ### Testing function locally
+
 ```
-fn run fnproject/hello
+fn run
 ```
 
 ### Testing route
+
 ```
 fn call myapp /hello
 ```
 
 ### App management
+
 ```
 fn apps create myapp
 fn apps update myapp --headers "content-type=application/json"
@@ -244,6 +223,7 @@ fn apps delete myapp
 ```
 
 ### Route management
+
 ```
 fn routes create myapp /hello fnproject/hello
 # routes update will also update any changes in the func.yaml file too. 

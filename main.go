@@ -36,7 +36,7 @@ func newFn() *cli.App {
 	app := cli.NewApp()
 	app.Name = "fn"
 	app.Version = Version
-	app.Authors = []cli.Author{{Name: "Oracle Corporation"}}
+	app.Authors = []cli.Author{{Name: "Fn Project"}}
 	app.Description = "Fn command line tool"
 	app.UsageText = `Check the docs at https://github.com/fnproject/fn/blob/master/fn/README.md`
 
@@ -48,7 +48,7 @@ USAGE:
    {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}
 
 ENVIRONMENT VARIABLES:
-   API_URL - Oracle Functions remote API address{{if .VisibleCommands}}
+   API_URL - Fn remote API address{{if .VisibleCommands}}
 
 COMMANDS:{{range .VisibleCategories}}{{if .Name}}
    {{.Name}}:{{end}}{{range .VisibleCommands}}
