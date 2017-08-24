@@ -22,7 +22,9 @@ jobs:
           # tar -C $HOME/golang -xzf go1.8.3.linux-amd64.tar.gz
           sudo tar -C /usr/local -xzf go$GOVERSION.$OS-$ARCH.tar.gz
           export PATH=$PATH:$HOME/go/bin
+          env
           go get -u github.com/Masterminds/glide
+          glide -v
       - run: go version
       # update Docker
       - run: |
