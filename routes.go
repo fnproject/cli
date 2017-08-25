@@ -183,11 +183,11 @@ func (a *routesCmd) list(c *cli.Context) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apiroutes.GetAppsAppRoutesNotFound:
-			return fmt.Errorf("error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		case *apiroutes.GetAppsAppRoutesDefault:
-			return fmt.Errorf("unexpected error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("unexpected error: %v", err)
+			return err
 		}
 	}
 
@@ -339,13 +339,13 @@ func (a *routesCmd) postRoute(c *cli.Context, appName string, rt *fnmodels.Route
 	if err != nil {
 		switch e := err.(type) {
 		case *apiroutes.PostAppsAppRoutesBadRequest:
-			return fmt.Errorf("error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		case *apiroutes.PostAppsAppRoutesConflict:
-			return fmt.Errorf("error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		case *apiroutes.PostAppsAppRoutesDefault:
-			return fmt.Errorf("unexpected error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("unexpected error: %v", err)
+			return fmt.Errorf("%v", err)
 		}
 	}
 
@@ -364,13 +364,13 @@ func (a *routesCmd) patchRoute(c *cli.Context, appName, routePath string, r *fnm
 	if err != nil {
 		switch e := err.(type) {
 		case *apiroutes.PatchAppsAppRoutesRouteBadRequest:
-			return fmt.Errorf("error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		case *apiroutes.PatchAppsAppRoutesRouteNotFound:
-			return fmt.Errorf("error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		case *apiroutes.PatchAppsAppRoutesRouteDefault:
-			return fmt.Errorf("unexpected error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("unexpected error: %v", err)
+			return fmt.Errorf("%v", err)
 		}
 	}
 
@@ -387,11 +387,11 @@ func (a *routesCmd) putRoute(c *cli.Context, appName, routePath string, r *fnmod
 	if err != nil {
 		switch e := err.(type) {
 		case *apiroutes.PutAppsAppRoutesRouteBadRequest:
-			return fmt.Errorf("error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		case *apiroutes.PutAppsAppRoutesRouteDefault:
-			return fmt.Errorf("unexpected error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("unexpected error: %v", err)
+			return fmt.Errorf("%v", err)
 		}
 	}
 	return nil
@@ -475,11 +475,11 @@ func (a *routesCmd) inspect(c *cli.Context) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apiroutes.GetAppsAppRoutesRouteNotFound:
-			return fmt.Errorf("error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		case *apiroutes.GetAppsAppRoutesRouteDefault:
-			return fmt.Errorf("unexpected error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("unexpected error: %v", err)
+			return fmt.Errorf("%v", err)
 		}
 	}
 
@@ -523,11 +523,11 @@ func (a *routesCmd) delete(c *cli.Context) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apiroutes.DeleteAppsAppRoutesRouteNotFound:
-			return fmt.Errorf("error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		case *apiroutes.DeleteAppsAppRoutesRouteDefault:
-			return fmt.Errorf("unexpected error: %s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("unexpected error: %v", err)
+			return fmt.Errorf("%v", err)
 		}
 	}
 

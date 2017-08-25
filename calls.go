@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	client "github.com/fnproject/cli/client"
@@ -66,9 +67,9 @@ func (call *callsCmd) get(ctx *cli.Context) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apicall.GetAppsAppCallsCallNotFound:
-			return fmt.Errorf("error: %v", e.Payload.Error.Message)
+			return errors.New(e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("unexpected error: %v", err)
+			return err
 		}
 	}
 	printCalls([]*models.Call{resp.Payload.Call})
@@ -89,9 +90,9 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apicall.GetCallsCallNotFound:
-			return fmt.Errorf("error: %v", e.Payload.Error.Message)
+			return errors.New(e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("unexpected error: %v", err)
+			return err
 		}
 	}
 	printCalls(resp.Payload.Calls)

@@ -77,7 +77,7 @@ func (t *testcmd) test(c *cli.Context) error {
 	if exists(tfile) {
 		f, err := os.Open(tfile)
 		if err != nil {
-			return fmt.Errorf("could not open %s for parsing. Error: %v", tfile, err)
+			return fmt.Errorf("could not open %s for parsing. %v", tfile, err)
 		}
 		ts := &testStruct{}
 		err = json.NewDecoder(f).Decode(ts)

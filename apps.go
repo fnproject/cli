@@ -104,14 +104,14 @@ func (a *appsCmd) list(c *cli.Context) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apiapps.GetAppsAppNotFound:
-			return fmt.Errorf("error: %v", e.Payload.Error.Message)
+			return fmt.Errorf("%v", e.Payload.Error.Message)
 		case *apiapps.GetAppsAppDefault:
-			return fmt.Errorf("unexpected error: %v", e.Payload.Error.Message)
+			return fmt.Errorf("%v", e.Payload.Error.Message)
 		case *apiapps.GetAppsDefault:
 			// this is the one getting called, not sure what the one above is?
-			return fmt.Errorf("unexpected error: %v", e.Payload.Error.Message)
+			return fmt.Errorf("%v", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("unexpected error: %v", err)
+			return fmt.Errorf("%v", err)
 		}
 	}
 
@@ -141,13 +141,13 @@ func (a *appsCmd) create(c *cli.Context) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apiapps.PostAppsBadRequest:
-			return fmt.Errorf("error: %v", e.Payload.Error.Message)
+			return fmt.Errorf("%v", e.Payload.Error.Message)
 		case *apiapps.PostAppsConflict:
-			return fmt.Errorf("error: %v", e.Payload.Error.Message)
+			return fmt.Errorf("%v", e.Payload.Error.Message)
 		case *apiapps.PostAppsDefault:
-			return fmt.Errorf("unexpected error: %v", e.Payload.Error.Message)
+			return fmt.Errorf("%v", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("unexpected error: %v", err)
+			return fmt.Errorf("%v", err)
 		}
 	}
 
@@ -224,7 +224,7 @@ func (a *appsCmd) patchApp(appName string, app *models.App) error {
 		case *apiapps.PatchAppsAppDefault:
 			return errors.New(e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("unexpected error: %v", err)
+			return fmt.Errorf("%v", err)
 		}
 	}
 
@@ -233,7 +233,7 @@ func (a *appsCmd) patchApp(appName string, app *models.App) error {
 
 func (a *appsCmd) inspect(c *cli.Context) error {
 	if c.Args().Get(0) == "" {
-		return errors.New("error: missing app name after the inspect command")
+		return errors.New("missing app name after the inspect command")
 	}
 
 	appName := c.Args().First()
@@ -247,11 +247,11 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apiapps.GetAppsAppNotFound:
-			return fmt.Errorf("error: %v", e.Payload.Error.Message)
+			return fmt.Errorf("%v", e.Payload.Error.Message)
 		case *apiapps.GetAppsAppDefault:
-			return fmt.Errorf("unexpected error: %v", e.Payload.Error.Message)
+			return fmt.Errorf("%v", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("unexpected error: %v", err)
+			return fmt.Errorf("%v", err)
 		}
 	}
 
@@ -267,18 +267,18 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 	// unmarshal as map[string]interface{}?
 	data, err := json.Marshal(resp.Payload.App)
 	if err != nil {
-		return fmt.Errorf("error inspect app: %v", err)
+		return fmt.Errorf("could not marshal app: %v", err)
 	}
 	var inspect map[string]interface{}
 	err = json.Unmarshal(data, &inspect)
 	if err != nil {
-		return fmt.Errorf("error inspect app: %v", err)
+		return fmt.Errorf("could not unmarshal data: %v", err)
 	}
 
 	jq := jsonq.NewQuery(inspect)
 	field, err := jq.Interface(strings.Split(prop, ".")...)
 	if err != nil {
-		return errors.New("failed to inspect that apps's field")
+		return fmt.Errorf("failed to inspect field %v", prop)
 	}
 	enc.Encode(field)
 
@@ -288,7 +288,7 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 func (a *appsCmd) delete(c *cli.Context) error {
 	appName := c.Args().First()
 	if appName == "" {
-		return errors.New("error: deleting an app takes one argument, an app name")
+		return errors.New("app name required to delete")
 	}
 
 	_, err := a.client.Apps.DeleteAppsApp(&apiapps.DeleteAppsAppParams{
@@ -303,9 +303,9 @@ func (a *appsCmd) delete(c *cli.Context) error {
 		case *apiapps.DeleteAppsAppDefault:
 			return errors.New(e.Payload.Error.Message)
 		}
-		return fmt.Errorf("unexpected error: %v", err)
+		return fmt.Errorf("%v", err)
 	}
 
-	fmt.Println("app", appName, "deleted")
+	fmt.Println("App", appName, "deleted")
 	return nil
 }

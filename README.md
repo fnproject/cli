@@ -235,16 +235,10 @@ fn routes delete myapp /hello
 
 ## Contributing
 
-Ensure you have Go configured and installed in your environment. Once it is
-done, run:
+You'll need Go installed and [Glide](https://github.com/Masterminds/glide) for dependencies.
 
 ```sh
-$ make
-```
-
-It will build fn compatible with your local environment. You can test this
-CLI, right away with:
-
-```sh
-$ ./fn
+glide install -v
+go build -o fn
+./fn
 ```

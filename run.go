@@ -76,7 +76,7 @@ func (r *runCmd) run(c *cli.Context) error {
 		ff, err = loadFuncfile()
 		if err != nil {
 			if _, ok := err.(*notFoundError); ok {
-				return errors.New("error: image name is missing or no function file found")
+				return errors.New("image name is missing or no function file found")
 			}
 			return err
 		}

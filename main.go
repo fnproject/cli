@@ -48,7 +48,8 @@ USAGE:
    {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}
 
 ENVIRONMENT VARIABLES:
-   API_URL - Fn remote API address{{if .VisibleCommands}}
+   API_URL - Fn server address{{if .VisibleCommands}}
+   FN_REGISTRY - Docker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]treeder]{{if .VisibleCommands}}
 
 COMMANDS:{{range .VisibleCategories}}{{if .Name}}
    {{.Name}}:{{end}}{{range .VisibleCommands}}
@@ -119,7 +120,7 @@ func prepareCmdArgsValidation(cmds []cli.Command) {
 			if c.NArg() < len(reqArgs) {
 				var help bytes.Buffer
 				cli.HelpPrinter(&help, cli.CommandHelpTemplate, c.Command)
-				return fmt.Errorf("ERROR: Missing required arguments: %s\n\n%s", strings.Join(reqArgs[c.NArg():], " "), help.String())
+				return fmt.Errorf("Missing required arguments: %s", strings.Join(reqArgs[c.NArg():], " "))
 			}
 			return cli.HandleAction(action, c)
 		}
@@ -132,7 +133,7 @@ func main() {
 	err := app.Run(os.Args)
 	if err != nil {
 		// TODO: this doesn't seem to get called even when an error returns from a command, but maybe urfave is doing a non zero exit anyways? nope: https://github.com/urfave/cli/issues/610
-		fmt.Fprintf(os.Stderr, "Error occurred: %v, exiting...\n", err)
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }
