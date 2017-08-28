@@ -30,7 +30,7 @@ Or, if you want full control, just make a Dockerfile. If `init` finds a Dockerfi
 
 `fn` provides a few commands you'll use while creating and updating your functions: `bump`, `build`, `run` and `push`.
 
-Bump will bumps the patch version number in your func.yaml file. Versions must be in [semver](http://semver.org/) format.
+Bump will update the patch version number in your func.yaml file. Versions must be in [semver](http://semver.org/) format.
 
 ```sh
 fn bump
