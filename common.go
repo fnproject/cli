@@ -45,7 +45,7 @@ func buildfunc(fn string, noCache bool) (*funcfile, error) {
 	}
 
 	if funcfile.Version == "" {
-		funcfile, err = bumpversion(*funcfile)
+		funcfile, err = bumpversion(*funcfile, Patch)
 		if err != nil {
 			return nil, err
 		}
