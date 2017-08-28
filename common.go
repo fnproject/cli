@@ -86,6 +86,10 @@ func dockerbuild(path string, ff *funcfile, noCache bool) error {
 	if err != nil {
 		return err
 	}
+	err = validImageName(ff.ImageName())
+	if err != nil {
+		return err
+	}
 
 	dir := filepath.Dir(path)
 
