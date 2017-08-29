@@ -94,7 +94,7 @@ func dockerbuild(path string, ff *funcfile, noCache bool) error {
 	dockerfile := filepath.Join(dir, "Dockerfile")
 	if !exists(dockerfile) {
 		if ff.Runtime == funcfileDockerRuntime {
-			return fmt.Errorf("Dockerfile not exists for 'docker' runtime")		
+			return fmt.Errorf("Dockerfile not exists for 'docker' runtime")
 		}
 		helper = langs.GetLangHelper(ff.Runtime)
 		if helper == nil {

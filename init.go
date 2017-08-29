@@ -3,21 +3,20 @@ package main
 /*
  usage: fn init <name>
 
- o If there's a Dockerfile found, this will force the 'runtime'
-   to be 'docker' and a basic function file with the image name
-   and mininum fields like following will be generated, for example:
+ o If there's a Dockerfile found, this will generate a basic
+   function file with the image and 'docker' as 'runtime'
+   like following, for example:
 
-   name: dockeruser/hello
+   name: hello
    version: 0.0.1
    runtime: docker
    path: /hello
 
-   then exit
+   then exit; if 'runtime' is 'docker' in the function file
+   and no Dockerfile exists,  print an error message then exit
  o It will then try to decipher the runtime based on
    the files in the current directory, if it can't figure it out,
-   it will ask.  
- o It will then take a best guess for what the entrypoint will be
-   based on the language, it it can't guess, it will ask.
+   it will print an error message then exit.
 */
 
 import (
@@ -180,15 +179,15 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 		return errors.New("function name cannot contain a colon")
 	}
 
-        //if Dockerfile presents, force runtime to be 'docker'
+	//if Dockerfile presents, use 'docker' as 'runtime'
 	if exists("Dockerfile") {
-		fmt.Println("Dockerfile found, will use that to build. Force runtime 'docker'")
+		fmt.Println("Dockerfile found, will use that to build.")
 		a.Runtime = funcfileDockerRuntime
-                return nil
-        }
+		return nil
+	}
 	if a.Runtime == funcfileDockerRuntime {
 		return errors.New("function file runtime is 'docker', but no Dockerfile exist !")
-        }
+	}
 
 	var rt string
 	if a.Runtime == "" {
