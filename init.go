@@ -1,12 +1,22 @@
 package main
 
 /*
-usage: fn init <name>
+ usage: fn init <name>
 
-If there's a Dockerfile found, this will generate the basic file with just the image name. exit
-It will then try to decipher the runtime based on the files in the current directory, if it can't figure it out, it will ask.
-It will then take a best guess for what the entrypoint will be based on the language, it it can't guess, it will ask.
+ o If there's a Dockerfile found, this will generate a basic
+   function file with the image and 'docker' as 'runtime'
+   like following, for example:
 
+   name: hello
+   version: 0.0.1
+   runtime: docker
+   path: /hello
+
+   then exit; if 'runtime' is 'docker' in the function file
+   and no Dockerfile exists,  print an error message then exit
+ o It will then try to decipher the runtime based on
+   the files in the current directory, if it can't figure it out,
+   it will print an error message then exit.
 */
 
 import (
@@ -118,7 +128,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	runtimeSpecified := a.Runtime != ""
 
-	if runtimeSpecified {
+	if runtimeSpecified && a.Runtime != funcfileDockerRuntime {
 		err := a.generateBoilerplate()
 		if err != nil {
 			return err
@@ -169,10 +179,16 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 		return errors.New("function name cannot contain a colon")
 	}
 
+	//if Dockerfile presents, use 'docker' as 'runtime'
 	if exists("Dockerfile") {
-		fmt.Println("Dockerfile found. Let's use that to build...")
+		fmt.Println("Dockerfile found.  Using runtime 'docker'")
+		a.Runtime = funcfileDockerRuntime
 		return nil
 	}
+	if a.Runtime == funcfileDockerRuntime {
+		return errors.New("function file runtime is 'docker', but no Dockerfile exist !")
+	}
+
 	var rt string
 	if a.Runtime == "" {
 		rt, err = detectRuntime(pwd)

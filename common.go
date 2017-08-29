@@ -21,6 +21,7 @@ import (
 
 const (
 	functionsDockerImage     = "fnproject/functions"
+	funcfileDockerRuntime    = "docker"
 	minRequiredDockerVersion = "17.5.0"
 	envFnRegistry            = "FN_REGISTRY"
 )
@@ -96,6 +97,9 @@ func dockerbuild(path string, ff *funcfile, noCache bool) error {
 	var helper langs.LangHelper
 	dockerfile := filepath.Join(dir, "Dockerfile")
 	if !exists(dockerfile) {
+		if ff.Runtime == funcfileDockerRuntime {
+			return fmt.Errorf("Dockerfile not exists for 'docker' runtime")
+		}
 		helper = langs.GetLangHelper(ff.Runtime)
 		if helper == nil {
 			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
