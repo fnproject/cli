@@ -3,5 +3,5 @@ RUN mkdir /app
 ADD . /app
 WORKDIR /app
 RUN go build -o hello .
-CMD ["/app/hello"]
+CMD ["./hello"]
 
