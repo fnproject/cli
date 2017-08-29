@@ -5,9 +5,18 @@ import (
 	"os"
 	"strings"
 
+	"github.com/coreos/go-semver/semver"
 	bumper "github.com/giantswarm/semver-bump/bump"
 	"github.com/giantswarm/semver-bump/storage"
 	"github.com/urfave/cli"
+)
+
+type VType int
+
+const (
+	Patch VType = iota
+	Minor
+	Major
 )
 
 var (
@@ -27,12 +36,24 @@ func bump() cli.Command {
 
 type bumpcmd struct {
 	verbose bool
+	major   bool
+	minor   bool
 }
 
 func (b *bumpcmd) flags() []cli.Flag {
 	return []cli.Flag{
 		cli.BoolFlag{
-			Name:        "v",
+			Name:        "major",
+			Usage:       "bumps major version",
+			Destination: &b.major,
+		},
+		cli.BoolFlag{
+			Name:        "minor",
+			Usage:       "bumps minor version",
+			Destination: &b.minor,
+		},
+		cli.BoolFlag{
+			Name:        "verbose, v",
 			Usage:       "verbose mode",
 			Destination: &b.verbose,
 		},
@@ -51,14 +72,22 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Println("bumping version for", fn)
+	fmt.Println("bumping version in func file at: ", fn)
 
 	funcfile, err := parsefuncfile(fn)
 	if err != nil {
 		return err
 	}
 
-	funcfile, err = bumpversion(*funcfile)
+	var t VType
+	if b.major {
+		t = Major
+	} else if b.minor {
+		t = Minor
+	} else {
+		t = Patch
+	}
+	funcfile, err = bumpversion(*funcfile, t)
 	if err != nil {
 		return err
 	}
@@ -71,7 +100,7 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 	return nil
 }
 
-func bumpversion(funcfile funcfile) (*funcfile, error) {
+func bumpversion(funcfile funcfile, t VType) (*funcfile, error) {
 	funcfile.Name = cleanImageName(funcfile.Name)
 	if funcfile.Version == "" {
 		funcfile.Version = initialVersion
@@ -84,7 +113,14 @@ func bumpversion(funcfile funcfile) (*funcfile, error) {
 	}
 
 	version := bumper.NewSemverBumper(s, "")
-	newver, err := version.BumpPatchVersion("", "")
+	var newver *semver.Version
+	if t == Major {
+		newver, err = version.BumpMajorVersion("", "")
+	} else if t == Minor {
+		newver, err = version.BumpMinorVersion("", "")
+	} else {
+		newver, err = version.BumpPatchVersion("", "")
+	}
 	if err != nil {
 		return nil, err
 	}
