@@ -221,43 +221,52 @@ func (a *routesCmd) call(c *cli.Context) error {
 }
 
 func routeWithFlags(c *cli.Context, rt *fnmodels.Route) {
-	if i := c.String("image"); i != "" {
-		rt.Image = i
-	}
-
-	if f := c.String("format"); f != "" {
-		rt.Format = f
-	}
-
-	if t := c.String("type"); t != "" {
-		rt.Type = t
-	}
-
-	if m := c.Uint64("memory"); m > 0 {
-		rt.Memory = m
-	}
-
-	if t := c.Duration("timeout"); t > 0 {
-		to := int32(t.Seconds())
-		rt.Timeout = &to
-	}
-
-	if t := c.Duration("idle-timeout"); t > 0 {
-		to := int32(t.Seconds())
-		rt.IDLETimeout = &to
-	}
-
-	if len(c.StringSlice("headers")) > 0 {
-		headers := map[string][]string{}
-		for _, header := range c.StringSlice("headers") {
-			parts := strings.Split(header, "=")
-			headers[parts[0]] = strings.Split(parts[1], ";")
+	if rt.Image == "" {
+		if i := c.String("image"); i != "" {
+			rt.Image = i
 		}
-		rt.Headers = headers
 	}
-
-	if len(c.StringSlice("config")) > 0 {
-		rt.Config = extractEnvConfig(c.StringSlice("config"))
+	if rt.Format == "" {
+		if f := c.String("format"); f != "" {
+			rt.Format = f
+		}
+	}
+	if rt.Type == "" {
+		if t := c.String("type"); t != "" {
+			rt.Type = t
+		}
+	}
+	if rt.Memory == 0 {
+		if m := c.Uint64("memory"); m > 0 {
+			rt.Memory = m
+		}
+	}
+	if rt.Timeout == nil {
+		if t := c.Duration("timeout"); t > 0 {
+			to := int32(t.Seconds())
+			rt.Timeout = &to
+		}
+	}
+	if rt.IDLETimeout == nil {
+		if t := c.Duration("idle-timeout"); t > 0 {
+			to := int32(t.Seconds())
+			rt.IDLETimeout = &to
+		}
+	}
+	if len(rt.Headers) == 0 {
+		if len(c.StringSlice("headers")) > 0 {
+			headers := map[string][]string{}
+			for _, header := range c.StringSlice("headers") {
+				parts := strings.Split(header, "=")
+				headers[parts[0]] = strings.Split(parts[1], ";")
+			}
+			rt.Headers = headers
+		}
+	}
+	if len(rt.Config) == 0{
+		if len(c.StringSlice("config")) > 0 {
+			rt.Config = extractEnvConfig(c.StringSlice("config"))
+		}
 	}
 }
 
@@ -287,13 +296,13 @@ func routeWithFuncFile(ff *funcfile, rt *fnmodels.Route) error {
 	if ff.Memory != 0 {
 		rt.Memory = ff.Memory
 	}
-	if rt.IDLETimeout != nil {
+	if ff.IDLETimeout != nil {
 		rt.IDLETimeout = ff.IDLETimeout
 	}
-	if len(rt.Headers) != 0 {
+	if len(ff.Headers) != 0 {
 		rt.Headers = ff.Headers
 	}
-	if len(rt.Config) != 0 {
+	if len(ff.Config) != 0 {
 		rt.Config = ff.Config
 	}
 
