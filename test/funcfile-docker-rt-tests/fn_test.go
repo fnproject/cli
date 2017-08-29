@@ -27,7 +27,7 @@ func TestDockerRuntime(t *testing.T) {
 	runFnInit(t, testname, fnTestBin)
 	runFnBuild(t, testname, fnTestBin)
 	runFnRun(t, testname, fnTestBin)
-	mylog(t, "INFO", testname, testname+" SUCCESS")
+	t.Logf("INFO: %s SUCCESS", testname)
 }
 
 func TestDockerRuntimeNoDockerfile(t *testing.T) {
@@ -45,13 +45,13 @@ func TestDockerRuntimeNoDockerfile(t *testing.T) {
 	defer cleanup(t, currdir, testdir)
 	fnTestBin := setupTestFiles(t, testname, currdir, testdir, testfiles)
 	runFnBuildNoDockerfile(t, testname, fnTestBin)
-	mylog(t, "INFO", testname, testname+" SUCCESS")
+	t.Logf("INFO: %s SUCCESS", testname)
 }
 
 func cleanup(t *testing.T, currdir, testdir string) {
 	err := os.Chdir(currdir)
 	if err != nil {
-		t.Fatalf("ERROR: Failed to cd "+currdir+" directory: err: %v", err)
+		t.Fatalf("ERROR: Failed to cd %s directory: err: %v", currdir, err)
 	}
 	os.Remove(testdir)
 }
@@ -59,13 +59,13 @@ func cleanup(t *testing.T, currdir, testdir string) {
 func setupTestFiles(t *testing.T,
 	testname, currdir, testdir string, testfiles []string) string {
 
-	mylog(t, "INFO", testname, "Current directory is "+currdir)
+	t.Logf("INFO", testname, "Current directory is "+currdir)
 
 	testfilesdir := path.Join(currdir, "testfiles")
 	for _, testfile := range testfiles {
 		err := copyFile(path.Join(testfilesdir, testfile), path.Join(testdir, testfile))
 		if err != nil {
-			t.Fatalf("ERROR: Failed to copy "+testfile+" to test directory: err: %v", err)
+			t.Fatalf("ERROR: Failed to copy %s to test directory %s: err: %v", testfile, testdir, err)
 		}
 	}
 
@@ -76,64 +76,59 @@ func setupTestFiles(t *testing.T,
 	}
 	res, err := exec.Command("go", "build", "-o", fnTestBin).CombinedOutput()
 	if err != nil {
-		mylog(t, "INFO", testname, string(res))
-		t.Fatalf("ERROR: Failed to build fn: err: %v", err)
+		t.Fatalf("ERROR: Failed to build fn: res: %s, err: %v", string(res), err)
 	}
 
-	mylog(t, "INFO", testname, "cd test dir "+testdir)
+	t.Logf("INFO: %s cd test directory %s", testname, testdir)
 	if err := os.Chdir(testdir); err != nil {
-		t.Fatalf("ERROR: Failed to cd test dir "+testdir+": err: %v", err)
+		t.Fatalf("ERROR: Failed to cd test directory %s: err: %v", testdir, err)
 	}
 	return fnTestBin
 }
 
 func runFnInit(t *testing.T, testname, fnTestBin string) {
-        /*
-        dockeruser := os.Getenv("DOCKER_USER")
-	if dockeruser == "" {
-		t.Fatalf("ERROR: DOCKER_USER not set")
-	}
-	mylog(t, "INFO", testname, "DOCKER_USER= "+dockeruser)
-	var imagename string = dockeruser + "/" + "fn_test_hello_docker_runtime"
-        */
+	/*
+	        dockeruser := os.Getenv("DOCKER_USER")
+		if dockeruser == "" {
+			t.Fatalf("ERROR: DOCKER_USER not set")
+		}
+		t.Logf("INFO: %s DOCKER_USER=%s", testname, dockeruser)
+		var imagename string = dockeruser + "/" + "fn_test_hello_docker_runtime"
+	*/
 	var imagename string = "fn_test_hello_docker_runtime"
 
-	mylog(t, "INFO", testname, "Run fn init "+imagename)
+	t.Logf("INFO: %s Run fn init %s", testname, imagename)
 	res, err := exec.Command(fnTestBin, "init", imagename).CombinedOutput()
 	if err != nil {
-		mylog(t, "INFO", testname, string(res))
-		t.Fatalf("ERROR: Failed run fn init: err: %v", err)
+		t.Fatalf("ERROR: Failed run fn init: res: %s, err: %v", string(res), err)
 	}
 }
 
 func runFnBuild(t *testing.T, testname, fnTestBin string) {
-	mylog(t, "INFO", testname, "Run fn build")
+	t.Logf("INFO: %s Run fn build", testname)
 	res, err := exec.Command(fnTestBin, "build").CombinedOutput()
 	if err != nil {
-		mylog(t, "INFO", testname, string(res))
-		t.Fatalf("ERROR: Failed run fn build: err: %v", err)
+		t.Fatalf("ERROR: Failed run fn build: res: %s, err: %v", string(res), err)
 	}
 }
 
 func runFnBuildNoDockerfile(t *testing.T, testname, fnTestBin string) {
-	mylog(t, "INFO", testname, "Run fn build")
+	t.Logf("INFO: %s Run fn build", testname)
 	res, err := exec.Command(fnTestBin, "build").CombinedOutput()
 	if err != nil {
 		if bytes.Contains(res, []byte("Dockerfile not exists")) {
-			mylog(t, "INFO", testname, "Got expected error message: "+string(res))
+			t.Logf("INFO: %s Got expected error message %s", testname, string(res))
 			return
 		}
 	}
-	mylog(t, "INFO", testname, string(res))
 	t.Fatalf("ERROR: Didn't get expected failure on fn build: res: %s, err: %v", string(res), err)
 }
 
 func runFnRun(t *testing.T, testname, fnTestBin string) {
-	mylog(t, "INFO", testname, "Run fn run")
+	t.Logf("INFO: %s Run fn run", testname)
 	res, err := exec.Command(fnTestBin, "run").CombinedOutput()
 	if err != nil {
-		mylog(t, "INFO", testname, string(res))
-		t.Fatalf("ERROR: Failed run fn run: err: %v", err)
+		t.Fatalf("ERROR: Failed run fn run: res: %s, err: %v", string(res), err)
 	}
 
 }
@@ -149,9 +144,4 @@ func copyFile(src, dst string) error {
 		return fmt.Errorf("copyFile(): failed to read dst file "+dst+": %s", dst)
 	}
 	return nil
-}
-
-func mylog(t *testing.T, level, testname, msg string) {
-	prefix := testname + " " + level + ": "
-	t.Log(prefix + msg)
 }
