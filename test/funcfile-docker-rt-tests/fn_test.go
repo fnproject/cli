@@ -4,11 +4,25 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path"
 	"testing"
 )
+
+func init() {
+	dockerUser := os.Getenv("DOCKER_USER")
+	var err error
+	if dockerUser == "" {
+		dockerUser = "funcster"
+	}
+	err = os.Setenv("FN_REGISTRY", dockerUser)
+	if err != nil {
+		log.Fatalf("couldn't set env var: %v", err)
+	}
+	return
+}
 
 func TestDockerRuntime(t *testing.T) {
 	testname := "TestDockerRuntime"
@@ -87,14 +101,6 @@ func setupTestFiles(t *testing.T,
 }
 
 func runFnInit(t *testing.T, testname, fnTestBin string) {
-	/*
-	        dockeruser := os.Getenv("DOCKER_USER")
-		if dockeruser == "" {
-			t.Fatalf("ERROR: DOCKER_USER not set")
-		}
-		t.Logf("INFO: %s DOCKER_USER=%s", testname, dockeruser)
-		var imagename string = dockeruser + "/" + "fn_test_hello_docker_runtime"
-	*/
 	var imagename string = "fn_test_hello_docker_runtime"
 
 	t.Logf("INFO: %s Run fn init %s", testname, imagename)
