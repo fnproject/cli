@@ -1,0 +1,4 @@
+name: amykang2020/fn_test_hello_docker_runtime
+version: 0.0.1
+runtime: docker
+path: /fn_test_hello_docker_runtime
