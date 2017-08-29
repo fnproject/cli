@@ -12,6 +12,7 @@ import (
 	client "github.com/fnproject/cli/client"
 	fnclient "github.com/funcy/functions_go/client"
 	apiapps "github.com/funcy/functions_go/client/apps"
+	apiroutes "github.com/funcy/functions_go/client/routes"
 	"github.com/funcy/functions_go/models"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
@@ -91,6 +92,13 @@ func apps() cli.Command {
 				Name:   "delete",
 				Usage:  "delete an app",
 				Action: a.delete,
+				Flags: []cli.Flag{
+					cli.BoolFlag{
+						Name:  "force",
+						Usage: "force delete application",
+					},
+				},
+
 			},
 		},
 	}
@@ -231,6 +239,20 @@ func (a *appsCmd) patchApp(appName string, app *models.App) error {
 	return nil
 }
 
+func inspectError(err error) error {
+	if err != nil {
+		switch e := err.(type) {
+		case *apiapps.GetAppsAppNotFound:
+			return fmt.Errorf("%v", e.Payload.Error.Message)
+		case *apiapps.GetAppsAppDefault:
+			return fmt.Errorf("%v", e.Payload.Error.Message)
+		default:
+			return fmt.Errorf("%v", err.Error())
+		}
+	}
+	return nil
+}
+
 func (a *appsCmd) inspect(c *cli.Context) error {
 	if c.Args().Get(0) == "" {
 		return errors.New("missing app name after the inspect command")
@@ -244,15 +266,9 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 		App:     appName,
 	})
 
+	err = inspectError(err)
 	if err != nil {
-		switch e := err.(type) {
-		case *apiapps.GetAppsAppNotFound:
-			return fmt.Errorf("%v", e.Payload.Error.Message)
-		case *apiapps.GetAppsAppDefault:
-			return fmt.Errorf("%v", e.Payload.Error.Message)
-		default:
-			return fmt.Errorf("%v", err)
-		}
+		return err
 	}
 
 	enc := json.NewEncoder(os.Stdout)
@@ -290,9 +306,32 @@ func (a *appsCmd) delete(c *cli.Context) error {
 	if appName == "" {
 		return errors.New("app name required to delete")
 	}
-
+	ctx := context.Background()
+	if c.Bool("force") {
+		_, err := a.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
+			App: appName,
+			Context: ctx,
+		})
+		err = inspectError(err)
+		if err != nil {
+			return err
+		}
+		appRoutes, err := a.client.Routes.GetAppsAppRoutes(&apiroutes.GetAppsAppRoutesParams{
+			App: appName,
+			Context: ctx,
+		})
+		for _, appRoute := range appRoutes.Payload.Routes {
+			// ignoring response because nothing prevents us from deleting a route
+			fmt.Printf("Deleting route %v\n", appRoute.Path)
+			a.client.Routes.DeleteAppsAppRoutesRoute(&apiroutes.DeleteAppsAppRoutesRouteParams{
+				App: appName,
+				Route: appRoute.Path,
+				Context: ctx,
+			})
+		}
+	}
 	_, err := a.client.Apps.DeleteAppsApp(&apiapps.DeleteAppsAppParams{
-		Context: context.Background(),
+		Context: ctx,
 		App:     appName,
 	})
 
