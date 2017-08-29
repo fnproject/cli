@@ -88,12 +88,15 @@ func setupTestFiles(t *testing.T,
 }
 
 func runFnInit(t *testing.T, testname, fnTestBin string) {
-	dockeruser := os.Getenv("DOCKER_USER")
+        /*
+        dockeruser := os.Getenv("DOCKER_USER")
 	if dockeruser == "" {
 		t.Fatalf("ERROR: DOCKER_USER not set")
 	}
 	mylog(t, "INFO", testname, "DOCKER_USER= "+dockeruser)
 	var imagename string = dockeruser + "/" + "fn_test_hello_docker_runtime"
+        */
+	var imagename string = "fn_test_hello_docker_runtime"
 
 	mylog(t, "INFO", testname, "Run fn init "+imagename)
 	res, err := exec.Command(fnTestBin, "init", imagename).CombinedOutput()
