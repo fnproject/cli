@@ -37,7 +37,7 @@ type deploycmd struct {
 	wd          string
 	verbose     bool
 	incremental bool
-	skippush    bool
+	local       bool
 	noCache     bool
 	registry    string
 }
@@ -49,19 +49,19 @@ func (cmd *deploycmd) Registry() string {
 func (p *deploycmd) flags() []cli.Flag {
 	return []cli.Flag{
 		cli.BoolFlag{
-			Name:        "v",
+			Name:        "verbose, v",
 			Usage:       "verbose mode",
 			Destination: &p.verbose,
 		},
 		cli.StringFlag{
-			Name:        "d",
+			Name:        "workdir, w",
 			Usage:       "working directory",
 			Destination: &p.wd,
 			EnvVar:      "WORK_DIR",
 			// Value:       "./",
 		},
 		cli.BoolFlag{
-			Name:        "i",
+			Name:        "incremental",
 			Usage:       "uses incremental building",
 			Destination: &p.incremental,
 		},
@@ -71,9 +71,9 @@ func (p *deploycmd) flags() []cli.Flag {
 			Destination: &p.noCache,
 		},
 		cli.BoolFlag{
-			Name:        "skip-push",
+			Name:        "local, skip-push", // todo: deprecate skip-push
 			Usage:       "does not push Docker built images onto Docker Hub - useful for local development.",
-			Destination: &p.skippush,
+			Destination: &p.local,
 		},
 		cli.StringFlag{
 			Name:        "registry",
@@ -147,7 +147,7 @@ func (p *deploycmd) deploy(c *cli.Context, funcFilePath string) error {
 		funcfile.Path = "/" + path.Base(path.Dir(funcFilePath))
 	}
 
-	if p.skippush {
+	if p.local {
 		return nil
 	}
 

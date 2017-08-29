@@ -21,6 +21,10 @@ func startCmd() cli.Command {
 				Name:  "log-level",
 				Usage: "--log-level DEBUG to enable debugging",
 			},
+			cli.BoolFlag{
+				Name:  "detach, d",
+				Usage: "Run container in background.",
+			},
 		},
 	}
 }
@@ -44,6 +48,9 @@ func start(c *cli.Context) error {
 	}
 	for _, v := range denvs {
 		args = append(args, "-e", v)
+	}
+	if c.Bool("detach") {
+		args = append(args, "-d")
 	}
 	args = append(args, functionsDockerImage)
 	cmd := exec.Command("docker", args...)
@@ -72,8 +79,6 @@ func start(c *cli.Context) error {
 	case err := <-done:
 		if err != nil {
 			log.Println("error: processed finished with error", err)
-		} else {
-			log.Println("process finished gracefully without error")
 		}
 	}
 	return nil
