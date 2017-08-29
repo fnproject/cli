@@ -25,7 +25,7 @@ export API_URL="http://localhost:$someport"
 $fn apps l
 $fn apps create myapp
 $fn apps l
-$fn deploy myapp
+$fn deploy --local myapp
 $fn call myapp $funcname
 
 docker rm --force functions

@@ -147,12 +147,10 @@ func (p *deploycmd) deploy(c *cli.Context, funcFilePath string) error {
 		funcfile.Path = "/" + path.Base(path.Dir(funcFilePath))
 	}
 
-	if p.local {
-		return nil
-	}
-
-	if err := dockerpush(funcfile); err != nil {
-		return err
+	if !p.local {
+		if err := dockerpush(funcfile); err != nil {
+			return err
+		}
 	}
 
 	return p.route(c, funcfile)
