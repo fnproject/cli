@@ -1,9 +1,9 @@
 package main
 
 import (
-  "fmt"
+	"fmt"
 )
 
 func main() {
-  fmt.Println("Hello from Fn for func file 'docker' runtime test !")
+	fmt.Println("Hello from Fn for func file 'docker' runtime test !")
 }

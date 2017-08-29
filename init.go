@@ -181,7 +181,7 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 
 	//if Dockerfile presents, use 'docker' as 'runtime'
 	if exists("Dockerfile") {
-		fmt.Println("Dockerfile found, will use that to build.")
+		fmt.Println("Dockerfile found.  Using runtime 'docker'")
 		a.Runtime = funcfileDockerRuntime
 		return nil
 	}
