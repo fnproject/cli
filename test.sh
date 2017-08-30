@@ -30,11 +30,11 @@ $fn call myapp $funcname
 
 #Test 'docker' runtime deploy
 cd ..
-rm -rf tmp2
-mkdir tmp2
-cp test/funcfile-docker-rt-tests/testfiles/Dockerfile tmp2/
-cp test/funcfile-docker-rt-tests/testfiles/func.go tmp2/
-cd tmp2
+rm -rf tmp1
+mkdir tmp1
+cp test/funcfile-docker-rt-tests/testfiles/Dockerfile tmp1/
+cp test/funcfile-docker-rt-tests/testfiles/func.go tmp1/
+cd tmp1
 $fn init $funcname
 $fn apps create myapp1
 $fn apps l
