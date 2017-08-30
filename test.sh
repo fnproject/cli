@@ -28,6 +28,21 @@ $fn apps l
 $fn deploy --local myapp
 $fn call myapp $funcname
 
+#Test 'docker' runtime deploy
+cd ..
+rm -rf tmp1
+mkdir tmp1
+cp test/funcfile-docker-rt-tests/testfiles/Dockerfile tmp1/
+cp test/funcfile-docker-rt-tests/testfiles/func.go tmp1/
+cd tmp1
+$fn init $funcname
+$fn apps create myapp1
+$fn apps l
+export FN_REGISTRY=$DOCKER_USER
+$fn deploy --local myapp1
+$fn routes create myapp1 /$funcname
+$fn call myapp1 /$funcname
+
 docker rm --force functions
 
 cd ..
