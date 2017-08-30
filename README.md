@@ -1,6 +1,18 @@
 # Fn CLI
 [![CircleCI](https://circleci.com/gh/fnproject/cli.svg?style=svg)](https://circleci.com/gh/fnproject/cli)
 
+## Install
+
+```sh
+curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
+```
+
+## Start Server
+
+```sh
+fn start
+```
+
 ## Creating Functions
 
 ### init
