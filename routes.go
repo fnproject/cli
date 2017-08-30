@@ -10,7 +10,6 @@ import (
 	"path"
 	"strings"
 	"text/tabwriter"
-	"time"
 
 	client "github.com/fnproject/cli/client"
 	fnclient "github.com/funcy/functions_go/client"
@@ -51,15 +50,15 @@ var routeFlags = []cli.Flag{
 		Usage: "hot container IO format - default or http",
 		Value: "default",
 	},
-	cli.DurationFlag{
+	cli.IntFlag{
 		Name:  "timeout",
-		Usage: "route timeout (eg. 30s)",
-		Value: 30 * time.Second,
+		Usage: "route timeout (eg. 30)",
+		Value: 30,
 	},
-	cli.DurationFlag{
+	cli.IntFlag{
 		Name:  "idle-timeout",
-		Usage: "route idle timeout (eg. 30s)",
-		Value: 30 * time.Second,
+		Usage: "route idle timeout (eg. 30)",
+		Value: 30,
 	},
 }
 
@@ -242,14 +241,14 @@ func routeWithFlags(c *cli.Context, rt *fnmodels.Route) {
 		}
 	}
 	if rt.Timeout == nil {
-		if t := c.Duration("timeout"); t > 0 {
-			to := int32(t.Seconds())
+		if t := c.Int("timeout"); t > 0 {
+			to := int32(t)
 			rt.Timeout = &to
 		}
 	}
 	if rt.IDLETimeout == nil {
-		if t := c.Duration("idle-timeout"); t > 0 {
-			to := int32(t.Seconds())
+		if t := c.Int("idle-timeout"); t > 0 {
+			to := int32(t)
 			rt.IDLETimeout = &to
 		}
 	}
