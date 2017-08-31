@@ -59,7 +59,7 @@ fn build
 Run will help you test your function. Functions read input from STDIN, so you can pipe the payload into the function like this:
 
 ```sh
-cat `payload.json` | fn run
+cat payload.json | fn run
 ```
 
 Push will push the function image to Docker Hub.
