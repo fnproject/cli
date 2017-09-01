@@ -67,6 +67,7 @@ func (t *testcmd) test(c *cli.Context) error {
 	}
 
 	ff, err = buildfunc(fpath, ff, false)
+	ff, envVars, err := preRun(c)
 	if err != nil {
 		return err
 	}
@@ -122,10 +123,10 @@ func (t *testcmd) test(c *cli.Context) error {
 		fmt.Printf("\nTest %v\n", i+1)
 		start := time.Now()
 		var err error
-		err = runtest(target, tt.Input, tt.Output, tt.Err, tt.Env)
+		err = runtest(target, tt.Input, tt.Output, tt.Err, envVars)
 		if err != nil {
 			fmt.Print("FAILED")
-			errorCount += 1
+			errorCount++
 			scanner := bufio.NewScanner(strings.NewReader(err.Error()))
 			for scanner.Scan() {
 				fmt.Println("\t\t", scanner.Text())
@@ -147,7 +148,7 @@ func (t *testcmd) test(c *cli.Context) error {
 	return nil
 }
 
-func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, env map[string]string) error {
+func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
 	inBytes, err := json.Marshal(in.Body)
 	if err != nil {
 		return err
@@ -167,20 +168,10 @@ func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedE
 	}
 	expectedString := string(expectedB)
 
-	// TODO: use the same run as `fn run` so we don't have to dupe all the config and env vars that get passed in
 	var stdout, stderr bytes.Buffer
-	var restrictedEnv []string
-	for k, v := range env {
-		oldv := os.Getenv(k)
-		defer func(oldk, oldv string) {
-			os.Setenv(oldk, oldv)
-		}(k, oldv)
-		os.Setenv(k, v)
-		restrictedEnv = append(restrictedEnv, k)
-	}
 
 	ff := &funcfile{Name: target}
-	if err := runff(ff, stdin, &stdout, &stderr, "", restrictedEnv, nil, DefaultFormat, 1); err != nil {
+	if err := runff(ff, stdin, &stdout, &stderr, "", envVars, nil, DefaultFormat, 1); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\nstderr:%s\n", err, stdout.String(), stderr.String())
 	}
 
@@ -196,7 +187,7 @@ func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedE
 	return fmt.Errorf("mismatched output found.\nexpected:\n%s\ngot:\n%s\nlogs:\n%s\n", expectedString, out, stderr.String())
 }
 
-func runremotetest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, env map[string]string) error {
+func runremotetest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
 	inBytes, err := json.Marshal(in)
 	if err != nil {
 		return err
@@ -211,16 +202,7 @@ func runremotetest(target string, in *inputMap, expectedOut *outputMap, expected
 	}
 	var stdout bytes.Buffer
 
-	var restrictedEnv []string
-	for k, v := range env {
-		oldv := os.Getenv(k)
-		defer func(oldk, oldv string) {
-			os.Setenv(oldk, oldv)
-		}(k, oldv)
-		os.Setenv(k, v)
-		restrictedEnv = append(restrictedEnv, k)
-	}
-	if err := client.CallFN(target, stdin, &stdout, "", restrictedEnv, false); err != nil {
+	if err := client.CallFN(target, stdin, &stdout, "", envVars, false); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\n", err, stdout.String())
 	}
 
