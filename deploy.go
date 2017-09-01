@@ -95,7 +95,7 @@ func (p *deploycmd) scan(c *cli.Context) error {
 
 	err = filepath.Walk(wd, func(path string, info os.FileInfo, err error) error {
 		if path != wd && info.IsDir() {
-			return filepath.SkipDir
+			return nil
 		}
 
 		if !isFuncfile(path, info) {
@@ -106,18 +106,19 @@ func (p *deploycmd) scan(c *cli.Context) error {
 			return nil
 		}
 
-		e := p.deploy(c, path)
+		err = p.deploy(c, path)
 		if err != nil {
-			fmt.Println(path, e)
+			// fmt.Println(path, e)
+			return fmt.Errorf("deploy error on %s: %v", path, err)
 		}
 
 		now := time.Now()
 		os.Chtimes(path, now, now)
 		walked = true
-		return e
+		return err
 	})
 	if err != nil {
-		fmt.Printf("error: %s\n", err)
+		return err
 	}
 
 	if !walked {
