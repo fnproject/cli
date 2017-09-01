@@ -133,7 +133,7 @@ func main() {
 	err := app.Run(os.Args)
 	if err != nil {
 		// TODO: this doesn't seem to get called even when an error returns from a command, but maybe urfave is doing a non zero exit anyways? nope: https://github.com/urfave/cli/issues/610
-		fmt.Fprintf(os.Stderr, "ERROR: %v", err)
+		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		os.Exit(1)
 	}
 }
