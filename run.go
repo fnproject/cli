@@ -114,12 +114,14 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 		format = DefaultFormat
 	}
 	// Add expected env vars that service will add
-	runEnv = append(runEnv, kvEq("METHOD", method))
-	runEnv = append(runEnv, kvEq("REQUEST_URL", LocalTestURL))
-	runEnv = append(runEnv, kvEq("APP_NAME", "myapp"))
-	runEnv = append(runEnv, kvEq("ROUTE", "/hello")) // TODO: should we change this to PATH ?
+	runEnv = append(runEnv, kvEq("FN_CALL_ID", "12345678901234567890123456"))
+	runEnv = append(runEnv, kvEq("FN_METHOD", method))
+	runEnv = append(runEnv, kvEq("FN_REQUEST_URL", LocalTestURL))
+	runEnv = append(runEnv, kvEq("FN_APP_NAME", "myapp"))
+	runEnv = append(runEnv, kvEq("FN_ROUTE", "/hello")) // TODO: should we change this to PATH ?
 	runEnv = append(runEnv, kvEq("FN_FORMAT", format))
-	runEnv = append(runEnv, kvEq("MEMORY_MB", fmt.Sprintf("%d", ff.Memory)))
+	runEnv = append(runEnv, kvEq("FN_MEMORY", fmt.Sprintf("%d", ff.Memory)))
+	runEnv = append(runEnv, kvEq("FN_TYPE", "sync"))
 
 	// add user defined envs
 	runEnv = append(runEnv, envVars...)
