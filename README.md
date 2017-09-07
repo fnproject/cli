@@ -206,13 +206,13 @@ path: /myfunc
 
 ```
 fn init hello --runtime ruby
-fn deploy myapp /hello
+fn deploy --app myapp
 ```
 
 ### Updating function
 
 ```
-fn deploy myapp
+fn deploy --app myapp
 ```
 
 ### Testing function locally

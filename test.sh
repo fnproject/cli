@@ -37,7 +37,7 @@ $fn init $funcname
 $fn apps create myapp1
 $fn apps l
 export FN_REGISTRY=$DOCKER_USER
-$fn deploy --local myapp1
+$fn deploy --local --app myapp1
 $fn routes create myapp1 /$funcname
 $fn call myapp1 /$funcname
 
