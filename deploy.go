@@ -22,11 +22,10 @@ func deploy() cli.Command {
 	var flags []cli.Flag
 	flags = append(flags, cmd.flags()...)
 	return cli.Command{
-		Name:      "deploy",
-		ArgsUsage: "<appName>",
-		Usage:     "deploys a function to the functions server. (bumps, build, pushes and updates route)",
-		Flags:     flags,
-		Action:    cmd.scan,
+		Name:   "deploy",
+		Usage:  "deploys a function to the functions server. (bumps, build, pushes and updates route)",
+		Flags:  flags,
+		Action: cmd.scan,
 	}
 }
 
@@ -48,17 +47,15 @@ func (cmd *deploycmd) Registry() string {
 
 func (p *deploycmd) flags() []cli.Flag {
 	return []cli.Flag{
+		cli.StringFlag{
+			Name:        "app",
+			Usage:       "app name to deploy to",
+			Destination: &p.appName,
+		},
 		cli.BoolFlag{
 			Name:        "verbose, v",
 			Usage:       "verbose mode",
 			Destination: &p.verbose,
-		},
-		cli.StringFlag{
-			Name:        "workdir, w",
-			Usage:       "working directory",
-			Destination: &p.wd,
-			EnvVar:      "WORK_DIR",
-			// Value:       "./",
 		},
 		cli.BoolFlag{
 			Name:        "incremental",
@@ -84,7 +81,10 @@ func (p *deploycmd) flags() []cli.Flag {
 }
 
 func (p *deploycmd) scan(c *cli.Context) error {
-	p.appName = c.Args().First()
+
+	if p.appName == "" {
+		return errors.New("app name must be provided. Try `--app APP_NAME`.")
+	}
 
 	var walked bool
 	wd, err := os.Getwd()
