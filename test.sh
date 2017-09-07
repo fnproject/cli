@@ -2,6 +2,7 @@ set -ex
 
 make build
 export fn="$(pwd)/fn"
+export FN_REGISTRY=$DOCKER_USER
 $fn --version
 
 go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
@@ -36,7 +37,6 @@ cd docker_runtime_test
 $fn init --name $funcname
 $fn apps create myapp1
 $fn apps l
-export FN_REGISTRY=$DOCKER_USER
 $fn deploy --local --app myapp1
 $fn routes create myapp1 /$funcname
 $fn call myapp1 /$funcname
