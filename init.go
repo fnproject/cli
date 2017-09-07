@@ -142,8 +142,8 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	ff := a.funcfile
 
-	_, path := appNamePath(ff.ImageName())
-	ff.Path = path
+	// _, path := appNamePath(ff.ImageName())
+	// ff.Path = path
 
 	if err := encodeFuncfileYAML("func.yaml", &ff); err != nil {
 		return err

@@ -25,7 +25,7 @@ func deploy() cli.Command {
 		Name:   "deploy",
 		Usage:  "deploys a function to the functions server. (bumps, build, pushes and updates route)",
 		Flags:  flags,
-		Action: cmd.scan,
+		Action: cmd.deploy,
 	}
 }
 
@@ -80,7 +80,8 @@ func (p *deploycmd) flags() []cli.Flag {
 	}
 }
 
-func (p *deploycmd) scan(c *cli.Context) error {
+// deploy deploys multiple funcs if required
+func (p *deploycmd) deploy(c *cli.Context) error {
 
 	if p.appName == "" {
 		return errors.New("app name must be provided. Try `--app APP_NAME`.")
@@ -106,7 +107,7 @@ func (p *deploycmd) scan(c *cli.Context) error {
 			return nil
 		}
 
-		err = p.deploy(c, path)
+		err = p.deployFunc(c, path)
 		if err != nil {
 			// fmt.Println(path, e)
 			return fmt.Errorf("deploy error on %s: %v", path, err)
@@ -128,11 +129,11 @@ func (p *deploycmd) scan(c *cli.Context) error {
 	return nil
 }
 
-// deploy will perform several actions to deploy to an functions server.
-// Parse functions file, bump version, build image, push to registry, and
+// deployFunc performs several actions to deploy to a functions server.
+// Parse func.yaml file, bump version, build image, push to registry, and
 // finally it will update function's route. Optionally,
-// the route can be overriden inside the functions file.
-func (p *deploycmd) deploy(c *cli.Context, funcFilePath string) error {
+// the route can be overriden inside the func.yaml file.
+func (p *deploycmd) deployFunc(c *cli.Context, funcFilePath string) error {
 	funcFileName := path.Base(funcFilePath)
 
 	err := c.App.Command("bump").Run(c)
@@ -154,10 +155,10 @@ func (p *deploycmd) deploy(c *cli.Context, funcFilePath string) error {
 		}
 	}
 
-	return p.route(c, funcfile)
+	return p.updateRoute(c, funcfile)
 }
 
-func (p *deploycmd) route(c *cli.Context, ff *funcfile) error {
+func (p *deploycmd) updateRoute(c *cli.Context, ff *funcfile) error {
 	fmt.Printf("Updating route %s using image %s...\n", ff.Path, ff.ImageName())
 	if err := resetBasePath(p.Configuration); err != nil {
 		return fmt.Errorf("error setting endpoint: %v", err)
