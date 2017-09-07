@@ -11,7 +11,7 @@ rm -rf tmp
 mkdir tmp
 cd tmp
 funcname="fn-test-go"
-$fn init --runtime go $DOCKER_USER/$funcname
+$fn init --runtime go --name $funcname
 $fn test
 
 someport=50080
@@ -33,7 +33,7 @@ mkdir  docker_runtime_test
 cp ../test/funcfile-docker-rt-tests/testfiles/Dockerfile docker_runtime_test/
 cp ../test/funcfile-docker-rt-tests/testfiles/func.go docker_runtime_test/
 cd docker_runtime_test
-$fn init $funcname
+$fn init --name $funcname
 $fn apps create myapp1
 $fn apps l
 export FN_REGISTRY=$DOCKER_USER

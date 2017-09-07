@@ -1,7 +1,7 @@
 package main
 
 /*
- usage: fn init <name>
+ usage: fn init --help
 
  o If there's a Dockerfile found, this will generate a basic
    function file with the image and 'docker' as 'runtime'

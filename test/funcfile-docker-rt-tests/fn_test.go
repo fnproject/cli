@@ -103,8 +103,8 @@ func setupTestFiles(t *testing.T,
 func runFnInit(t *testing.T, testname, fnTestBin string) {
 	var imagename string = "fn_test_hello_docker_runtime"
 
-	t.Logf("INFO: %s Run fn init %s", testname, imagename)
-	res, err := exec.Command(fnTestBin, "init", imagename).CombinedOutput()
+	t.Logf("INFO: %s Run fn init --name %s", testname, imagename)
+	res, err := exec.Command(fnTestBin, "init", "--name", imagename).CombinedOutput()
 	if err != nil {
 		t.Fatalf("ERROR: Failed run fn init: res: %s, err: %v", string(res), err)
 	}
