@@ -12,7 +12,9 @@ rm -rf tmp
 mkdir tmp
 cd tmp
 funcname="fn-test-go"
-$fn init --runtime go --name $funcname
+mkdir $funcname
+cd $funcname
+$fn init --runtime go
 $fn test
 
 someport=50080
@@ -28,8 +30,9 @@ $fn apps create myapp
 $fn apps l
 $fn deploy --local --app myapp
 $fn call myapp $funcname
+cd ..
 
-#Test 'docker' runtime deploy
+# Test 'docker' runtime deploy
 mkdir  docker_runtime_test 
 cp ../test/funcfile-docker-rt-tests/testfiles/Dockerfile docker_runtime_test/
 cp ../test/funcfile-docker-rt-tests/testfiles/func.go docker_runtime_test/
