@@ -25,7 +25,7 @@ if you are using Node, put the code that you want to execute in the file `func.j
 Run:
 
 ```sh
-fn init [FUNCTION_NAME]
+fn init [--name FUNCTION_NAME]
 ```
 
 If you don't specify a name, the current directory name will be used.
@@ -33,7 +33,7 @@ If you don't specify a name, the current directory name will be used.
 If you want to override the convention with configuration, you can do that as well using:
 
 ```sh
-fn init [--runtime node] [--entrypoint "node hello.js"] [FUNCTION_NAME]
+fn init [--runtime node] [--entrypoint "node hello.js"] [--name FUNCTION_NAME]
 ```
 
 Or, if you want full control, just make a Dockerfile. If `init` finds a Dockerfile, it will use that instead of runtime and entrypoint.
@@ -205,14 +205,14 @@ path: /myfunc
 ### Creating a new function from source
 
 ```
-fn init hello --runtime ruby
-fn deploy myapp /hello
+fn init --name hello --runtime ruby
+fn deploy --app myapp
 ```
 
 ### Updating function
 
 ```
-fn deploy myapp
+fn deploy --app myapp
 ```
 
 ### Testing function locally
