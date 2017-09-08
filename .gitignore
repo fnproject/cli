@@ -8,3 +8,5 @@ vendor/
 _vendor*/
 /cli
 data/
+.vscode/
+
