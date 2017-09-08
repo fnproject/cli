@@ -26,7 +26,7 @@ export API_URL="http://localhost:$someport"
 $fn apps l
 $fn apps create myapp
 $fn apps l
-$fn deploy --local myapp
+$fn deploy --local --app myapp
 $fn call myapp $funcname
 
 #Test 'docker' runtime deploy
