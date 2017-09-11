@@ -1,7 +1,7 @@
 package main
 
 /*
- usage: fn init <name>
+ usage: fn init --help
 
  o If there's a Dockerfile found, this will generate a basic
    function file with the image and 'docker' as 'runtime'
@@ -61,6 +61,11 @@ type initFnCmd struct {
 
 func initFlags(a *initFnCmd) []cli.Flag {
 	fgs := []cli.Flag{
+		cli.StringFlag{
+			Name:        "name",
+			Usage:       "name of the function. Defaults to directory name.",
+			Destination: &a.Name,
+		},
 		cli.BoolFlag{
 			Name:        "force",
 			Usage:       "overwrite existing func.yaml",
@@ -83,7 +88,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 		},
 		cli.StringFlag{
 			Name:        "version",
-			Usage:       "function version",
+			Usage:       "set initial function version",
 			Destination: &a.Version,
 			Value:       initialVersion,
 		},
@@ -137,8 +142,8 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	ff := a.funcfile
 
-	_, path := appNamePath(ff.ImageName())
-	ff.Path = path
+	// _, path := appNamePath(ff.ImageName())
+	// ff.Path = path
 
 	if err := encodeFuncfileYAML("func.yaml", &ff); err != nil {
 		return err
@@ -168,10 +173,6 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 		return fmt.Errorf("error detecting current working directory: %v", err)
 	}
 
-	a.Name = c.Args().First()
-	// if a.name == "" {
-	// 	// return errors.New("please specify a name for your function.\nTry: fn init <FUNCTION_NAME>")
-	// } else
 	if a.Name == "" {
 		// then use current directory for name
 		a.Name = filepath.Base(pwd)
@@ -179,14 +180,14 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 		return errors.New("function name cannot contain a colon")
 	}
 
-	//if Dockerfile presents, use 'docker' as 'runtime'
+	//if Dockerfile present, use 'docker' as 'runtime'
 	if exists("Dockerfile") {
 		fmt.Println("Dockerfile found.  Using runtime 'docker'")
 		a.Runtime = funcfileDockerRuntime
 		return nil
 	}
 	if a.Runtime == funcfileDockerRuntime {
-		return errors.New("function file runtime is 'docker', but no Dockerfile exist !")
+		return errors.New("function file runtime is 'docker', but no Dockerfile exists")
 	}
 
 	var rt string
