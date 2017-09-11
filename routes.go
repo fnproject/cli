@@ -262,7 +262,7 @@ func routeWithFlags(c *cli.Context, rt *fnmodels.Route) {
 			rt.Headers = headers
 		}
 	}
-	if len(rt.Config) == 0{
+	if len(rt.Config) == 0 {
 		if len(c.StringSlice("config")) > 0 {
 			rt.Config = extractEnvConfig(c.StringSlice("config"))
 		}
@@ -334,6 +334,11 @@ func (a *routesCmd) create(c *cli.Context) error {
 
 func (a *routesCmd) postRoute(c *cli.Context, appName string, rt *fnmodels.Route) error {
 
+	err := validImageName(rt.Image)
+	if err != nil {
+		return err
+	}
+
 	body := &fnmodels.RouteWrapper{
 		Route: rt,
 	}
@@ -362,7 +367,12 @@ func (a *routesCmd) postRoute(c *cli.Context, appName string, rt *fnmodels.Route
 }
 
 func (a *routesCmd) patchRoute(c *cli.Context, appName, routePath string, r *fnmodels.Route) error {
-	_, err := a.client.Routes.PatchAppsAppRoutesRoute(&apiroutes.PatchAppsAppRoutesRouteParams{
+	err := validImageName(r.Image)
+	if err != nil {
+		return err
+	}
+
+	_, err = a.client.Routes.PatchAppsAppRoutesRoute(&apiroutes.PatchAppsAppRoutesRouteParams{
 		Context: context.Background(),
 		App:     appName,
 		Route:   routePath,
