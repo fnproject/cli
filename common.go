@@ -87,10 +87,6 @@ func dockerbuild(path string, ff *funcfile, noCache bool) error {
 	if err != nil {
 		return err
 	}
-	err = validImageName(ff.ImageName())
-	if err != nil {
-		return err
-	}
 
 	dir := filepath.Dir(path)
 
@@ -272,7 +268,7 @@ func extractEnvConfig(configs []string) map[string]string {
 }
 
 func dockerpush(ff *funcfile) error {
-	err := validImageName(ff.ImageName())
+	err := validateImageName(ff.ImageName())
 	if err != nil {
 		return err
 	}
@@ -286,7 +282,7 @@ func dockerpush(ff *funcfile) error {
 	return nil
 }
 
-func validImageName(n string) error {
+func validateImageName(n string) error {
 	// must have at least owner name and a tag
 	split := strings.Split(n, ":")
 	if len(split) < 2 {

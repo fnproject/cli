@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -64,20 +63,21 @@ func runflags() []cli.Flag {
 }
 
 func (r *runCmd) run(c *cli.Context) error {
-	// First, build it
-	err := c.App.Command("build").Run(c)
-	if err != nil {
-		return err
-	}
-	var ff *funcfile
+
 	// if image name is passed in, it will run that image
-	image := c.Args().First()
+	image := c.Args().First() // TODO: should we ditch this?
+	var ff *funcfile
 	if image == "" {
-		ff, err = loadFuncfile()
+		path, err := os.Getwd()
 		if err != nil {
-			if _, ok := err.(*notFoundError); ok {
-				return errors.New("image name is missing or no function file found")
-			}
+			return err
+		}
+		fn, err := findFuncfile(path)
+		if err != nil {
+			return err
+		}
+		ff, err = buildfunc(fn, false)
+		if err != nil {
 			return err
 		}
 	} else {
