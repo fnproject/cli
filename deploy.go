@@ -39,6 +39,7 @@ type deploycmd struct {
 	local       bool
 	noCache     bool
 	registry    string
+	all         bool
 }
 
 func (cmd *deploycmd) Registry() string {
@@ -77,22 +78,49 @@ func (p *deploycmd) flags() []cli.Flag {
 			Usage:       "Sets the Docker owner for images and optionally the registry. This will be prefixed to your function name for pushing to Docker registries. eg: `--registry username` will set your Docker Hub owner. `--registry registry.hub.docker.com/username` will set the registry and owner.",
 			Destination: &p.registry,
 		},
+		cli.BoolFlag{
+			Name:        "all",
+			Usage:       "if in root directory containing `app.yaml`, this will deploy all functions",
+			Destination: &p.all,
+		},
 	}
 }
 
 // deploy deploys multiple funcs if required
 func (p *deploycmd) deploy(c *cli.Context) error {
-
-	if p.appName == "" {
-		return errors.New("app name must be provided. Try `--app APP_NAME`.")
-	}
-
-	var walked bool
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatalln("Couldn't get working directory:", err)
 	}
+
 	setRegistryEnv(p)
+
+	if !p.all {
+		// just deploy current directory
+		if p.appName == "" {
+			return errors.New("app name must be provided, try `--app APP_NAME`.")
+		}
+
+		ff, err := findFuncfile(wd)
+		if err != nil {
+			return err
+		}
+		err = p.deployFunc(c, p.appName, ff)
+		return err
+	}
+
+	// else deploy all functions in app
+	appf, err := loadAppfile()
+	if err != nil {
+		return err
+	}
+	appName := appf.Name
+	if p.appName != "" {
+		// overrides app name in app.yaml
+		appName = p.appName
+	}
+
+	var funcFound bool
 
 	err = filepath.Walk(wd, func(path string, info os.FileInfo, err error) error {
 		if path != wd && info.IsDir() {
@@ -107,7 +135,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 			return nil
 		}
 
-		err = p.deployFunc(c, path)
+		err = p.deployFunc(c, appName, path)
 		if err != nil {
 			// fmt.Println(path, e)
 			return fmt.Errorf("deploy error on %s: %v", path, err)
@@ -115,15 +143,15 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 
 		now := time.Now()
 		os.Chtimes(path, now, now)
-		walked = true
+		funcFound = true
 		return err
 	})
 	if err != nil {
 		return err
 	}
 
-	if !walked {
-		return errors.New("No function file found.")
+	if !funcFound {
+		return errors.New("no function found to deploy")
 	}
 
 	return nil
@@ -133,7 +161,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 // Parse func.yaml file, bump version, build image, push to registry, and
 // finally it will update function's route. Optionally,
 // the route can be overriden inside the func.yaml file.
-func (p *deploycmd) deployFunc(c *cli.Context, funcFilePath string) error {
+func (p *deploycmd) deployFunc(c *cli.Context, appName, funcFilePath string) error {
 	funcFileName := path.Base(funcFilePath)
 
 	ff, err := loadFuncfile()
@@ -160,15 +188,15 @@ func (p *deploycmd) deployFunc(c *cli.Context, funcFilePath string) error {
 	}
 
 	if !p.local {
-		if err := dockerpush(funcfile); err != nil {
+		if err := dockerPush(funcfile); err != nil {
 			return err
 		}
 	}
 
-	return p.updateRoute(c, funcfile)
+	return p.updateRoute(c, appName, funcfile)
 }
 
-func (p *deploycmd) updateRoute(c *cli.Context, ff *funcfile) error {
+func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *funcfile) error {
 	fmt.Printf("Updating route %s using image %s...\n", ff.Path, ff.ImageName())
 	if err := resetBasePath(p.Configuration); err != nil {
 		return fmt.Errorf("error setting endpoint: %v", err)
@@ -179,7 +207,7 @@ func (p *deploycmd) updateRoute(c *cli.Context, ff *funcfile) error {
 	if err := routeWithFuncFile(ff, rt); err != nil {
 		return fmt.Errorf("error getting route with funcfile: %s", err)
 	}
-	return routesCmd.putRoute(c, p.appName, ff.Path, rt)
+	return routesCmd.putRoute(c, appName, ff.Path, rt)
 }
 
 func expandEnvConfig(configs map[string]string) map[string]string {
@@ -187,21 +215,6 @@ func expandEnvConfig(configs map[string]string) map[string]string {
 		configs[k] = os.ExpandEnv(v)
 	}
 	return configs
-}
-
-func isFuncfile(path string, info os.FileInfo) bool {
-	if info.IsDir() {
-		return false
-	}
-
-	basefn := filepath.Base(path)
-	for _, fn := range validfn {
-		if basefn == fn {
-			return true
-		}
-	}
-
-	return false
 }
 
 // Theory of operation: this takes an optimistic approach to detect whether a

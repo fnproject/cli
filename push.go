@@ -60,7 +60,7 @@ func (p *pushcmd) push(c *cli.Context) error {
 
 	fmt.Println("pushing", ff.ImageName())
 
-	if err := dockerpush(ff); err != nil {
+	if err := dockerPush(ff); err != nil {
 		return err
 	}
 

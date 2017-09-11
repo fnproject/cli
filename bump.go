@@ -74,7 +74,7 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 
 	fmt.Println("bumping version in func file at: ", fn)
 
-	funcfile, err := parsefuncfile(fn)
+	funcfile, err := parseFuncfile(fn)
 	if err != nil {
 		return err
 	}
@@ -87,12 +87,12 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 	} else {
 		t = Patch
 	}
-	funcfile, err = bumpversion(*funcfile, t)
+	funcfile, err = bumpVersion(*funcfile, t)
 	if err != nil {
 		return err
 	}
 
-	if err := storefuncfile(fn, funcfile); err != nil {
+	if err := storeFuncfile(fn, funcfile); err != nil {
 		return err
 	}
 
@@ -100,7 +100,7 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 	return nil
 }
 
-func bumpversion(funcfile funcfile, t VType) (*funcfile, error) {
+func bumpVersion(funcfile funcfile, t VType) (*funcfile, error) {
 	funcfile.Name = cleanImageName(funcfile.Name)
 	if funcfile.Version == "" {
 		funcfile.Version = initialVersion
