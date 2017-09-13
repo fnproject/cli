@@ -136,7 +136,17 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 func (p *deploycmd) deployFunc(c *cli.Context, funcFilePath string) error {
 	funcFileName := path.Base(funcFilePath)
 
-	err := c.App.Command("bump").Run(c)
+	ff, err := loadFuncfile()
+	if err != nil {
+		return err
+	}
+
+	err = validateImageName(ff.ImageName())
+	if err != nil {
+		return err
+	}
+
+	err = c.App.Command("bump").Run(c)
 	if err != nil {
 		return err
 	}

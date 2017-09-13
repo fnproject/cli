@@ -334,7 +334,7 @@ func (a *routesCmd) create(c *cli.Context) error {
 
 func (a *routesCmd) postRoute(c *cli.Context, appName string, rt *fnmodels.Route) error {
 
-	err := validImageName(rt.Image)
+	err := validateImageName(rt.Image)
 	if err != nil {
 		return err
 	}
@@ -367,12 +367,14 @@ func (a *routesCmd) postRoute(c *cli.Context, appName string, rt *fnmodels.Route
 }
 
 func (a *routesCmd) patchRoute(c *cli.Context, appName, routePath string, r *fnmodels.Route) error {
-	err := validImageName(r.Image)
-	if err != nil {
-		return err
+	if r.Image != "" {
+		err := validateImageName(r.Image)
+		if err != nil {
+			return err
+		}
 	}
 
-	_, err = a.client.Routes.PatchAppsAppRoutesRoute(&apiroutes.PatchAppsAppRoutesRouteParams{
+	_, err := a.client.Routes.PatchAppsAppRoutesRoute(&apiroutes.PatchAppsAppRoutesRouteParams{
 		Context: context.Background(),
 		App:     appName,
 		Route:   routePath,
