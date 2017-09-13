@@ -144,23 +144,12 @@ const (
     <repositories>
         <repository>
             <id>fn-release-repo</id>
-            <url>https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/releases</url>
+            <url>https://dl.bintray.com/fnproject/fnproject</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
             <snapshots>
                 <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>fn-snapshot-repo</id>
-            <url>https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
             </snapshots>
         </repository>
     </repositories>
@@ -169,12 +158,12 @@ const (
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>[1.0.0,1.1.0)</version>
         </dependency>
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>[1.0.0,1.1.0)</version>
             <scope>test</scope>
         </dependency>
         <dependency>
