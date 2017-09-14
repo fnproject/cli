@@ -17,7 +17,7 @@ type JavaLangHelper struct {
 }
 
 // BuildFromImage returns the Docker image used to compile the Maven function project
-func (lh *JavaLangHelper) BuildFromImage() string { return "maven:3.5-jdk-8-alpine" }
+func (lh *JavaLangHelper) BuildFromImage() string { return "fnproject/fn-java-fdk:dev" }
 
 // RunFromImage returns the Docker image used to run the Java function.
 func (lh *JavaLangHelper) RunFromImage() string {
