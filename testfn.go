@@ -65,7 +65,7 @@ func (t *testcmd) test(c *cli.Context) error {
 		return err
 	}
 
-	ff, err := loadFuncfile()
+	_, ff, err := loadFuncfile()
 	if err != nil {
 		return err
 	}

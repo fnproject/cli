@@ -39,31 +39,20 @@ func setRegistryEnv(hr HasRegistry) {
 	}
 }
 
-func buildfunc(fn string, noCache bool) (*funcfile, error) {
-	funcfile, err := parseFuncfile(fn)
-	if err != nil {
-		return nil, err
-	}
-
+func buildfunc(fpath string, funcfile *funcfile, noCache bool) (*funcfile, error) {
+	var err error
 	if funcfile.Version == "" {
-		funcfile, err = bumpVersion(*funcfile, Patch)
-		if err != nil {
-			return nil, err
-		}
-		if err := storeFuncfile(fn, funcfile); err != nil {
-			return nil, err
-		}
-		funcfile, err = parseFuncfile(fn)
+		funcfile, err = bumpIt(fpath, Patch)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if err := localBuild(fn, funcfile.Build); err != nil {
+	if err := localBuild(fpath, funcfile.Build); err != nil {
 		return nil, err
 	}
 
-	if err := dockerBuild(fn, funcfile, noCache); err != nil {
+	if err := dockerBuild(fpath, funcfile, noCache); err != nil {
 		return nil, err
 	}
 
@@ -82,13 +71,13 @@ func localBuild(path string, steps []string) error {
 	return nil
 }
 
-func dockerBuild(path string, ff *funcfile, noCache bool) error {
+func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
 	}
 
-	dir := filepath.Dir(path)
+	dir := filepath.Dir(fpath)
 
 	var helper langs.LangHelper
 	dockerfile := filepath.Join(dir, "Dockerfile")

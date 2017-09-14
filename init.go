@@ -117,7 +117,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	routeWithFlags(c, rt)
 
 	if !a.force {
-		ff, err := loadFuncfile()
+		_, ff, err := loadFuncfile()
 		if _, ok := err.(*notFoundError); !ok && err != nil {
 			return err
 		}

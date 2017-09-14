@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"time"
 
@@ -94,35 +93,63 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	}
 
 	setRegistryEnv(p)
-
-	if !p.all {
-		// just deploy current directory
-		if p.appName == "" {
-			return errors.New("app name must be provided, try `--app APP_NAME`.")
-		}
-
-		ff, err := findFuncfile(wd)
-		if err != nil {
-			return err
-		}
-		err = p.deployFunc(c, p.appName, ff)
-		return err
-	}
-
 	// else deploy all functions in app
 	appf, err := loadAppfile()
 	if err != nil {
-		return err
+		if _, ok := err.(*notFoundError); ok {
+			if p.all {
+				return err
+			}
+			// otherwise, it's ok
+		} else {
+			return err
+		}
+
 	}
-	appName := appf.Name
-	if p.appName != "" {
-		// overrides app name in app.yaml
-		appName = p.appName
+	fmt.Printf("appfile: %+v\n", appf)
+
+	appName := p.appName
+	if appName == "" && appf != nil {
+		appName = appf.Name
+	}
+
+	if !p.all {
+		// just deploy current directory
+		if appName == "" {
+			return errors.New("app name must be provided, try `--app APP_NAME`.")
+		}
+		dir := wd
+		// if we're in the context of an app, first arg is path to fhe function
+		if appf != nil {
+			path := c.Args().First()
+			if path != "" {
+				fmt.Printf("Deploying function at: /%s\n", path)
+				dir = filepath.Join(wd, path)
+				err = os.Chdir(dir)
+				if err != nil {
+					return err
+				}
+				defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
+			}
+		}
+
+		fpath, ff, err := findAndParseFuncfile(dir)
+		if err != nil {
+			return err
+		}
+		if appf != nil {
+			// assume root dir for this first go round, as that's the only way it would find appfile
+			fmt.Println("ROOT")
+			ff.Path = "/"
+		}
+		err = p.deployFunc(c, appName, wd, fpath, ff)
+		return err
 	}
 
 	var funcFound bool
 
 	err = filepath.Walk(wd, func(path string, info os.FileInfo, err error) error {
+		fmt.Println("Walking:", path)
 		if path != wd && info.IsDir() {
 			return nil
 		}
@@ -134,8 +161,26 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 		if p.incremental && !isstale(path) {
 			return nil
 		}
-
-		err = p.deployFunc(c, appName, path)
+		// Then we found a func file, so let's deploy it:
+		ff, err := parseFuncfile(path)
+		if err != nil {
+			return err
+		}
+		dir := filepath.Dir(path)
+		if dir == wd {
+			// then in root dir, so this will be deployed at /
+			// TODO: this should perhaps only override if path isn't defined
+			fmt.Println("ROOT")
+			ff.Path = "/"
+		} else {
+			// change dirs
+			err = os.Chdir(dir)
+			if err != nil {
+				return err
+			}
+			defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
+		}
+		err = p.deployFunc(c, appName, wd, path, ff)
 		if err != nil {
 			// fmt.Println(path, e)
 			return fmt.Errorf("deploy error on %s: %v", path, err)
@@ -161,30 +206,31 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 // Parse func.yaml file, bump version, build image, push to registry, and
 // finally it will update function's route. Optionally,
 // the route can be overriden inside the func.yaml file.
-func (p *deploycmd) deployFunc(c *cli.Context, appName, funcFilePath string) error {
-	funcFileName := path.Base(funcFilePath)
-
-	ff, err := loadFuncfile()
-	if err != nil {
-		return err
+func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *funcfile) error {
+	if appName == "" {
+		return errors.New("app name must be provided, try `--app APP_NAME`.")
 	}
-
-	err = validateImageName(ff.ImageName())
-	if err != nil {
-		return err
-	}
-
-	err = c.App.Command("bump").Run(c)
-	if err != nil {
-		return err
-	}
-
-	funcfile, err := buildfunc(funcFileName, p.noCache)
-	if err != nil {
-		return err
-	}
+	dir := filepath.Dir(funcfilePath)
 	if funcfile.Path == "" {
-		funcfile.Path = "/" + path.Base(path.Dir(funcFilePath))
+		if dir == "." {
+			funcfile.Path = "/"
+		} else {
+			funcfile.Path = "/" + filepath.Base(dir)
+		}
+
+	}
+	fmt.Printf("Deploying %s to app: %s at path: %s\n", funcfile.Name, appName, funcfile.Path)
+
+	funcfile2, err := bumpIt(funcfilePath, Patch)
+	if err != nil {
+		return err
+	}
+	funcfile.Version = funcfile2.Version
+	// TODO: this whole funcfile handling needs some love. Only bump makes permanent changes to it, but gets confusing in places like this.
+
+	_, err = buildfunc(funcfilePath, funcfile, p.noCache)
+	if err != nil {
+		return err
 	}
 
 	if !p.local {

@@ -51,7 +51,7 @@ func TestBump(t *testing.T) {
 }
 
 func verifyVersion(tmp, version string) error {
-	ff, err := loadFuncfile()
+	_, ff, err := loadFuncfile()
 	if err != nil {
 		return err
 	}

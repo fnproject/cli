@@ -272,7 +272,7 @@ func routeWithFlags(c *cli.Context, rt *fnmodels.Route) {
 func routeWithFuncFile(ff *funcfile, rt *fnmodels.Route) error {
 	var err error
 	if ff == nil {
-		ff, err = loadFuncfile()
+		_, ff, err = loadFuncfile()
 		if err != nil {
 			return err
 		}

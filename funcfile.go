@@ -96,13 +96,17 @@ func findFuncfile(path string) (string, error) {
 	}
 	return "", newNotFoundError("could not find function file")
 }
-
-func loadFuncfile() (*funcfile, error) {
-	fn, err := findFuncfile(".")
+func findAndParseFuncfile(path string) (fpath string, funcfile *funcfile, err error) {
+	fpath, err = findFuncfile(path)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
-	return parseFuncfile(fn)
+	funcfile, err = parseFuncfile(fpath)
+	return fpath, funcfile, err
+}
+
+func loadFuncfile() (string, *funcfile, error) {
+	return findAndParseFuncfile(".")
 }
 
 func parseFuncfile(path string) (*funcfile, error) {

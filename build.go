@@ -44,12 +44,12 @@ func (b *buildcmd) build(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	fn, err := findFuncfile(path)
+	fpath, ff, err := findAndParseFuncfile(path)
 	if err != nil {
 		return err
 	}
 
-	ff, err := buildfunc(fn, b.noCache)
+	ff, err = buildfunc(fpath, ff, b.noCache)
 	if err != nil {
 		return err
 	}

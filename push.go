@@ -50,7 +50,7 @@ func (p *pushcmd) flags() []cli.Flag {
 func (p *pushcmd) push(c *cli.Context) error {
 	setRegistryEnv(p)
 
-	ff, err := loadFuncfile()
+	_, ff, err := loadFuncfile()
 	if err != nil {
 		if _, ok := err.(*notFoundError); ok {
 			return errors.New("image name is missing or no function file found")

@@ -68,15 +68,7 @@ func (r *runCmd) run(c *cli.Context) error {
 	image := c.Args().First() // TODO: should we ditch this?
 	var ff *funcfile
 	if image == "" {
-		path, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		fn, err := findFuncfile(path)
-		if err != nil {
-			return err
-		}
-		ff, err = buildfunc(fn, false)
+		_, ff, err = loadFuncfile()
 		if err != nil {
 			return err
 		}
