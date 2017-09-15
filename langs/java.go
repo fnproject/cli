@@ -2,9 +2,11 @@ package langs
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -24,7 +26,7 @@ func (lh *JavaLangHelper) RunFromImage() string {
 	return "fnproject/fn-java-fdk:latest"
 }
 
-// HasPreBuild returns whether the Java runtime has boilerplate that can be generated.
+// HasBoilerplate returns whether the Java runtime has boilerplate that can be generated.
 func (lh *JavaLangHelper) HasBoilerplate() bool { return true }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime. The default boilerplate is for a Maven
@@ -40,7 +42,12 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 		return ErrBoilerplateExists
 	}
 
-	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFile), os.FileMode(0644)); err != nil {
+	apiVersion, err := getFDKAPIVersion()
+	if err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -62,7 +69,7 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 	return mkDirAndWriteFile("src/test/java/com/example/fn", "HelloFunctionTest.java", helloJavaTestBoilerplate)
 }
 
-// Entrypoint returns the Java runtime Docker entrypoint that will be executed when the function is executed.
+// Cmd returns the Java runtime Docker entrypoint that will be executed when the function is executed.
 func (lh *JavaLangHelper) Cmd() string {
 	return "com.example.fn.HelloFunction::handleRequest"
 }
@@ -127,6 +134,40 @@ func mavenOpts() string {
 /*    TODO temporarily generate maven project boilerplate from hardcoded values.
 Will eventually move to using a maven archetype.
 */
+func pomFileContent(version string) string {
+	return fmt.Sprintf(pomFile, version, version)
+}
+
+func getFDKAPIVersion() (string, error) {
+	const versionURL = "https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
+	const versionEnv = "FN_JAVA_FDK_VERSION"
+	fetchError := fmt.Errorf("Failed to fetch latest Java FDK version from %v. Check your network settings or manually override the version by setting %s", versionURL, versionEnv)
+
+	type parsedResponse struct {
+		Version string `json:"latest_version"`
+	}
+	version := os.Getenv(versionEnv)
+	if version != "" {
+		return version, nil
+	}
+	resp, err := http.Get(versionURL)
+	if err != nil || resp.StatusCode != 200 {
+		return "", fetchError
+	}
+
+	buf := bytes.Buffer{}
+	_, err = buf.ReadFrom(resp.Body)
+	if err != nil {
+		return "", fetchError
+	}
+
+	parsedResp := make([]parsedResponse, 1)
+	err = json.Unmarshal(buf.Bytes(), &parsedResp)
+	if err != nil {
+		return "", fetchError
+	}
+	return parsedResp[0].Version, nil
+}
 
 const (
 	pomFile = `<?xml version="1.0" encoding="UTF-8"?>
@@ -158,12 +199,12 @@ const (
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>api</artifactId>
-            <version>[1.0.0,1.1.0)</version>
+            <version>%s</version>
         </dependency>
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing</artifactId>
-            <version>[1.0.0,1.1.0)</version>
+            <version>%s</version>
             <scope>test</scope>
         </dependency>
         <dependency>
