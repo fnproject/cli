@@ -2,16 +2,15 @@ package langs
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
-	"net/http"
-	"encoding/json"
-	"io"
 )
 
 // JavaLangHelper provides a set of helper methods for the lifecycle of Java Maven projects
@@ -27,7 +26,7 @@ func (lh *JavaLangHelper) RunFromImage() string {
 	return "fnproject/fn-java-fdk:latest"
 }
 
-// HasPreBuild returns whether the Java runtime has boilerplate that can be generated.
+// HasBoilerplate returns whether the Java runtime has boilerplate that can be generated.
 func (lh *JavaLangHelper) HasBoilerplate() bool { return true }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime. The default boilerplate is for a Maven
@@ -43,7 +42,7 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 		return ErrBoilerplateExists
 	}
 
-	apiVersion, err := getApiVersion()
+	apiVersion, err := getFDKAPIVersion()
 	if err != nil {
 		return err
 	}
@@ -70,7 +69,7 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 	return mkDirAndWriteFile("src/test/java/com/example/fn", "HelloFunctionTest.java", helloJavaTestBoilerplate)
 }
 
-// Entrypoint returns the Java runtime Docker entrypoint that will be executed when the function is executed.
+// Cmd returns the Java runtime Docker entrypoint that will be executed when the function is executed.
 func (lh *JavaLangHelper) Cmd() string {
 	return "com.example.fn.HelloFunction::handleRequest"
 }
@@ -135,46 +134,37 @@ func mavenOpts() string {
 /*    TODO temporarily generate maven project boilerplate from hardcoded values.
 Will eventually move to using a maven archetype.
 */
-
 func pomFileContent(version string) string {
 	return fmt.Sprintf(pomFile, version, version)
 }
 
-type parsedResponse struct {
-	Version string `json:"latest_version"`
-}
-
-func getApiVersion() (string, error) {
-	const versionUrl="https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
+func getFDKAPIVersion() (string, error) {
+	const versionURL = "https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
 	const versionEnv = "FN_JAVA_FDK_VERSION"
-	version:= os.Getenv(versionEnv)
+	fetchError := fmt.Errorf("Failed to fetch latest Java FDK version from %v. Check your network settings or manually override the version by setting %s", versionURL, versionEnv)
+
+	type parsedResponse struct {
+		Version string `json:"latest_version"`
+	}
+	version := os.Getenv(versionEnv)
 	if version != "" {
 		return version, nil
 	}
-	preMadeError := fmt.Errorf("Failed to fetch latest Java FDK version from %v. Check your network settings or manually override the version by setting %s", versionUrl, versionEnv)
-	resp, err := http.Get(versionUrl)
+	resp, err := http.Get(versionURL)
 	if err != nil || resp.StatusCode != 200 {
-		return "", preMadeError
+		return "", fetchError
 	}
-	chunkLength := 1000
-	respBody := make([]byte, 0)
-	var n int
-	for ; err != io.EOF ; {
-		respChunk := make([]byte, chunkLength)
-		n, err = resp.Body.Read(respChunk)
-		if n > 0 {
-			for i := 0 ; i < n; i++ {
-				respBody = append(respBody, respChunk[i])
-			}
-		}
-		if err != nil && err != io.EOF {
-			return "", preMadeError
-		}
-	}
-	parsedResp := make([]parsedResponse, 1)
-	err = json.Unmarshal(respBody, &parsedResp)
+
+	buf := bytes.Buffer{}
+	_, err = buf.ReadFrom(resp.Body)
 	if err != nil {
-		return "", preMadeError
+		return "", fetchError
+	}
+
+	parsedResp := make([]parsedResponse, 1)
+	err = json.Unmarshal(buf.Bytes(), &parsedResp)
+	if err != nil {
+		return "", fetchError
 	}
 	return parsedResp[0].Version, nil
 }
