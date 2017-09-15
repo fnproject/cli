@@ -85,7 +85,15 @@ func (p *deploycmd) flags() []cli.Flag {
 	}
 }
 
-// deploy deploys multiple funcs if required
+// deploy deploys a function or a set of functions for an app
+// By default this will deploy a single function, either the function in the current directory
+// or if an arg is passed in, a function in the path representing that arg, relative to the
+// current working directory.
+//
+// If user passes in --all flag, it will deploy all functions in an app. An app must have an `app.yaml`
+// file in it's root directory. The functions will be deployed based on the directory structure
+// on the file system (can be overridden using the `path` arg in each `func.yaml`. The index/root function
+// is the one that lives in the same directory as the app.yaml.
 func (p *deploycmd) deploy(c *cli.Context) error {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -93,7 +101,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	}
 
 	setRegistryEnv(p)
-	// else deploy all functions in app
+
 	appf, err := loadAppfile()
 	if err != nil {
 		if _, ok := err.(*notFoundError); ok {
@@ -101,6 +109,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 				return err
 			}
 			// otherwise, it's ok
+			appf = &appfile{}
 		} else {
 			return err
 		}
@@ -108,41 +117,38 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	}
 	fmt.Printf("appfile: %+v\n", appf)
 
-	appName := p.appName
-	if appName == "" && appf != nil {
-		appName = appf.Name
+	if p.appName != "" {
+		appf.Name = p.appName
+	}
+	if appf.Name == "" {
+		return errors.New("app name must be provided, try `--app APP_NAME`.")
 	}
 
 	if !p.all {
 		// just deploy current directory
-		if appName == "" {
-			return errors.New("app name must be provided, try `--app APP_NAME`.")
-		}
 		dir := wd
 		// if we're in the context of an app, first arg is path to fhe function
-		if appf != nil {
-			path := c.Args().First()
-			if path != "" {
-				fmt.Printf("Deploying function at: /%s\n", path)
-				dir = filepath.Join(wd, path)
-				err = os.Chdir(dir)
-				if err != nil {
-					return err
-				}
-				defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
+		path := c.Args().First()
+		if path != "" {
+			fmt.Printf("Deploying function at: /%s\n", path)
+			dir = filepath.Join(wd, path)
+			err = os.Chdir(dir)
+			if err != nil {
+				return err
 			}
+			defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
 		}
 
 		fpath, ff, err := findAndParseFuncfile(dir)
 		if err != nil {
 			return err
 		}
-		if appf != nil {
-			// assume root dir for this first go round, as that's the only way it would find appfile
+		if ff.Path == "" && dir == wd {
+			// TODO: this changes behavior on single functions... what to do, what to do? Set path in func.yaml on fn init?
 			fmt.Println("ROOT")
 			ff.Path = "/"
 		}
-		err = p.deployFunc(c, appName, wd, fpath, ff)
+		err = p.deployFunc(c, appf, wd, fpath, ff)
 		return err
 	}
 
@@ -178,11 +184,9 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 			if err != nil {
 				return err
 			}
-			defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
 		}
-		err = p.deployFunc(c, appName, wd, path, ff)
+		err = p.deployFunc(c, appf, wd, path, ff)
 		if err != nil {
-			// fmt.Println(path, e)
 			return fmt.Errorf("deploy error on %s: %v", path, err)
 		}
 
@@ -196,7 +200,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	}
 
 	if !funcFound {
-		return errors.New("no function found to deploy")
+		return errors.New("no functions found to deploy")
 	}
 
 	return nil
@@ -206,8 +210,8 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 // Parse func.yaml file, bump version, build image, push to registry, and
 // finally it will update function's route. Optionally,
 // the route can be overriden inside the func.yaml file.
-func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *funcfile) error {
-	if appName == "" {
+func (p *deploycmd) deployFunc(c *cli.Context, appf *appfile, baseDir, funcfilePath string, funcfile *funcfile) error {
+	if appf.Name == "" {
 		return errors.New("app name must be provided, try `--app APP_NAME`.")
 	}
 	dir := filepath.Dir(funcfilePath)
@@ -219,7 +223,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 		}
 
 	}
-	fmt.Printf("Deploying %s to app: %s at path: %s\n", funcfile.Name, appName, funcfile.Path)
+	fmt.Printf("Deploying %s to app: %s at path: %s\n", funcfile.Name, appf.Name, funcfile.Path)
 
 	funcfile2, err := bumpIt(funcfilePath, Patch)
 	if err != nil {
@@ -239,7 +243,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 		}
 	}
 
-	return p.updateRoute(c, appName, funcfile)
+	return p.updateRoute(c, appf.Name, funcfile)
 }
 
 func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *funcfile) error {

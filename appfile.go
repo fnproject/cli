@@ -22,7 +22,8 @@ var (
 )
 
 type appfile struct {
-	Name   string            `yaml:"name,omitempty" json:"name,omitempty"`
+	Name string `yaml:"name,omitempty" json:"name,omitempty"`
+	// TODO: Config here is not yet used
 	Config map[string]string `yaml:"config,omitempty" json:"config,omitempty"`
 }
 
