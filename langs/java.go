@@ -9,6 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"net/http"
+	"encoding/json"
+	"io"
 )
 
 // JavaLangHelper provides a set of helper methods for the lifecycle of Java Maven projects
@@ -40,7 +43,12 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 		return ErrBoilerplateExists
 	}
 
-	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFile), os.FileMode(0644)); err != nil {
+	apiVersion, err := getApiVersion()
+	if err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -128,6 +136,49 @@ func mavenOpts() string {
 Will eventually move to using a maven archetype.
 */
 
+func pomFileContent(version string) string {
+	return fmt.Sprintf(pomFile, version, version)
+}
+
+type parsedResponse struct {
+	Version string `json:"latest_version"`
+}
+
+func getApiVersion() (string, error) {
+	const versionUrl="https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
+	const versionEnv = "FN_JAVA_FDK_VERSION"
+	version:= os.Getenv(versionEnv)
+	if version != "" {
+		return version, nil
+	}
+	preMadeError := fmt.Errorf("Failed to fetch latest Java FDK version from %v. Check your network settings or manually override the version by setting %s", versionUrl, versionEnv)
+	resp, err := http.Get(versionUrl)
+	if err != nil || resp.StatusCode != 200 {
+		return "", preMadeError
+	}
+	chunkLength := 1000
+	respBody := make([]byte, 0)
+	var n int
+	for ; err != io.EOF ; {
+		respChunk := make([]byte, chunkLength)
+		n, err = resp.Body.Read(respChunk)
+		if n > 0 {
+			for i := 0 ; i < n; i++ {
+				respBody = append(respBody, respChunk[i])
+			}
+		}
+		if err != nil && err != io.EOF {
+			return "", preMadeError
+		}
+	}
+	parsedResp := make([]parsedResponse, 1)
+	err = json.Unmarshal(respBody, &parsedResp)
+	if err != nil {
+		return "", preMadeError
+	}
+	return parsedResp[0].Version, nil
+}
+
 const (
 	pomFile = `<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -158,12 +209,12 @@ const (
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>api</artifactId>
-            <version>[1.0.0,1.1.0)</version>
+            <version>%s</version>
         </dependency>
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing</artifactId>
-            <version>[1.0.0,1.1.0)</version>
+            <version>%s</version>
             <scope>test</scope>
         </dependency>
         <dependency>
