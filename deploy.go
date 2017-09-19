@@ -95,11 +95,6 @@ func (p *deploycmd) flags() []cli.Flag {
 // on the file system (can be overridden using the `path` arg in each `func.yaml`. The index/root function
 // is the one that lives in the same directory as the app.yaml.
 func (p *deploycmd) deploy(c *cli.Context) error {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalln("Couldn't get working directory:", err)
-	}
-
 	setRegistryEnv(p)
 
 	appName := ""
@@ -128,38 +123,55 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	}
 
 	if !p.all {
-		// just deploy current directory
-		dir := wd
-		// if we're in the context of an app, first arg is path to the function
-		path := c.Args().First()
-		if path != "" {
-			if appf != nil {
-				fmt.Printf("Deploying function at: /%s\n", path)
-				dir = filepath.Join(wd, path)
-				err = os.Chdir(dir)
-				if err != nil {
-					return err
-				}
-				defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
-			} else {
-				// todo: error out, invalid arg?
-			}
-		}
+		return p.deploySingle(c, appName, appf)
+	}
 
-		fpath, ff, err := findAndParseFuncfile(dir)
-		if err != nil {
-			return err
+	return p.deployAll(c, appName, appf)
+}
+
+// deploySingle deploys a single function, either the current directory or if in the context
+// of an app and user provides relative path as the first arg, it will deploy that function.
+func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *appfile) error {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalln("Couldn't get working directory:", err)
+	}
+
+	dir := wd
+	// if we're in the context of an app, first arg is path to the function
+	path := c.Args().First()
+	if path != "" {
+		if appf != nil {
+			fmt.Printf("Deploying function at: /%s\n", path)
+			dir = filepath.Join(wd, path)
+			err := os.Chdir(dir)
+			if err != nil {
+				return err
+			}
+			defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
+		} else {
+			// todo: error out, invalid arg?
 		}
-		if appf != nil && ff.Path == "" && dir == wd {
-			fmt.Println("ROOT")
-			ff.Path = "/"
-		}
-		err = p.deployFunc(c, appName, wd, fpath, ff)
+	}
+
+	fpath, ff, err := findAndParseFuncfile(dir)
+	if err != nil {
 		return err
+	}
+	if appf != nil && ff.Path == "" && dir == wd {
+		ff.Path = "/"
+	}
+	return p.deployFunc(c, appName, wd, fpath, ff)
+}
+
+// deployAll deploys all functions in an app.
+func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) error {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalln("Couldn't get working directory:", err)
 	}
 
 	var funcFound bool
-
 	err = filepath.Walk(wd, func(path string, info os.FileInfo, err error) error {
 		if path != wd && info.IsDir() {
 			return nil
@@ -178,10 +190,8 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 			return err
 		}
 		dir := filepath.Dir(path)
-		if dir == wd {
+		if ff.Path == "" && dir == wd {
 			// then in root dir, so this will be deployed at /
-			// TODO: this should perhaps only override if path isn't defined
-			fmt.Println("ROOT")
 			ff.Path = "/"
 		} else {
 			// change dirs
@@ -207,7 +217,6 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	if !funcFound {
 		return errors.New("no functions found to deploy")
 	}
-
 	return nil
 }
 
