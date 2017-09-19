@@ -102,6 +102,8 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 
 	setRegistryEnv(p)
 
+	appName := ""
+
 	appf, err := loadAppfile()
 	if err != nil {
 		if _, ok := err.(*notFoundError); ok {
@@ -109,51 +111,56 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 				return err
 			}
 			// otherwise, it's ok
-			appf = &appfile{}
 		} else {
 			return err
 		}
 
+	} else {
+		appName = appf.Name
 	}
 	if p.appName != "" {
-		appf.Name = p.appName
+		// flag overrides all
+		appName = p.appName
 	}
-	if appf.Name == "" {
+
+	if appName == "" {
 		return errors.New("app name must be provided, try `--app APP_NAME`.")
 	}
 
 	if !p.all {
 		// just deploy current directory
 		dir := wd
-		// if we're in the context of an app, first arg is path to fhe function
+		// if we're in the context of an app, first arg is path to the function
 		path := c.Args().First()
 		if path != "" {
-			fmt.Printf("Deploying function at: /%s\n", path)
-			dir = filepath.Join(wd, path)
-			err = os.Chdir(dir)
-			if err != nil {
-				return err
+			if appf != nil {
+				fmt.Printf("Deploying function at: /%s\n", path)
+				dir = filepath.Join(wd, path)
+				err = os.Chdir(dir)
+				if err != nil {
+					return err
+				}
+				defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
+			} else {
+				// todo: error out, invalid arg?
 			}
-			defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
 		}
 
 		fpath, ff, err := findAndParseFuncfile(dir)
 		if err != nil {
 			return err
 		}
-		if ff.Path == "" && dir == wd {
-			// TODO: this changes behavior on single functions... what to do, what to do? Set path in func.yaml on fn init?
+		if appf != nil && ff.Path == "" && dir == wd {
 			fmt.Println("ROOT")
 			ff.Path = "/"
 		}
-		err = p.deployFunc(c, appf, wd, fpath, ff)
+		err = p.deployFunc(c, appName, wd, fpath, ff)
 		return err
 	}
 
 	var funcFound bool
 
 	err = filepath.Walk(wd, func(path string, info os.FileInfo, err error) error {
-		fmt.Println("Walking:", path)
 		if path != wd && info.IsDir() {
 			return nil
 		}
@@ -183,7 +190,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 				return err
 			}
 		}
-		err = p.deployFunc(c, appf, wd, path, ff)
+		err = p.deployFunc(c, appName, wd, path, ff)
 		if err != nil {
 			return fmt.Errorf("deploy error on %s: %v", path, err)
 		}
@@ -208,8 +215,8 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 // Parse func.yaml file, bump version, build image, push to registry, and
 // finally it will update function's route. Optionally,
 // the route can be overriden inside the func.yaml file.
-func (p *deploycmd) deployFunc(c *cli.Context, appf *appfile, baseDir, funcfilePath string, funcfile *funcfile) error {
-	if appf.Name == "" {
+func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *funcfile) error {
+	if appName == "" {
 		return errors.New("app name must be provided, try `--app APP_NAME`.")
 	}
 	dir := filepath.Dir(funcfilePath)
@@ -221,14 +228,14 @@ func (p *deploycmd) deployFunc(c *cli.Context, appf *appfile, baseDir, funcfileP
 		}
 
 	}
-	fmt.Printf("Deploying %s to app: %s at path: %s\n", funcfile.Name, appf.Name, funcfile.Path)
+	fmt.Printf("Deploying %s to app: %s at path: %s\n", funcfile.Name, appName, funcfile.Path)
 
 	funcfile2, err := bumpIt(funcfilePath, Patch)
 	if err != nil {
 		return err
 	}
 	funcfile.Version = funcfile2.Version
-	// TODO: this whole funcfile handling needs some love. Only bump makes permanent changes to it, but gets confusing in places like this.
+	// TODO: this whole funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
 
 	_, err = buildfunc(funcfilePath, funcfile, p.noCache)
 	if err != nil {
@@ -241,7 +248,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appf *appfile, baseDir, funcfileP
 		}
 	}
 
-	return p.updateRoute(c, appf.Name, funcfile)
+	return p.updateRoute(c, appName, funcfile)
 }
 
 func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *funcfile) error {
