@@ -66,6 +66,7 @@ func (r *runCmd) run(c *cli.Context) error {
 
 	// if image name is passed in, it will run that image
 	image := c.Args().First() // TODO: should we ditch this?
+	var err error
 	var ff *funcfile
 	if image == "" {
 		_, ff, err = loadFuncfile()

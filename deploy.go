@@ -115,8 +115,6 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 		}
 
 	}
-	fmt.Printf("appfile: %+v\n", appf)
-
 	if p.appName != "" {
 		appf.Name = p.appName
 	}

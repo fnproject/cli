@@ -88,7 +88,7 @@ func bumpItWd(wd string, vtype VType) (*funcfile, error) {
 
 // returns updated funcfile
 func bumpIt(fpath string, vtype VType) (*funcfile, error) {
-	fmt.Println("Bumping version in func file at: ", fpath)
+	// fmt.Println("Bumping version in func file at: ", fpath)
 	funcfile, err := parseFuncfile(fpath)
 	if err != nil {
 		return nil, err
