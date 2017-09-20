@@ -62,23 +62,6 @@ func (b *bumpcmd) flags() []cli.Flag {
 
 // bump will take the found valid function and bump its version
 func (b *bumpcmd) bump(c *cli.Context) error {
-
-	path, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	fn, err := findFuncfile(path)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("bumping version in func file at: ", fn)
-
-	funcfile, err := parsefuncfile(fn)
-	if err != nil {
-		return err
-	}
-
 	var t VType
 	if b.major {
 		t = Major
@@ -87,24 +70,47 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 	} else {
 		t = Patch
 	}
-	funcfile, err = bumpversion(*funcfile, t)
+
+	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-
-	if err := storefuncfile(fn, funcfile); err != nil {
-		return err
+	_, err = bumpItWd(wd, t)
+	return err
+}
+func bumpItWd(wd string, vtype VType) (*funcfile, error) {
+	fn, err := findFuncfile(wd)
+	if err != nil {
+		return nil, err
 	}
-
-	fmt.Println("Bumped to version", funcfile.Version)
-	return nil
+	return bumpIt(fn, vtype)
 }
 
-func bumpversion(funcfile funcfile, t VType) (*funcfile, error) {
+// returns updated funcfile
+func bumpIt(fpath string, vtype VType) (*funcfile, error) {
+	// fmt.Println("Bumping version in func file at: ", fpath)
+	funcfile, err := parseFuncfile(fpath)
+	if err != nil {
+		return nil, err
+	}
+
+	funcfile, err = bumpVersion(funcfile, vtype)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := storeFuncfile(fpath, funcfile); err != nil {
+		return nil, err
+	}
+	fmt.Println("Bumped to version", funcfile.Version)
+	return funcfile, nil
+}
+
+func bumpVersion(funcfile *funcfile, t VType) (*funcfile, error) {
 	funcfile.Name = cleanImageName(funcfile.Name)
 	if funcfile.Version == "" {
 		funcfile.Version = initialVersion
-		return &funcfile, nil
+		return funcfile, nil
 	}
 
 	s, err := storage.NewVersionStorage("local", funcfile.Version)
@@ -126,7 +132,7 @@ func bumpversion(funcfile funcfile, t VType) (*funcfile, error) {
 	}
 
 	funcfile.Version = newver.String()
-	return &funcfile, nil
+	return funcfile, nil
 }
 
 func cleanImageName(name string) string {

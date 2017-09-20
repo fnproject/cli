@@ -22,9 +22,9 @@ func (h *PythonLangHelper) DockerfileBuildCmds() []string {
 		r = append(r,
 			"ADD requirements.txt /function/",
 			"RUN pip install -r requirements.txt",
-			"ADD . /function/",
 		)
 	}
+	r = append(r, "ADD . /function/")
 	return r
 }
 

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,13 +12,11 @@ import (
 )
 
 var (
-	validfn = [...]string{
+	validFuncfileNames = [...]string{
 		"func.yaml",
 		"func.yml",
 		"func.json",
 	}
-
-	errUnexpectedFileFormat = errors.New("unexpected file format for function file")
 )
 
 type inputMap struct {
@@ -89,8 +86,9 @@ func (ff *funcfile) RuntimeTag() (runtime, tag string) {
 	return rt[:tagpos], rt[tagpos+1:]
 }
 
+// findFuncfile for a func.yaml/json/yml file in path
 func findFuncfile(path string) (string, error) {
-	for _, fn := range validfn {
+	for _, fn := range validFuncfileNames {
 		fullfn := filepath.Join(path, fn)
 		if exists(fullfn) {
 			return fullfn, nil
@@ -98,16 +96,20 @@ func findFuncfile(path string) (string, error) {
 	}
 	return "", newNotFoundError("could not find function file")
 }
-
-func loadFuncfile() (*funcfile, error) {
-	fn, err := findFuncfile(".")
+func findAndParseFuncfile(path string) (fpath string, funcfile *funcfile, err error) {
+	fpath, err = findFuncfile(path)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
-	return parsefuncfile(fn)
+	funcfile, err = parseFuncfile(fpath)
+	return fpath, funcfile, err
 }
 
-func parsefuncfile(path string) (*funcfile, error) {
+func loadFuncfile() (string, *funcfile, error) {
+	return findAndParseFuncfile(".")
+}
+
+func parseFuncfile(path string) (*funcfile, error) {
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json":
@@ -118,7 +120,7 @@ func parsefuncfile(path string) (*funcfile, error) {
 	return nil, errUnexpectedFileFormat
 }
 
-func storefuncfile(path string, ff *funcfile) error {
+func storeFuncfile(path string, ff *funcfile) error {
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json":
@@ -166,4 +168,18 @@ func encodeFuncfileYAML(path string, ff *funcfile) error {
 		return fmt.Errorf("could not encode function file. Error: %v", err)
 	}
 	return ioutil.WriteFile(path, b, os.FileMode(0644))
+}
+
+func isFuncfile(path string, info os.FileInfo) bool {
+	if info.IsDir() {
+		return false
+	}
+
+	basefn := filepath.Base(path)
+	for _, fn := range validFuncfileNames {
+		if basefn == fn {
+			return true
+		}
+	}
+	return false
 }

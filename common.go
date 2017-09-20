@@ -39,38 +39,27 @@ func setRegistryEnv(hr HasRegistry) {
 	}
 }
 
-func buildfunc(fn string, noCache bool) (*funcfile, error) {
-	funcfile, err := parsefuncfile(fn)
-	if err != nil {
-		return nil, err
-	}
-
+func buildfunc(fpath string, funcfile *funcfile, noCache bool) (*funcfile, error) {
+	var err error
 	if funcfile.Version == "" {
-		funcfile, err = bumpversion(*funcfile, Patch)
-		if err != nil {
-			return nil, err
-		}
-		if err := storefuncfile(fn, funcfile); err != nil {
-			return nil, err
-		}
-		funcfile, err = parsefuncfile(fn)
+		funcfile, err = bumpIt(fpath, Patch)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if err := localbuild(fn, funcfile.Build); err != nil {
+	if err := localBuild(fpath, funcfile.Build); err != nil {
 		return nil, err
 	}
 
-	if err := dockerbuild(fn, funcfile, noCache); err != nil {
+	if err := dockerBuild(fpath, funcfile, noCache); err != nil {
 		return nil, err
 	}
 
 	return funcfile, nil
 }
 
-func localbuild(path string, steps []string) error {
+func localBuild(path string, steps []string) error {
 	for _, cmd := range steps {
 		exe := exec.Command("/bin/sh", "-c", cmd)
 		exe.Dir = filepath.Dir(path)
@@ -82,13 +71,13 @@ func localbuild(path string, steps []string) error {
 	return nil
 }
 
-func dockerbuild(path string, ff *funcfile, noCache bool) error {
+func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
 	}
 
-	dir := filepath.Dir(path)
+	dir := filepath.Dir(fpath)
 
 	var helper langs.LangHelper
 	dockerfile := filepath.Join(dir, "Dockerfile")
@@ -267,7 +256,7 @@ func extractEnvConfig(configs []string) map[string]string {
 	return c
 }
 
-func dockerpush(ff *funcfile) error {
+func dockerPush(ff *funcfile) error {
 	err := validateImageName(ff.ImageName())
 	if err != nil {
 		return err
