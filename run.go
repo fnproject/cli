@@ -111,7 +111,7 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	runEnv = append(runEnv, kvEq("FN_METHOD", method))
 	runEnv = append(runEnv, kvEq("FN_REQUEST_URL", LocalTestURL))
 	runEnv = append(runEnv, kvEq("FN_APP_NAME", "myapp"))
-	runEnv = append(runEnv, kvEq("FN_ROUTE", "/hello")) // TODO: should we change this to PATH ?
+	runEnv = append(runEnv, kvEq("FN_PATH", "/hello")) // TODO: should we change this to PATH ?
 	runEnv = append(runEnv, kvEq("FN_FORMAT", format))
 	runEnv = append(runEnv, kvEq("FN_MEMORY", fmt.Sprintf("%d", ff.Memory)))
 	runEnv = append(runEnv, kvEq("FN_TYPE", "sync"))
