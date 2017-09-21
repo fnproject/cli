@@ -32,7 +32,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-const string defaultSupportedJavaVersion = "java8"
+const defaultSupportedJavaVersion = "java8"
 
 var (
 	fileExtToRuntime = map[string]string{
