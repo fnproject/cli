@@ -32,8 +32,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-const defaultSupportedJavaVersion = "java8"
-
 var (
 	fileExtToRuntime = map[string]string{
 		".go":   "go",
@@ -44,7 +42,7 @@ var (
 		".rs":   "rust",
 		".cs":   "dotnet",
 		".fs":   "dotnet",
-		".java": defaultSupportedJavaVersion,
+		".java": "java",
 	}
 
 	fnInitRuntimes []string
@@ -136,9 +134,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	runtimeSpecified := a.Runtime != ""
 
 	if runtimeSpecified && a.Runtime != funcfileDockerRuntime {
-		if a.Runtime == "java" {
-			a.Runtime = defaultSupportedJavaVersion
-		}
 		err := a.generateBoilerplate()
 		if err != nil {
 			return err

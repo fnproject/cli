@@ -13,25 +13,25 @@ import (
 	"strings"
 )
 
-// JavaLangHelper provides a set of helper methods for the lifecycle of Java Maven projects
-type JavaLangHelper struct {
+// Java8LangHelper provides a set of helper methods for the lifecycle of Java8 Maven projects
+type Java8LangHelper struct {
 	BaseHelper
 }
 
 // BuildFromImage returns the Docker image used to compile the Maven function project
-func (lh *JavaLangHelper) BuildFromImage() string { return "fnproject/fn-java-fdk-build:latest" }
+func (lh *Java8LangHelper) BuildFromImage() string { return "fnproject/fn-java-fdk-build:latest" }
 
-// RunFromImage returns the Docker image used to run the Java function.
-func (lh *JavaLangHelper) RunFromImage() string {
+// RunFromImage returns the Docker image used to run the Java8 function.
+func (lh *Java8LangHelper) RunFromImage() string {
 	return "fnproject/fn-java-fdk:latest"
 }
 
-// HasBoilerplate returns whether the Java runtime has boilerplate that can be generated.
-func (lh *JavaLangHelper) HasBoilerplate() bool { return true }
+// HasBoilerplate returns whether the Java8 runtime has boilerplate that can be generated.
+func (lh *Java8LangHelper) HasBoilerplate() bool { return true }
 
-// GenerateBoilerplate will generate function boilerplate for a Java runtime. The default boilerplate is for a Maven
+// GenerateBoilerplate will generate function boilerplate for a Java8 runtime. The default boilerplate is for a Maven
 // project.
-func (lh *JavaLangHelper) GenerateBoilerplate() error {
+func (lh *Java8LangHelper) GenerateBoilerplate() error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -61,28 +61,28 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 		return ioutil.WriteFile(fullFilePath, []byte(content), os.FileMode(0644))
 	}
 
-	err = mkDirAndWriteFile("src/main/java/com/example/fn", "HelloFunction.java", helloJavaSrcBoilerplate)
+	err = mkDirAndWriteFile("src/main/java/com/example/fn", "HelloFunction.java", helloJava8SrcBoilerplate)
 	if err != nil {
 		return err
 	}
 
-	return mkDirAndWriteFile("src/test/java/com/example/fn", "HelloFunctionTest.java", helloJavaTestBoilerplate)
+	return mkDirAndWriteFile("src/test/java/com/example/fn", "HelloFunctionTest.java", helloJava8TestBoilerplate)
 }
 
-// Cmd returns the Java runtime Docker entrypoint that will be executed when the function is executed.
-func (lh *JavaLangHelper) Cmd() string {
+// Cmd returns the Java8 runtime Docker entrypoint that will be executed when the function is executed.
+func (lh *Java8LangHelper) Cmd() string {
 	return "com.example.fn.HelloFunction::handleRequest"
 }
 
-// DockerfileCopyCmds returns the Docker COPY command to copy the compiled Java function jar and dependencies.
-func (lh *JavaLangHelper) DockerfileCopyCmds() []string {
+// DockerfileCopyCmds returns the Docker COPY command to copy the compiled Java8 function jar and dependencies.
+func (lh *Java8LangHelper) DockerfileCopyCmds() []string {
 	return []string{
 		"COPY --from=build-stage /function/target/*.jar /function/app/",
 	}
 }
 
 // DockerfileBuildCmds returns the build stage steps to compile the Maven function project.
-func (lh *JavaLangHelper) DockerfileBuildCmds() []string {
+func (lh *Java8LangHelper) DockerfileBuildCmds() []string {
 	return []string{
 		fmt.Sprintf("ENV MAVEN_OPTS %s", mavenOpts()),
 		"ADD pom.xml /function/pom.xml",
@@ -93,11 +93,11 @@ func (lh *JavaLangHelper) DockerfileBuildCmds() []string {
 	}
 }
 
-// HasPreBuild returns whether the Java Maven runtime has a pre-build step.
-func (lh *JavaLangHelper) HasPreBuild() bool { return true }
+// HasPreBuild returns whether the Java8 Maven runtime has a pre-build step.
+func (lh *Java8LangHelper) HasPreBuild() bool { return true }
 
 // PreBuild ensures that the expected the function is based is a maven project.
-func (lh *JavaLangHelper) PreBuild() error {
+func (lh *Java8LangHelper) PreBuild() error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -141,7 +141,7 @@ func pomFileContent(version string) string {
 func getFDKAPIVersion() (string, error) {
 	const versionURL = "https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
 	const versionEnv = "FN_JAVA_FDK_VERSION"
-	fetchError := fmt.Errorf("Failed to fetch latest Java FDK version from %v. Check your network settings or manually override the version by setting %s", versionURL, versionEnv)
+	fetchError := fmt.Errorf("Failed to fetch latest Java8 FDK version from %v. Check your network settings or manually override the version by setting %s", versionURL, versionEnv)
 
 	type parsedResponse struct {
 		Version string `json:"latest_version"`
@@ -231,7 +231,7 @@ const (
 </project>
 `
 
-	helloJavaSrcBoilerplate = `package com.example.fn;
+	helloJava8SrcBoilerplate = `package com.example.fn;
 
 public class HelloFunction {
 
@@ -243,7 +243,7 @@ public class HelloFunction {
 
 }`
 
-	helloJavaTestBoilerplate = `package com.example.fn;
+	helloJava8TestBoilerplate = `package com.example.fn;
 
 import com.fnproject.fn.testing.*;
 import org.junit.*;
