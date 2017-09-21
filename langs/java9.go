@@ -26,9 +26,9 @@ func (lh *Java9LangHelper) GenerateBoilerPlate() error {
 	return errors.New("No boilerplate generation has been implemented for java9 yet.") //FIXME @ollerhll
 }
 
-// Cmd currently returns nil as boilerplate has not yet been implemented
+// Cmd currently returns "" as boilerplate has not yet been implemented
 func (lh *Java9LangHelper) Cmd() string {
-	return nil //FIXME @ollerhll
+	return "" //FIXME @ollerhll
 }
 
 // DockerfileBuildCmds currently returns nil as boilerplate has not yet been implemented
