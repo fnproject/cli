@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -59,17 +60,24 @@ func runflags() []cli.Flag {
 			Name:  "memory",
 			Usage: "RAM to allocate for function, Units: MB",
 		},
+		cli.BoolFlag{
+			Name:  "no-cache",
+			Usage: "Don't use Docker cache for the build",
+		},
 	}
 }
 
 func (r *runCmd) run(c *cli.Context) error {
-
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalln("Couldn't get working directory:", err)
+	}
 	// if image name is passed in, it will run that image
 	image := c.Args().First() // TODO: should we ditch this?
-	var err error
 	var ff *funcfile
+	var fpath string
 	if image == "" {
-		_, ff, err = loadFuncfile()
+		fpath, ff, err = findAndParseFuncfile(wd)
 		if err != nil {
 			return err
 		}
@@ -77,6 +85,11 @@ func (r *runCmd) run(c *cli.Context) error {
 		ff = &funcfile{
 			Name: image,
 		}
+	}
+
+	_, err = buildfunc(fpath, ff, c.Bool("no-cache"))
+	if err != nil {
+		return err
 	}
 
 	// means no memory specified through CLI args

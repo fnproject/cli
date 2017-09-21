@@ -15,6 +15,7 @@ funcname="fn-test-go"
 mkdir $funcname
 cd $funcname
 $fn init --runtime go
+$fn run
 $fn test
 
 someport=50080
