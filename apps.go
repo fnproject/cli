@@ -89,6 +89,7 @@ func apps() cli.Command {
 			},
 			{
 				Name:   "delete",
+				Aliases:   []string{"d"},
 				Usage:  "delete an app",
 				Action: a.delete,
 			},
