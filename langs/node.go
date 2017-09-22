@@ -27,8 +27,9 @@ func (h *NodeLangHelper) DockerfileBuildCmds() []string {
 }
 
 func (h *NodeLangHelper) DockerfileCopyCmds() []string {
-	return []string{
-		"ADD . /function/",
-		"COPY --from=build-stage /function/node_modules/ /function/node_modules/",
+	r := []string{"ADD . /function/"}
+	if exists("package.json") {
+		r = append(r, "COPY --from=build-stage /function/node_modules/ /function/node_modules/")
 	}
+	return r
 }
