@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -68,5 +69,52 @@ func TestMainCommands(t *testing.T) {
 		if bytes.Contains(res, []byte("command not found")) {
 			t.Error(err)
 		}
+	}
+}
+
+// very simple non-failure test for java versioning on fn init
+func TestJavaVersioning(t *testing.T) {
+	testname := "TestJavaVersioning"
+
+	testdir, err := ioutil.TempDir("", testname)
+	if err != nil {
+		t.Fatalf("ERROR: Failed to make tmp test directory: err: %v", err)
+	}
+	defer os.RemoveAll(testdir)
+
+	testsub1, err := ioutil.TempDir(testdir, "8")
+	if err != nil {
+		t.Fatalf("ERROR: Failed to make tmp test directory: err: %v", err)
+	}
+	checkInit(t, testsub1, "8", fnTestBin)
+
+	testsub2, err := ioutil.TempDir(testdir, "9")
+	if err != nil {
+		t.Fatalf("ERROR: Failed to make tmp test directory: err: %v", err)
+	}
+	checkInit(t, testsub2, "9", fnTestBin)
+
+	testsub3, err := ioutil.TempDir(testdir, "noversion")
+	if err != nil {
+		t.Fatalf("ERROR: Failed to make tmp test directory: err: %v", err)
+	}
+	checkInit(t, testsub3, "", fnTestBin)
+}
+
+func checkInit(t *testing.T, testdir, version, bin string) {
+	err := os.Chdir(testdir)
+	if err != nil {
+		t.Errorf("ERROR: Failed to cd to tmp test directory: err: %v", err)
+	}
+
+	runtime := fmt.Sprintf("--runtime=java%s", version)
+
+	_, err = exec.Command(bin, "init", runtime).CombinedOutput()
+	if err != nil {
+		t.Errorf("ERROR: Failed to run fn init with --runtime=java%s", version)
+	}
+
+	if _, err = os.Stat(fmt.Sprintf("%s/src/main", testdir)); err != nil && os.IsNotExist(err) {
+		t.Errorf("ERROR: failed to create java project with --runtime=java%s", version)
 	}
 }
