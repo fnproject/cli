@@ -73,7 +73,7 @@ func cleanup(t *testing.T, currdir, testdir string) {
 func setupTestFiles(t *testing.T,
 	testname, currdir, testdir string, testfiles []string) string {
 
-	t.Logf("INFO", testname, "Current directory is "+currdir)
+	t.Logf("INFO: %s Current directory is %s", testname, currdir)
 
 	testfilesdir := path.Join(currdir, "testfiles")
 	for _, testfile := range testfiles {
