@@ -6,11 +6,11 @@ import (
 	"os"
 )
 
+//used to indicate the default supported version of java
+const defaultJavaSupportedVersion = 8
+
 var (
 	ErrBoilerplateExists = errors.New("Function boilerplate already exists")
-
-	//used to indicate the default supported version of java
-	DefaultJavaSupportedHelper = Java8LangHelper{}
 )
 
 // GetLangHelper returns a LangHelper for the passed in language
@@ -33,11 +33,11 @@ func GetLangHelper(lang string) LangHelper {
 	case "lambda-nodejs4.3", "lambda-node-4":
 		return &LambdaNodeHelper{}
 	case "java":
-		return &DefaultJavaSupportedHelper
+		return &JavaLangHelper{version: defaultJavaSupportedVersion}
 	case "java8":
-		return &Java8LangHelper{}
+		return &JavaLangHelper{version: 8}
 	case "java9":
-		return &Java9LangHelper{}
+		return &JavaLangHelper{version: 9}
 	}
 	return nil
 }
