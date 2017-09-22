@@ -7,7 +7,7 @@ import (
 )
 
 //used to indicate the default supported version of java
-const defaultJavaSupportedVersion = 8
+const defaultJavaSupportedVersion = "1.8"
 
 var (
 	ErrBoilerplateExists = errors.New("Function boilerplate already exists")
@@ -35,9 +35,9 @@ func GetLangHelper(lang string) LangHelper {
 	case "java":
 		return &JavaLangHelper{version: defaultJavaSupportedVersion}
 	case "java8":
-		return &JavaLangHelper{version: 8}
+		return &JavaLangHelper{version: "1.8"}
 	case "java9":
-		return &JavaLangHelper{version: 9}
+		return &JavaLangHelper{version: "9"}
 	}
 	return nil
 }

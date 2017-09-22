@@ -16,14 +16,14 @@ import (
 // JavaLangHelper provides a set of helper methods for the lifecycle of Java Maven projects
 type JavaLangHelper struct {
 	BaseHelper
-	version int
+	version string
 }
 
 // BuildFromImage returns the Docker image used to compile the Maven function project
 func (lh *JavaLangHelper) BuildFromImage() string {
-	if lh.version == 8 {
+	if lh.version == "1.8" {
 		return "fnproject/fn-java-fdk-build:latest"
-	} else if lh.version == 9 {
+	} else if lh.version == "9" {
 		return "fnproject/fn-java-fdk-build:jdk9-latest"
 	} else {
 		return ""
@@ -32,9 +32,9 @@ func (lh *JavaLangHelper) BuildFromImage() string {
 
 // RunFromImage returns the Docker image used to run the Java function.
 func (lh *JavaLangHelper) RunFromImage() string {
-	if lh.version == 8 {
+	if lh.version == "1.8" {
 		return "fnproject/fn-java-fdk:latest"
-	} else if lh.version == 9 {
+	} else if lh.version == "9" {
 		return "fnproject/fn-java-fdk:jdk9-latest"
 	} else {
 		return ""
@@ -149,7 +149,7 @@ func mavenOpts() string {
 /*    TODO temporarily generate maven project boilerplate from hardcoded values.
 Will eventually move to using a maven archetype.
 */
-func pomFileContent(APIversion string, javaVersion int) string {
+func pomFileContent(APIversion, javaVersion string) string {
 	return fmt.Sprintf(pomFile, APIversion, APIversion, javaVersion, javaVersion)
 }
 
@@ -237,8 +237,8 @@ const (
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.3</version>
                 <configuration>
-                    <source>1.%v</source>
-                    <target>1.%v</target>
+                    <source>%s</source>
+                    <target>%s</target>
                 </configuration>
             </plugin>
         </plugins>
