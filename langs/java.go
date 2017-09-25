@@ -216,12 +216,12 @@ const (
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>api</artifactId>
-            <version>{fdk.version}</version>
+            <version>${fdk.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing</artifactId>
-            <version>{fdk.version}</version>
+            <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -239,8 +239,8 @@ const (
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.3</version>
                 <configuration>
-                    <source>{fdk.java.version}</source>
-                    <target>{fdk.java.version}</target>
+                    <source>${fdk.java.version}</source>
+                    <target>${fdk.java.version}</target>
                 </configuration>
             </plugin>
         </plugins>
