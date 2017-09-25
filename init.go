@@ -126,6 +126,15 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 	}
 
+	const runHeader = `
+        ______
+       / ____/___
+      / /_  / __ \
+     / __/ / / / /
+    /_/   /_/ /_/`
+	
+	fmt.Println(runHeader + "\n")
+
 	err := a.buildFuncFile(c)
 	if err != nil {
 		return err
@@ -148,8 +157,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	if err := encodeFuncfileYAML("func.yaml", &ff); err != nil {
 		return err
 	}
-
-	fmt.Println("func.yaml created")
+	fmt.Println("func.yaml created.")
 	return nil
 }
 
@@ -162,7 +170,7 @@ func (a *initFnCmd) generateBoilerplate() error {
 			}
 			return err
 		}
-		fmt.Println("function boilerplate generated.")
+		fmt.Println("Function boilerplate generated.")
 	}
 	return nil
 }
@@ -182,7 +190,7 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 
 	//if Dockerfile present, use 'docker' as 'runtime'
 	if exists("Dockerfile") {
-		fmt.Println("Dockerfile found.  Using runtime 'docker'")
+		fmt.Println("Dockerfile found. Using runtime 'docker'.")
 		a.Runtime = funcfileDockerRuntime
 		return nil
 	}
@@ -197,13 +205,13 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 			return err
 		}
 		a.Runtime = rt
-		fmt.Printf("Found %v, assuming %v runtime.\n", rt, rt)
+		fmt.Printf("Found %v function, assuming %v runtime.\n", rt, rt)
 	} else {
 		fmt.Println("Runtime:", a.Runtime)
 	}
 	helper := langs.GetLangHelper(a.Runtime)
 	if helper == nil {
-		fmt.Printf("init does not support the %s runtime, you'll have to create your own Dockerfile for this function", a.Runtime)
+		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function", a.Runtime)
 	}
 
 	if a.Entrypoint == "" {
