@@ -16,14 +16,29 @@ import (
 // JavaLangHelper provides a set of helper methods for the lifecycle of Java Maven projects
 type JavaLangHelper struct {
 	BaseHelper
+	version string
 }
 
 // BuildFromImage returns the Docker image used to compile the Maven function project
-func (lh *JavaLangHelper) BuildFromImage() string { return "fnproject/fn-java-fdk-build:latest" }
+func (lh *JavaLangHelper) BuildFromImage() string {
+	if lh.version == "1.8" {
+		return "fnproject/fn-java-fdk-build:latest"
+	} else if lh.version == "9" {
+		return "fnproject/fn-java-fdk-build:jdk9-latest"
+	} else {
+		return ""
+	}
+}
 
 // RunFromImage returns the Docker image used to run the Java function.
 func (lh *JavaLangHelper) RunFromImage() string {
-	return "fnproject/fn-java-fdk:latest"
+	if lh.version == "1.8" {
+		return "fnproject/fn-java-fdk:latest"
+	} else if lh.version == "9" {
+		return "fnproject/fn-java-fdk:jdk9-latest"
+	} else {
+		return ""
+	}
 }
 
 // HasBoilerplate returns whether the Java runtime has boilerplate that can be generated.
@@ -47,7 +62,7 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion)), os.FileMode(0644)); err != nil {
+	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, lh.version)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -134,8 +149,8 @@ func mavenOpts() string {
 /*    TODO temporarily generate maven project boilerplate from hardcoded values.
 Will eventually move to using a maven archetype.
 */
-func pomFileContent(version string) string {
-	return fmt.Sprintf(pomFile, version, version)
+func pomFileContent(APIversion, javaVersion string) string {
+	return fmt.Sprintf(pomFile, APIversion, APIversion, javaVersion, javaVersion)
 }
 
 func getFDKAPIVersion() (string, error) {
@@ -222,8 +237,8 @@ const (
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.3</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>%s</source>
+                    <target>%s</target>
                 </configuration>
             </plugin>
         </plugins>
