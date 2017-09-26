@@ -86,9 +86,6 @@ func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 	}
 
 	dir := filepath.Dir(fpath)
-	if ff.Name == "" {
-		ff.Name = filepath.Base(dir) // todo: should probably make a copy of ff before changing it
-	}
 
 	var helper langs.LangHelper
 	dockerfile := filepath.Join(dir, "Dockerfile")

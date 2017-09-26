@@ -59,16 +59,19 @@ func (t *testcmd) test(c *cli.Context) error {
 		fmt.Println("In gomega FailHandler:", message)
 	})
 
-	// First, build it
-	err := c.App.Command("build").Run(c)
+	wd := getWd()
+
+	fpath, ff, err := findAndParseFuncfile(wd)
 	if err != nil {
 		return err
 	}
 
-	_, ff, err := loadFuncfile()
+	ff, err = buildfunc(fpath, ff, false)
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("LOADED FF:", ff)
 
 	var tests []fftest
 
