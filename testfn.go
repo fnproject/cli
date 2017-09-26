@@ -71,8 +71,6 @@ func (t *testcmd) test(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Println("LOADED FF:", ff)
-
 	var tests []fftest
 
 	// Look for test.json file too
