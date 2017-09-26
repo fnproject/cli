@@ -37,9 +37,9 @@ cd ..
 funcname="rubyfunc"
 mkdir $funcname
 cd $funcname
-fn init --runtime ruby
-fn run
-fn test
+$fn init --runtime ruby
+$fn run
+$fn test
 cd ..
 
 # Test 'docker' runtime deploy
