@@ -148,6 +148,11 @@ func (t *testcmd) test(c *cli.Context) error {
 
 func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, env map[string]string) error {
 	inBytes, _ := json.Marshal(in.Body)
+	if string(inBytes) == "\"\"" {
+		// marshalling this: `"body": ""` turns into double quotes, not an empty string as you might expect.
+		// may be a better way to handle this?
+		inBytes = []byte{} // empty string
+	}
 	stdin := &bytes.Buffer{}
 	if in != nil {
 		stdin = bytes.NewBuffer(inBytes)
@@ -181,15 +186,7 @@ func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedE
 		return nil
 	}
 
-	// don't think we should test error output, it's just for logging
-	// err := stderr.String()
-	// if expectedErr == nil && err != "" {
-	// 	return fmt.Errorf("unexpected error output found: %s", err)
-	// } else if expectedErr != nil && *expectedErr != err {
-	// 	return fmt.Errorf("mismatched error output found.\nexpected (%d bytes):\n%s\ngot (%d bytes):\n%s\n", len(*expectedErr), *expectedErr, len(err), err)
-	// }
-
-	return fmt.Errorf("mismatched output found.\nexpected:\n%s\ngot:\n%s\n", expectedString, out)
+	return fmt.Errorf("mismatched output found.\nexpected:\n%s\ngot:\n%s\nlogs:\n%s\n", expectedString, out, stderr.String())
 }
 
 func runremotetest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, env map[string]string) error {
