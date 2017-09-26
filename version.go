@@ -9,8 +9,8 @@ import (
 	"github.com/urfave/cli"
 )
 
-// Version of Functions CLI
-var Version = "0.3.95"
+// Version of Fn CLI
+var Version = "0.4.0"
 
 func version() cli.Command {
 	r := versionCmd{VersionApi: functions.NewVersionApi()}

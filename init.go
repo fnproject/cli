@@ -112,6 +112,26 @@ func initFn() cli.Command {
 }
 
 func (a *initFnCmd) init(c *cli.Context) error {
+	wd := getWd()
+
+	path := c.Args().First()
+	if path != "" {
+		fmt.Printf("Creating function at: /%s\n", path)
+		dir := filepath.Join(wd, path)
+		// check if dir exists, if it does, then we can't create function
+		if exists(dir) {
+			return fmt.Errorf("directory %s already exists, cannot init function", dir)
+		}
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			return err
+		}
+		err = os.Chdir(dir)
+		if err != nil {
+			return err
+		}
+		defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
+	}
 
 	rt := &models.Route{}
 	routeWithFlags(c, rt)
@@ -122,7 +142,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			return err
 		}
 		if ff != nil {
-			return errors.New("Function file already exists")
+			return errors.New("Function file already exists, aborting.")
 		}
 	}
 
@@ -141,10 +161,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	}
 
 	ff := a.funcfile
-
-	// _, path := appNamePath(ff.ImageName())
-	// ff.Path = path
-
 	if err := encodeFuncfileYAML("func.yaml", &ff); err != nil {
 		return err
 	}
@@ -168,14 +184,12 @@ func (a *initFnCmd) generateBoilerplate() error {
 }
 
 func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
-	pwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("error detecting current working directory: %v", err)
-	}
+	wd := getWd()
+	var err error
 
 	if a.Name == "" {
-		// then use current directory for name
-		a.Name = filepath.Base(pwd)
+		// then defaults to current directory for name, we'll just leave it out of func.yaml
+		// a.Name = filepath.Base(pwd)
 	} else if strings.Contains(a.Name, ":") {
 		return errors.New("function name cannot contain a colon")
 	}
@@ -192,7 +206,7 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 
 	var rt string
 	if a.Runtime == "" {
-		rt, err = detectRuntime(pwd)
+		rt, err = detectRuntime(wd)
 		if err != nil {
 			return err
 		}
