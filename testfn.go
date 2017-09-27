@@ -148,12 +148,23 @@ func (t *testcmd) test(c *cli.Context) error {
 }
 
 func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, env map[string]string) error {
-	inBytes, _ := json.Marshal(in.Body)
+	inBytes, err := json.Marshal(in.Body)
+	if err != nil {
+		return err
+	}
+	if string(inBytes) == "\"\"" {
+		// marshalling this: `"body": ""` turns into double quotes, not an empty string as you might expect.
+		// may be a better way to handle this?
+		inBytes = []byte{} // empty string
+	}
 	stdin := &bytes.Buffer{}
 	if in != nil {
 		stdin = bytes.NewBuffer(inBytes)
 	}
-	expectedB, _ := json.Marshal(expectedOut.Body)
+	expectedB, err := json.Marshal(expectedOut.Body)
+	if err != nil {
+		return err
+	}
 	expectedString := string(expectedB)
 
 	// TODO: use the same run as `fn run` so we don't have to dupe all the config and env vars that get passed in
@@ -194,13 +205,18 @@ func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedE
 }
 
 func runremotetest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, env map[string]string) error {
-	inBytes, _ := json.Marshal(in)
+	inBytes, err := json.Marshal(in)
+	if err != nil {
+		return err
+	}
 	stdin := &bytes.Buffer{}
 	if in != nil {
 		stdin = bytes.NewBuffer(inBytes)
 	}
-	expectedString, _ := json.Marshal(expectedOut.Body)
-
+	expectedString, err := json.Marshal(expectedOut.Body)
+	if err != nil {
+		return err
+	}
 	var stdout bytes.Buffer
 
 	var restrictedEnv []string
