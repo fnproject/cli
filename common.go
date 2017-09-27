@@ -79,27 +79,23 @@ func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 
 	dir := filepath.Dir(fpath)
 
-	var helper langs.LangHelper
+	//var helper langs.LangHelper
 	dockerfile := filepath.Join(dir, "Dockerfile")
 	if !exists(dockerfile) {
 		if ff.Runtime == funcfileDockerRuntime {
 			return fmt.Errorf("Dockerfile not exists for 'docker' runtime")
 		}
-		helper = langs.GetLangHelper(ff.Runtime)
-		if helper == nil {
-			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
-		}
-		dockerfile, err = writeTmpDockerfile(helper, dir, ff)
+		dockerfile, err = writeTmpDockerfile(dir, ff)
 		if err != nil {
 			return err
 		}
 		defer os.Remove(dockerfile)
-		if helper.HasPreBuild() {
-			err := helper.PreBuild()
-			if err != nil {
-				return err
-			}
-		}
+		//if helper.HasPreBuild() {
+		//err := helper.PreBuild()
+		//if err != nil {
+		//return err
+		//}
+		//}
 	}
 
 	fmt.Printf("Building image %v\n", ff.ImageName())
@@ -139,12 +135,12 @@ func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 		return fmt.Errorf("build cancelled on signal %v", signal)
 	}
 
-	if helper != nil {
-		err := helper.AfterBuild()
-		if err != nil {
-			return err
-		}
-	}
+	//if helper != nil {
+	//err := helper.AfterBuild()
+	//if err != nil {
+	//return err
+	//}
+	//}*/
 	return nil
 }
 
@@ -179,7 +175,14 @@ func exists(name string) bool {
 	return true
 }
 
-func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *funcfile) (string, error) {
+func writeTmpDockerfile(dir string, ff *funcfile) (string, error) {
+	helper, err := langs.BuildLangHelper(ff.Runtime)
+	if err != nil {
+		return "", err
+	}
+	if helper == nil {
+		return "", fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
+	}
 	if ff.Entrypoint == "" && ff.Cmd == "" {
 		return "", errors.New("entrypoint and cmd are missing, you must provide one or the other")
 	}
@@ -192,19 +195,20 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *funcfile) (stri
 
 	// multi-stage build: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
 	dfLines := []string{}
-	if helper.IsMultiStage() {
+
+	if helper.IsMultiStage {
 		// build stage
-		dfLines = append(dfLines, fmt.Sprintf("FROM %s as build-stage", helper.BuildFromImage()))
+		dfLines = append(dfLines, fmt.Sprintf("FROM %s as build-stage", helper.BuildImage))
 	} else {
-		dfLines = append(dfLines, fmt.Sprintf("FROM %s", helper.BuildFromImage()))
+		dfLines = append(dfLines, fmt.Sprintf("FROM %s", helper.BuildImage))
 	}
 	dfLines = append(dfLines, "WORKDIR /function")
-	dfLines = append(dfLines, helper.DockerfileBuildCmds()...)
-	if helper.IsMultiStage() {
+	dfLines = append(dfLines, helper.DockerfileBuildCmds...)
+	if helper.IsMultiStage {
 		// final stage
-		dfLines = append(dfLines, fmt.Sprintf("FROM %s", helper.RunFromImage()))
+		dfLines = append(dfLines, fmt.Sprintf("FROM %s", helper.RunImage))
 		dfLines = append(dfLines, "WORKDIR /function")
-		dfLines = append(dfLines, helper.DockerfileCopyCmds()...)
+		dfLines = append(dfLines, helper.DockerfileCopyCmds...)
 	}
 	if ff.Entrypoint != "" {
 		dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", stringToSlice(ff.Entrypoint)))
