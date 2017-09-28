@@ -27,7 +27,6 @@ import (
 
 	"strings"
 
-	"github.com/fnproject/cli/langs"
 	"github.com/funcy/functions_go/models"
 	"github.com/urfave/cli"
 )
@@ -47,6 +46,11 @@ var (
 
 	fnInitRuntimes []string
 )
+
+type LangInitialiser struct {
+	Entrypoint string
+	Cmd        string
+}
 
 func init() {
 	for rt := range fileExtToRuntime {
@@ -131,15 +135,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		return err
 	}
 
-	/*	runtimeSpecified := a.Runtime != ""
-
-		if runtimeSpecified && a.Runtime != funcfileDockerRuntime {
-				err := a.generateBoilerplate()
-				if err != nil {
-					return err
-				}
-			}
-	*/
 	ff := a.funcfile
 
 	// _, path := appNamePath(ff.ImageName())
@@ -152,20 +147,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	fmt.Println("func.yaml created")
 	return nil
 }
-
-//func (a *initFnCmd) generateBoilerplate() error {
-//	helper := langs.GetLangHelper(a.Runtime)
-//	if helper != nil && helper.HasBoilerplate() {
-//		if err := helper.GenerateBoilerplate(); err != nil {
-//			if err == langs.ErrBoilerplateExists {
-//				return nil
-//			}
-//			return err
-//		}
-//		fmt.Println("function boilerplate generated.")
-//	}
-//	return nil
-//}
 
 func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 	pwd, err := os.Getwd()
@@ -201,7 +182,7 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 	} else {
 		fmt.Println("Runtime:", a.Runtime)
 	}
-	helper, err := langs.InitLangHelper(a.Runtime)
+	helper, err := InitLangHelper(a.Runtime)
 	if err != nil {
 		return err
 	}
@@ -241,4 +222,12 @@ func detectRuntime(path string) (runtime string, err error) {
 		}
 	}
 	return "", fmt.Errorf("no supported files found to guess runtime, please set runtime explicitly with --runtime flag")
+}
+
+func InitLangHelper(rt string) (*LangInitialiser, error) {
+	if lh, err := LangHelper(rt, "-init"); err != nil {
+		return nil, err
+	} else {
+		return &lh.LangInitialiser, err
+	}
 }

@@ -16,7 +16,6 @@ import (
 	"unicode"
 
 	"github.com/coreos/go-semver/semver"
-	"github.com/fnproject/cli/langs"
 )
 
 const (
@@ -28,6 +27,14 @@ const (
 
 type HasRegistry interface {
 	Registry() string
+}
+
+type LangBuilder struct {
+	BuildImage          string
+	RunImage            string
+	IsMultiStage        bool
+	DockerfileBuildCmds []string
+	DockerfileCopyCmds  []string
 }
 
 func setRegistryEnv(hr HasRegistry) {
@@ -89,13 +96,7 @@ func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 		if err != nil {
 			return err
 		}
-		//		defer os.Remove(dockerfile)
-		//if helper.HasPreBuild() {
-		//err := helper.PreBuild()
-		//if err != nil {
-		//return err
-		//}
-		//}
+		defer os.Remove(dockerfile)
 	}
 
 	fmt.Printf("Building image %v\n", ff.ImageName())
@@ -176,7 +177,7 @@ func exists(name string) bool {
 }
 
 func writeTmpDockerfile(dir string, ff *funcfile) (string, error) {
-	helper, err := langs.BuildLangHelper(ff.Runtime)
+	helper, err := BuildLangHelper(ff.Runtime)
 	if err != nil {
 		return "", err
 	}
@@ -221,6 +222,15 @@ func writeTmpDockerfile(dir string, ff *funcfile) (string, error) {
 		return "", err
 	}
 	return fd.Name(), err
+}
+
+func BuildLangHelper(rt string) (*LangBuilder, error) {
+	//TODO: run container's "afterbuild" command
+	if lh, err := LangHelper(rt, ""); err != nil {
+		return nil, err
+	} else {
+		return &lh.LangBuilder, err
+	}
 }
 
 func writeLines(w io.Writer, lines []string) error {

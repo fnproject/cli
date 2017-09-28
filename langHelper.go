@@ -1,0 +1,42 @@
+package main
+
+import (
+	"encoding/json"
+	"os"
+	"os/exec"
+	"strings"
+)
+
+type LangHelp struct {
+	LangBuilder
+	LangInitialiser
+}
+
+func LangHelper(rt, cmdFlag string) (*LangHelp, error) {
+	pwd, _ := os.Getwd()
+	lh := &LangHelp{}
+	langHelperImage := getLangHelperImageName(rt)
+	cmd := exec.Command("docker", "run", "-i", "--mount", "type=bind,src="+pwd+",target=/dummy", langHelperImage, cmdFlag)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	if err = cmd.Start(); err != nil {
+		return nil, err
+	}
+	if err = json.NewDecoder(stdout).Decode(lh); err != nil {
+		return nil, err
+	}
+	if err = cmd.Wait(); err != nil {
+		return nil, err
+	}
+	return lh, nil
+}
+
+func getLangHelperImageName(rt string) string {
+	if strings.Contains(rt, "/") {
+		return rt
+	}
+	return "ollerhll/dummy"
+	//TODO: return fmt.Sprintf("fnproject/lang-%s:latest", rt)
+}
