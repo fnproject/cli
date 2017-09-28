@@ -281,3 +281,8 @@ glide install -v
 go build -o fn
 ./fn
 ```
+
+### Language Support
+The CLI now supports docker-based language plugins. If we don't already have a 
+supported plugin for your language, raise an issue, or feel free to write your 
+own plugin! (plugin contributions are detailed [here](docs/languages.md).)
