@@ -89,7 +89,7 @@ func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 		if err != nil {
 			return err
 		}
-		defer os.Remove(dockerfile)
+		//		defer os.Remove(dockerfile)
 		//if helper.HasPreBuild() {
 		//err := helper.PreBuild()
 		//if err != nil {

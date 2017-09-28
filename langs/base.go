@@ -66,15 +66,13 @@ func BuildLangHelper(rt string) (*LangHelper, error) {
 
 	//run container's "build" command
 	//	var lh LangHelper
-	/*	lh := &LangHelper{}
 
-		//retrieve lh.BuildImage, lh.RunImage, lh.IsMultiStage, DockerfileBuildCmds, DockerFileCopyCmds
-		//if necessary, build tmp dockerfile (using code from common.go)
+	//retrieve lh.BuildImage, lh.RunImage, lh.IsMultiStage, DockerfileBuildCmds, DockerFileCopyCmds
+	//if necessary, build tmp dockerfile (using code from common.go)
 
-		//build the image
+	//build the image
 
-		//run container's "afterbuild" command
-	*/
+	//run container's "afterbuild" command
 	pwd, _ := os.Getwd()
 	lh := &LangHelper{}
 
