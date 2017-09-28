@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -39,6 +40,5 @@ func getLangHelperImageName(rt string) string {
 	if strings.Contains(rt, "/") {
 		return rt
 	}
-	return "ollerhll/dummy"
-	//TODO: return fmt.Sprintf("fnproject/lang-%s:latest", rt)
+	return fmt.Sprintf("fnproject/lang-%s:latest", rt)
 }
