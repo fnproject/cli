@@ -132,26 +132,19 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 // deploySingle deploys a single function, either the current directory or if in the context
 // of an app and user provides relative path as the first arg, it will deploy that function.
 func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *appfile) error {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalln("Couldn't get working directory:", err)
-	}
+	wd := getWd()
 
 	dir := wd
 	// if we're in the context of an app, first arg is path to the function
 	path := c.Args().First()
 	if path != "" {
-		if appf != nil {
-			fmt.Printf("Deploying function at: /%s\n", path)
-			dir = filepath.Join(wd, path)
-			err := os.Chdir(dir)
-			if err != nil {
-				return err
-			}
-			defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
-		} else {
-			// todo: error out, invalid arg?
+		fmt.Printf("Deploying function at: /%s\n", path)
+		dir = filepath.Join(wd, path)
+		err := os.Chdir(dir)
+		if err != nil {
+			return err
 		}
+		defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
 	}
 
 	fpath, ff, err := findAndParseFuncfile(dir)
