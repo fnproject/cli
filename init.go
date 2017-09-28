@@ -114,17 +114,21 @@ func initFn() cli.Command {
 func (a *initFnCmd) init(c *cli.Context) error {
 	wd := getWd()
 
+	var err error
 	path := c.Args().First()
 	if path != "" {
 		fmt.Printf("Creating function at: /%s\n", path)
 		dir := filepath.Join(wd, path)
 		// check if dir exists, if it does, then we can't create function
 		if exists(dir) {
-			return fmt.Errorf("directory %s already exists, cannot init function", dir)
-		}
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
-			return err
+			if !a.force {
+				return fmt.Errorf("directory %s already exists, cannot init function", dir)
+			}
+		} else {
+			err := os.MkdirAll(dir, 0755)
+			if err != nil {
+				return err
+			}
 		}
 		err = os.Chdir(dir)
 		if err != nil {
@@ -146,7 +150,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 	}
 
-	err := a.buildFuncFile(c)
+	err = a.buildFuncFile(c)
 	if err != nil {
 		return err
 	}
