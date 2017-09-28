@@ -33,11 +33,21 @@ $fn deploy --local --app myapp
 $fn call myapp $funcname
 cd ..
 
+# Test ruby func
+funcname="rubyfunc"
+mkdir $funcname
+cd $funcname
+$fn init --runtime ruby
+$fn run
+$fn test
+cd ..
+
 # Test 'docker' runtime deploy
-mkdir  docker_runtime_test 
+mkdir docker_runtime_test 
 cp ../test/funcfile-docker-rt-tests/testfiles/Dockerfile docker_runtime_test/
 cp ../test/funcfile-docker-rt-tests/testfiles/func.go docker_runtime_test/
 cd docker_runtime_test
+funcname="dockerfunc"
 $fn init --name $funcname
 $fn apps create myapp1
 $fn apps l
