@@ -31,7 +31,7 @@ Whether you're writing a plugin intended for official support, or just writing
 one for personal use, it will need to obey the following rules presented in this
 section.
 
-To start, take a look at [the template](./examples/template.go), which you should
+To start, take a look at [the template](../examples/template.go), which you should
 copy, and fill out, replacing `XXXXX` with a suitable name for your plugin.
 
 #### Core
@@ -67,7 +67,7 @@ This is subject to change, but all changes should be backwards compatible.
 
 #### Side Effects
 `Init` is also the appropriate place to generate any boilerplate code for your runtime.
-The [Java example](./examples/javaPlugin.go.example) has a good example of this.
+The [Java example](../examples/javaPlugin.go.example) has a good example of this.
 
 #### Naming
 <!---
