@@ -16,6 +16,7 @@ import (
 	"unicode"
 
 	"github.com/coreos/go-semver/semver"
+	"github.com/fnproject/cli/langhelper"
 )
 
 const (
@@ -27,14 +28,6 @@ const (
 
 type HasRegistry interface {
 	Registry() string
-}
-
-type LangBuilder struct {
-	BuildImage          string
-	RunImage            string
-	IsMultiStage        bool
-	DockerfileBuildCmds []string
-	DockerfileCopyCmds  []string
 }
 
 func setRegistryEnv(hr HasRegistry) {
@@ -224,12 +217,12 @@ func writeTmpDockerfile(dir string, ff *funcfile) (string, error) {
 	return fd.Name(), err
 }
 
-func BuildLangHelper(rt string) (*LangBuilder, error) {
+func BuildLangHelper(rt string) (*langhelper.LangBuilder, error) {
 	//TODO: run container's "afterbuild" command
-	if lh, err := LangHelper(rt, ""); err != nil {
+	if lh, err := LangHelper(rt, []string{"-helpercommand=build"}); err != nil {
 		return nil, err
 	} else {
-		return &lh.LangBuilder, err
+		return lh.LangBuilder, err
 	}
 }
 

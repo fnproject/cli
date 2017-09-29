@@ -27,6 +27,7 @@ import (
 
 	"strings"
 
+	"github.com/fnproject/cli/langhelper"
 	"github.com/funcy/functions_go/models"
 	"github.com/urfave/cli"
 )
@@ -224,10 +225,10 @@ func detectRuntime(path string) (runtime string, err error) {
 	return "", fmt.Errorf("no supported files found to guess runtime, please set runtime explicitly with --runtime flag")
 }
 
-func InitLangHelper(rt string) (*LangInitialiser, error) {
-	if lh, err := LangHelper(rt, "-init"); err != nil {
+func InitLangHelper(rt string) (*langhelper.LangInitialiser, error) {
+	if lh, err := LangHelper(rt, []string{"-helpercommand=init"}); err != nil {
 		return nil, err
 	} else {
-		return &lh.LangInitialiser, err
+		return lh.LangInitialiser, err
 	}
 }

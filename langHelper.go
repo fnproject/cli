@@ -6,20 +6,21 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/fnproject/cli/langhelper"
 )
 
-type LangHelp struct {
-	LangBuilder
-	LangInitialiser
-}
-
-func LangHelper(rt, cmdFlag string) (*LangHelp, error) {
+func LangHelper(rt string, flags []string) (*langhelper.LangHelpResults, error) {
 	pwd, _ := os.Getwd()
-	lh := &LangHelp{}
+	lh := &langhelper.LangHelpResults{}
 	langHelperImage := getLangHelperImageName(rt)
 	//TODO: cmdFlag needs changing; very stupid solution at present
 	//Was done this way because it was the quickest way of using two commands in one docker image
-	cmd := exec.Command("docker", "run", "-i", "--mount", "type=bind,src="+pwd+",target=/dummy", langHelperImage, cmdFlag)
+	commands := []string{"run", "-i", "--mount", "type=bind,src=" + pwd + ",target=/dummy", langHelperImage, "-runtime=" + rt}
+	for _, val := range flags {
+		commands = append(commands, val)
+	}
+	cmd := exec.Command("docker", commands...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
