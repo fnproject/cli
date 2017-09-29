@@ -232,8 +232,8 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	}
 	dir := filepath.Dir(funcfilePath)
 	// get name from directory if it's not defined
-	if ff.Name == "" {
-		ff.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
+	if funcfile.Name == "" {
+		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
 	}
 	if funcfile.Path == "" {
 		if dir == "." {
