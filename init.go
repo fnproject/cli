@@ -27,7 +27,7 @@ import (
 
 	"strings"
 
-	"github.com/fnproject/cli/langs"
+	"github.com/fnproject/cli/langhelper"
 	"github.com/funcy/functions_go/models"
 	"github.com/urfave/cli"
 )
@@ -47,6 +47,11 @@ var (
 
 	fnInitRuntimes []string
 )
+
+type LangInitialiser struct {
+	Entrypoint string
+	Cmd        string
+}
 
 func init() {
 	for rt := range fileExtToRuntime {
@@ -155,35 +160,12 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		return err
 	}
 
-	runtimeSpecified := a.Runtime != ""
-
-	if runtimeSpecified && a.Runtime != funcfileDockerRuntime {
-		err := a.generateBoilerplate()
-		if err != nil {
-			return err
-		}
-	}
-
 	ff := a.funcfile
 	if err := encodeFuncfileYAML("func.yaml", &ff); err != nil {
 		return err
 	}
 
 	fmt.Println("func.yaml created")
-	return nil
-}
-
-func (a *initFnCmd) generateBoilerplate() error {
-	helper := langs.GetLangHelper(a.Runtime)
-	if helper != nil && helper.HasBoilerplate() {
-		if err := helper.GenerateBoilerplate(); err != nil {
-			if err == langs.ErrBoilerplateExists {
-				return nil
-			}
-			return err
-		}
-		fmt.Println("function boilerplate generated.")
-	}
 	return nil
 }
 
@@ -219,19 +201,23 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 	} else {
 		fmt.Println("Runtime:", a.Runtime)
 	}
-	helper := langs.GetLangHelper(a.Runtime)
+	helper, err := InitLangHelper(a.Runtime)
+	if err != nil {
+		return err
+	}
+
 	if helper == nil {
 		fmt.Printf("init does not support the %s runtime, you'll have to create your own Dockerfile for this function", a.Runtime)
 	}
 
 	if a.Entrypoint == "" {
 		if helper != nil {
-			a.Entrypoint = helper.Entrypoint()
+			a.Entrypoint = helper.Entrypoint
 		}
 	}
 	if a.Cmd == "" {
 		if helper != nil {
-			a.Cmd = helper.Cmd()
+			a.Cmd = helper.Cmd
 		}
 	}
 	if a.Entrypoint == "" && a.Cmd == "" {
@@ -255,4 +241,12 @@ func detectRuntime(path string) (runtime string, err error) {
 		}
 	}
 	return "", fmt.Errorf("no supported files found to guess runtime, please set runtime explicitly with --runtime flag")
+}
+
+func InitLangHelper(rt string) (*langhelper.LangInitialiser, error) {
+	if lh, err := LangHelper(rt, []string{"-helpercommand=init"}); err != nil {
+		return nil, err
+	} else {
+		return lh.LangInitialiser, err
+	}
 }

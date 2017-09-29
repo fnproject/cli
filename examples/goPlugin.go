@@ -1,53 +1,50 @@
-package langs
+package XXXXXlanghelper //replace with "main"
 
-import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
-)
+import "github.com/fnproject/cli/langhelper"
 
-type GoLangHelper struct {
-	BaseHelper
+type XXXXXHelper struct {
+	langhelper.BaseHelper
 }
 
-func (lh *GoLangHelper) BuildFromImage() string {
-	return "funcy/go:dev"
+func main() {
+	//you probably don't want to change this
+	helper := &XXXXXHelper{}
+	helper.Plug = helper
+	helper.Main()
 }
 
-func (lh *GoLangHelper) RunFromImage() string {
-	return "funcy/go"
+func (h *XXXXXHelper) Init(flags map[string]string) {
+	//change one or both of these values
+	cmd := ""
+	entrypoint := ""
+
+	//optional: generateBoilerplate() - create boilerplate code for your runtime
+
+	//leave this line as it is
+	h.LangInitialiser = &langhelper.LangInitialiser{Cmd: cmd, Entrypoint: entrypoint}
 }
 
-func (h *GoLangHelper) DockerfileBuildCmds() []string {
-	r := []string{}
-	// more info on Go multi-stage builds: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
-	// For now we assume that dependencies are vendored already, but we could vendor them
-	// inside the container. Maybe we should check for /vendor dir and if it doesn't exist,
-	// either run `dep init` if no Gopkg.toml/lock found or `dep ensure` if it's there.
-	r = append(r, "ADD . /go/src/func/")
-	// if exists("Gopkg.toml") {
-	// r = append(r,
-	// 	"RUN go get -u github.com/golang/dep/cmd/dep",
-	// 	"RUN cd /src && dep ensure",
-	// )
-	// }
-	r = append(r, "RUN cd /go/src/func/ && go build -o func")
-	return r
-}
+func (h *XXXXXHelper) Build(flags map[string]string) {
+	//change these as needed
+	buildImage := ""
+	runImage := ""
+	isMultiStage := true
+	dockerFileCopyCmds := []string{}
+	dockerFileBuildCmds := []string{}
 
-func (h *GoLangHelper) DockerfileCopyCmds() []string {
-	return []string{
-		"COPY --from=build-stage /go/src/func/func /function/",
+	//optional: preBuild() - run any prebuild stages for your runtime
+
+	//leave this line as it is
+	h.LangBuilder = &langhelper.LangBuilder{
+		BuildImage:          buildImage,
+		RunImage:            runImage,
+		IsMultiStage:        isMultiStage,
+		DockerfileCopyCmds:  dockerFileCopyCmds,
+		DockerfileBuildCmds: dockerFileBuildCmds,
 	}
 }
 
-func (lh *GoLangHelper) Entrypoint() string {
-	return "./func"
-}
-
-func (lh *GoLangHelper) HasBoilerplate() bool { return true }
-
-func (lh *GoLangHelper) GenerateBoilerplate() error {
+func generateBoilerplate() error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err

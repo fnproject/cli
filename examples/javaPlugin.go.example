@@ -1,4 +1,4 @@
-package langs
+package main
 
 import (
 	"bytes"
@@ -6,47 +6,76 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/fnproject/cli/langhelper"
 )
 
-// JavaLangHelper provides a set of helper methods for the lifecycle of Java Maven projects
-type JavaLangHelper struct {
-	BaseHelper
-	version string
+type javaHelper struct {
+	langhelper.BaseHelper
 }
 
-// BuildFromImage returns the Docker image used to compile the Maven function project
-func (lh *JavaLangHelper) BuildFromImage() string {
-	if lh.version == "1.8" {
-		return "fnproject/fn-java-fdk-build:latest"
-	} else if lh.version == "9" {
-		return "fnproject/fn-java-fdk-build:jdk9-latest"
-	} else {
-		return ""
+func main() {
+	helper := &javaHelper{}
+	helper.Plug = helper
+	helper.Main()
+}
+
+func (h *javaHelper) Init(flags map[string]string) {
+	var javaVersion string
+	if flags["runtime"] == "java8" {
+		javaVersion = "1.8"
+	} else if flags["runtime"] == "java9" || flags["runtime"] == "java" {
+		javaVersion = "9"
+	}
+	cmd := "com.example.fn.HelloFunction::handleRequest"
+
+	if err := generateBoilerplate(javaVersion); err != nil {
+		log.Fatalf("Boilerplate not written: %v", err)
+	}
+
+	h.LangInitialiser = &langhelper.LangInitialiser{Cmd: cmd}
+}
+
+func (h *javaHelper) Build(flags map[string]string) {
+	var javaVersion string
+	if flags["runtime"] == "java8" {
+		javaVersion = "1.8"
+	} else if flags["runtime"] == "java9" || flags["runtime"] == "java" {
+		javaVersion = "9"
+	}
+	buildImage := getBuildImage(javaVersion)
+	runImage := getRunImage(javaVersion)
+	isMultiStage := true
+	dockerfileCopyCmds := []string{
+		"COPY --from=build-stage /function/target/*.jar /function/app/",
+	}
+	dockerfileBuildCmds := []string{
+		fmt.Sprintf("ENV MAVEN_OPTS %s", mavenOpts()),
+		"ADD pom.xml /function/pom.xml",
+		"RUN [\"mvn\", \"package\", \"dependency:copy-dependencies\", \"-DincludeScope=runtime\", " +
+			"\"-DskipTests=true\", \"-Dmdep.prependGroupId=true\", \"-DoutputDirectory=target\", \"--fail-never\"]",
+		"ADD src /function/src",
+		"RUN [\"mvn\", \"package\"]",
+	}
+
+	preBuild(javaVersion)
+
+	h.LangBuilder = &langhelper.LangBuilder{
+		BuildImage:          buildImage,
+		RunImage:            runImage,
+		IsMultiStage:        isMultiStage,
+		DockerfileCopyCmds:  dockerfileCopyCmds,
+		DockerfileBuildCmds: dockerfileBuildCmds,
 	}
 }
 
-// RunFromImage returns the Docker image used to run the Java function.
-func (lh *JavaLangHelper) RunFromImage() string {
-	if lh.version == "1.8" {
-		return "fnproject/fn-java-fdk:latest"
-	} else if lh.version == "9" {
-		return "fnproject/fn-java-fdk:jdk9-latest"
-	} else {
-		return ""
-	}
-}
-
-// HasBoilerplate returns whether the Java runtime has boilerplate that can be generated.
-func (lh *JavaLangHelper) HasBoilerplate() bool { return true }
-
-// GenerateBoilerplate will generate function boilerplate for a Java runtime. The default boilerplate is for a Maven
-// project.
-func (lh *JavaLangHelper) GenerateBoilerplate() error {
+func generateBoilerplate(javaVersion string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -54,7 +83,7 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 
 	pathToPomFile := filepath.Join(wd, "pom.xml")
 	if exists(pathToPomFile) {
-		return ErrBoilerplateExists
+		return errors.New("Boilerplate exists") //TODO
 	}
 
 	apiVersion, err := getFDKAPIVersion()
@@ -62,7 +91,7 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, lh.version)), os.FileMode(0644)); err != nil {
+	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, javaVersion)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -84,35 +113,27 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 	return mkDirAndWriteFile("src/test/java/com/example/fn", "HelloFunctionTest.java", helloJavaTestBoilerplate)
 }
 
-// Cmd returns the Java runtime Docker entrypoint that will be executed when the function is executed.
-func (lh *JavaLangHelper) Cmd() string {
-	return "com.example.fn.HelloFunction::handleRequest"
-}
-
-// DockerfileCopyCmds returns the Docker COPY command to copy the compiled Java function jar and dependencies.
-func (lh *JavaLangHelper) DockerfileCopyCmds() []string {
-	return []string{
-		"COPY --from=build-stage /function/target/*.jar /function/app/",
+func getRunImage(javaVersion string) string {
+	if javaVersion == "1.8" {
+		return "fnproject/fn-java-fdk:latest"
+	} else if javaVersion == "9" {
+		return "fnproject/fn-java-fdk:jdk9-latest"
+	} else {
+		return ""
 	}
 }
 
-// DockerfileBuildCmds returns the build stage steps to compile the Maven function project.
-func (lh *JavaLangHelper) DockerfileBuildCmds() []string {
-	return []string{
-		fmt.Sprintf("ENV MAVEN_OPTS %s", mavenOpts()),
-		"ADD pom.xml /function/pom.xml",
-		"RUN [\"mvn\", \"package\", \"dependency:copy-dependencies\", \"-DincludeScope=runtime\", " +
-			"\"-DskipTests=true\", \"-Dmdep.prependGroupId=true\", \"-DoutputDirectory=target\", \"--fail-never\"]",
-		"ADD src /function/src",
-		"RUN [\"mvn\", \"package\"]",
+func getBuildImage(javaVersion string) string {
+	if javaVersion == "1.8" {
+		return "fnproject/fn-java-fdk-build:latest"
+	} else if javaVersion == "9" {
+		return "fnproject/fn-java-fdk-build:jdk9-latest"
+	} else {
+		return ""
 	}
 }
 
-// HasPreBuild returns whether the Java Maven runtime has a pre-build step.
-func (lh *JavaLangHelper) HasPreBuild() bool { return true }
-
-// PreBuild ensures that the expected the function is based is a maven project.
-func (lh *JavaLangHelper) PreBuild() error {
+func preBuild(javaVersion string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -281,3 +302,17 @@ public class HelloFunctionTest {
 
 }`
 )
+
+// exists checks if a file exists
+func exists(name string) bool {
+	if _, err := os.Stat(name); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+	return true
+}
+
+func dockerBuildError(err error) error {
+	return fmt.Errorf("error running docker build: %v", err)
+}
