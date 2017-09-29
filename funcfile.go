@@ -107,10 +107,6 @@ func findAndParseFuncfile(path string) (fpath string, ff *funcfile, err error) {
 	if err != nil {
 		return "", nil, err
 	}
-	// get name from directory if it's not defined
-	if ff.Name == "" {
-		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
-	}
 	return fpath, ff, err
 }
 

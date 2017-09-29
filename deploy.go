@@ -3,9 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	client "github.com/fnproject/cli/client"
@@ -151,21 +151,21 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *appfile) 
 	if err != nil {
 		return err
 	}
-	if appf != nil && ff.Path == "" && dir == wd {
-		ff.Path = "/"
+	if appf != nil {
+		fmt.Println(dir, "vs", wd)
+		if dir == wd {
+			setRootFuncInfo(ff, appf.Name)
+		}
 	}
 	return p.deployFunc(c, appName, wd, fpath, ff)
 }
 
 // deployAll deploys all functions in an app.
 func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) error {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalln("Couldn't get working directory:", err)
-	}
+	wd := getWd()
 
 	var funcFound bool
-	err = filepath.Walk(wd, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(wd, func(path string, info os.FileInfo, err error) error {
 		if path != wd && info.IsDir() {
 			return nil
 		}
@@ -173,6 +173,8 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 		if !isFuncfile(path, info) {
 			return nil
 		}
+
+		fmt.Println("Walking", path)
 
 		if p.incremental && !isstale(path) {
 			return nil
@@ -183,14 +185,25 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 			return err
 		}
 		dir := filepath.Dir(path)
-		if ff.Path == "" && dir == wd {
-			// then in root dir, so this will be deployed at /
-			ff.Path = "/"
+		if dir == wd {
+			setRootFuncInfo(ff, appName)
 		} else {
 			// change dirs
 			err = os.Chdir(dir)
 			if err != nil {
 				return err
+			}
+			p2 := strings.TrimPrefix(dir, wd)
+			fmt.Println("PATH:", p2)
+			if ff.Name == "" {
+				ff.Name = strings.Replace(p2, "/", "-", -1)
+				if strings.HasPrefix(ff.Name, "-") {
+					ff.Name = ff.Name[1:]
+				}
+				// todo: should we prefix appname too?
+			}
+			if ff.Path == "" {
+				ff.Path = p2
 			}
 		}
 		err = p.deployFunc(c, appName, wd, path, ff)
@@ -232,10 +245,12 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	}
 	fmt.Printf("Deploying %s to app: %s at path: %s\n", funcfile.Name, appName, funcfile.Path)
 
+	fmt.Println("bumping", funcfilePath)
 	funcfile2, err := bumpIt(funcfilePath, Patch)
 	if err != nil {
 		return err
 	}
+	fmt.Println("bumped")
 	funcfile.Version = funcfile2.Version
 	// TODO: this whole funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
 
@@ -251,6 +266,17 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	}
 
 	return p.updateRoute(c, appName, funcfile)
+}
+
+func setRootFuncInfo(ff *funcfile, appName string) {
+	if ff.Name == "" {
+		fmt.Println("setting name")
+		ff.Name = fmt.Sprintf("%s-root", appName)
+	}
+	if ff.Path == "" {
+		// then in root dir, so this will be deployed at /
+		ff.Path = "/"
+	}
 }
 
 func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *funcfile) error {

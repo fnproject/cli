@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -64,6 +65,10 @@ func (t *testcmd) test(c *cli.Context) error {
 	fpath, ff, err := findAndParseFuncfile(wd)
 	if err != nil {
 		return err
+	}
+	// get name from directory if it's not defined
+	if ff.Name == "" {
+		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
 	}
 
 	ff, err = buildfunc(fpath, ff, false)

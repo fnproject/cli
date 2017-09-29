@@ -90,6 +90,10 @@ func (r *runCmd) run(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	// get name from directory if it's not defined
+	if ff.Name == "" {
+		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
+	}
 
 	_, err = buildfunc(fpath, ff, c.Bool("no-cache"))
 	if err != nil {
