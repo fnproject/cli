@@ -152,7 +152,6 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *appfile) 
 		return err
 	}
 	if appf != nil {
-		fmt.Println(dir, "vs", wd)
 		if dir == wd {
 			setRootFuncInfo(ff, appf.Name)
 		}
@@ -174,8 +173,6 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 			return nil
 		}
 
-		fmt.Println("Walking", path)
-
 		if p.incremental && !isstale(path) {
 			return nil
 		}
@@ -194,7 +191,6 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 				return err
 			}
 			p2 := strings.TrimPrefix(dir, wd)
-			fmt.Println("PATH:", p2)
 			if ff.Name == "" {
 				ff.Name = strings.Replace(p2, "/", "-", -1)
 				if strings.HasPrefix(ff.Name, "-") {
@@ -245,12 +241,10 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	}
 	fmt.Printf("Deploying %s to app: %s at path: %s\n", funcfile.Name, appName, funcfile.Path)
 
-	fmt.Println("bumping", funcfilePath)
 	funcfile2, err := bumpIt(funcfilePath, Patch)
 	if err != nil {
 		return err
 	}
-	fmt.Println("bumped")
 	funcfile.Version = funcfile2.Version
 	// TODO: this whole funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
 
