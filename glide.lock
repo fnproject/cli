@@ -1,10 +1,10 @@
-hash: 7c2f789d8f4972b1cb81cc2581f8e481cc815b40b7715c0fb9aa94cf3c1bfd8e
-updated: 2017-08-23T16:53:46.159402157-07:00
+hash: 1a053317b453fca38f2fd1ccd5f2e4cd9f4a02b246ea310349c1e3fa21ede6df
+updated: 2017-09-29T16:11:59.238810593-07:00
 imports:
 - name: github.com/asaskevich/govalidator
-  version: 15028e809df8c71964e8efa6c11e81d5c0262302
+  version: 73945b6115bfbbcc57d89b7316e28109364124e1
 - name: github.com/aws/aws-sdk-go
-  version: 5f216d3a320b04771edb3f39e9e063603551423a
+  version: 6198197eabb9bb93346ae204d79ac2225e44cf05
   subpackages:
   - aws
   - aws/awserr
@@ -50,7 +50,7 @@ imports:
 - name: github.com/docker/go-units
   version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/fnproject/fn_go
-  version: e046aa4ca1f1028a04fc51395297ff07515cb0b6
+  version: 418dcd8e37593d86604e89a48d7ee2e109a1d3bf
   subpackages:
   - client
   - client/apps
@@ -76,7 +76,7 @@ imports:
 - name: github.com/go-openapi/loads
   version: a80dea3052f00e5f032e860dd7355cd0cc67e24d
 - name: github.com/go-openapi/runtime
-  version: d6605b7c17ac3b1033ca794886e6142a4141f5b0
+  version: bf2ff8f7150788b1c7256abb0805ba0410cbbabb
   subpackages:
   - client
 - name: github.com/go-openapi/spec
@@ -87,8 +87,6 @@ imports:
   version: f3f9494671f93fcff853e3c6e9e948b3eb71e590
 - name: github.com/go-openapi/validate
   version: 8a82927c942c94794a5cd8b8b50ce2f48a955c0c
-- name: github.com/go-resty/resty
-  version: 8d8edd722eb7a48130ba8bd71fefbf028e8aab26
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jmoiron/jsonq
@@ -98,7 +96,7 @@ imports:
   subpackages:
   - errors
 - name: github.com/mailru/easyjson
-  version: 2f5df55504ebc322e4d52d34df6a1f5b503bf26d
+  version: 2a92e673c9a6302dd05c3a691ae1f24aef46457d
   subpackages:
   - buffer
   - jlexer
@@ -112,7 +110,7 @@ imports:
 - name: github.com/Nvveen/Gotty
   version: cd527374f1e5bff4938207604a14f2e38a9cf512
 - name: github.com/onsi/gomega
-  version: c893efa28eb45626cdaa76c9f653b62488858837
+  version: dcabb60a477c2b6f456df65037cb6708210fbb02
   subpackages:
   - format
   - internal/assertion
@@ -126,19 +124,19 @@ imports:
   - matchers/support/goraph/util
   - types
 - name: github.com/PuerkitoBio/purell
-  version: 7cf257f0a33260797b0febf39f95fccd86aab2a3
+  version: f619812e3caf603a8df60a7ec6f2654b703189ef
 - name: github.com/PuerkitoBio/urlesc
   version: de5bf2ad457846296e2031421a34e2568e304e35
 - name: github.com/sirupsen/logrus
   version: 89742aefa4b206dcf400792f3bd35b542998eb3b
 - name: github.com/urfave/cli
-  version: f017f86fccc5a039a98f23311f34fdf78b014f78
+  version: ac249472b7de27a9e8990819566d9be95ab5b816
 - name: golang.org/x/crypto
-  version: 1351f936d976c60a0a48d728281922cf63eafb8d
+  version: 76eec36fa14229c4b25bb894c2d0e591527af429
   subpackages:
   - ssh/terminal
 - name: golang.org/x/net
-  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
+  version: c8c74377599bd978aee1cf3b9b63a8634051cec2
   subpackages:
   - context
   - context/ctxhttp
@@ -146,13 +144,13 @@ imports:
   - html/atom
   - html/charset
   - idna
-  - publicsuffix
 - name: golang.org/x/sys
-  version: 07c182904dbd53199946ba614a412c61d3c548f5
+  version: 7ddbeae9ae08c6a06a59597f0c9edbc5ff2444ce
   subpackages:
   - unix
+  - windows
 - name: golang.org/x/text
-  version: e56139fd9c5bc7244c76116c68e500765bb6db6b
+  version: b19bf474d317b857955b12035d2c5acb57ce8b01
   subpackages:
   - encoding
   - encoding/charmap
