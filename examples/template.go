@@ -17,6 +17,9 @@ func (h *XXXXXHelper) Init(flags map[string]string) {
 	//change one or both of these values
 	cmd := ""
 	entrypoint := ""
+
+	//optional: generateBoilerplate() - create boilerplate code for your runtime
+
 	//leave this line as it is
 	h.LangInitialiser = &langhelper.LangInitialiser{Cmd: cmd, Entrypoint: entrypoint}
 }
@@ -28,6 +31,9 @@ func (h *XXXXXHelper) Build(flags map[string]string) {
 	isMultiStage := true
 	dockerFileCopyCmds := []string{}
 	dockerFileBuildCmds := []string{}
+
+	//optional: preBuild() - run any prebuild stages for your runtime
+
 	//leave this line as it is
 	h.LangBuilder = &langhelper.LangBuilder{
 		BuildImage:          buildImage,

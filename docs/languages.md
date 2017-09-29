@@ -7,6 +7,7 @@ written in Golang at present.
 Currently, we provide support for the following language runtimes:
 * java (also referred to as java9)
 * java8
+* go
 
 More are being added all the time!
 
@@ -79,4 +80,69 @@ If you are writing an official plugin, it should be named `fnproject/lang-NAME:l
 To help demonstrate the process, these docs will now go through the process of 
 adding a Golang plugin for the CLI.
 
-TBD
+First, I'm going to fill out the `Init` method. We want to set either `Cmd` or 
+`Entrypoint`, and in this case we want to generate some boilerplate code.
+
+So first we replace
+```go
+entrypoint := ""
+```
+with
+```go
+entrypoint := "./func"
+```
+This is the command that will be called to run the go binary `func`.
+
+Next, we want to generate some boilerplate code, so we add a `GenerateBoilerplate()` function:
+```go
+func generateBoilerplate() error {
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	codeFile := filepath.Join(wd, "func.go")
+	if exists(codeFile) {
+		return ErrBoilerplateExists
+	}
+	testFile := filepath.Join(wd, "test.json")
+	if exists(testFile) {
+		return ErrBoilerplateExists
+	}
+
+	if err := ioutil.WriteFile(codeFile, []byte(helloGoSrcBoilerplate), os.FileMode(0644)); err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(testFile, []byte(goTestBoilerPlate), os.FileMode(0644)); err != nil {
+		return err
+	}
+	return nil
+}
+
+const (
+	helloGoSrcBoilerplate = //GO SOURCE CODE FOR HELLO WORLD
+
+	goTestBoilerPlate = //GO TEST SOURCE CODE
+)
+```
+
+and now `Init` is done.
+
+Next, we need to write the `Build` method. This is much easier, as it's just writing to variables.
+We replace
+```go
+buildImage := ""
+runImage := ""
+isMultiStage := true
+dockerFileCopyCmds := []string{}
+dockerFileBuildCmds := []string{}
+```
+with
+```go
+buildImage := "funcy/go:dev"
+runImage := "funcy/go"
+isMultiStage := true
+dockerFileCopyCmds := []string{"COPY --from=build-stage /go/src/func/func /function/",}
+dockerFileBuildCmds := []string{"ADD . /go/src/func/", "RUN cd /go/src/func/func /function/",}
+```
+And now we're done with the code! All that's left is to build the binary and the docker image.
