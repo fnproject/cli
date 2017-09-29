@@ -27,15 +27,25 @@ type outputMap struct {
 }
 
 type fftest struct {
-	Name   string            `yaml:"name,omitempty" json:"name,omitempty"`
-	Input  *inputMap         `yaml:"input,omitempty" json:"input,omitempty"`
-	Output *outputMap        `yaml:"outoutput,omitempty" json:"output,omitempty"`
-	Err    *string           `yaml:"err,omitempty" json:"err,omitempty"`
-	Env    map[string]string `yaml:"env,omitempty" json:"env,omitempty"`
+	Name   string     `yaml:"name,omitempty" json:"name,omitempty"`
+	Input  *inputMap  `yaml:"input,omitempty" json:"input,omitempty"`
+	Output *outputMap `yaml:"outoutput,omitempty" json:"output,omitempty"`
+	Err    *string    `yaml:"err,omitempty" json:"err,omitempty"`
+	// Env    map[string]string `yaml:"env,omitempty" json:"env,omitempty"`
+}
+
+type InputVar struct {
+	Name     string `yaml:"name" json:"name"`
+	Required bool   `yaml:"required" json:"required"`
+}
+type Expects struct {
+	Config []InputVar `yaml:"config" json:"config"`
 }
 
 type funcfile struct {
-	Name       string   `yaml:"name,omitempty" json:"name,omitempty"`
+	Name string `yaml:"name,omitempty" json:"name,omitempty"`
+
+	// Build params
 	Version    string   `yaml:"version,omitempty" json:"version,omitempty"`
 	Runtime    string   `yaml:"runtime,omitempty" json:"runtime,omitempty"`
 	Entrypoint string   `yaml:"entrypoint,omitempty" json:"entrypoint,omitempty"`
@@ -43,7 +53,7 @@ type funcfile struct {
 	Build      []string `yaml:"build,omitempty" json:"build,omitempty"`
 	Tests      []fftest `yaml:"tests,omitempty" json:"tests,omitempty"`
 
-	// route specific
+	// Route params
 	Type        string              `yaml:"type,omitempty" json:"type,omitempty"`
 	Memory      uint64              `yaml:"memory,omitempty" json:"memory,omitempty"`
 	Format      string              `yaml:"format,omitempty" json:"format,omitempty"`
@@ -52,6 +62,9 @@ type funcfile struct {
 	Config      map[string]string   `yaml:"config,omitempty" json:"config,omitempty"`
 	Headers     map[string][]string `yaml:"headers,omitempty" json:"headers,omitempty"`
 	IDLETimeout *int32              `yaml:"idle_timeout,omitempty" json:"idle_timeout,omitempty"`
+
+	// Run/test
+	Expects Expects `yaml:"expects" json:"expects"`
 }
 
 func (ff *funcfile) ImageName() string {

@@ -24,11 +24,10 @@ func run() cli.Command {
 	r := runCmd{}
 
 	return cli.Command{
-		Name:      "run",
-		Usage:     "run a function locally",
-		ArgsUsage: "[username/image:tag]",
-		Flags:     append(runflags(), []cli.Flag{}...),
-		Action:    r.run,
+		Name:   "run",
+		Usage:  "run a function locally",
+		Flags:  append(runflags(), []cli.Flag{}...),
+		Action: r.run,
 	}
 }
 
@@ -67,7 +66,7 @@ func runflags() []cli.Flag {
 	}
 }
 
-func (r *runCmd) run(c *cli.Context) error {
+func preRun(c *cli.Context) (*funcfile, []string, error) {
 	wd := getWd()
 	// if image name is passed in, it will run that image
 	path := c.Args().First() // TODO: should we ditch this?
@@ -80,7 +79,7 @@ func (r *runCmd) run(c *cli.Context) error {
 		dir := filepath.Join(wd, path)
 		err := os.Chdir(dir)
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
 		defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
 		wd = dir
@@ -88,21 +87,59 @@ func (r *runCmd) run(c *cli.Context) error {
 
 	fpath, ff, err = findAndParseFuncfile(wd)
 	if err != nil {
-		return err
+		return nil, nil, err
+	}
+
+	// check for valid input
+	envVars := c.StringSlice("env")
+	// Check expected env vars defined in func file
+	for _, expected := range ff.Expects.Config {
+		n := expected.Name
+		e := getEnvValue(n, envVars)
+		if e != "" {
+			continue
+		}
+		e = os.Getenv(n)
+		if e != "" {
+			envVars = append(envVars, kvEq(n, e))
+			continue
+		}
+		if expected.Required {
+			return ff, envVars, fmt.Errorf("required env var %s not found, please set either set it in your environment or pass in `-e %s=X` flag.", n, n)
+		}
+		fmt.Fprintf(os.Stderr, "info: optional env var %s not found.\n", n)
 	}
 
 	_, err = buildfunc(fpath, ff, c.Bool("no-cache"))
 	if err != nil {
+		return nil, nil, err
+	}
+	return ff, envVars, nil
+}
+
+func getEnvValue(n string, envVars []string) string {
+	for _, e := range envVars {
+		// assuming has equals for now
+		split := strings.Split(e, "=")
+		if split[0] == n {
+			return split[1]
+		}
+	}
+	return ""
+}
+
+func (r *runCmd) run(c *cli.Context) error {
+	ff, envVars, err := preRun(c)
+	if err != nil {
 		return err
 	}
-
 	// means no memory specified through CLI args
 	// memory from func.yaml applied
 	if c.Uint64("memory") != 0 {
 		ff.Memory = c.Uint64("memory")
 	}
 
-	return runff(ff, stdin(), os.Stdout, os.Stderr, c.String("method"), c.StringSlice("e"), c.StringSlice("link"), c.String("format"), c.Int("runs"))
+	return runff(ff, stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"))
 }
 
 // TODO: share all this stuff with the Docker driver in server or better yet, actually use the Docker driver
