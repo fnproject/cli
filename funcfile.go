@@ -42,6 +42,8 @@ type funcfile struct {
 	Cmd        string   `yaml:"cmd,omitempty" json:"cmd,omitempty"`
 	Build      []string `yaml:"build,omitempty" json:"build,omitempty"`
 	Tests      []fftest `yaml:"tests,omitempty" json:"tests,omitempty"`
+	BuildImage string   `yaml:"build_image" json:"build_image"` // Image to use as base for building
+	RunImage   string   `yaml:"run_image" json:"run_image"`     // Image to use for running
 
 	// route specific
 	Type        string              `yaml:"type,omitempty" json:"type,omitempty"`
