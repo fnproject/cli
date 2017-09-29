@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/urfave/cli"
@@ -68,23 +68,27 @@ func runflags() []cli.Flag {
 }
 
 func (r *runCmd) run(c *cli.Context) error {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalln("Couldn't get working directory:", err)
-	}
+	wd := getWd()
 	// if image name is passed in, it will run that image
-	image := c.Args().First() // TODO: should we ditch this?
+	path := c.Args().First() // TODO: should we ditch this?
+	var err error
 	var ff *funcfile
 	var fpath string
-	if image == "" {
-		fpath, ff, err = findAndParseFuncfile(wd)
+
+	if path != "" {
+		fmt.Printf("Running function at: /%s\n", path)
+		dir := filepath.Join(wd, path)
+		err := os.Chdir(dir)
 		if err != nil {
 			return err
 		}
-	} else {
-		ff = &funcfile{
-			Name: image,
-		}
+		defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
+		wd = dir
+	}
+
+	fpath, ff, err = findAndParseFuncfile(wd)
+	if err != nil {
+		return err
 	}
 
 	_, err = buildfunc(fpath, ff, c.Bool("no-cache"))

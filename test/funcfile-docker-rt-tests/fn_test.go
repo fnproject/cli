@@ -122,7 +122,7 @@ func runFnBuildNoDockerfile(t *testing.T, testname, fnTestBin string) {
 	t.Logf("INFO: %s Run fn build", testname)
 	res, err := exec.Command(fnTestBin, "build").CombinedOutput()
 	if err != nil {
-		if bytes.Contains(res, []byte("Dockerfile not exists")) {
+		if bytes.Contains(res, []byte("Dockerfile does not exist")) {
 			t.Logf("INFO: %s Got expected error message %s", testname, string(res))
 			return
 		}

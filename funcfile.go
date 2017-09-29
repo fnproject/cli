@@ -96,13 +96,20 @@ func findFuncfile(path string) (string, error) {
 	}
 	return "", newNotFoundError("could not find function file")
 }
-func findAndParseFuncfile(path string) (fpath string, funcfile *funcfile, err error) {
+func findAndParseFuncfile(path string) (fpath string, ff *funcfile, err error) {
 	fpath, err = findFuncfile(path)
 	if err != nil {
 		return "", nil, err
 	}
-	funcfile, err = parseFuncfile(fpath)
-	return fpath, funcfile, err
+	ff, err = parseFuncfile(fpath)
+	if err != nil {
+		return "", nil, err
+	}
+	// get name from directory if it's not defined
+	if ff.Name == "" {
+		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
+	}
+	return fpath, ff, err
 }
 
 func loadFuncfile() (string, *funcfile, error) {

@@ -39,6 +39,14 @@ func setRegistryEnv(hr HasRegistry) {
 	}
 }
 
+func getWd() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalln("Couldn't get working directory:", err)
+	}
+	return wd
+}
+
 func buildfunc(fpath string, funcfile *funcfile, noCache bool) (*funcfile, error) {
 	var err error
 	if funcfile.Version == "" {
@@ -83,7 +91,7 @@ func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 	dockerfile := filepath.Join(dir, "Dockerfile")
 	if !exists(dockerfile) {
 		if ff.Runtime == funcfileDockerRuntime {
-			return fmt.Errorf("Dockerfile not exists for 'docker' runtime")
+			return fmt.Errorf("Dockerfile does not exist for 'docker' runtime")
 		}
 		helper = langs.GetLangHelper(ff.Runtime)
 		if helper == nil {

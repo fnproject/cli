@@ -7,7 +7,7 @@ import (
 )
 
 //used to indicate the default supported version of java
-const defaultJavaSupportedVersion = "1.8"
+const defaultJavaSupportedVersion = "9"
 
 var (
 	ErrBoilerplateExists = errors.New("Function boilerplate already exists")
