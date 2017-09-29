@@ -13,7 +13,7 @@ import:
   version: ^0.2.0
   subpackages:
   - semver
-- package: github.com/funcy/functions_go
+- package: github.com/fnproject/fn_go
   version: ^0.1.36
   subpackages:
   - client

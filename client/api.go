@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/url"
 
-	fnclient "github.com/funcy/functions_go/client"
+	fnclient "github.com/fnproject/fn_go/client"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 )

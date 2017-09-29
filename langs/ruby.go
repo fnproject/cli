@@ -12,11 +12,11 @@ type RubyLangHelper struct {
 }
 
 func (lh *RubyLangHelper) BuildFromImage() string {
-	return "funcy/ruby:dev"
+	return "fnproject/ruby:dev"
 }
 
 func (lh *RubyLangHelper) RunFromImage() string {
-	return "funcy/ruby"
+	return "fnproject/ruby"
 }
 
 func (h *RubyLangHelper) DockerfileBuildCmds() []string {

@@ -49,7 +49,7 @@ imports:
   - pkg/term/windows
 - name: github.com/docker/go-units
   version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
-- name: github.com/funcy/functions_go
+- name: github.com/fnproject/fn_go
   version: e046aa4ca1f1028a04fc51395297ff07515cb0b6
   subpackages:
   - client

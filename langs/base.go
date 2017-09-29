@@ -43,7 +43,7 @@ func GetLangHelper(lang string) LangHelper {
 }
 
 type LangHelper interface {
-	// BuildFromImage is the base image to build off, typically funcy/LANG:dev
+	// BuildFromImage is the base image to build off, typically fnproject/LANG:dev
 	BuildFromImage() string
 	// RunFromImage is the base image to use for deployment (usually smaller than the build images)
 	RunFromImage() string

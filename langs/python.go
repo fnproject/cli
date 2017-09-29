@@ -5,11 +5,11 @@ type PythonLangHelper struct {
 }
 
 func (lh *PythonLangHelper) BuildFromImage() string {
-	return "funcy/python:2-dev"
+	return "fnproject/python:2-dev"
 }
 
 func (lh *PythonLangHelper) RunFromImage() string {
-	return "funcy/python:2-dev"
+	return "fnproject/python:2-dev"
 }
 
 func (lh *PythonLangHelper) Entrypoint() string {
