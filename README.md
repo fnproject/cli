@@ -3,45 +3,18 @@
 
 ## Install
 
+You can install the Fn CLI and Fn server with a single command.
 ```sh
 curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
 ```
 
-## Quickstart
+Checkout the [Fn home page](../fn/README.md) for additional installation
+options and an Fn function development quickstart guide.
 
-```sh
-# Install command line tool:
-curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
-# Set your Docker Hub username
-export FN_REGISTRY=<DOCKERHUB_USERNAME>
 
-# Start server:
-fn start
+## Init
 
-# Open a new console, then:
-
-# Create a function
-mkdir myfunc
-cd myfunc
-fn init --runtime go
-
-# Test your function
-fn run
-
-# Deploy your function
-fn deploy myapp
-
-# Call your function:
-curl http://localhost:8080/r/myapp/myfunc
-# or:
-fn call myapp /myfunc
-```
-
-## Creating Functions
-
-### init
-
-Init will help you create a [function file](../docs/function-file.md) (func.yaml) in the current directory.
+Init will help you create a [function file](../fn/docs/function-file.md) (func.yaml) in the current directory.
 
 To make things simple, we try to use convention over configuration, so `init` will look for a file named `func.{language-extension}`. For example,
 if you are using Node, put the code that you want to execute in the file `func.js`. If you are using Python, use `func.py`. Ruby, use `func.rb`. Go, `func.go`. Etc.
@@ -52,7 +25,7 @@ Run:
 fn init [--name FUNCTION_NAME]
 ```
 
-If you don't specify a name, the current directory name will be used.
+If you don't specify a name for your function, the current directory name will be used.
 
 If you want to override the convention with configuration, you can do that as well using:
 
@@ -62,7 +35,7 @@ fn init [--runtime node] [--entrypoint "node hello.js"] [--name FUNCTION_NAME]
 
 Or, if you want full control, just make a Dockerfile. If `init` finds a Dockerfile, it will use that instead of runtime and entrypoint.
 
-### Bump, Build, Run, Push
+## Bump, Build, Run, Push
 
 `fn` provides a few commands you'll use while creating and updating your functions: `bump`, `build`, `run` and `push`.
 
@@ -72,7 +45,7 @@ Bump will update the patch version number in your func.yaml file. Versions must 
 fn bump
 ```
 
-To bump a major or minor version, pass the `--major` or `--minor` flag to `fn bump`. 
+To bump a major or minor version, pass the `--major` or `--minor` flag to `fn bump`.
 
 Build will build the image for your function, creating a Docker image tagged with the version number from func.yaml.
 
@@ -144,12 +117,12 @@ Status: success
 $ fn version                                   # shows version both of client and server
 Client version: 0.3.7
 Server version 0.3.7
-```
+
 
 ## Application level configuration
 
 When creating an application, you can configure it to tweak its behavior and its
-routes' with an appropriate flag, `config`.
+routes with an appropriate flag, `config`.
 
 Thus a more complete example of an application creation will look like:
 ```sh
@@ -183,7 +156,7 @@ fn routes update --memory 64 --type sync --image fnproject/hello
 
 To know exactly what configurations you can update just use the command
 
-```
+```sh
 fn routes update --help
 ```
 
@@ -228,32 +201,32 @@ path: /myfunc
 
 ### Creating a new function from source
 
-```
+```sh
 fn init --name hello --runtime ruby
 fn deploy --app myapp
 ```
 
 ### Updating function
 
-```
+```sh
 fn deploy --app myapp
 ```
 
 ### Testing function locally
 
-```
+```sh
 fn run
 ```
 
 ### Testing route
 
-```
+```sh
 fn call myapp /hello
 ```
 
 ### App management
 
-```
+```sh
 fn apps create myapp
 fn apps update myapp --headers "content-type=application/json"
 fn apps config set log_level info
@@ -263,9 +236,9 @@ fn apps delete myapp
 
 ### Route management
 
-```
+```sh
 fn routes create myapp /hello fnproject/hello
-# routes update will also update any changes in the func.yaml file too. 
+# routes update will also update any changes in the func.yaml file too.
 fn routes update myapp /hello --timeout 30 --type async
 fn routes config set myapp /hello log_level info
 fn routes inspect myapp /hello
