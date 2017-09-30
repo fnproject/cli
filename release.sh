@@ -19,7 +19,24 @@ if [ -z $(grep -m1 -Eo "[0-9]+\.[0-9]+\.[0-9]+" $version_file) ]; then
   echo "did not find semantic version in $version_file"
   exit 1
 fi
-perl -i -pe 's/\d+\.\d+\.\K(\d+)/$1+1/e' $version_file
+# The following checks if the commit message contains `[bump X]`, and if so, bumps the appropriate semver number
+bump_by="patch"
+last_commit=$(git log -1 --pretty=%B)
+x=$(docker run --rm -i treeder/strings contains "$last_commit" "[bump")
+if [ "$x" == "true" ]; then
+  x=$(docker run --rm -i treeder/strings contains "$last_commit" "[bump minor]")
+  if [ "$x" == "true" ]; then
+    echo "bumping minor version"
+    bump_by="minor"
+  fi
+  x=$(docker run --rm -i treeder/strings contains "$last_commit" "[bump major]")
+  if [ "$x" == "true" ]; then
+    echo "bumping major version"
+    bump_by="major"
+  fi
+fi
+# https://github.com/treeder/dockers/tree/master/bump
+docker run --rm -it -v $PWD:/app -w /app treeder/bump --filename $version_file $bump_by
 version=$(grep -m1 -Eo "[0-9]+\.[0-9]+\.[0-9]+" $version_file)
 echo "Version: $version"
 
