@@ -200,17 +200,25 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *funcfile) (stri
 
 	// multi-stage build: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
 	dfLines := []string{}
+	bi := ff.BuildImage
+	if bi == "" {
+		bi = helper.BuildFromImage()
+	}
 	if helper.IsMultiStage() {
 		// build stage
-		dfLines = append(dfLines, fmt.Sprintf("FROM %s as build-stage", helper.BuildFromImage()))
+		dfLines = append(dfLines, fmt.Sprintf("FROM %s as build-stage", bi))
 	} else {
-		dfLines = append(dfLines, fmt.Sprintf("FROM %s", helper.BuildFromImage()))
+		dfLines = append(dfLines, fmt.Sprintf("FROM %s", bi))
 	}
 	dfLines = append(dfLines, "WORKDIR /function")
 	dfLines = append(dfLines, helper.DockerfileBuildCmds()...)
 	if helper.IsMultiStage() {
 		// final stage
-		dfLines = append(dfLines, fmt.Sprintf("FROM %s", helper.RunFromImage()))
+		ri := ff.RunImage
+		if ri == "" {
+			ri = helper.RunFromImage()
+		}
+		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")
 		dfLines = append(dfLines, helper.DockerfileCopyCmds()...)
 	}
