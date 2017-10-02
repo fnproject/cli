@@ -32,13 +32,12 @@ type deploycmd struct {
 	appName string
 	*functions.RoutesApi
 
-	wd          string
-	verbose     bool
-	incremental bool
-	local       bool
-	noCache     bool
-	registry    string
-	all         bool
+	wd       string
+	verbose  bool
+	local    bool
+	noCache  bool
+	registry string
+	all      bool
 }
 
 func (cmd *deploycmd) Registry() string {
@@ -56,11 +55,6 @@ func (p *deploycmd) flags() []cli.Flag {
 			Name:        "verbose, v",
 			Usage:       "verbose mode",
 			Destination: &p.verbose,
-		},
-		cli.BoolFlag{
-			Name:        "incremental",
-			Usage:       "uses incremental building",
-			Destination: &p.incremental,
 		},
 		cli.BoolFlag{
 			Name:        "no-cache",
@@ -174,7 +168,8 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 			return nil
 		}
 
-		if p.incremental && !isstale(path) {
+		// TODO: test/try this again to speed up deploys.
+		if false && !isstale(path) {
 			return nil
 		}
 		// Then we found a func file, so let's deploy it:
