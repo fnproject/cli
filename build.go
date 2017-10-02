@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/urfave/cli"
 )
@@ -47,6 +48,10 @@ func (b *buildcmd) build(c *cli.Context) error {
 	fpath, ff, err := findAndParseFuncfile(path)
 	if err != nil {
 		return err
+	}
+	// get name from directory if it's not defined
+	if ff.Name == "" {
+		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
 	}
 
 	ff, err = buildfunc(fpath, ff, b.noCache)

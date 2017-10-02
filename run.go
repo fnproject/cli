@@ -109,6 +109,10 @@ func preRun(c *cli.Context) (*funcfile, []string, error) {
 		}
 		fmt.Fprintf(os.Stderr, "info: optional env var %s not found.\n", n)
 	}
+	// get name from directory if it's not defined
+	if ff.Name == "" {
+		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
+	}
 
 	_, err = buildfunc(fpath, ff, c.Bool("no-cache"))
 	if err != nil {
