@@ -10,7 +10,7 @@ ADD . $D
 RUN cd $D && go build -o fn-alpine && cp fn-alpine /tmp/
 
 # final stage
-FROM golang:alpine
+FROM alpine
 RUN apk add --no-cache ca-certificates curl
 WORKDIR /app
 COPY --from=build-env /tmp/fn-alpine /app/fn
