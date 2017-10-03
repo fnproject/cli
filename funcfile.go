@@ -52,8 +52,8 @@ type funcfile struct {
 	Cmd        string   `yaml:"cmd,omitempty" json:"cmd,omitempty"`
 	Build      []string `yaml:"build,omitempty" json:"build,omitempty"`
 	Tests      []fftest `yaml:"tests,omitempty" json:"tests,omitempty"`
-	BuildImage string   `yaml:"build_image" json:"build_image"` // Image to use as base for building
-	RunImage   string   `yaml:"run_image" json:"run_image"`     // Image to use for running
+	BuildImage string   `yaml:"build_image,omitempty" json:"build_image,omitempty"` // Image to use as base for building
+	RunImage   string   `yaml:"run_image,omitempty" json:"run_image,omitempty"`     // Image to use for running
 
 	// Route params
 	Type        string              `yaml:"type,omitempty" json:"type,omitempty"`
@@ -66,7 +66,7 @@ type funcfile struct {
 	IDLETimeout *int32              `yaml:"idle_timeout,omitempty" json:"idle_timeout,omitempty"`
 
 	// Run/test
-	Expects Expects `yaml:"expects" json:"expects"`
+	Expects Expects `yaml:"expects,omitempty" json:"expects,omitempty"`
 }
 
 func (ff *funcfile) ImageName() string {
