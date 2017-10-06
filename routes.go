@@ -31,7 +31,6 @@ var routeFlags = []cli.Flag{
 	cli.Uint64Flag{
 		Name:  "memory,m",
 		Usage: "memory in MiB",
-		Value: uint64(128),
 	},
 	cli.StringFlag{
 		Name:  "type,t",
@@ -48,17 +47,14 @@ var routeFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:  "format,f",
 		Usage: "hot container IO format - default or http",
-		Value: "default",
 	},
 	cli.IntFlag{
 		Name:  "timeout",
 		Usage: "route timeout (eg. 30)",
-		Value: 30,
 	},
 	cli.IntFlag{
 		Name:  "idle-timeout",
 		Usage: "route idle timeout (eg. 30)",
-		Value: 30,
 	},
 }
 
