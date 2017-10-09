@@ -3,6 +3,9 @@ set -ex
 make build
 export fn="$(pwd)/fn"
 export FN_REGISTRY=$DOCKER_USER
+if [[ -z "$FN_REGISTRY" ]]; then
+  export FN_REGISTRY=default_docker_user_does_not_push
+fi
 $fn --version
 
 go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
