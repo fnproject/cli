@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -59,13 +60,19 @@ func (t *testcmd) test(c *cli.Context) error {
 		fmt.Println("In gomega FailHandler:", message)
 	})
 
-	// First, build it
-	err := c.App.Command("build").Run(c)
+	wd := getWd()
+
+	fpath, ff, err := findAndParseFuncfile(wd)
 	if err != nil {
 		return err
 	}
+	// get name from directory if it's not defined
+	if ff.Name == "" {
+		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
+	}
 
-	_, ff, err := loadFuncfile()
+	ff, err = buildfunc(fpath, ff, false)
+	ff, envVars, err := preRun(c)
 	if err != nil {
 		return err
 	}
@@ -121,10 +128,10 @@ func (t *testcmd) test(c *cli.Context) error {
 		fmt.Printf("\nTest %v\n", i+1)
 		start := time.Now()
 		var err error
-		err = runtest(target, tt.Input, tt.Output, tt.Err, tt.Env)
+		err = runtest(target, tt.Input, tt.Output, tt.Err, envVars)
 		if err != nil {
 			fmt.Print("FAILED")
-			errorCount += 1
+			errorCount++
 			scanner := bufio.NewScanner(strings.NewReader(err.Error()))
 			for scanner.Scan() {
 				fmt.Println("\t\t", scanner.Text())
@@ -146,29 +153,30 @@ func (t *testcmd) test(c *cli.Context) error {
 	return nil
 }
 
-func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, env map[string]string) error {
-	inBytes, _ := json.Marshal(in.Body)
+func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
+	inBytes, err := json.Marshal(in.Body)
+	if err != nil {
+		return err
+	}
+	if string(inBytes) == "\"\"" {
+		// marshalling this: `"body": ""` turns into double quotes, not an empty string as you might expect.
+		// may be a better way to handle this?
+		inBytes = []byte{} // empty string
+	}
 	stdin := &bytes.Buffer{}
 	if in != nil {
 		stdin = bytes.NewBuffer(inBytes)
 	}
-	expectedB, _ := json.Marshal(expectedOut.Body)
+	expectedB, err := json.Marshal(expectedOut.Body)
+	if err != nil {
+		return err
+	}
 	expectedString := string(expectedB)
 
-	// TODO: use the same run as `fn run` so we don't have to dupe all the config and env vars that get passed in
 	var stdout, stderr bytes.Buffer
-	var restrictedEnv []string
-	for k, v := range env {
-		oldv := os.Getenv(k)
-		defer func(oldk, oldv string) {
-			os.Setenv(oldk, oldv)
-		}(k, oldv)
-		os.Setenv(k, v)
-		restrictedEnv = append(restrictedEnv, k)
-	}
 
 	ff := &funcfile{Name: target}
-	if err := runff(ff, stdin, &stdout, &stderr, "", restrictedEnv, nil, DefaultFormat, 1); err != nil {
+	if err := runff(ff, stdin, &stdout, &stderr, "", envVars, nil, DefaultFormat, 1); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\nstderr:%s\n", err, stdout.String(), stderr.String())
 	}
 
@@ -181,37 +189,25 @@ func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedE
 		return nil
 	}
 
-	// don't think we should test error output, it's just for logging
-	// err := stderr.String()
-	// if expectedErr == nil && err != "" {
-	// 	return fmt.Errorf("unexpected error output found: %s", err)
-	// } else if expectedErr != nil && *expectedErr != err {
-	// 	return fmt.Errorf("mismatched error output found.\nexpected (%d bytes):\n%s\ngot (%d bytes):\n%s\n", len(*expectedErr), *expectedErr, len(err), err)
-	// }
-
-	return fmt.Errorf("mismatched output found.\nexpected:\n%s\ngot:\n%s\n", expectedString, out)
+	return fmt.Errorf("mismatched output found.\nexpected:\n%s\ngot:\n%s\nlogs:\n%s\n", expectedString, out, stderr.String())
 }
 
-func runremotetest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, env map[string]string) error {
-	inBytes, _ := json.Marshal(in)
+func runremotetest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
+	inBytes, err := json.Marshal(in)
+	if err != nil {
+		return err
+	}
 	stdin := &bytes.Buffer{}
 	if in != nil {
 		stdin = bytes.NewBuffer(inBytes)
 	}
-	expectedString, _ := json.Marshal(expectedOut.Body)
-
+	expectedString, err := json.Marshal(expectedOut.Body)
+	if err != nil {
+		return err
+	}
 	var stdout bytes.Buffer
 
-	var restrictedEnv []string
-	for k, v := range env {
-		oldv := os.Getenv(k)
-		defer func(oldk, oldv string) {
-			os.Setenv(oldk, oldv)
-		}(k, oldv)
-		os.Setenv(k, v)
-		restrictedEnv = append(restrictedEnv, k)
-	}
-	if err := client.CallFN(target, stdin, &stdout, "", restrictedEnv, false); err != nil {
+	if err := client.CallFN(target, stdin, &stdout, "", envVars, false); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\n", err, stdout.String())
 	}
 

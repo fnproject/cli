@@ -39,6 +39,14 @@ func setRegistryEnv(hr HasRegistry) {
 	}
 }
 
+func getWd() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalln("Couldn't get working directory:", err)
+	}
+	return wd
+}
+
 func buildfunc(fpath string, funcfile *funcfile, noCache bool) (*funcfile, error) {
 	var err error
 	if funcfile.Version == "" {
@@ -83,7 +91,7 @@ func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 	dockerfile := filepath.Join(dir, "Dockerfile")
 	if !exists(dockerfile) {
 		if ff.Runtime == funcfileDockerRuntime {
-			return fmt.Errorf("Dockerfile not exists for 'docker' runtime")
+			return fmt.Errorf("Dockerfile does not exist for 'docker' runtime")
 		}
 		helper = langs.GetLangHelper(ff.Runtime)
 		if helper == nil {
@@ -192,17 +200,25 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *funcfile) (stri
 
 	// multi-stage build: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
 	dfLines := []string{}
+	bi := ff.BuildImage
+	if bi == "" {
+		bi = helper.BuildFromImage()
+	}
 	if helper.IsMultiStage() {
 		// build stage
-		dfLines = append(dfLines, fmt.Sprintf("FROM %s as build-stage", helper.BuildFromImage()))
+		dfLines = append(dfLines, fmt.Sprintf("FROM %s as build-stage", bi))
 	} else {
-		dfLines = append(dfLines, fmt.Sprintf("FROM %s", helper.BuildFromImage()))
+		dfLines = append(dfLines, fmt.Sprintf("FROM %s", bi))
 	}
 	dfLines = append(dfLines, "WORKDIR /function")
 	dfLines = append(dfLines, helper.DockerfileBuildCmds()...)
 	if helper.IsMultiStage() {
 		// final stage
-		dfLines = append(dfLines, fmt.Sprintf("FROM %s", helper.RunFromImage()))
+		ri := ff.RunImage
+		if ri == "" {
+			ri = helper.RunFromImage()
+		}
+		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")
 		dfLines = append(dfLines, helper.DockerfileCopyCmds()...)
 	}

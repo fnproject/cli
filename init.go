@@ -112,6 +112,30 @@ func initFn() cli.Command {
 }
 
 func (a *initFnCmd) init(c *cli.Context) error {
+	wd := getWd()
+
+	var err error
+	path := c.Args().First()
+	if path != "" {
+		fmt.Printf("Creating function at: /%s\n", path)
+		dir := filepath.Join(wd, path)
+		// check if dir exists, if it does, then we can't create function
+		if exists(dir) {
+			if !a.force {
+				return fmt.Errorf("directory %s already exists, cannot init function", dir)
+			}
+		} else {
+			err := os.MkdirAll(dir, 0755)
+			if err != nil {
+				return err
+			}
+		}
+		err = os.Chdir(dir)
+		if err != nil {
+			return err
+		}
+		defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
+	}
 
 	rt := &models.Route{}
 	routeWithFlags(c, rt)
@@ -122,11 +146,21 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			return err
 		}
 		if ff != nil {
-			return errors.New("Function file already exists")
+			return errors.New("Function file already exists, aborting.")
 		}
 	}
 
-	err := a.buildFuncFile(c)
+	const runHeader = `
+        ______
+       / ____/___
+      / /_  / __ \
+     / __/ / / / /
+    /_/   /_/ /_/`
+	
+	fmt.Println(runHeader + "\n")
+
+	err = a.buildFuncFile(c)
+
 	if err != nil {
 		return err
 	}
@@ -141,15 +175,10 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	}
 
 	ff := a.funcfile
-
-	// _, path := appNamePath(ff.ImageName())
-	// ff.Path = path
-
 	if err := encodeFuncfileYAML("func.yaml", &ff); err != nil {
 		return err
 	}
-
-	fmt.Println("func.yaml created")
+	fmt.Println("func.yaml created.")
 	return nil
 }
 
@@ -162,27 +191,25 @@ func (a *initFnCmd) generateBoilerplate() error {
 			}
 			return err
 		}
-		fmt.Println("function boilerplate generated.")
+		fmt.Println("Function boilerplate generated.")
 	}
 	return nil
 }
 
 func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
-	pwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("error detecting current working directory: %v", err)
-	}
+	wd := getWd()
+	var err error
 
 	if a.Name == "" {
-		// then use current directory for name
-		a.Name = filepath.Base(pwd)
+		// then defaults to current directory for name, we'll just leave it out of func.yaml
+		// a.Name = filepath.Base(pwd)
 	} else if strings.Contains(a.Name, ":") {
 		return errors.New("function name cannot contain a colon")
 	}
 
 	//if Dockerfile present, use 'docker' as 'runtime'
 	if exists("Dockerfile") {
-		fmt.Println("Dockerfile found.  Using runtime 'docker'")
+		fmt.Println("Dockerfile found. Using runtime 'docker'.")
 		a.Runtime = funcfileDockerRuntime
 		return nil
 	}
@@ -192,18 +219,18 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 
 	var rt string
 	if a.Runtime == "" {
-		rt, err = detectRuntime(pwd)
+		rt, err = detectRuntime(wd)
 		if err != nil {
 			return err
 		}
 		a.Runtime = rt
-		fmt.Printf("Found %v, assuming %v runtime.\n", rt, rt)
+		fmt.Printf("Found %v function, assuming %v runtime.\n", rt, rt)
 	} else {
 		fmt.Println("Runtime:", a.Runtime)
 	}
 	helper := langs.GetLangHelper(a.Runtime)
 	if helper == nil {
-		fmt.Printf("init does not support the %s runtime, you'll have to create your own Dockerfile for this function", a.Runtime)
+		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function", a.Runtime)
 	}
 
 	if a.Entrypoint == "" {

@@ -62,11 +62,7 @@ var routeFlags = []cli.Flag{
 	},
 }
 
-var updateRouteFlags = append(routeFlags,
-	cli.BoolFlag{
-		Name:  "ignore-fn-file",
-		Usage: "defines whether skip func file or not",
-	})
+var updateRouteFlags = routeFlags
 
 var callFnFlags = append(runflags(),
 	cli.BoolFlag{
@@ -422,12 +418,6 @@ func (a *routesCmd) update(c *cli.Context) error {
 	route := cleanRoutePath(c.Args().Get(1))
 
 	rt := &fnmodels.Route{}
-
-	if !c.Bool("ignore-fn-file") {
-		if err := routeWithFuncFile(nil, rt); err != nil {
-			return fmt.Errorf("error updating route: %s", err)
-		}
-	}
 
 	routeWithFlags(c, rt)
 

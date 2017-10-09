@@ -45,11 +45,8 @@ func (lh *GoLangHelper) Entrypoint() string {
 	return "./func"
 }
 
-// HasPreBuild returns whether the Java runtime has boilerplate that can be generated.
 func (lh *GoLangHelper) HasBoilerplate() bool { return true }
 
-// GenerateBoilerplate will generate function boilerplate for a Java runtime. The default boilerplate is for a Maven
-// project.
 func (lh *GoLangHelper) GenerateBoilerplate() error {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -68,7 +65,7 @@ func (lh *GoLangHelper) GenerateBoilerplate() error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(testFile, []byte(testBoilerPlate), os.FileMode(0644)); err != nil {
+	if err := ioutil.WriteFile(testFile, []byte(goTestBoilerPlate), os.FileMode(0644)); err != nil {
 		return err
 	}
 	return nil
@@ -97,7 +94,7 @@ func main() {
 `
 
 	// Could use same test for most langs
-	testBoilerPlate = `{
+	goTestBoilerPlate = `{
     "tests": [
         {
             "input": {

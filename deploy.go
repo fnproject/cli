@@ -3,9 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	client "github.com/fnproject/cli/client"
@@ -32,13 +32,12 @@ type deploycmd struct {
 	appName string
 	*functions.RoutesApi
 
-	wd          string
-	verbose     bool
-	incremental bool
-	local       bool
-	noCache     bool
-	registry    string
-	all         bool
+	wd       string
+	verbose  bool
+	local    bool
+	noCache  bool
+	registry string
+	all      bool
 }
 
 func (cmd *deploycmd) Registry() string {
@@ -56,11 +55,6 @@ func (p *deploycmd) flags() []cli.Flag {
 			Name:        "verbose, v",
 			Usage:       "verbose mode",
 			Destination: &p.verbose,
-		},
-		cli.BoolFlag{
-			Name:        "incremental",
-			Usage:       "uses incremental building",
-			Destination: &p.incremental,
 		},
 		cli.BoolFlag{
 			Name:        "no-cache",
@@ -132,47 +126,39 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 // deploySingle deploys a single function, either the current directory or if in the context
 // of an app and user provides relative path as the first arg, it will deploy that function.
 func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *appfile) error {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalln("Couldn't get working directory:", err)
-	}
+	wd := getWd()
 
 	dir := wd
 	// if we're in the context of an app, first arg is path to the function
 	path := c.Args().First()
 	if path != "" {
-		if appf != nil {
-			fmt.Printf("Deploying function at: /%s\n", path)
-			dir = filepath.Join(wd, path)
-			err := os.Chdir(dir)
-			if err != nil {
-				return err
-			}
-			defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
-		} else {
-			// todo: error out, invalid arg?
+		fmt.Printf("Deploying function at: /%s\n", path)
+		dir = filepath.Join(wd, path)
+		err := os.Chdir(dir)
+		if err != nil {
+			return err
 		}
+		defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
 	}
 
 	fpath, ff, err := findAndParseFuncfile(dir)
 	if err != nil {
 		return err
 	}
-	if appf != nil && ff.Path == "" && dir == wd {
-		ff.Path = "/"
+	if appf != nil {
+		if dir == wd {
+			setRootFuncInfo(ff, appf.Name)
+		}
 	}
 	return p.deployFunc(c, appName, wd, fpath, ff)
 }
 
 // deployAll deploys all functions in an app.
 func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) error {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalln("Couldn't get working directory:", err)
-	}
+	wd := getWd()
 
 	var funcFound bool
-	err = filepath.Walk(wd, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(wd, func(path string, info os.FileInfo, err error) error {
 		if path != wd && info.IsDir() {
 			return nil
 		}
@@ -181,7 +167,8 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 			return nil
 		}
 
-		if p.incremental && !isstale(path) {
+		// TODO: test/try this again to speed up deploys.
+		if false && !isstale(path) {
 			return nil
 		}
 		// Then we found a func file, so let's deploy it:
@@ -190,14 +177,24 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 			return err
 		}
 		dir := filepath.Dir(path)
-		if ff.Path == "" && dir == wd {
-			// then in root dir, so this will be deployed at /
-			ff.Path = "/"
+		if dir == wd {
+			setRootFuncInfo(ff, appName)
 		} else {
 			// change dirs
 			err = os.Chdir(dir)
 			if err != nil {
 				return err
+			}
+			p2 := strings.TrimPrefix(dir, wd)
+			if ff.Name == "" {
+				ff.Name = strings.Replace(p2, "/", "-", -1)
+				if strings.HasPrefix(ff.Name, "-") {
+					ff.Name = ff.Name[1:]
+				}
+				// todo: should we prefix appname too?
+			}
+			if ff.Path == "" {
+				ff.Path = p2
 			}
 		}
 		err = p.deployFunc(c, appName, wd, path, ff)
@@ -229,6 +226,10 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 		return errors.New("app name must be provided, try `--app APP_NAME`.")
 	}
 	dir := filepath.Dir(funcfilePath)
+	// get name from directory if it's not defined
+	if funcfile.Name == "" {
+		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
+	}
 	if funcfile.Path == "" {
 		if dir == "." {
 			funcfile.Path = "/"
@@ -258,6 +259,17 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	}
 
 	return p.updateRoute(c, appName, funcfile)
+}
+
+func setRootFuncInfo(ff *funcfile, appName string) {
+	if ff.Name == "" {
+		fmt.Println("setting name")
+		ff.Name = fmt.Sprintf("%s-root", appName)
+	}
+	if ff.Path == "" {
+		// then in root dir, so this will be deployed at /
+		ff.Path = "/"
+	}
 }
 
 func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *funcfile) error {
