@@ -150,7 +150,7 @@ func mavenOpts() string {
 Will eventually move to using a maven archetype.
 */
 func pomFileContent(APIversion, javaVersion string) string {
-	return fmt.Sprintf(pomFile, APIversion, APIversion, javaVersion, javaVersion)
+	return fmt.Sprintf(pomFile, APIversion, javaVersion, javaVersion)
 }
 
 func getFDKAPIVersion() (string, error) {
@@ -192,6 +192,7 @@ const (
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <fdk.version>%s</fdk.version>
     </properties>
     <groupId>com.example.fn</groupId>
     <artifactId>hello</artifactId>
@@ -214,12 +215,12 @@ const (
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>api</artifactId>
-            <version>%s</version>
+            <version>${fdk.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing</artifactId>
-            <version>%s</version>
+            <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
