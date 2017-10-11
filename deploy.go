@@ -12,6 +12,7 @@ import (
 	functions "github.com/funcy/functions_go"
 	"github.com/funcy/functions_go/models"
 	"github.com/urfave/cli"
+	"github.com/fnproject/cli/funcfile"
 )
 
 func deploy() cli.Command {
@@ -221,7 +222,7 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 // Parse func.yaml file, bump version, build image, push to registry, and
 // finally it will update function's route. Optionally,
 // the route can be overriden inside the func.yaml file.
-func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *Funcfile) error {
+func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *funcfile.Funcfile) error {
 	if appName == "" {
 		return errors.New("app name must be provided, try `--app APP_NAME`.")
 	}
@@ -261,7 +262,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	return p.updateRoute(c, appName, funcfile)
 }
 
-func setRootFuncInfo(ff *Funcfile, appName string) {
+func setRootFuncInfo(ff *funcfile.Funcfile, appName string) {
 	if ff.Name == "" {
 		fmt.Println("setting name")
 		ff.Name = fmt.Sprintf("%s-root", appName)
@@ -272,7 +273,7 @@ func setRootFuncInfo(ff *Funcfile, appName string) {
 	}
 }
 
-func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *Funcfile) error {
+func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *funcfile.Funcfile) error {
 	fmt.Printf("Updating route %s using image %s...\n", ff.Path, ff.ImageName())
 	if err := resetBasePath(p.Configuration); err != nil {
 		return fmt.Errorf("error setting endpoint: %v", err)

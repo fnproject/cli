@@ -17,6 +17,7 @@ import (
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/fnproject/cli/langs"
+	"github.com/fnproject/cli/funcfile"
 )
 
 const (
@@ -47,7 +48,7 @@ func getWd() string {
 	return wd
 }
 
-func buildfunc(fpath string, funcfile *Funcfile, noCache bool) (*Funcfile, error) {
+func buildfunc(fpath string, funcfile *funcfile.Funcfile, noCache bool) (*funcfile.Funcfile, error) {
 	var err error
 	if funcfile.Version == "" {
 		funcfile, err = bumpIt(fpath, Patch)
@@ -79,7 +80,7 @@ func localBuild(path string, steps []string) error {
 	return nil
 }
 
-func dockerBuild(fpath string, ff *Funcfile, noCache bool) error {
+func dockerBuild(fpath string, ff *funcfile.Funcfile, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
@@ -187,7 +188,7 @@ func exists(name string) bool {
 	return true
 }
 
-func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *Funcfile) (string, error) {
+func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *funcfile.Funcfile) (string, error) {
 	if ff.Entrypoint == "" && ff.Cmd == "" {
 		return "", errors.New("entrypoint and cmd are missing, you must provide one or the other")
 	}
@@ -272,7 +273,7 @@ func extractEnvConfig(configs []string) map[string]string {
 	return c
 }
 
-func dockerPush(ff *Funcfile) error {
+func dockerPush(ff *funcfile.Funcfile) error {
 	err := validateImageName(ff.ImageName())
 	if err != nil {
 		return err
