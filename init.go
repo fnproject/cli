@@ -186,7 +186,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 func (a *initFnCmd) generateBoilerplate() error {
 	helper := langs.GetLangHelper(a.Runtime)
 	if helper != nil && helper.HasBoilerplate() {
-		if err := helper.GenerateBoilerplate(); err != nil {
+		if err := helper.GenerateBoilerplate(&a.Funcfile); err != nil {
 			if err == langs.ErrBoilerplateExists {
 				return nil
 			}

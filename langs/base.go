@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+
+	"github.com/fnproject/cli/funcfile"
 )
 
 //used to indicate the default supported version of java
@@ -62,9 +64,9 @@ type LangHelper interface {
 	AfterBuild() error
 	// HasBoilerplate indicates whether a language has support for generating function boilerplate.
 	HasBoilerplate() bool
-	// GenerateBoilerplate generates basic function boilerplate. Returns ErrBoilerplateExists if the function file
-	// already exists.
-	GenerateBoilerplate() error
+	// GenerateBoilerplate generates basic function boilerplate and possibly modifies values of the initial func file.
+	// Returns ErrBoilerplateExists if the function file already exists.
+	GenerateBoilerplate(ff *funcfile.Funcfile) error
 }
 
 // BaseHelper is empty implementation of LangHelper for embedding in implementations.
@@ -82,7 +84,7 @@ func (h *BaseHelper) HasPreBuild() bool             { return false }
 func (h *BaseHelper) PreBuild() error               { return nil }
 func (h *BaseHelper) AfterBuild() error             { return nil }
 func (h *BaseHelper) HasBoilerplate() bool          { return false }
-func (h *BaseHelper) GenerateBoilerplate() error    { return nil }
+func (h *BaseHelper) GenerateBoilerplate(ff *funcfile.Funcfile) error { return nil }
 
 // exists checks if a file exists
 func exists(name string) bool {

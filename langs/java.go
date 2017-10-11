@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"github.com/fnproject/cli/funcfile"
 )
 
 // JavaLangHelper provides a set of helper methods for the lifecycle of Java Maven projects
@@ -46,7 +47,7 @@ func (lh *JavaLangHelper) HasBoilerplate() bool { return true }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime. The default boilerplate is for a Maven
 // project.
-func (lh *JavaLangHelper) GenerateBoilerplate() error {
+func (lh *JavaLangHelper) GenerateBoilerplate(ff *funcfile.Funcfile) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -60,6 +61,22 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 	apiVersion, err := getFDKAPIVersion()
 	if err != nil {
 		return err
+	}
+
+	// Lock FDK build and runtime images to the API version, unless already specified.
+	if len(ff.BuildImage) == 0 {
+		if lh.version == "1.8" {
+			ff.BuildImage = "fnproject/fn-java-fdk-build:" + apiVersion
+		} else if lh.version == "9" {
+			ff.BuildImage = "fnproject/fn-java-fdk-build:jdk9-" + apiVersion
+		}
+	}
+	if len(ff.RunImage) == 0 {
+		if lh.version == "1.8" {
+			ff.RunImage = "fnproject/fn-java-fdk:" + apiVersion
+		} else if lh.version == "9" {
+			ff.RunImage = "fnproject/fn-java-fdk:jdk9-" + apiVersion
+		}
 	}
 
 	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, lh.version)), os.FileMode(0644)); err != nil {
