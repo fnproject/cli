@@ -175,7 +175,7 @@ func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedE
 
 	var stdout, stderr bytes.Buffer
 
-	ff := &funcfile{Name: target}
+	ff := &Funcfile{Name: target}
 	if err := runff(ff, stdin, &stdout, &stderr, "", envVars, nil, DefaultFormat, 1); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\nstderr:%s\n", err, stdout.String(), stderr.String())
 	}

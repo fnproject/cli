@@ -56,7 +56,7 @@ func init() {
 
 type initFnCmd struct {
 	force bool
-	funcfile
+	Funcfile
 }
 
 func initFlags(a *initFnCmd) []cli.Flag {
@@ -99,7 +99,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 
 func initFn() cli.Command {
 	a := &initFnCmd{}
-	// funcfile := &funcfile{}
+	// Funcfile := &Funcfile{}
 
 	return cli.Command{
 		Name:        "init",
@@ -174,7 +174,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 	}
 
-	ff := a.funcfile
+	ff := a.Funcfile
 	if err := encodeFuncfileYAML("func.yaml", &ff); err != nil {
 		return err
 	}

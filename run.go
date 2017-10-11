@@ -66,12 +66,12 @@ func runflags() []cli.Flag {
 	}
 }
 
-func preRun(c *cli.Context) (*funcfile, []string, error) {
+func preRun(c *cli.Context) (*Funcfile, []string, error) {
 	wd := getWd()
 	// if image name is passed in, it will run that image
 	path := c.Args().First() // TODO: should we ditch this?
 	var err error
-	var ff *funcfile
+	var ff *Funcfile
 	var fpath string
 
 	if path != "" {
@@ -147,7 +147,7 @@ func (r *runCmd) run(c *cli.Context) error {
 }
 
 // TODO: share all this stuff with the Docker driver in server or better yet, actually use the Docker driver
-func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int) error {
+func runff(ff *Funcfile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int) error {
 	sh := []string{"docker", "run", "--rm", "-i", fmt.Sprintf("--memory=%dm", ff.Memory)}
 
 	var err error

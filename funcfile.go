@@ -42,7 +42,7 @@ type Expects struct {
 	Config []InputVar `yaml:"config" json:"config"`
 }
 
-type funcfile struct {
+type Funcfile struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 
 	// Build params
@@ -69,7 +69,7 @@ type funcfile struct {
 	Expects Expects `yaml:"expects,omitempty" json:"expects,omitempty"`
 }
 
-func (ff *funcfile) ImageName() string {
+func (ff *Funcfile) ImageName() string {
 	fname := ff.Name
 	if !strings.Contains(fname, "/") {
 		// then we'll prefix FN_REGISTRY
@@ -87,7 +87,7 @@ func (ff *funcfile) ImageName() string {
 	return fname
 }
 
-func (ff *funcfile) RuntimeTag() (runtime, tag string) {
+func (ff *Funcfile) RuntimeTag() (runtime, tag string) {
 	if ff.Runtime == "" {
 		return "", ""
 	}
@@ -111,7 +111,7 @@ func findFuncfile(path string) (string, error) {
 	}
 	return "", newNotFoundError("could not find function file")
 }
-func findAndParseFuncfile(path string) (fpath string, ff *funcfile, err error) {
+func findAndParseFuncfile(path string) (fpath string, ff *Funcfile, err error) {
 	fpath, err = findFuncfile(path)
 	if err != nil {
 		return "", nil, err
@@ -123,11 +123,11 @@ func findAndParseFuncfile(path string) (fpath string, ff *funcfile, err error) {
 	return fpath, ff, err
 }
 
-func loadFuncfile() (string, *funcfile, error) {
+func loadFuncfile() (string, *Funcfile, error) {
 	return findAndParseFuncfile(".")
 }
 
-func parseFuncfile(path string) (*funcfile, error) {
+func parseFuncfile(path string) (*Funcfile, error) {
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json":
@@ -138,7 +138,7 @@ func parseFuncfile(path string) (*funcfile, error) {
 	return nil, errUnexpectedFileFormat
 }
 
-func storeFuncfile(path string, ff *funcfile) error {
+func storeFuncfile(path string, ff *Funcfile) error {
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json":
@@ -149,30 +149,30 @@ func storeFuncfile(path string, ff *funcfile) error {
 	return errUnexpectedFileFormat
 }
 
-func decodeFuncfileJSON(path string) (*funcfile, error) {
+func decodeFuncfileJSON(path string) (*Funcfile, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", path, err)
 	}
-	ff := &funcfile{}
+	ff := &Funcfile{}
 	// ff.Route = &fnmodels.Route{}
 	err = json.NewDecoder(f).Decode(ff)
 	// ff := fff.MakeFuncFile()
 	return ff, err
 }
 
-func decodeFuncfileYAML(path string) (*funcfile, error) {
+func decodeFuncfileYAML(path string) (*Funcfile, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", path, err)
 	}
-	ff := &funcfile{}
+	ff := &Funcfile{}
 	err = yaml.Unmarshal(b, ff)
 	// ff := fff.MakeFuncFile()
 	return ff, err
 }
 
-func encodeFuncfileJSON(path string, ff *funcfile) error {
+func encodeFuncfileJSON(path string, ff *Funcfile) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return fmt.Errorf("could not open %s for encoding. Error: %v", path, err)
@@ -180,7 +180,7 @@ func encodeFuncfileJSON(path string, ff *funcfile) error {
 	return json.NewEncoder(f).Encode(ff)
 }
 
-func encodeFuncfileYAML(path string, ff *funcfile) error {
+func encodeFuncfileYAML(path string, ff *Funcfile) error {
 	b, err := yaml.Marshal(ff)
 	if err != nil {
 		return fmt.Errorf("could not encode function file. Error: %v", err)

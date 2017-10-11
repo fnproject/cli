@@ -265,7 +265,7 @@ func routeWithFlags(c *cli.Context, rt *fnmodels.Route) {
 	}
 }
 
-func routeWithFuncFile(ff *funcfile, rt *fnmodels.Route) error {
+func routeWithFuncFile(ff *Funcfile, rt *fnmodels.Route) error {
 	var err error
 	if ff == nil {
 		_, ff, err = loadFuncfile()

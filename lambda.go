@@ -178,7 +178,7 @@ func createFunctionYaml(opts createImageOptions, functionName string) error {
 	strs := strings.Split(opts.Name, "/")
 	path := fmt.Sprintf("/%s", strs[1])
 
-	funcDesc := &funcfile{
+	funcDesc := &Funcfile{
 		Name:    opts.Name,
 		Version: "0.0.1",
 		Runtime: opts.Base,
