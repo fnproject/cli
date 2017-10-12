@@ -12,6 +12,7 @@ import (
 	functions "github.com/funcy/functions_go"
 	"github.com/funcy/functions_go/models"
 	"github.com/urfave/cli"
+	"github.com/fnproject/cli/funcfile"
 )
 
 func deploy() cli.Command {
@@ -221,7 +222,7 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 // Parse func.yaml file, bump version, build image, push to registry, and
 // finally it will update function's route. Optionally,
 // the route can be overriden inside the func.yaml file.
-func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *funcfile) error {
+func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *funcfile.Funcfile) error {
 	if appName == "" {
 		return errors.New("app name must be provided, try `--app APP_NAME`.")
 	}
@@ -245,7 +246,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 		return err
 	}
 	funcfile.Version = funcfile2.Version
-	// TODO: this whole funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
+	// TODO: this whole Funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
 
 	_, err = buildfunc(funcfilePath, funcfile, p.noCache)
 	if err != nil {
@@ -261,7 +262,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	return p.updateRoute(c, appName, funcfile)
 }
 
-func setRootFuncInfo(ff *funcfile, appName string) {
+func setRootFuncInfo(ff *funcfile.Funcfile, appName string) {
 	if ff.Name == "" {
 		fmt.Println("setting name")
 		ff.Name = fmt.Sprintf("%s-root", appName)
@@ -272,7 +273,7 @@ func setRootFuncInfo(ff *funcfile, appName string) {
 	}
 }
 
-func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *funcfile) error {
+func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *funcfile.Funcfile) error {
 	fmt.Printf("Updating route %s using image %s...\n", ff.Path, ff.ImageName())
 	if err := resetBasePath(p.Configuration); err != nil {
 		return fmt.Errorf("error setting endpoint: %v", err)
@@ -281,7 +282,7 @@ func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *funcfile) er
 	routesCmd := routesCmd{client: client.APIClient()}
 	rt := &models.Route{}
 	if err := routeWithFuncFile(ff, rt); err != nil {
-		return fmt.Errorf("error getting route with funcfile: %s", err)
+		return fmt.Errorf("error getting route with Funcfile: %s", err)
 	}
 	return routesCmd.putRoute(c, appName, ff.Path, rt)
 }

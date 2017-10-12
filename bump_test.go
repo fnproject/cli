@@ -56,7 +56,7 @@ func verifyVersion(tmp, version string) error {
 		return err
 	}
 	if ff.Version != version {
-		return fmt.Errorf("funcfile version %v does not match expected version %v", ff.Version, version)
+		return fmt.Errorf("Funcfile version %v does not match expected version %v", ff.Version, version)
 	}
 	return nil
 }

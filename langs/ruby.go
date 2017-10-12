@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"github.com/fnproject/cli/funcfile"
 )
 
 type RubyLangHelper struct {
@@ -43,7 +44,7 @@ func (lh *RubyLangHelper) Entrypoint() string {
 
 func (lh *RubyLangHelper) HasBoilerplate() bool { return true }
 
-func (lh *RubyLangHelper) GenerateBoilerplate() error {
+func (lh *RubyLangHelper) GenerateBoilerplate(ff *funcfile.Funcfile) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err

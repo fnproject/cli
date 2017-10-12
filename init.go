@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	"github.com/fnproject/cli/langs"
+	"github.com/fnproject/cli/funcfile"
 	"github.com/funcy/functions_go/models"
 	"github.com/urfave/cli"
 )
@@ -56,7 +57,7 @@ func init() {
 
 type initFnCmd struct {
 	force bool
-	funcfile
+	funcfile.Funcfile
 }
 
 func initFlags(a *initFnCmd) []cli.Flag {
@@ -99,7 +100,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 
 func initFn() cli.Command {
 	a := &initFnCmd{}
-	// funcfile := &funcfile{}
+	// Funcfile := &Funcfile{}
 
 	return cli.Command{
 		Name:        "init",
@@ -174,7 +175,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 	}
 
-	ff := a.funcfile
+	ff := a.Funcfile
 	if err := encodeFuncfileYAML("func.yaml", &ff); err != nil {
 		return err
 	}
@@ -185,7 +186,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 func (a *initFnCmd) generateBoilerplate() error {
 	helper := langs.GetLangHelper(a.Runtime)
 	if helper != nil && helper.HasBoilerplate() {
-		if err := helper.GenerateBoilerplate(); err != nil {
+		if err := helper.GenerateBoilerplate(&a.Funcfile); err != nil {
 			if err == langs.ErrBoilerplateExists {
 				return nil
 			}

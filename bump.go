@@ -9,6 +9,8 @@ import (
 	bumper "github.com/giantswarm/semver-bump/bump"
 	"github.com/giantswarm/semver-bump/storage"
 	"github.com/urfave/cli"
+
+	"github.com/fnproject/cli/funcfile"
 )
 
 type VType int
@@ -78,7 +80,7 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 	_, err = bumpItWd(wd, t)
 	return err
 }
-func bumpItWd(wd string, vtype VType) (*funcfile, error) {
+func bumpItWd(wd string, vtype VType) (*funcfile.Funcfile, error) {
 	fn, err := findFuncfile(wd)
 	if err != nil {
 		return nil, err
@@ -86,8 +88,8 @@ func bumpItWd(wd string, vtype VType) (*funcfile, error) {
 	return bumpIt(fn, vtype)
 }
 
-// returns updated funcfile
-func bumpIt(fpath string, vtype VType) (*funcfile, error) {
+// returns updated Funcfile
+func bumpIt(fpath string, vtype VType) (*funcfile.Funcfile, error) {
 	// fmt.Println("Bumping version in func file at: ", fpath)
 	funcfile, err := parseFuncfile(fpath)
 	if err != nil {
@@ -106,7 +108,7 @@ func bumpIt(fpath string, vtype VType) (*funcfile, error) {
 	return funcfile, nil
 }
 
-func bumpVersion(funcfile *funcfile, t VType) (*funcfile, error) {
+func bumpVersion(funcfile *funcfile.Funcfile, t VType) (*funcfile.Funcfile, error) {
 	funcfile.Name = cleanImageName(funcfile.Name)
 	if funcfile.Version == "" {
 		funcfile.Version = initialVersion

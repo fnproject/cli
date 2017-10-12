@@ -17,6 +17,8 @@ import (
 	fnmodels "github.com/funcy/functions_go/models"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
+
+	"github.com/fnproject/cli/funcfile"
 )
 
 type routesCmd struct {
@@ -265,7 +267,7 @@ func routeWithFlags(c *cli.Context, rt *fnmodels.Route) {
 	}
 }
 
-func routeWithFuncFile(ff *funcfile, rt *fnmodels.Route) error {
+func routeWithFuncFile(ff *funcfile.Funcfile, rt *fnmodels.Route) error {
 	var err error
 	if ff == nil {
 		_, ff, err = loadFuncfile()

@@ -17,10 +17,12 @@ import (
 	functions "github.com/funcy/functions_go"
 	"github.com/onsi/gomega"
 	"github.com/urfave/cli"
+
+	"github.com/fnproject/cli/funcfile"
 )
 
 type testStruct struct {
-	Tests []fftest `yaml:"tests,omitempty" json:"tests,omitempty"`
+	Tests []funcfile.Fftest `yaml:"tests,omitempty" json:"tests,omitempty"`
 }
 
 func testfn() cli.Command {
@@ -77,7 +79,7 @@ func (t *testcmd) test(c *cli.Context) error {
 		return err
 	}
 
-	var tests []fftest
+	var tests []funcfile.Fftest
 
 	// Look for test.json file too
 	tfile := "test.json"
@@ -153,7 +155,7 @@ func (t *testcmd) test(c *cli.Context) error {
 	return nil
 }
 
-func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
+func runlocaltest(target string, in *funcfile.InputMap, expectedOut *funcfile.OutputMap, expectedErr *string, envVars []string) error {
 	inBytes, err := json.Marshal(in.Body)
 	if err != nil {
 		return err
@@ -175,7 +177,7 @@ func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedE
 
 	var stdout, stderr bytes.Buffer
 
-	ff := &funcfile{Name: target}
+	ff := &funcfile.Funcfile{Name: target}
 	if err := runff(ff, stdin, &stdout, &stderr, "", envVars, nil, DefaultFormat, 1); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\nstderr:%s\n", err, stdout.String(), stderr.String())
 	}
@@ -192,7 +194,7 @@ func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedE
 	return fmt.Errorf("mismatched output found.\nexpected:\n%s\ngot:\n%s\nlogs:\n%s\n", expectedString, out, stderr.String())
 }
 
-func runremotetest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
+func runremotetest(target string, in *funcfile.InputMap, expectedOut *funcfile.OutputMap, expectedErr *string, envVars []string) error {
 	inBytes, err := json.Marshal(in)
 	if err != nil {
 		return err

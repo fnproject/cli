@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"github.com/fnproject/cli/funcfile"
 )
 
 type RustLangHelper struct {
@@ -38,7 +39,7 @@ func mainContent() string {
 `
 }
 
-func (lh *RustLangHelper) GenerateBoilerplate() error {
+func (lh *RustLangHelper) GenerateBoilerplate(ff *funcfile.Funcfile) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
