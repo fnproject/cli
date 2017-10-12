@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	client "github.com/fnproject/cli/client"
-	fnclient "github.com/funcy/functions_go/client"
-	apicall "github.com/funcy/functions_go/client/call"
-	"github.com/funcy/functions_go/models"
+	fnclient "github.com/fnproject/fn_go/client"
+	apicall "github.com/fnproject/fn_go/client/call"
+	"github.com/fnproject/fn_go/models"
 	"github.com/urfave/cli"
 )
 

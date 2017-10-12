@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/fnproject/cli/client"
-	functions "github.com/funcy/functions_go"
+	functions "github.com/fnproject/fn_go"
 	"github.com/onsi/gomega"
 	"github.com/urfave/cli"
 )

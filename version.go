@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"os"
 
-	functions "github.com/funcy/functions_go"
+	functions "github.com/fnproject/fn_go"
 	"github.com/urfave/cli"
 )
 

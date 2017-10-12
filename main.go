@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	functions "github.com/funcy/functions_go"
+	functions "github.com/fnproject/fn_go"
 	"github.com/urfave/cli"
 )
 
@@ -49,7 +49,7 @@ USAGE:
 
 ENVIRONMENT VARIABLES:
    API_URL - Fn server address
-   FN_REGISTRY - Docker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]treeder]{{if .VisibleCommands}}
+   FN_REGISTRY - Docker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]username]{{if .VisibleCommands}}
 
 COMMANDS:{{range .VisibleCategories}}{{if .Name}}
    {{.Name}}:{{end}}{{range .VisibleCommands}}

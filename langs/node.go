@@ -5,10 +5,10 @@ type NodeLangHelper struct {
 }
 
 func (lh *NodeLangHelper) BuildFromImage() string {
-	return "funcy/node:dev"
+	return "fnproject/node:dev"
 }
 func (lh *NodeLangHelper) RunFromImage() string {
-	return "funcy/node"
+	return "fnproject/node"
 }
 
 func (lh *NodeLangHelper) Entrypoint() string {

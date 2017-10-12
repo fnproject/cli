@@ -9,8 +9,8 @@ import (
 	"time"
 
 	client "github.com/fnproject/cli/client"
-	functions "github.com/funcy/functions_go"
-	"github.com/funcy/functions_go/models"
+	functions "github.com/fnproject/fn_go"
+	"github.com/fnproject/fn_go/models"
 	"github.com/urfave/cli"
 )
 

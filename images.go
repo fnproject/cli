@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/funcy/functions_go"
+	"github.com/fnproject/fn_go"
 	"github.com/urfave/cli"
 )
 
