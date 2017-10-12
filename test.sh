@@ -46,18 +46,21 @@ $fn test
 cd ..
 
 # Test 'docker' runtime deploy
-mkdir docker_runtime_test 
-cp ../test/funcfile-docker-rt-tests/testfiles/Dockerfile docker_runtime_test/
-cp ../test/funcfile-docker-rt-tests/testfiles/func.go docker_runtime_test/
-cd docker_runtime_test
 funcname="dockerfunc"
+mkdir $funcname 
+cp ../test/funcfile-docker-rt-tests/testfiles/Dockerfile $funcname/
+cp ../test/funcfile-docker-rt-tests/testfiles/func.go $funcname/
+cd $funcname
 $fn init --name $funcname
 $fn apps create myapp1
 $fn apps l
 $fn deploy --local --app myapp1
-$fn routes create myapp1 /$funcname
 $fn call myapp1 /$funcname
+# todo: would be nice to have a flag to output parseable formats in cli, eg: `fn deploy --output json` would return json with version and other info 
+$fn routes create myapp1 /another --image $FN_REGISTRY/$funcname:0.0.2
+$fn call myapp1 /another
 
 docker rm --force functions
 
 cd ../..
+rm -rf tmp

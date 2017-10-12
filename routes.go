@@ -312,10 +312,6 @@ func (a *routesCmd) create(c *cli.Context) error {
 	rt.Path = route
 	rt.Image = c.Args().Get(2)
 
-	if err := routeWithFuncFile(nil, rt); err != nil {
-		return fmt.Errorf("error getting route info: %s", err)
-	}
-
 	routeWithFlags(c, rt)
 
 	if rt.Path == "" {
