@@ -10,7 +10,7 @@ import (
 )
 
 // Version of Fn CLI
-var Version = "0.4.10"
+var Version = "0.4.11"
 
 func version() cli.Command {
 	r := versionCmd{VersionApi: functions.NewVersionApi()}
