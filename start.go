@@ -25,6 +25,11 @@ func startCmd() cli.Command {
 				Name:  "detach, d",
 				Usage: "Run container in background.",
 			},
+			cli.IntFlag{
+				Name:  "port, p",
+				Value: 8080,
+				Usage: "Specify port number to bind to on the host.",
+			},
 		},
 	}
 }
@@ -44,7 +49,7 @@ func start(c *cli.Context) error {
 		"--name", "functions",
 		"-v", fmt.Sprintf("%s/data:/app/data", wd),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
-		"-p", "8080:8080",
+		"-p", fmt.Sprintf("%d:8080", c.Int("port")),
 	}
 	for _, v := range denvs {
 		args = append(args, "-e", v)
