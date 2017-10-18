@@ -29,6 +29,11 @@ func startCmd() cli.Command {
 				Name:  "env-file",
 				Usage: "Path to Fn server configuration file.",
 			},
+			cli.IntFlag{
+				Name:  "port, p",
+				Value: 8080,
+				Usage: "Specify port number to bind to on the host.",
+			},
 		},
 	}
 }
@@ -43,7 +48,7 @@ func start(c *cli.Context) error {
 		"-v", fmt.Sprintf("%s/data:/app/data", wd),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"--privileged",
-		"-p", "8080:8080",
+		"-p", fmt.Sprintf("%d:8080", c.Int("port")),
 		"--entrypoint", "./fnserver",
 	}
 	if c.String("log-level") != "" {
