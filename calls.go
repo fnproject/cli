@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/fnproject/cli/client"
 	fnclient "github.com/fnproject/fn_go/client"
@@ -33,9 +34,32 @@ func calls() cli.Command {
 			{
 				Name:      "list",
 				Aliases:   []string{"l"},
-				Usage:     "list all calls for specific app / route route is optional",
-				ArgsUsage: "<app> [route]",
+				Usage:     "list all calls for the specific app. Route is optional",
+				ArgsUsage: "<app>",
 				Action:    c.list,
+				Flags: []cli.Flag{
+					cli.StringFlag{
+						Name:  "path",
+						Usage: "function's path",
+					},
+					cli.StringFlag{
+						Name:  "cursor",
+						Usage: "pagination cursor",
+					},
+					cli.StringFlag{
+						Name:  "from-time",
+						Usage: "'start' timestamp",
+					},
+					cli.StringFlag{
+						Name:  "to-time",
+						Usage: "'stop' timestamp",
+					},
+					cli.Int64Flag{
+						Name:  "per-page",
+						Usage: "number of calls to return",
+						Value: int64(0),
+					},
+				},
 			},
 		},
 	}
@@ -82,10 +106,38 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 		App:     app,
 		Context: context.Background(),
 	}
-	if ctx.Args().Get(1) != "" {
-		route := ctx.Args().Get(1)
+	if ctx.String("cursor") != "" {
+		cursor := ctx.String("cursor")
+		params.Cursor = &cursor
+	}
+	if ctx.String("path") != "" {
+		route := ctx.String("path")
 		params.Path = &route
 	}
+	if ctx.String("from-time") != "" {
+		fromTime := ctx.String("from-time")
+		fromTime_int64, err := time.Parse(time.RFC3339, fromTime)
+		if err != nil {
+			return err
+		}
+		res := fromTime_int64.UnixNano() / int64(time.Second)
+		params.FromTime = &res
+
+	}
+	if ctx.String("to-time") != "" {
+		toTime := ctx.String("from-time")
+		toTime_int64, err := time.Parse(time.RFC3339, toTime)
+		if err != nil {
+			return err
+		}
+		res := toTime_int64.UnixNano() / int64(time.Second)
+		params.ToTime = &res
+	}
+	if ctx.Int64("per-page") != 0 {
+		per_page := ctx.Int64("per-page")
+		params.PerPage = &per_page
+	}
+
 	resp, err := call.client.Call.GetAppsAppCalls(&params)
 	if err != nil {
 		switch e := err.(type) {
