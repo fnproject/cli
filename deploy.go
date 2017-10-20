@@ -9,14 +9,14 @@ import (
 	"time"
 
 	client "github.com/fnproject/cli/client"
-	functions "github.com/funcy/functions_go"
-	"github.com/funcy/functions_go/models"
+	fnclient "github.com/fnproject/fn_go/client"
+	"github.com/fnproject/fn_go/models"
 	"github.com/urfave/cli"
 )
 
 func deploy() cli.Command {
 	cmd := deploycmd{
-		RoutesApi: functions.NewRoutesApi(),
+		Fn: client.APIClient(),
 	}
 	var flags []cli.Flag
 	flags = append(flags, cmd.flags()...)
@@ -30,7 +30,7 @@ func deploy() cli.Command {
 
 type deploycmd struct {
 	appName string
-	*functions.RoutesApi
+	*fnclient.Fn
 
 	wd       string
 	verbose  bool
@@ -274,9 +274,6 @@ func setRootFuncInfo(ff *funcfile, appName string) {
 
 func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *funcfile) error {
 	fmt.Printf("Updating route %s using image %s...\n", ff.Path, ff.ImageName())
-	if err := resetBasePath(p.Configuration); err != nil {
-		return fmt.Errorf("error setting endpoint: %v", err)
-	}
 
 	routesCmd := routesCmd{client: client.APIClient()}
 	rt := &models.Route{}

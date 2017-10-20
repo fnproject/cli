@@ -5,15 +5,15 @@ import (
 	"errors"
 	"fmt"
 
-	client "github.com/fnproject/cli/client"
-	fnclient "github.com/funcy/functions_go/client"
-	apicall "github.com/funcy/functions_go/client/call"
-	"github.com/funcy/functions_go/models"
+	"github.com/fnproject/cli/client"
+	fnclient "github.com/fnproject/fn_go/client"
+	apicall "github.com/fnproject/fn_go/client/call"
+	"github.com/fnproject/fn_go/models"
 	"github.com/urfave/cli"
 )
 
 type callsCmd struct {
-	client *fnclient.Functions
+	client *fnclient.Fn
 }
 
 func calls() cli.Command {
@@ -84,12 +84,12 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 	}
 	if ctx.Args().Get(1) != "" {
 		route := ctx.Args().Get(1)
-		params.Route = &route
+		params.Path = &route
 	}
 	resp, err := call.client.Call.GetAppsAppCalls(&params)
 	if err != nil {
 		switch e := err.(type) {
-		case *apicall.GetCallsCallNotFound:
+		case *apicall.GetAppsAppCallsNotFound:
 			return errors.New(e.Payload.Error.Message)
 		default:
 			return err

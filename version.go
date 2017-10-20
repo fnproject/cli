@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 
-	functions "github.com/funcy/functions_go"
+	client "github.com/fnproject/cli/client"
+	versionclient "github.com/fnproject/fn_go/client/version"
 	"github.com/urfave/cli"
 )
 
@@ -13,7 +13,7 @@ import (
 var Version = "0.4.11"
 
 func version() cli.Command {
-	r := versionCmd{VersionApi: functions.NewVersionApi()}
+	r := versionCmd{client: versionclient.New(client.GetTransportAndRegistry())}
 	return cli.Command{
 		Name:   "version",
 		Usage:  "displays fn and functions daemon versions",
@@ -22,7 +22,7 @@ func version() cli.Command {
 }
 
 type versionCmd struct {
-	*functions.VersionApi
+	client *versionclient.Client
 }
 
 func (r *versionCmd) version(c *cli.Context) error {
@@ -30,18 +30,11 @@ func (r *versionCmd) version(c *cli.Context) error {
 	if apiURL == "" {
 		apiURL = "http://localhost:8080"
 	}
-
-	u, err := url.Parse(apiURL)
-	if err != nil {
-		return err
-	}
-	r.Configuration.BasePath = u.String()
-
 	fmt.Println("Client version:", Version)
-	v, _, err := r.VersionGet()
+	v, err := r.client.GetVersion(nil)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Server version", v.Version)
+	fmt.Println("Server version", v.Payload.Version)
 	return nil
 }

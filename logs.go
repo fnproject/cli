@@ -5,13 +5,13 @@ import (
 	"fmt"
 
 	client "github.com/fnproject/cli/client"
-	fnclient "github.com/funcy/functions_go/client"
-	apicall "github.com/funcy/functions_go/client/operations"
+	fnclient "github.com/fnproject/fn_go/client"
+	apicall "github.com/fnproject/fn_go/client/operations"
 	"github.com/urfave/cli"
 )
 
 type logsCmd struct {
-	client *fnclient.Functions
+	client *fnclient.Fn
 }
 
 func logs() cli.Command {
