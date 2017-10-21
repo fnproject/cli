@@ -125,7 +125,7 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 
 	}
 	if ctx.String("to-time") != "" {
-		toTime := ctx.String("from-time")
+		toTime := ctx.String("to-time")
 		toTime_int64, err := time.Parse(time.RFC3339, toTime)
 		if err != nil {
 			return err
