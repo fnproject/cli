@@ -56,8 +56,8 @@ func calls() cli.Command {
 					},
 					cli.Int64Flag{
 						Name:  "per-page",
-						Usage: "number of calls to return",
-						Value: int64(0),
+						Usage: "number of calls to return, if --per-page=-1 all calls will be listed",
+						Value: int64(-1),
 					},
 				},
 			},
@@ -133,7 +133,7 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 		res := toTime_int64.Unix() / int64(time.Second)
 		params.ToTime = &res
 	}
-	if ctx.Int64("per-page") != 0 {
+	if ctx.Int64("per-page") > 0 {
 		per_page := ctx.Int64("per-page")
 		params.PerPage = &per_page
 	}
