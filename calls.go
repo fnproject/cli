@@ -56,8 +56,8 @@ func calls() cli.Command {
 					},
 					cli.Int64Flag{
 						Name:  "per-page",
-						Usage: "number of calls to return, if --per-page=-1 all calls will be listed",
-						Value: int64(-1),
+						Usage: "number of calls to return",
+						Value: int64(30),
 					},
 				},
 			},
