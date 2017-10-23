@@ -7,6 +7,7 @@ import (
 	fnclient "github.com/fnproject/fn_go/client"
 	openapi "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"fmt"
 )
 
 const (
@@ -16,7 +17,8 @@ const (
 func Host() string {
 	h, err := HostURL()
 	if err != nil {
-		panic(err)
+		fmt.Fprint(os.Stderr, err.Error())
+		os.Exit(1)
 	}
 	return h.Host
 }

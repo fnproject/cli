@@ -120,7 +120,7 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		res := fromTime_int64.Unix() / int64(time.Second)
+		res := fromTime_int64.Unix()
 		params.FromTime = &res
 
 	}
@@ -130,7 +130,7 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		res := toTime_int64.Unix() / int64(time.Second)
+		res := toTime_int64.Unix()
 		params.ToTime = &res
 	}
 	if ctx.Int64("per-page") > 0 {
