@@ -12,15 +12,15 @@ import (
 	"text/tabwriter"
 
 	client "github.com/fnproject/cli/client"
-	fnclient "github.com/funcy/functions_go/client"
-	apiroutes "github.com/funcy/functions_go/client/routes"
-	fnmodels "github.com/funcy/functions_go/models"
+	fnclient "github.com/fnproject/fn_go/client"
+	apiroutes "github.com/fnproject/fn_go/client/routes"
+	fnmodels "github.com/fnproject/fn_go/models"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
 )
 
 type routesCmd struct {
-	client *fnclient.Functions
+	client *fnclient.Fn
 }
 
 var routeFlags = []cli.Flag{

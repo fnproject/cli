@@ -3,11 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"net/url"
 	"os"
 	"strings"
 
-	functions "github.com/funcy/functions_go"
 	"github.com/urfave/cli"
 )
 
@@ -136,20 +134,4 @@ func main() {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		os.Exit(1)
 	}
-}
-
-func resetBasePath(c *functions.Configuration) error {
-	apiURL := os.Getenv("API_URL")
-	if apiURL == "" {
-		apiURL = "http://localhost:8080"
-	}
-
-	u, err := url.Parse(apiURL)
-	if err != nil {
-		return err
-	}
-	u.Path = "/v1"
-	c.BasePath = u.String()
-
-	return nil
 }
