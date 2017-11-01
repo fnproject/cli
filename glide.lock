@@ -1,10 +1,10 @@
-hash: af54042f7a4dca55ffb5962d600a586ad677f3353062121033e40a0daa0ee047
-updated: 2017-10-21T01:50:25.975596+03:00
+hash: 00d8ff3232cc70f02a4b2b2895ba354906090de509b193549fce030a9149fbbc
+updated: 2017-11-01T10:39:56.91894259Z
 imports:
 - name: github.com/asaskevich/govalidator
-  version: 15028e809df8c71964e8efa6c11e81d5c0262302
+  version: ddb193b4c7bfa1d1c1923ae05a1ee8fb0cd45cf3
 - name: github.com/aws/aws-sdk-go
-  version: 0b712b483e38c7e1efe9c3e0249de0a8f131cb4e
+  version: ee1f179877b2daf2aaabf71fa900773bf8842253
   subpackages:
   - aws
   - aws/awserr
@@ -34,7 +34,7 @@ imports:
   - service/lambda
   - service/sts
 - name: github.com/Azure/go-ansiterm
-  version: 19f72df4d05d31cbe1c56bfc8045c96babff6c7e
+  version: d6e3b3328b783f23731bc4d058875b0371ff8109
   subpackages:
   - winterm
 - name: github.com/coreos/go-semver
@@ -42,9 +42,8 @@ imports:
   subpackages:
   - semver
 - name: github.com/docker/docker
-  version: cdf870bd0b5fa678b10ef2708cca7ad776b4913c
+  version: ba99c19b593bdb9e7b90793681fe89b0a91781ed
   subpackages:
-  - pkg/jsonlog
   - pkg/term
   - pkg/term/windows
 - name: github.com/docker/go-units
@@ -59,21 +58,13 @@ imports:
   - client/routes
   - client/version
   - models
-- name: github.com/funcy/functions_go
-  version: e046aa4ca1f1028a04fc51395297ff07515cb0b6
-  subpackages:
-  - client
-  - client/apps
-  - client/call
-  - client/routes
-  - models
 - name: github.com/giantswarm/semver-bump
   version: 88e6c9f2fe390c48839eaba32490fd09cb3b581c
   subpackages:
   - bump
   - storage
 - name: github.com/go-ini/ini
-  version: c787282c39ac1fc618827141a1f762240def08a3
+  version: f280b3ba517bf5fc98922624f21fb0e7a92adaec
 - name: github.com/go-openapi/analysis
   version: 8ed83f2ea9f00f945516462951a288eaa68bf0d6
 - name: github.com/go-openapi/errors
@@ -83,19 +74,19 @@ imports:
 - name: github.com/go-openapi/jsonreference
   version: 36d33bfe519efae5632669801b180bf1a245da3b
 - name: github.com/go-openapi/loads
-  version: a80dea3052f00e5f032e860dd7355cd0cc67e24d
+  version: c3e1ca4c0b6160cac10aeef7e8b425cc95b9c820
 - name: github.com/go-openapi/runtime
-  version: d6605b7c17ac3b1033ca794886e6142a4141f5b0
+  version: e8231e16de5bcda9839e03ae07c5c96a1fd82041
   subpackages:
   - client
 - name: github.com/go-openapi/spec
-  version: 3faa0055dbbf2110abc1f3b4e3adbb22721e96e7
+  version: 84b5bee7bcb76f3d17bcbaf421bac44bd5709ca6
 - name: github.com/go-openapi/strfmt
   version: 610b6cacdcde6852f4de68998bd20ce1dac85b22
 - name: github.com/go-openapi/swag
   version: f3f9494671f93fcff853e3c6e9e948b3eb71e590
 - name: github.com/go-openapi/validate
-  version: 8a82927c942c94794a5cd8b8b50ce2f48a955c0c
+  version: b6cfc35bf312e6fb320d85ed9fc3ac408dcb8694
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jmoiron/jsonq
@@ -105,21 +96,21 @@ imports:
   subpackages:
   - errors
 - name: github.com/mailru/easyjson
-  version: 2f5df55504ebc322e4d52d34df6a1f5b503bf26d
+  version: 4d347d79dea0067c945f374f990601decb08abb5
   subpackages:
   - buffer
   - jlexer
   - jwriter
 - name: github.com/mitchellh/mapstructure
-  version: d0303fe809921458f417bcf828397a65db30a7e4
+  version: 06020f85339e21b2478f756a78e295255ffa4d6a
 - name: github.com/moby/moby
-  version: cdf870bd0b5fa678b10ef2708cca7ad776b4913c
+  version: ba99c19b593bdb9e7b90793681fe89b0a91781ed
   subpackages:
   - pkg/jsonmessage
 - name: github.com/Nvveen/Gotty
   version: cd527374f1e5bff4938207604a14f2e38a9cf512
 - name: github.com/onsi/gomega
-  version: c893efa28eb45626cdaa76c9f653b62488858837
+  version: 283ed655c6b8238afecd5bea6434bc9b03129f2f
   subpackages:
   - format
   - internal/assertion
@@ -133,19 +124,19 @@ imports:
   - matchers/support/goraph/util
   - types
 - name: github.com/PuerkitoBio/purell
-  version: 7cf257f0a33260797b0febf39f95fccd86aab2a3
+  version: fd18e053af8a4ff11039269006e8037ff374ce0e
 - name: github.com/PuerkitoBio/urlesc
   version: de5bf2ad457846296e2031421a34e2568e304e35
 - name: github.com/sirupsen/logrus
   version: 89742aefa4b206dcf400792f3bd35b542998eb3b
 - name: github.com/urfave/cli
-  version: 7bc6a0acffa589f415f88aca16cc1de5ffd66f9c
+  version: 7f4b273a05858e05b96b6adf0a7907b7b695c352
 - name: golang.org/x/crypto
-  version: 1351f936d976c60a0a48d728281922cf63eafb8d
+  version: bd6f299fb381e4c3393d1c4b1f0b94f5e77650c8
   subpackages:
   - ssh/terminal
 - name: golang.org/x/net
-  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
+  version: c73622c77280266305273cb545f54516ced95b93
   subpackages:
   - context
   - context/ctxhttp
@@ -154,11 +145,12 @@ imports:
   - html/charset
   - idna
 - name: golang.org/x/sys
-  version: 07c182904dbd53199946ba614a412c61d3c548f5
+  version: 95c6576299259db960f6c5b9b69ea52422860fce
   subpackages:
   - unix
+  - windows
 - name: golang.org/x/text
-  version: e56139fd9c5bc7244c76116c68e500765bb6db6b
+  version: 3cfc6c0d6bf80d724d98c26c4822f4a35d37598e
   subpackages:
   - encoding
   - encoding/charmap

@@ -13,14 +13,8 @@ import:
   version: ^0.2.0
   subpackages:
   - semver
-- package: github.com/funcy/functions_go
-  version: ^0.1.36
-  subpackages:
-  - client
-  - client/apps
-  - client/call
-  - client/routes
-  - models
+- package: github.com/fnproject/fn_go
+  version: ^0.2.0
 - package: github.com/giantswarm/semver-bump
   version: ^1.1.1
   subpackages:
@@ -32,7 +26,7 @@ import:
 - package: github.com/go-openapi/strfmt
 - package: github.com/jmoiron/jsonq
 - package: github.com/moby/moby
-  version: cdf870bd0b5fa678b10ef2708cca7ad776b4913c
+  version: ba99c19b593bdb9e7b90793681fe89b0a91781ed
   subpackages:
   - pkg/jsonmessage
 - package: github.com/urfave/cli

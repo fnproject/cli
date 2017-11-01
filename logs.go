@@ -44,7 +44,7 @@ func (log *logsCmd) get(ctx *cli.Context) error {
 		resp, err := log.client.Call.GetAppsAppCalls(&params)
 		if err != nil {
 			switch e := err.(type) {
-			case *ccall.GetCallsCallNotFound:
+			case *ccall.GetAppsAppCallsNotFound:
 				return errors.New(e.Payload.Error.Message)
 			default:
 				return err
