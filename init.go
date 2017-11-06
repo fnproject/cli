@@ -156,7 +156,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
       / /_  / __ \
      / __/ / / / /
     /_/   /_/ /_/`
-	
+
 	fmt.Println(runHeader + "\n")
 
 	err = a.buildFuncFile(c)
@@ -238,6 +238,13 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 			a.Entrypoint = helper.Entrypoint()
 		}
 	}
+
+	if a.Format == "" {
+		if helper != nil {
+			a.Format = helper.DefaultFormat()
+		}
+	}
+
 	if a.Cmd == "" {
 		if helper != nil {
 			a.Cmd = helper.Cmd()
