@@ -21,7 +21,7 @@ func init() {
 	registerHelper(&RubyLangHelper{})
 	registerHelper(&RustLangHelper{})
 	registerHelper(&KotlinLangHelper{})
-
+	registerHelper(&SVMLangHelper{javaHelper:JavaLangHelper{version: defaultSVMJavaSupportedVersion}})
 }
 
 func registerHelper(h LangHelper) {
