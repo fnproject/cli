@@ -99,7 +99,6 @@ func initFlags(a *initFnCmd) []cli.Flag {
 
 func initFn() cli.Command {
 	a := &initFnCmd{}
-	// funcfile := &funcfile{}
 
 	return cli.Command{
 		Name:        "init",
@@ -137,8 +136,9 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
 	}
 
-	rt := &models.Route{}
-	routeWithFlags(c, rt)
+	var rt models.Route
+	routeWithFlags(c, &rt)
+	a.bindRoute(&rt)
 
 	if !a.force {
 		_, ff, err := loadFuncfile()
@@ -150,17 +150,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 	}
 
-	const runHeader = `
-        ______
-       / ____/___
-      / /_  / __ \
-     / __/ / / / /
-    /_/   /_/ /_/`
-
-	fmt.Println(runHeader + "\n")
-
 	err = a.buildFuncFile(c)
-
 	if err != nil {
 		return err
 	}
@@ -174,8 +164,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 	}
 
-	ff := a.funcfile
-	if err := encodeFuncfileYAML("func.yaml", &ff); err != nil {
+	if err := encodeFuncfileYAML("func.yaml", &a.funcfile); err != nil {
 		return err
 	}
 	fmt.Println("func.yaml created.")
@@ -194,6 +183,25 @@ func (a *initFnCmd) generateBoilerplate() error {
 		fmt.Println("Function boilerplate generated.")
 	}
 	return nil
+}
+
+func (a *initFnCmd) bindRoute(rt *models.Route) {
+	ff := &a.funcfile
+	if rt.Format != "" {
+		ff.Format = rt.Format
+	}
+	if rt.Type != "" {
+		ff.Type = rt.Type
+	}
+	if rt.Memory > 0 {
+		ff.Memory = rt.Memory
+	}
+	if rt.Timeout != nil {
+		ff.Timeout = rt.Timeout
+	}
+	if rt.IDLETimeout != nil {
+		ff.IDLETimeout = rt.IDLETimeout
+	}
 }
 
 func (a *initFnCmd) buildFuncFile(c *cli.Context) error {

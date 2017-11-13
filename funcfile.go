@@ -56,6 +56,7 @@ type funcfile struct {
 	RunImage   string   `yaml:"run_image,omitempty" json:"run_image,omitempty"`     // Image to use for running
 
 	// Route params
+	// TODO embed models.Route
 	Type        string              `yaml:"type,omitempty" json:"type,omitempty"`
 	Memory      uint64              `yaml:"memory,omitempty" json:"memory,omitempty"`
 	Format      string              `yaml:"format,omitempty" json:"format,omitempty"`
