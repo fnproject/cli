@@ -57,6 +57,8 @@ type LangHelper interface {
 	Entrypoint() string
 	// Cmd sets the Docker command. One of Entrypoint or Cmd is required.
 	Cmd() string
+	// DefaultFormat provides the default fn format to set in func.yaml fn init, return "" for an empty format.
+	DefaultFormat() string
 	HasPreBuild() bool
 	PreBuild() error
 	AfterBuild() error
@@ -83,6 +85,7 @@ func (h *BaseHelper) PreBuild() error               { return nil }
 func (h *BaseHelper) AfterBuild() error             { return nil }
 func (h *BaseHelper) HasBoilerplate() bool          { return false }
 func (h *BaseHelper) GenerateBoilerplate() error    { return nil }
+func (h *BaseHelper) DefaultFormat() string         { return "" }
 
 // exists checks if a file exists
 func exists(name string) bool {

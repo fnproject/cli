@@ -10,15 +10,15 @@ import (
 	"strings"
 
 	client "github.com/fnproject/cli/client"
-	fnclient "github.com/funcy/functions_go/client"
-	apiapps "github.com/funcy/functions_go/client/apps"
-	"github.com/funcy/functions_go/models"
+	fnclient "github.com/fnproject/fn_go/client"
+	apiapps "github.com/fnproject/fn_go/client/apps"
+	"github.com/fnproject/fn_go/models"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
 )
 
 type appsCmd struct {
-	client *fnclient.Functions
+	client *fnclient.Fn
 }
 
 func apps() cli.Command {

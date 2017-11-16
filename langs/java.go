@@ -44,6 +44,9 @@ func (lh *JavaLangHelper) RunFromImage() string {
 // HasBoilerplate returns whether the Java runtime has boilerplate that can be generated.
 func (lh *JavaLangHelper) HasBoilerplate() bool { return true }
 
+// Java defaults to http
+func (lh *JavaLangHelper) DefaultFormat() string { return "http"}
+
 // GenerateBoilerplate will generate function boilerplate for a Java runtime. The default boilerplate is for a Maven
 // project.
 func (lh *JavaLangHelper) GenerateBoilerplate() error {
