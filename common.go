@@ -314,7 +314,7 @@ func validateImageName(n string) error {
 	name := split2[len(split2)-1]
 	if !regexp.MustCompile(`^[a-z0-9]([a-z0-9_.-]*[a-z0-9])?$`).MatchString(name) ||
 		regexp.MustCompile(`\.{2}|_{3}`).MatchString(name) {
-		return errors.New("name only may contain lowercase characters, digits, and separators " +
+		return errors.New("name may only contain lowercase characters, digits, and separators " +
 			"and may not start or end with a separator (separator is \".\", one or two \"_\", one or more \"-\")")
 	}
 
