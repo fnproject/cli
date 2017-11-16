@@ -24,10 +24,10 @@ func (lh *PythonLangHelper) Entrypoint() string {
 
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
 	pip := "pip"
-	if strings.Contains("python2", h.Version) {
+	if strings.HasPrefix(h.Version, "2.7") {
 		pip = "pip2"
 	}
-	if strings.Contains("python3", h.Version) {
+	if strings.HasPrefix(h.Version, "3.6") {
 		pip = "pip3"
 	}
 	r := []string{}
