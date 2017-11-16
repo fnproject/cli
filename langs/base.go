@@ -22,6 +22,8 @@ func GetLangHelper(lang string) LangHelper {
 		return &NodeLangHelper{}
 	case "ruby":
 		return &RubyLangHelper{}
+	case "python":
+		return &PythonLangHelper{Version:"2.7.13"}
 	case "python2.7":
 		return &PythonLangHelper{Version:"2.7.13"}
 	case "python3.6":
