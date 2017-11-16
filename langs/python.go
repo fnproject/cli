@@ -1,6 +1,9 @@
 package langs
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type PythonLangHelper struct {
 	BaseHelper
@@ -20,11 +23,18 @@ func (lh *PythonLangHelper) Entrypoint() string {
 }
 
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
+	pip := "pip"
+	if strings.Contains("python2", h.Version) {
+		pip = "pip2"
+	}
+	if strings.Contains("python3", h.Version) {
+		pip = "pip3"
+	}
 	r := []string{}
 	if exists("requirements.txt") {
 		r = append(r,
 			"ADD requirements.txt /function/",
-			"RUN pip install -r requirements.txt",
+			fmt.Sprintf("RUN %v install -r requirements.txt", pip),
 		)
 	}
 	r = append(r, "ADD . /function/")
