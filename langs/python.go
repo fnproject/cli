@@ -24,9 +24,6 @@ func (lh *PythonLangHelper) Entrypoint() string {
 
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
 	pip := "pip"
-	if strings.HasPrefix(h.Version, "2.7") {
-		pip = "pip2"
-	}
 	if strings.HasPrefix(h.Version, "3.6") {
 		pip = "pip3"
 	}
