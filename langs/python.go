@@ -19,7 +19,7 @@ func (lh *PythonLangHelper) RunFromImage() string {
 }
 
 func (lh *PythonLangHelper) Entrypoint() string {
-	return "python2 func.py"
+	return "python func.py"
 }
 
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
