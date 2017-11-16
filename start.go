@@ -34,8 +34,8 @@ func start(c *cli.Context) error {
 	if c.String("log-level") != "" {
 		denvs = append(denvs, "GIN_MODE="+c.String("log-level"))
 	}
-	// Socket mount: docker run --rm -it --name functions -v ${PWD}/data:/app/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 funcy/functions
-	// OR dind: docker run --rm -it --name functions -v ${PWD}/data:/app/data --privileged -p 8080:8080 funcy/functions
+	// Socket mount: docker run --rm -it --name functions -v ${PWD}/data:/app/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 fnproject/functions
+	// OR dind: docker run --rm -it --name functions -v ${PWD}/data:/app/data --privileged -p 8080:8080 fnproject/functions
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatalln("Getwd failed:", err)

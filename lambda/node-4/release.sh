@@ -2,4 +2,4 @@ set -ex
 
 ./build.sh
 
-docker push funcy/lambda:node-4
+docker push fnproject/lambda:node-4
