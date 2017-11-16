@@ -34,15 +34,15 @@ func start(c *cli.Context) error {
 	if c.String("log-level") != "" {
 		denvs = append(denvs, "GIN_MODE="+c.String("log-level"))
 	}
-	// Socket mount: docker run --rm -it --name functions -v ${PWD}/data:/app/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 funcy/functions
-	// OR dind: docker run --rm -it --name functions -v ${PWD}/data:/app/data --privileged -p 8080:8080 funcy/functions
+	// Socket mount: docker run --rm -it --name functions -v ${PWD}/data:/app/data:Z -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 funcy/functions
+	// OR dind: docker run --rm -it --name functions -v ${PWD}/data:/app/data:Z --privileged -p 8080:8080 funcy/functions
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatalln("Getwd failed:", err)
 	}
 	args := []string{"run", "--rm", "-i",
 		"--name", "functions",
-		"-v", fmt.Sprintf("%s/data:/app/data", wd),
+		"-v", fmt.Sprintf("%s/data:/app/data:Z", wd),    // :Z deals with SELinux and enables write permission only for this specific container.
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-p", "8080:8080",
 	}
