@@ -19,7 +19,11 @@ func (lh *PythonLangHelper) RunFromImage() string {
 }
 
 func (lh *PythonLangHelper) Entrypoint() string {
-	return "python func.py"
+	python := "python2"
+	if strings.HasPrefix(lh.Version, "3.6") {
+		python = "python3"
+	}
+	return fmt.Sprintf("%v func.py", python)
 }
 
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
