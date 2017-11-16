@@ -1,15 +1,18 @@
 package langs
 
+import "fmt"
+
 type PythonLangHelper struct {
 	BaseHelper
+	Version string
 }
 
 func (lh *PythonLangHelper) BuildFromImage() string {
-	return "funcy/python:2-dev"
+	return fmt.Sprintf("fnproject/python:%v", lh.Version)
 }
 
 func (lh *PythonLangHelper) RunFromImage() string {
-	return "funcy/python:2-dev"
+	return fmt.Sprintf("fnproject/python:%v", lh.Version)
 }
 
 func (lh *PythonLangHelper) Entrypoint() string {
