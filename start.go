@@ -25,6 +25,10 @@ func startCmd() cli.Command {
 				Name:  "detach, d",
 				Usage: "Run container in background.",
 			},
+			cli.BoolFlag{
+				Name:  "selinux",
+				Usage: "Run container with the right privileges on a SELinux system.",
+			},
 		},
 	}
 }
@@ -40,11 +44,17 @@ func start(c *cli.Context) error {
 	if err != nil {
 		log.Fatalln("Getwd failed:", err)
 	}
-	args := []string{"run", "--rm", "-i",
-		"--name", "functions",
-		"-v", fmt.Sprintf("%s/data:/app/data:Z", wd),    // :Z deals with SELinux and enables write permission only for this specific container.
-		"-v", "/var/run/docker.sock:/var/run/docker.sock:Z",
+	args := []string{"run", "--rm", "-i", "--name", "functions",
+		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-p", "8080:8080",
+	}
+	if c.Bool("selinux") {
+		// Require security privileges on SELinux systems and securely mount the volume with :Z
+		args = append(args, "--security-opt", "label=type:container_runtime_t")
+		args = append(args, "-v", fmt.Sprintf("%s/data:/app/data:Z", wd))
+	} else {
+		// Just mount the volume as usual
+		args = append(args, "-v", fmt.Sprintf("%s/data:/app/data", wd))
 	}
 	for _, v := range denvs {
 		args = append(args, "-e", v)
