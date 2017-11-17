@@ -1,27 +1,41 @@
 package langs
 
+import (
+	"fmt"
+	"strings"
+)
+
 type PythonLangHelper struct {
 	BaseHelper
+	Version string
 }
 
 func (lh *PythonLangHelper) BuildFromImage() string {
-	return "funcy/python:2-dev"
+	return fmt.Sprintf("fnproject/python:%v", lh.Version)
 }
 
 func (lh *PythonLangHelper) RunFromImage() string {
-	return "funcy/python:2-dev"
+	return fmt.Sprintf("fnproject/python:%v", lh.Version)
 }
 
 func (lh *PythonLangHelper) Entrypoint() string {
-	return "python2 func.py"
+	python := "python2"
+	if strings.HasPrefix(lh.Version, "3.6") {
+		python = "python3"
+	}
+	return fmt.Sprintf("%v func.py", python)
 }
 
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
+	pip := "pip"
+	if strings.HasPrefix(h.Version, "3.6") {
+		pip = "pip3"
+	}
 	r := []string{}
 	if exists("requirements.txt") {
 		r = append(r,
 			"ADD requirements.txt /function/",
-			"RUN pip install -r requirements.txt",
+			fmt.Sprintf("RUN %v install -r requirements.txt", pip),
 		)
 	}
 	r = append(r, "ADD . /function/")

@@ -11,11 +11,11 @@ type GoLangHelper struct {
 }
 
 func (lh *GoLangHelper) BuildFromImage() string {
-	return "funcy/go:dev"
+	return "fnproject/go:dev"
 }
 
 func (lh *GoLangHelper) RunFromImage() string {
-	return "funcy/go"
+	return "fnproject/go"
 }
 
 func (h *GoLangHelper) DockerfileBuildCmds() []string {

@@ -13,7 +13,7 @@ type PhpLangHelper struct {
 }
 
 func (lh *PhpLangHelper) BuildFromImage() string {
-	return "funcy/php:dev"
+	return "fnproject/php:dev"
 }
 func (lh *PhpLangHelper) Entrypoint() string {
 	return "php func.php"
@@ -33,7 +33,7 @@ func (lh *PhpLangHelper) PreBuild() error {
 		return nil
 	}
 
-	pbcmd := fmt.Sprintf("docker run --rm -v %s:/worker -w /worker funcy/php:dev composer install", wd)
+	pbcmd := fmt.Sprintf("docker run --rm -v %s:/worker -w /worker fnproject/php:dev composer install", wd)
 	fmt.Println("Running prebuild command:", pbcmd)
 	parts := strings.Fields(pbcmd)
 	head := parts[0]
@@ -47,6 +47,13 @@ func (lh *PhpLangHelper) PreBuild() error {
 	return nil
 }
 
+func (h *PhpLangHelper) IsMultiStage() bool {
+	return false
+}
+
+func (h *PhpLangHelper) DockerfileBuildCmds() []string {
+	return []string{"ADD . /function/"}
+}
 func (lh *PhpLangHelper) AfterBuild() error {
 	return nil
 }
