@@ -47,6 +47,13 @@ func (lh *PhpLangHelper) PreBuild() error {
 	return nil
 }
 
+func (h *PhpLangHelper) IsMultiStage() bool {
+	return false
+}
+
+func (h *PhpLangHelper) DockerfileBuildCmds() []string {
+	return []string{"ADD . /function/"}
+}
 func (lh *PhpLangHelper) AfterBuild() error {
 	return nil
 }
