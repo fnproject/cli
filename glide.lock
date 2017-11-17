@@ -1,10 +1,10 @@
 hash: 9430b3554d0c48fbaff117fcdea193ad472c41520e212e0435c22f60cf57d3f4
-updated: 2017-11-16T21:34:43.728822+02:00
+updated: 2017-11-17T10:10:35.815044+02:00
 imports:
 - name: github.com/asaskevich/govalidator
-  version: ddb193b4c7bfa1d1c1923ae05a1ee8fb0cd45cf3
+  version: 15028e809df8c71964e8efa6c11e81d5c0262302
 - name: github.com/aws/aws-sdk-go
-  version: a532359524fb25c60b6c938ec321b571adc857de
+  version: 32f50a06b82225ea99d3c400c20cba02874f0db7
   subpackages:
   - aws
   - aws/awserr
@@ -34,7 +34,7 @@ imports:
   - service/lambda
   - service/sts
 - name: github.com/Azure/go-ansiterm
-  version: d6e3b3328b783f23731bc4d058875b0371ff8109
+  version: 19f72df4d05d31cbe1c56bfc8045c96babff6c7e
   subpackages:
   - winterm
 - name: github.com/coreos/go-semver
@@ -42,8 +42,9 @@ imports:
   subpackages:
   - semver
 - name: github.com/docker/docker
-  version: ba99c19b593bdb9e7b90793681fe89b0a91781ed
+  version: cdf870bd0b5fa678b10ef2708cca7ad776b4913c
   subpackages:
+  - pkg/jsonlog
   - pkg/term
   - pkg/term/windows
 - name: github.com/docker/go-units
@@ -64,7 +65,7 @@ imports:
   - bump
   - storage
 - name: github.com/go-ini/ini
-  version: f280b3ba517bf5fc98922624f21fb0e7a92adaec
+  version: c787282c39ac1fc618827141a1f762240def08a3
 - name: github.com/go-openapi/analysis
   version: 8ed83f2ea9f00f945516462951a288eaa68bf0d6
 - name: github.com/go-openapi/errors
@@ -74,19 +75,19 @@ imports:
 - name: github.com/go-openapi/jsonreference
   version: 36d33bfe519efae5632669801b180bf1a245da3b
 - name: github.com/go-openapi/loads
-  version: c3e1ca4c0b6160cac10aeef7e8b425cc95b9c820
+  version: a80dea3052f00e5f032e860dd7355cd0cc67e24d
 - name: github.com/go-openapi/runtime
-  version: e8231e16de5bcda9839e03ae07c5c96a1fd82041
+  version: d6605b7c17ac3b1033ca794886e6142a4141f5b0
   subpackages:
   - client
 - name: github.com/go-openapi/spec
-  version: 84b5bee7bcb76f3d17bcbaf421bac44bd5709ca6
+  version: 3faa0055dbbf2110abc1f3b4e3adbb22721e96e7
 - name: github.com/go-openapi/strfmt
   version: 610b6cacdcde6852f4de68998bd20ce1dac85b22
 - name: github.com/go-openapi/swag
   version: f3f9494671f93fcff853e3c6e9e948b3eb71e590
 - name: github.com/go-openapi/validate
-  version: b6cfc35bf312e6fb320d85ed9fc3ac408dcb8694
+  version: 8a82927c942c94794a5cd8b8b50ce2f48a955c0c
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jmoiron/jsonq
@@ -96,13 +97,13 @@ imports:
   subpackages:
   - errors
 - name: github.com/mailru/easyjson
-  version: 4d347d79dea0067c945f374f990601decb08abb5
+  version: 2f5df55504ebc322e4d52d34df6a1f5b503bf26d
   subpackages:
   - buffer
   - jlexer
   - jwriter
 - name: github.com/mitchellh/mapstructure
-  version: 06020f85339e21b2478f756a78e295255ffa4d6a
+  version: d0303fe809921458f417bcf828397a65db30a7e4
 - name: github.com/moby/moby
   version: 90d35abf7b3535c1c319c872900fbd76374e521c
   subpackages:
@@ -110,7 +111,7 @@ imports:
 - name: github.com/Nvveen/Gotty
   version: cd527374f1e5bff4938207604a14f2e38a9cf512
 - name: github.com/onsi/gomega
-  version: 283ed655c6b8238afecd5bea6434bc9b03129f2f
+  version: c893efa28eb45626cdaa76c9f653b62488858837
   subpackages:
   - format
   - internal/assertion
@@ -124,7 +125,7 @@ imports:
   - matchers/support/goraph/util
   - types
 - name: github.com/PuerkitoBio/purell
-  version: fd18e053af8a4ff11039269006e8037ff374ce0e
+  version: 7cf257f0a33260797b0febf39f95fccd86aab2a3
 - name: github.com/PuerkitoBio/urlesc
   version: de5bf2ad457846296e2031421a34e2568e304e35
 - name: github.com/sirupsen/logrus
@@ -132,11 +133,11 @@ imports:
 - name: github.com/urfave/cli
   version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
 - name: golang.org/x/crypto
-  version: bd6f299fb381e4c3393d1c4b1f0b94f5e77650c8
+  version: 1351f936d976c60a0a48d728281922cf63eafb8d
   subpackages:
   - ssh/terminal
 - name: golang.org/x/net
-  version: c73622c77280266305273cb545f54516ced95b93
+  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
   subpackages:
   - context
   - context/ctxhttp
@@ -145,12 +146,11 @@ imports:
   - html/charset
   - idna
 - name: golang.org/x/sys
-  version: 95c6576299259db960f6c5b9b69ea52422860fce
+  version: 07c182904dbd53199946ba614a412c61d3c548f5
   subpackages:
   - unix
-  - windows
 - name: golang.org/x/text
-  version: 3cfc6c0d6bf80d724d98c26c4822f4a35d37598e
+  version: e56139fd9c5bc7244c76116c68e500765bb6db6b
   subpackages:
   - encoding
   - encoding/charmap
