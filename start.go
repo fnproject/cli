@@ -56,7 +56,7 @@ func start(c *cli.Context) error {
 	}
 
 	args := []string{"run", "--rm", "-i",
-		"--name", "functions",
+		"--name", "fnserver",
 		"-v", fmt.Sprintf("%s/data:/app/data", wd),
 		"-p", "8080:8080",
 	}

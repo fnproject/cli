@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	functionsDockerImage     = "fnproject/functions"
+	functionsDockerImage     = "fnproject/fnserver"
 	funcfileDockerRuntime    = "docker"
 	minRequiredDockerVersion = "17.5.0"
 	envFnRegistry            = "FN_REGISTRY"
