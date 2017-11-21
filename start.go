@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"runtime"
 	"syscall"
 
 	"github.com/urfave/cli"
@@ -21,11 +20,6 @@ func startCmd() cli.Command {
 			cli.StringFlag{
 				Name:  "log-level",
 				Usage: "--log-level DEBUG to enable debugging",
-			},
-			cli.StringFlag{
-				Name:  "docker-mode",
-				Value: "docker-in-docker",
-				Usage: "docker-mode - docker-in-docker or docker-bind-socket",
 			},
 			cli.BoolFlag{
 				Name:  "detach, d",
@@ -45,33 +39,18 @@ func start(c *cli.Context) error {
 	if c.String("log-level") != "" {
 		denvs = append(denvs, "GIN_MODE="+c.String("log-level"))
 	}
-
-	// docker-in-docker or socker bind mount?
-	isDind := true
-	if c.String("docker-mode") == "docker-in-docker" && runtime.GOOS == "windows" {
-		log.Println("docker-in-docker unavailable in Windows, auto-reverting to docker-bind-socket mode")
-		isDind = false
-	} else if c.String("docker-mode") == "docker-bind-socket" {
-		isDind = false
-	}
-
+	// Socket mount: docker run --rm -it --name functions -v ${PWD}/data:/app/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 fnproject/functions
+	// OR dind: docker run --rm -it --name functions -v ${PWD}/data:/app/data --privileged -p 8080:8080 fnproject/functions
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatalln("Getwd failed:", err)
 	}
-
 	args := []string{"run", "--rm", "-i",
-		"--name", "functions",
+		"--name", "fnserver",
 		"-v", fmt.Sprintf("%s/data:/app/data", wd),
+		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-p", fmt.Sprintf("%d:8080", c.Int("port")),
 	}
-
-	if isDind {
-		args = append(args, "--privileged")
-	} else {
-		args = append(args, "-v", "/var/run/docker.sock:/var/run/docker.sock")
-	}
-
 	for _, v := range denvs {
 		args = append(args, "-e", v)
 	}
@@ -95,17 +74,22 @@ func start(c *cli.Context) error {
 	sigC := make(chan os.Signal, 2)
 	signal.Notify(sigC, os.Interrupt, syscall.SIGTERM)
 
-	select {
-	case <-sigC:
-		log.Println("interrupt caught, exiting")
-		err = cmd.Process.Kill()
-		if err != nil {
-			log.Println("error: could not kill process:", err)
-		}
-	case err := <-done:
-		if err != nil {
-			log.Println("error: processed finished with error", err)
+	for {
+		select {
+		case <-sigC:
+			log.Println("interrupt caught, exiting")
+			err = cmd.Process.Signal(syscall.SIGTERM)
+			if err != nil {
+				log.Println("error: could not kill process:", err)
+				return err
+			}
+		case err := <-done:
+			if err != nil {
+				log.Println("error: processed finished with error", err)
+			}
+			return err
 		}
 	}
+
 	return nil
 }
