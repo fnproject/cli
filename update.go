@@ -48,7 +48,7 @@ func update(c *cli.Context) error {
 		if err != nil {
 			log.Println("processed finished with error:", err)
 		} else {
-			log.Println("process finished gracefully without error")
+			log.Println("process finished gracefully")
 		}
 	}
 	return nil

@@ -12,15 +12,15 @@ import (
 	"text/tabwriter"
 
 	client "github.com/fnproject/cli/client"
-	fnclient "github.com/funcy/functions_go/client"
-	apiroutes "github.com/funcy/functions_go/client/routes"
-	fnmodels "github.com/funcy/functions_go/models"
+	fnclient "github.com/fnproject/fn_go/client"
+	apiroutes "github.com/fnproject/fn_go/client/routes"
+	fnmodels "github.com/fnproject/fn_go/models"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
 )
 
 type routesCmd struct {
-	client *fnclient.Functions
+	client *fnclient.Fn
 }
 
 var routeFlags = []cli.Flag{
@@ -31,7 +31,6 @@ var routeFlags = []cli.Flag{
 	cli.Uint64Flag{
 		Name:  "memory,m",
 		Usage: "memory in MiB",
-		Value: uint64(128),
 	},
 	cli.StringFlag{
 		Name:  "type,t",
@@ -48,17 +47,14 @@ var routeFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:  "format,f",
 		Usage: "hot container IO format - default or http",
-		Value: "default",
 	},
 	cli.IntFlag{
 		Name:  "timeout",
 		Usage: "route timeout (eg. 30)",
-		Value: 30,
 	},
 	cli.IntFlag{
 		Name:  "idle-timeout",
 		Usage: "route idle timeout (eg. 30)",
-		Value: 30,
 	},
 }
 

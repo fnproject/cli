@@ -5,7 +5,7 @@ type LambdaNodeHelper struct {
 }
 
 func (lh *LambdaNodeHelper) BuildFromImage() string {
-	return "funcy/lambda:node-4"
+	return "fnproject/lambda:node-4"
 }
 
 func (lh *LambdaNodeHelper) IsMultiStage() bool {

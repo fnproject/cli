@@ -62,23 +62,19 @@ case "$(uname)" in
     $sh_c "$curl /usr/local/bin/fn $url/$version/fn_linux"
     $sh_c "chmod +x /usr/local/bin/fn"
     fn --version
-    exit 0
     ;;
   Darwin)
     $sh_c "$curl /usr/local/bin/fn $url/$version/fn_mac"
     $sh_c "chmod +x /usr/local/bin/fn"
     fn --version
-    exit 0
     ;;
   WindowsNT)
     $sh_c "$curl $url/$version/fn.exe"
     # TODO how to make executable? chmod?
     fn.exe --version
-    exit 0
     ;;
-esac
-
-cat >&2 <<'EOF'
+  *)
+    cat >&2 <<'EOF'
 
   Either your platform is not easily detectable or is not supported by this
   installer script (yet - PRs welcome! [fn/install]).
@@ -87,4 +83,16 @@ cat >&2 <<'EOF'
     https://github.com/fnproject/fn
 
 EOF
-exit 1
+    exit 1
+esac
+
+cat >&2 <<'EOF'
+
+        ______
+       / ____/___
+      / /_  / __ \
+     / __/ / / / /
+    /_/   /_/ /_/`
+
+EOF
+exit 0

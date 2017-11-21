@@ -2,13 +2,12 @@ package client
 
 import (
 	"os"
-
-	"log"
 	"net/url"
 
-	fnclient "github.com/funcy/functions_go/client"
-	httptransport "github.com/go-openapi/runtime/client"
+	fnclient "github.com/fnproject/fn_go/client"
+	openapi "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"fmt"
 )
 
 const (
@@ -16,26 +15,39 @@ const (
 )
 
 func Host() string {
+	h, err := HostURL()
+	if err != nil {
+		fmt.Fprint(os.Stderr, err.Error())
+		os.Exit(1)
+	}
+	return h.Host
+}
+
+func HostURL() (*url.URL, error) {
 	apiURL := os.Getenv("API_URL")
 	if apiURL == "" {
 		apiURL = "http://localhost:8080"
 	}
 
-	u, err := url.Parse(apiURL)
-	if err != nil {
-		log.Fatalln("Couldn't parse API URL:", err)
-	}
-	return u.Host
+	return url.Parse(apiURL)
 }
 
-func APIClient() *fnclient.Functions {
-	transport := httptransport.New(Host(), "/v1", []string{"http"})
+func GetTransportAndRegistry() (*openapi.Runtime, strfmt.Registry) {
+	transport := openapi.New(Host(), "/v1", []string{"http"})
 	if os.Getenv(envFnToken) != "" {
-		transport.DefaultAuthentication = httptransport.BearerToken(os.Getenv(envFnToken))
+		transport.DefaultAuthentication = openapi.BearerToken(os.Getenv(envFnToken))
+	}
+	return transport, strfmt.Default
+}
+
+func APIClient() *fnclient.Fn {
+	transport := openapi.New(Host(), "/v1", []string{"http"})
+	if os.Getenv(envFnToken) != "" {
+		transport.DefaultAuthentication = openapi.BearerToken(os.Getenv(envFnToken))
 	}
 
 	// create the API client, with the transport
-	client := fnclient.New(transport, strfmt.Default)
+	client := fnclient.New(GetTransportAndRegistry())
 
 	return client
 }

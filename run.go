@@ -17,6 +17,7 @@ import (
 const (
 	DefaultFormat = "default"
 	HttpFormat    = "http"
+	JSONFormat    = "json"
 	LocalTestURL  = "http://localhost:8080/myapp/hello"
 )
 
@@ -227,6 +228,9 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 		body = b.String()
 		// fmt.Println("body:", s)
 		stdin = strings.NewReader(body)
+	} else if format == JSONFormat {
+		// TODO: We need to use the same structs as in the server to keep these things all in line
+		return fmt.Errorf("Format %v not supported", format)
 	}
 
 	sh = append(sh, ff.ImageName())

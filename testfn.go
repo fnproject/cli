@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/fnproject/cli/client"
-	functions "github.com/funcy/functions_go"
+	functions "github.com/fnproject/fn_go/client"
 	"github.com/onsi/gomega"
 	"github.com/urfave/cli"
 )
@@ -24,7 +24,7 @@ type testStruct struct {
 }
 
 func testfn() cli.Command {
-	cmd := testcmd{RoutesApi: functions.NewRoutesApi()}
+	cmd := testcmd{Fn: client.APIClient()}
 	return cli.Command{
 		Name:   "test",
 		Usage:  "run functions test if present",
@@ -34,7 +34,7 @@ func testfn() cli.Command {
 }
 
 type testcmd struct {
-	*functions.RoutesApi
+	*functions.Fn
 
 	build  bool
 	remote string
@@ -106,12 +106,9 @@ func (t *testcmd) test(c *cli.Context) error {
 	runtest := runlocaltest
 	if t.remote != "" {
 		if ff.Path == "" {
-			return errors.New("execution of tests on remote server demand that this function has a `path`.")
+			return errors.New("execution of tests on remote server demand that this function has a `path`")
 		}
-		if err := resetBasePath(t.Configuration); err != nil {
-			return fmt.Errorf("error setting endpoint: %v", err)
-		}
-		baseURL, err := url.Parse(t.Configuration.BasePath)
+		baseURL, err := client.HostURL()
 		if err != nil {
 			return fmt.Errorf("error parsing base path: %v", err)
 		}

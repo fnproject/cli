@@ -23,7 +23,11 @@ func GetLangHelper(lang string) LangHelper {
 	case "ruby":
 		return &RubyLangHelper{}
 	case "python":
-		return &PythonLangHelper{}
+		return &PythonLangHelper{Version:"2.7.13"}
+	case "python2.7":
+		return &PythonLangHelper{Version:"2.7.13"}
+	case "python3.6":
+		return &PythonLangHelper{Version:"3.6"}
 	case "php":
 		return &PhpLangHelper{}
 	case "rust":
@@ -43,7 +47,7 @@ func GetLangHelper(lang string) LangHelper {
 }
 
 type LangHelper interface {
-	// BuildFromImage is the base image to build off, typically funcy/LANG:dev
+	// BuildFromImage is the base image to build off, typically fnproject/LANG:dev
 	BuildFromImage() string
 	// RunFromImage is the base image to use for deployment (usually smaller than the build images)
 	RunFromImage() string
@@ -57,6 +61,8 @@ type LangHelper interface {
 	Entrypoint() string
 	// Cmd sets the Docker command. One of Entrypoint or Cmd is required.
 	Cmd() string
+	// DefaultFormat provides the default fn format to set in func.yaml fn init, return "" for an empty format.
+	DefaultFormat() string
 	HasPreBuild() bool
 	PreBuild() error
 	AfterBuild() error
@@ -83,6 +89,7 @@ func (h *BaseHelper) PreBuild() error               { return nil }
 func (h *BaseHelper) AfterBuild() error             { return nil }
 func (h *BaseHelper) HasBoilerplate() bool          { return false }
 func (h *BaseHelper) GenerateBoilerplate() error    { return nil }
+func (h *BaseHelper) DefaultFormat() string         { return "" }
 
 // exists checks if a file exists
 func exists(name string) bool {

@@ -1,47 +1,36 @@
 package main
 
 import (
-	"fmt"
-	"net/url"
-	"os"
-
-	functions "github.com/funcy/functions_go"
+	"github.com/fnproject/cli/client"
+	fnclient "github.com/fnproject/fn_go/client/version"
 	"github.com/urfave/cli"
+	"fmt"
 )
 
 // Version of Fn CLI
-var Version = "0.4.11"
+var Version = "0.4.19"
 
 func version() cli.Command {
-	r := versionCmd{VersionApi: functions.NewVersionApi()}
 	return cli.Command{
 		Name:   "version",
 		Usage:  "displays fn and functions daemon versions",
-		Action: r.version,
+		Action: versionCMD,
 	}
 }
 
-type versionCmd struct {
-	*functions.VersionApi
-}
-
-func (r *versionCmd) version(c *cli.Context) error {
-	apiURL := os.Getenv("API_URL")
-	if apiURL == "" {
-		apiURL = "http://localhost:8080"
-	}
-
-	u, err := url.Parse(apiURL)
+func versionCMD(c *cli.Context) error {
+	t, reg := client.GetTransportAndRegistry()
+	// dirty hack, swagger paths live under /v1
+	// version is also there, but it shouldn't
+	// dropping base path to get appropriate URL for request eventually
+	t.BasePath = ""
+	fmt.Println("Client version: ", Version)
+	versionClient := fnclient.New(t, reg)
+	v, err := versionClient.GetVersion(nil)
 	if err != nil {
-		return err
+		fmt.Println("Server version: ", "?")
+		return nil
 	}
-	r.Configuration.BasePath = u.String()
-
-	fmt.Println("Client version:", Version)
-	v, _, err := r.VersionGet()
-	if err != nil {
-		return err
-	}
-	fmt.Println("Server version", v.Version)
+	fmt.Println("Server version: ", v.Payload.Version)
 	return nil
 }

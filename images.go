@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/funcy/functions_go"
+	"github.com/fnproject/fn_go/client"
 	"github.com/urfave/cli"
 )
 
 type imagesCmd struct {
-	*functions.AppsApi
+	*client.Fn
 }
 
 func images() cli.Command {

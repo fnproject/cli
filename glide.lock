@@ -1,10 +1,10 @@
-hash: 7c2f789d8f4972b1cb81cc2581f8e481cc815b40b7715c0fb9aa94cf3c1bfd8e
-updated: 2017-08-23T16:53:46.159402157-07:00
+hash: 9430b3554d0c48fbaff117fcdea193ad472c41520e212e0435c22f60cf57d3f4
+updated: 2017-11-17T10:10:35.815044+02:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 15028e809df8c71964e8efa6c11e81d5c0262302
 - name: github.com/aws/aws-sdk-go
-  version: 5f216d3a320b04771edb3f39e9e063603551423a
+  version: 32f50a06b82225ea99d3c400c20cba02874f0db7
   subpackages:
   - aws
   - aws/awserr
@@ -49,14 +49,15 @@ imports:
   - pkg/term/windows
 - name: github.com/docker/go-units
   version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
-- name: github.com/funcy/functions_go
-  version: e046aa4ca1f1028a04fc51395297ff07515cb0b6
+- name: github.com/fnproject/fn_go
+  version: 7ce3bb2e624df60cdfbfc1ee5483f6df80bb2b1b
   subpackages:
   - client
   - client/apps
   - client/call
   - client/operations
   - client/routes
+  - client/version
   - models
 - name: github.com/giantswarm/semver-bump
   version: 88e6c9f2fe390c48839eaba32490fd09cb3b581c
@@ -87,8 +88,6 @@ imports:
   version: f3f9494671f93fcff853e3c6e9e948b3eb71e590
 - name: github.com/go-openapi/validate
   version: 8a82927c942c94794a5cd8b8b50ce2f48a955c0c
-- name: github.com/go-resty/resty
-  version: 8d8edd722eb7a48130ba8bd71fefbf028e8aab26
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jmoiron/jsonq
@@ -106,7 +105,7 @@ imports:
 - name: github.com/mitchellh/mapstructure
   version: d0303fe809921458f417bcf828397a65db30a7e4
 - name: github.com/moby/moby
-  version: cdf870bd0b5fa678b10ef2708cca7ad776b4913c
+  version: 90d35abf7b3535c1c319c872900fbd76374e521c
   subpackages:
   - pkg/jsonmessage
 - name: github.com/Nvveen/Gotty
@@ -132,7 +131,7 @@ imports:
 - name: github.com/sirupsen/logrus
   version: 89742aefa4b206dcf400792f3bd35b542998eb3b
 - name: github.com/urfave/cli
-  version: f017f86fccc5a039a98f23311f34fdf78b014f78
+  version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
 - name: golang.org/x/crypto
   version: 1351f936d976c60a0a48d728281922cf63eafb8d
   subpackages:
@@ -146,7 +145,6 @@ imports:
   - html/atom
   - html/charset
   - idna
-  - publicsuffix
 - name: golang.org/x/sys
   version: 07c182904dbd53199946ba614a412c61d3c548f5
   subpackages:

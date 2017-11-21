@@ -1,3 +1,3 @@
 set -ex
 
-docker build --build-arg HTTP_PROXY -t funcy/lambda:node-4 .
+docker build --build-arg HTTP_PROXY -t fnproject/lambda:node-4 .
