@@ -90,17 +90,22 @@ func start(c *cli.Context) error {
 	sigC := make(chan os.Signal, 2)
 	signal.Notify(sigC, os.Interrupt, syscall.SIGTERM)
 
-	select {
-	case <-sigC:
-		log.Println("interrupt caught, exiting")
-		err = cmd.Process.Kill()
-		if err != nil {
-			log.Println("error: could not kill process:", err)
-		}
-	case err := <-done:
-		if err != nil {
-			log.Println("error: processed finished with error", err)
+	for {
+		select {
+		case <-sigC:
+			log.Println("interrupt caught, exiting")
+			err = cmd.Process.Signal(syscall.SIGTERM)
+			if err != nil {
+				log.Println("error: could not kill process:", err)
+				return err
+			}
+		case err := <-done:
+			if err != nil {
+				log.Println("error: processed finished with error", err)
+			}
+			return err
 		}
 	}
+
 	return nil
 }
