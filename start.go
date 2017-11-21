@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"runtime"
 	"syscall"
 
 	"github.com/urfave/cli"
@@ -22,11 +21,6 @@ func startCmd() cli.Command {
 				Name:  "log-level",
 				Usage: "--log-level DEBUG to enable debugging",
 			},
-			cli.StringFlag{
-				Name:  "docker-mode",
-				Value: "docker-in-docker",
-				Usage: "docker-mode - docker-in-docker or docker-bind-socket",
-			},
 			cli.BoolFlag{
 				Name:  "detach, d",
 				Usage: "Run container in background.",
@@ -40,33 +34,18 @@ func start(c *cli.Context) error {
 	if c.String("log-level") != "" {
 		denvs = append(denvs, "GIN_MODE="+c.String("log-level"))
 	}
-
-	// docker-in-docker or socker bind mount?
-	isDind := true
-	if c.String("docker-mode") == "docker-in-docker" && runtime.GOOS == "windows" {
-		log.Println("docker-in-docker unavailable in Windows, auto-reverting to docker-bind-socket mode")
-		isDind = false
-	} else if c.String("docker-mode") == "docker-bind-socket" {
-		isDind = false
-	}
-
+	// Socket mount: docker run --rm -it --name functions -v ${PWD}/data:/app/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 fnproject/functions
+	// OR dind: docker run --rm -it --name functions -v ${PWD}/data:/app/data --privileged -p 8080:8080 fnproject/functions
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatalln("Getwd failed:", err)
 	}
-
 	args := []string{"run", "--rm", "-i",
 		"--name", "fnserver",
 		"-v", fmt.Sprintf("%s/data:/app/data", wd),
+		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-p", "8080:8080",
 	}
-
-	if isDind {
-		args = append(args, "--privileged")
-	} else {
-		args = append(args, "-v", "/var/run/docker.sock:/var/run/docker.sock")
-	}
-
 	for _, v := range denvs {
 		args = append(args, "-e", v)
 	}
