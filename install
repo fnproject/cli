@@ -59,7 +59,7 @@ url='https://github.com/fnproject/cli/releases/download'
 # perform some very rudimentary platform detection
 case "$(uname)" in
   arm64)
-    $sh_c "$curl /usr/local/bin/fn $url/$version/fn_linux_amd64"
+    $sh_c "$curl /usr/local/bin/fn $url/$version/fn_linux_arm64"
     $sh_c "chmod +x /usr/local/bin/fn"
     fn --version
     ;;

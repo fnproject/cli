@@ -18,7 +18,7 @@ dep-up:
 
 test:
 	GOOS=windows go build -o fn
-	GOOS=linux GOARCH=amd64 go build -o fn
+	GOOS=linux GOARCH=arm64 go build -o fn
 	GOOS=darwin go build -o fn
 	GOOS=linux go build -o fn
 	go build -o fn
@@ -28,7 +28,7 @@ release:
 	GOOS=linux go build -o fn_linux
 	GOOS=darwin go build -o fn_mac
 	GOOS=windows go build -o fn.exe
-	GOOS=linux GOARCH=amd64 go build -o fn_linux_arm64
+	GOOS=linux GOARCH=arm64 go build -o fn_linux_arm64
 	docker run --rm -v ${PWD}:/go/src/github.com/fnproject/cli -w /go/src/github.com/fnproject/cli golang:alpine go build -o fn_alpine
 
 .PHONY: install
