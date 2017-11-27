@@ -28,7 +28,7 @@ docker run --name functions -d -v /var/run/docker.sock:/var/run/docker.sock -p $
 sleep 10
 docker logs functions
 
-export API_URL="http://localhost:$someport"
+export FN_API_URL="http://localhost:$someport"
 $fn apps l
 $fn apps create myapp
 $fn apps l
