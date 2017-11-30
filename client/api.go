@@ -24,7 +24,7 @@ func Host() string {
 }
 
 func HostURL() (*url.URL, error) {
-	apiURL := os.Getenv("API_URL")
+	apiURL := os.Getenv("FN_API_URL")
 	if apiURL == "" {
 		apiURL = "http://localhost:8080"
 	}
