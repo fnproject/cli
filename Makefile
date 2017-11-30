@@ -1,4 +1,4 @@
-all: vendor build	
+all: dep build	
 	./fn
 
 build: 
