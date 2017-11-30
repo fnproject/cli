@@ -1,13 +1,13 @@
 package client
 
 import (
-	"os"
+	"fmt"
 	"net/url"
+	"os"
 
 	fnclient "github.com/fnproject/fn_go/client"
 	openapi "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	"fmt"
 )
 
 const (
@@ -25,7 +25,12 @@ func Host() string {
 
 func HostURL() (*url.URL, error) {
 	apiURL := os.Getenv("FN_API_URL")
+
 	if apiURL == "" {
+		if os.Getenv("API_URL") != "" {
+			fmt.Fprint(os.Stderr, "Error: API_URL is deprecated, please use FN_API_URL.")
+			os.Exit(1)
+		}
 		apiURL = "http://localhost:8080"
 	}
 
