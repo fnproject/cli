@@ -112,6 +112,21 @@ func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 
 	fmt.Printf("Building image %v\n", ff.ImageName())
 
+	err = runBuild(dir, ff.ImageName(), dockerfile, noCache)
+	if err != nil {
+		return err
+	}
+
+	if helper != nil {
+		err := helper.AfterBuild()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func runBuild(dir, imageName, dockerfile string, noCache bool) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -121,7 +136,7 @@ func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 	go func(done chan<- error) {
 		args := []string{
 			"build",
-			"-t", ff.ImageName(),
+			"-t", imageName,
 			"-f", dockerfile,
 		}
 		if noCache {
@@ -145,13 +160,6 @@ func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 		}
 	case signal := <-cancel:
 		return fmt.Errorf("build cancelled on signal %v", signal)
-	}
-
-	if helper != nil {
-		err := helper.AfterBuild()
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }

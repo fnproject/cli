@@ -81,6 +81,7 @@ GLOBAL OPTIONS:
 		calls(),
 		logs(),
 		testfn(),
+		buildServer(),
 	}
 	app.Commands = append(app.Commands, aliasesFn()...)
 
