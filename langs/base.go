@@ -23,11 +23,11 @@ func GetLangHelper(lang string) LangHelper {
 	case "ruby":
 		return &RubyLangHelper{}
 	case "python":
-		return &PythonLangHelper{Version:"2.7.13"}
+		return &PythonLangHelper{Version: "2.7.13"}
 	case "python2.7":
-		return &PythonLangHelper{Version:"2.7.13"}
+		return &PythonLangHelper{Version: "2.7.13"}
 	case "python3.6":
-		return &PythonLangHelper{Version:"3.6"}
+		return &PythonLangHelper{Version: "3.6"}
 	case "php":
 		return &PhpLangHelper{}
 	case "rust":
@@ -48,9 +48,9 @@ func GetLangHelper(lang string) LangHelper {
 
 type LangHelper interface {
 	// BuildFromImage is the base image to build off, typically fnproject/LANG:dev
-	BuildFromImage() string
+	BuildFromImage() (string, error)
 	// RunFromImage is the base image to use for deployment (usually smaller than the build images)
-	RunFromImage() string
+	RunFromImage() (string, error)
 	// If set to false, it will use a single Docker build step, rather than multi-stage
 	IsMultiStage() bool
 	// Dockerfile build lines for building dependencies or anything else language specific
@@ -58,9 +58,9 @@ type LangHelper interface {
 	// DockerfileCopyCmds will run in second/final stage of multi-stage build to copy artifacts form the build stage
 	DockerfileCopyCmds() []string
 	// Entrypoint sets the Docker Entrypoint. One of Entrypoint or Cmd is required.
-	Entrypoint() string
+	Entrypoint() (string, error)
 	// Cmd sets the Docker command. One of Entrypoint or Cmd is required.
-	Cmd() string
+	Cmd() (string, error)
 	// DefaultFormat provides the default fn format to set in func.yaml fn init, return "" for an empty format.
 	DefaultFormat() string
 	HasPreBuild() bool
@@ -71,25 +71,26 @@ type LangHelper interface {
 	// GenerateBoilerplate generates basic function boilerplate. Returns ErrBoilerplateExists if the function file
 	// already exists.
 	GenerateBoilerplate() error
+	// FixImagesOnInit determines if images should be fixed on initialization - BuildFromImage and RunFromImage will be written to func.yaml
+	FixImagesOnInit() bool
 }
 
 // BaseHelper is empty implementation of LangHelper for embedding in implementations.
 type BaseHelper struct {
 }
 
-func (h *BaseHelper) BuildFromImage() string        { return "" }
-func (h *BaseHelper) RunFromImage() string          { return h.BuildFromImage() }
 func (h *BaseHelper) IsMultiStage() bool            { return true }
 func (h *BaseHelper) DockerfileBuildCmds() []string { return []string{} }
 func (h *BaseHelper) DockerfileCopyCmds() []string  { return []string{} }
-func (h *BaseHelper) Entrypoint() string            { return "" }
-func (h *BaseHelper) Cmd() string                   { return "" }
+func (h *BaseHelper) Entrypoint() (string, error)   { return "", nil }
+func (h *BaseHelper) Cmd() (string, error)          { return "", nil }
 func (h *BaseHelper) HasPreBuild() bool             { return false }
 func (h *BaseHelper) PreBuild() error               { return nil }
 func (h *BaseHelper) AfterBuild() error             { return nil }
 func (h *BaseHelper) HasBoilerplate() bool          { return false }
 func (h *BaseHelper) GenerateBoilerplate() error    { return nil }
 func (h *BaseHelper) DefaultFormat() string         { return "" }
+func (h *BaseHelper) FixImagesOnInit() bool         { return false }
 
 // exists checks if a file exists
 func exists(name string) bool {

@@ -202,7 +202,10 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *funcfile) (stri
 	dfLines := []string{}
 	bi := ff.BuildImage
 	if bi == "" {
-		bi = helper.BuildFromImage()
+		bi, err = helper.BuildFromImage()
+		if err != nil {
+			return "", err
+		}
 	}
 	if helper.IsMultiStage() {
 		// build stage
@@ -216,7 +219,10 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *funcfile) (stri
 		// final stage
 		ri := ff.RunImage
 		if ri == "" {
-			ri = helper.RunFromImage()
+			ri, err = helper.RunFromImage()
+			if err !=nil {
+				return "", err
+			}
 		}
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")

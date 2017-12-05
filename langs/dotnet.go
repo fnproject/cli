@@ -9,15 +9,15 @@ type DotNetLangHelper struct {
 	BaseHelper
 }
 
-func (lh *DotNetLangHelper) BuildFromImage() string {
-	return "microsoft/dotnet:1.0.1-sdk-projectjson"
+func (lh *DotNetLangHelper) BuildFromImage() (string, error) {
+	return "microsoft/dotnet:1.0.1-sdk-projectjson", nil
 }
-func (lh *DotNetLangHelper) RunFromImage() string {
-	return "microsoft/dotnet:runtime"
+func (lh *DotNetLangHelper) RunFromImage() (string, error) {
+	return "microsoft/dotnet:runtime", nil
 }
 
-func (lh *DotNetLangHelper) Entrypoint() string {
-	return "dotnet dotnet.dll"
+func (lh *DotNetLangHelper) Entrypoint() (string, error) {
+	return "dotnet dotnet.dll", nil
 }
 
 func (lh *DotNetLangHelper) HasPreBuild() bool {

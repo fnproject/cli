@@ -4,15 +4,15 @@ type NodeLangHelper struct {
 	BaseHelper
 }
 
-func (lh *NodeLangHelper) BuildFromImage() string {
-	return "fnproject/node:dev"
+func (lh *NodeLangHelper) BuildFromImage() (string, error) {
+	return "fnproject/node:dev", nil
 }
-func (lh *NodeLangHelper) RunFromImage() string {
-	return "fnproject/node"
+func (lh *NodeLangHelper) RunFromImage() (string, error) {
+	return "fnproject/node", nil
 }
 
-func (lh *NodeLangHelper) Entrypoint() string {
-	return "node func.js"
+func (lh *NodeLangHelper) Entrypoint() (string, error) {
+	return "node func.js", nil
 }
 
 func (h *NodeLangHelper) DockerfileBuildCmds() []string {

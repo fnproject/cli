@@ -239,25 +239,46 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 	helper := langs.GetLangHelper(a.Runtime)
 	if helper == nil {
 		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function", a.Runtime)
-	}
-
-	if a.Entrypoint == "" {
-		if helper != nil {
-			a.Entrypoint = helper.Entrypoint()
+	} else {
+		if a.Entrypoint == "" {
+			a.Entrypoint, err = helper.Entrypoint()
+			if err != nil {
+				return err
+			}
 		}
-	}
 
-	if a.Format == "" {
-		if helper != nil {
+		if a.Format == "" {
 			a.Format = helper.DefaultFormat()
 		}
-	}
 
-	if a.Cmd == "" {
-		if helper != nil {
-			a.Cmd = helper.Cmd()
+		if a.Cmd == "" {
+			cmd, err := helper.Cmd()
+			if err != nil {
+				return err
+			}
+			a.Cmd = cmd
+		}
+
+		if helper.FixImagesOnInit() {
+			if a.BuildImage == "" {
+				buildImage, err := helper.BuildFromImage()
+				if err != nil {
+					return err
+				}
+				a.BuildImage = buildImage
+			}
+			if helper.IsMultiStage() {
+				if a.RunImage == "" {
+					runImage, err := helper.RunFromImage()
+					if err != nil {
+						return err
+					}
+					a.RunImage = runImage
+				}
+			}
 		}
 	}
+
 	if a.Entrypoint == "" && a.Cmd == "" {
 		return fmt.Errorf("could not detect entrypoint or cmd for %v, use --entrypoint and/or --cmd to set them explicitly", a.Runtime)
 	}
