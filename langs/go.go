@@ -10,12 +10,12 @@ type GoLangHelper struct {
 	BaseHelper
 }
 
-func (lh *GoLangHelper) BuildFromImage() string {
-	return "fnproject/go:dev"
+func (lh *GoLangHelper) BuildFromImage() (string, error) {
+	return "fnproject/go:dev", nil
 }
 
-func (lh *GoLangHelper) RunFromImage() string {
-	return "fnproject/go"
+func (lh *GoLangHelper) RunFromImage() (string, error) {
+	return "fnproject/go", nil
 }
 
 func (h *GoLangHelper) DockerfileBuildCmds() []string {
@@ -41,8 +41,8 @@ func (h *GoLangHelper) DockerfileCopyCmds() []string {
 	}
 }
 
-func (lh *GoLangHelper) Entrypoint() string {
-	return "./func"
+func (lh *GoLangHelper) Entrypoint() (string, error) {
+	return "./func", nil
 }
 
 func (lh *GoLangHelper) HasBoilerplate() bool { return true }

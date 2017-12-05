@@ -10,20 +10,20 @@ type PythonLangHelper struct {
 	Version string
 }
 
-func (lh *PythonLangHelper) BuildFromImage() string {
-	return fmt.Sprintf("fnproject/python:%v", lh.Version)
+func (lh *PythonLangHelper) BuildFromImage() (string, error) {
+	return fmt.Sprintf("fnproject/python:%v", lh.Version), nil
 }
 
-func (lh *PythonLangHelper) RunFromImage() string {
-	return fmt.Sprintf("fnproject/python:%v", lh.Version)
+func (lh *PythonLangHelper) RunFromImage() (string, error) {
+	return fmt.Sprintf("fnproject/python:%v", lh.Version), nil
 }
 
-func (lh *PythonLangHelper) Entrypoint() string {
+func (lh *PythonLangHelper) Entrypoint() (string, error) {
 	python := "python2"
 	if strings.HasPrefix(lh.Version, "3.6") {
 		python = "python3"
 	}
-	return fmt.Sprintf("%v func.py", python)
+	return fmt.Sprintf("%v func.py", python), nil
 }
 
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {

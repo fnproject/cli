@@ -11,12 +11,12 @@ type RustLangHelper struct {
 	BaseHelper
 }
 
-func (lh *RustLangHelper) BuildFromImage() string {
-	return "rust:1"
+func (lh *RustLangHelper) BuildFromImage() (string, error) {
+	return "rust:1", nil
 }
 
-func (lh *RustLangHelper) RunFromImage() string {
-	return "debian:stretch"
+func (lh *RustLangHelper) RunFromImage() (string, error) {
+	return "debian:stretch", nil
 }
 
 func (lh *RustLangHelper) HasBoilerplate() bool { return true }
@@ -66,8 +66,8 @@ func (lh *RustLangHelper) GenerateBoilerplate() error {
 	return nil
 }
 
-func (lh *RustLangHelper) Entrypoint() string {
-	return "/function/func"
+func (lh *RustLangHelper) Entrypoint() (string, error) {
+	return "/function/func", nil
 }
 
 func (lh *RustLangHelper) DockerfileCopyCmds() []string {

@@ -16,28 +16,39 @@ import (
 // JavaLangHelper provides a set of helper methods for the lifecycle of Java Maven projects
 type JavaLangHelper struct {
 	BaseHelper
-	version string
+	version      string
+	latestFdkVersion string
 }
 
 // BuildFromImage returns the Docker image used to compile the Maven function project
-func (lh *JavaLangHelper) BuildFromImage() string {
+func (lh *JavaLangHelper) BuildFromImage() (string, error) {
+
+	fdkVersion, err := lh.getFDKAPIVersion()
+	if err != nil {
+		return "", err
+	}
+
 	if lh.version == "1.8" {
-		return "fnproject/fn-java-fdk-build:latest"
+		return fmt.Sprintf("fnproject/fn-java-fdk-build:%s", fdkVersion), nil
 	} else if lh.version == "9" {
-		return "fnproject/fn-java-fdk-build:jdk9-latest"
+		return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk9-%s", fdkVersion), nil
 	} else {
-		return ""
+		return "", fmt.Errorf("unsupported java version %s", lh.version)
 	}
 }
 
 // RunFromImage returns the Docker image used to run the Java function.
-func (lh *JavaLangHelper) RunFromImage() string {
+func (lh *JavaLangHelper) RunFromImage() (string, error) {
+	fdkVersion, err := lh.getFDKAPIVersion()
+	if err != nil {
+		return "", err
+	}
 	if lh.version == "1.8" {
-		return "fnproject/fn-java-fdk:latest"
+		return fmt.Sprintf("fnproject/fn-java-fdk:%s", fdkVersion), nil
 	} else if lh.version == "9" {
-		return "fnproject/fn-java-fdk:jdk9-latest"
+		return fmt.Sprintf("fnproject/fn-java-fdk:jdk9-%s", fdkVersion), nil
 	} else {
-		return ""
+		return "", fmt.Errorf("unsupported java version %s", lh.version)
 	}
 }
 
@@ -45,7 +56,7 @@ func (lh *JavaLangHelper) RunFromImage() string {
 func (lh *JavaLangHelper) HasBoilerplate() bool { return true }
 
 // Java defaults to http
-func (lh *JavaLangHelper) DefaultFormat() string { return "http"}
+func (lh *JavaLangHelper) DefaultFormat() string { return "http" }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime. The default boilerplate is for a Maven
 // project.
@@ -60,7 +71,7 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 		return ErrBoilerplateExists
 	}
 
-	apiVersion, err := getFDKAPIVersion()
+	apiVersion, err := lh.getFDKAPIVersion()
 	if err != nil {
 		return err
 	}
@@ -88,8 +99,8 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 }
 
 // Cmd returns the Java runtime Docker entrypoint that will be executed when the function is executed.
-func (lh *JavaLangHelper) Cmd() string {
-	return "com.example.fn.HelloFunction::handleRequest"
+func (lh *JavaLangHelper) Cmd() (string, error) {
+	return "com.example.fn.HelloFunction::handleRequest", nil
 }
 
 // DockerfileCopyCmds returns the Docker COPY command to copy the compiled Java function jar and dependencies.
@@ -156,10 +167,15 @@ func pomFileContent(APIversion, javaVersion string) string {
 	return fmt.Sprintf(pomFile, APIversion, javaVersion, javaVersion)
 }
 
-func getFDKAPIVersion() (string, error) {
+func (lh *JavaLangHelper) getFDKAPIVersion() (string, error) {
+
+	if lh.latestFdkVersion != "" {
+		return lh.latestFdkVersion, nil
+	}
+
 	const versionURL = "https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
 	const versionEnv = "FN_JAVA_FDK_VERSION"
-	fetchError := fmt.Errorf("Failed to fetch latest Java FDK version from %v. Check your network settings or manually override the version by setting %s", versionURL, versionEnv)
+	fetchError := fmt.Errorf("Failed to fetch latest Java FDK javaVersion from %v. Check your network settings or manually override the javaVersion by setting %s", versionURL, versionEnv)
 
 	type parsedResponse struct {
 		Version string `json:"latest_version"`
@@ -184,7 +200,14 @@ func getFDKAPIVersion() (string, error) {
 	if err != nil {
 		return "", fetchError
 	}
-	return parsedResp[0].Version, nil
+
+	version = parsedResp[0].Version
+	lh.latestFdkVersion = version
+	return version, nil
+}
+
+func (lh *JavaLangHelper) FixImagesOnInit() bool {
+	return true
 }
 
 const (

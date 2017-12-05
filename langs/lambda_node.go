@@ -4,16 +4,20 @@ type LambdaNodeHelper struct {
 	BaseHelper
 }
 
-func (lh *LambdaNodeHelper) BuildFromImage() string {
-	return "fnproject/lambda:node-4"
+func (lh *LambdaNodeHelper) BuildFromImage() (string, error) {
+	return "fnproject/lambda:node-4", nil
+}
+
+func (lh *LambdaNodeHelper) RunFromImage() (string, error) {
+	return "fnproject/lambda:node-4", nil
 }
 
 func (lh *LambdaNodeHelper) IsMultiStage() bool {
 	return false
 }
 
-func (lh *LambdaNodeHelper) Cmd() string {
-	return "func.handler"
+func (lh *LambdaNodeHelper) Cmd() (string, error) {
+	return "func.handler", nil
 }
 
 func (h *LambdaNodeHelper) DockerfileBuildCmds() []string {
