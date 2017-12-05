@@ -11,7 +11,7 @@ type PythonLangHelper struct {
 }
 
 func (lh *PythonLangHelper) BuildFromImage() string {
-	return fmt.Sprintf("fnproject/python:%v", lh.Version)
+	return fmt.Sprintf("fnproject/python:%v-dev", lh.Version)
 }
 
 func (lh *PythonLangHelper) RunFromImage() string {
