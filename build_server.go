@@ -156,7 +156,7 @@ func main() {
 	ctx := context.Background()
 	funcServer := server.NewFromEnv(ctx)
 	{{- range .Extensions }}
-		funcServer.AddExtension("{{ .Name }}")
+		funcServer.AddExtensionByName("{{ .Name }}")
 	{{- end}}
 	funcServer.Start(ctx)
 }
