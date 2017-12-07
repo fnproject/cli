@@ -99,7 +99,7 @@ func (b *buildServerCmd) buildServer(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	err = runBuild(dir, c.String("tag"), "Dockerfile", false)
+	err = runBuild(dir, c.String("tag"), "Dockerfile", b.noCache)
 	if err != nil {
 		return err
 	}
@@ -179,9 +179,9 @@ RUN cd $D && go get
 RUN cd $D && go build -o fnserver && cp fnserver /tmp/
 
 # final stage
-FROM alpine
-RUN apk add --no-cache ca-certificates curl
+FROM fnproject/dind
+RUN apk add --no-cache ca-certificates
 WORKDIR /app
 COPY --from=build-env /tmp/fnserver /app/fnserver
-ENTRYPOINT ["./fnserver"]
+CMD ["./fnserver"]
 `
