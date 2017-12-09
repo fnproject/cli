@@ -49,7 +49,7 @@ var (
 )
 
 func init() {
-	for rt := range fileExtToRuntime {
+	for _, rt := range fileExtToRuntime {
 		fnInitRuntimes = append(fnInitRuntimes, rt)
 	}
 }
