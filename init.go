@@ -311,15 +311,14 @@ func removeDuplicates(elements []string) []string {
     result := []string{}
 
     for v := range elements {
-        if encountered[elements[v]] == true {
-            // Do not add duplicate.
-        } else {
+        if encountered[elements[v]] != true {
             encountered[elements[v]] = true
             // Append to result slice.
             result = append(result, elements[v])
         }
     }
-	// Return the new after sort  slice.
+	// Return the new sort after slice.
 	sort.Strings(result)
     return result
 }
+
