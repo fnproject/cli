@@ -98,31 +98,38 @@ func apps() cli.Command {
 }
 
 func (a *appsCmd) list(c *cli.Context) error {
-	resp, err := a.client.Apps.GetApps(&apiapps.GetAppsParams{
-		Context: context.Background(),
-	})
 
-	if err != nil {
-		switch e := err.(type) {
-		case *apiapps.GetAppsAppNotFound:
-			return fmt.Errorf("%v", e.Payload.Error.Message)
-		case *apiapps.GetAppsAppDefault:
-			return fmt.Errorf("%v", e.Payload.Error.Message)
-		case *apiapps.GetAppsDefault:
-			// this is the one getting called, not sure what the one above is?
-			return fmt.Errorf("%v", e.Payload.Error.Message)
-		default:
-			return fmt.Errorf("%v", err)
+	params := &apiapps.GetAppsParams{Context: context.Background(),
+	}
+	for {
+		resp, err := a.client.Apps.GetApps(params)
+
+		if err != nil {
+			switch e := err.(type) {
+			case *apiapps.GetAppsAppNotFound:
+				return fmt.Errorf("%v", e.Payload.Error.Message)
+			case *apiapps.GetAppsAppDefault:
+				return fmt.Errorf("%v", e.Payload.Error.Message)
+			case *apiapps.GetAppsDefault:
+				// this is the one getting called, not sure what the one above is?
+				return fmt.Errorf("%v", e.Payload.Error.Message)
+			default:
+				return fmt.Errorf("%v", err)
+			}
 		}
-	}
+		if len(resp.Payload.Apps) == 0 {
+			fmt.Println("no apps found")
+			return nil
+		}
 
-	if len(resp.Payload.Apps) == 0 {
-		fmt.Println("no apps found")
-		return nil
-	}
+		for _, app := range resp.Payload.Apps {
+			fmt.Println(app.Name)
+		}
 
-	for _, app := range resp.Payload.Apps {
-		fmt.Println(app.Name)
+		if resp.Payload.NextCursor == "" {
+			break
+		}
+		params.Cursor = &resp.Payload.NextCursor
 	}
 
 	return nil

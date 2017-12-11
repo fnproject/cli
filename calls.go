@@ -141,15 +141,24 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 		params.PerPage = &per_page
 	}
 
-	resp, err := call.client.Call.GetAppsAppCalls(&params)
-	if err != nil {
-		switch e := err.(type) {
-		case *apicall.GetAppsAppCallsNotFound:
-			return errors.New(e.Payload.Error.Message)
-		default:
-			return err
+	for {
+		resp, err := call.client.Call.GetAppsAppCalls(&params)
+		if err != nil {
+			switch e := err.(type) {
+			case *apicall.GetAppsAppCallsNotFound:
+				return errors.New(e.Payload.Error.Message)
+			default:
+				return err
+			}
 		}
+
+		printCalls(resp.Payload.Calls)
+
+		if resp.Payload.NextCursor == "" {
+			break
+		}
+		params.Cursor = &resp.Payload.NextCursor
 	}
-	printCalls(resp.Payload.Calls)
+
 	return nil
 }

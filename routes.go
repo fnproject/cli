@@ -163,36 +163,44 @@ func cleanRoutePath(p string) string {
 	return p
 }
 
-func (a *routesCmd) list(c *cli.Context) error {
-	appName := c.Args().Get(0)
-
-	resp, err := a.client.Routes.GetAppsAppRoutes(&apiroutes.GetAppsAppRoutesParams{
-		Context: context.Background(),
-		App:     appName,
-	})
-
-	if err != nil {
-		switch e := err.(type) {
-		case *apiroutes.GetAppsAppRoutesNotFound:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
-		case *apiroutes.GetAppsAppRoutesDefault:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
-		default:
-			return err
-		}
-	}
-
+func printRoutes(appName string, routes []*fnmodels.Route) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprint(w, "path", "\t", "image", "\t", "endpoint", "\n")
-	for _, route := range resp.Payload.Routes {
+	for _, route := range routes {
 		endpoint := path.Join(client.Host(), "r", appName, route.Path)
-		if err != nil {
-			return fmt.Errorf("error parsing functions route path: %s", err)
-		}
-
 		fmt.Fprint(w, route.Path, "\t", route.Image, "\t", endpoint, "\n")
 	}
 	w.Flush()
+}
+
+func (a *routesCmd) list(c *cli.Context) error {
+	appName := c.Args().Get(0)
+
+	params := &apiroutes.GetAppsAppRoutesParams{
+		Context: context.Background(),
+		App:     appName,
+	}
+	for {
+		resp, err := a.client.Routes.GetAppsAppRoutes(params)
+
+		if err != nil {
+			switch e := err.(type) {
+			case *apiroutes.GetAppsAppRoutesNotFound:
+				return fmt.Errorf("%s", e.Payload.Error.Message)
+			case *apiroutes.GetAppsAppRoutesDefault:
+				return fmt.Errorf("%s", e.Payload.Error.Message)
+			default:
+				return err
+			}
+		}
+
+		printRoutes(appName, resp.Payload.Routes)
+
+		if resp.Payload.NextCursor == "" {
+			break
+		}
+		params.Cursor = &resp.Payload.NextCursor
+	}
 
 	return nil
 }
