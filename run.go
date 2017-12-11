@@ -67,7 +67,8 @@ func runflags() []cli.Flag {
 	}
 }
 
-func preRun(c *cli.Context) (*funcfile, []string, error) {
+// preRun parses func.yaml, checks expected env vars and builds the function image.
+func preRun(c *cli.Context) (string, *funcfile, []string, error) {
 	wd := getWd()
 	// if image name is passed in, it will run that image
 	path := c.Args().First() // TODO: should we ditch this?
@@ -80,7 +81,7 @@ func preRun(c *cli.Context) (*funcfile, []string, error) {
 		dir := filepath.Join(wd, path)
 		err := os.Chdir(dir)
 		if err != nil {
-			return nil, nil, err
+			return "", nil, nil, err
 		}
 		defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
 		wd = dir
@@ -88,7 +89,7 @@ func preRun(c *cli.Context) (*funcfile, []string, error) {
 
 	fpath, ff, err = findAndParseFuncfile(wd)
 	if err != nil {
-		return nil, nil, err
+		return fpath, nil, nil, err
 	}
 
 	// check for valid input
@@ -106,7 +107,7 @@ func preRun(c *cli.Context) (*funcfile, []string, error) {
 			continue
 		}
 		if expected.Required {
-			return ff, envVars, fmt.Errorf("required env var %s not found, please set either set it in your environment or pass in `-e %s=X` flag.", n, n)
+			return "", ff, envVars, fmt.Errorf("required env var %s not found, please set either set it in your environment or pass in `-e %s=X` flag.", n, n)
 		}
 		fmt.Fprintf(os.Stderr, "info: optional env var %s not found.\n", n)
 	}
@@ -117,9 +118,9 @@ func preRun(c *cli.Context) (*funcfile, []string, error) {
 
 	_, err = buildfunc(fpath, ff, c.Bool("no-cache"))
 	if err != nil {
-		return nil, nil, err
+		return fpath, nil, nil, err
 	}
-	return ff, envVars, nil
+	return fpath, ff, envVars, nil
 }
 
 func getEnvValue(n string, envVars []string) string {
@@ -134,7 +135,7 @@ func getEnvValue(n string, envVars []string) string {
 }
 
 func (r *runCmd) run(c *cli.Context) error {
-	ff, envVars, err := preRun(c)
+	_, ff, envVars, err := preRun(c)
 	if err != nil {
 		return err
 	}
