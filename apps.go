@@ -88,10 +88,10 @@ func apps() cli.Command {
 				Action:  a.list,
 			},
 			{
-				Name:   "delete",
-				Aliases:   []string{"d"},
-				Usage:  "delete an app",
-				Action: a.delete,
+				Name:    "delete",
+				Aliases: []string{"d"},
+				Usage:   "delete an app",
+				Action:  a.delete,
 			},
 		},
 	}
@@ -99,8 +99,7 @@ func apps() cli.Command {
 
 func (a *appsCmd) list(c *cli.Context) error {
 
-	params := &apiapps.GetAppsParams{Context: context.Background(),
-	}
+	params := &apiapps.GetAppsParams{Context: context.Background()}
 	for {
 		resp, err := a.client.Apps.GetApps(params)
 
