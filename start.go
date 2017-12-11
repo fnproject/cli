@@ -29,7 +29,7 @@ func startCmd() cli.Command {
 	}
 }
 
-func start(c *cli.Context) error {
+func start(c *cli.Context) {
 	denvs := []string{}
 	if c.String("log-level") != "" {
 		denvs = append(denvs, "GIN_MODE="+c.String("log-level"))
@@ -77,15 +77,11 @@ func start(c *cli.Context) error {
 			err = cmd.Process.Signal(syscall.SIGTERM)
 			if err != nil {
 				log.Println("error: could not kill process:", err)
-				return err
 			}
 		case err := <-done:
 			if err != nil {
 				log.Println("error: processed finished with error", err)
 			}
-			return err
 		}
 	}
-
-	return nil
 }
