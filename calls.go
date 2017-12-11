@@ -77,6 +77,9 @@ func printCalls(calls []*models.Call) {
 				"Status: %v\n",
 			call.ID, call.AppName, call.Path, call.CreatedAt,
 			call.StartedAt, call.CompletedAt, call.Status))
+		if call.Error != "" {
+			fmt.Println(fmt.Sprintf("Error reason: %v\n", call.Error))
+		}
 	}
 }
 
