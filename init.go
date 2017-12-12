@@ -223,7 +223,7 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 		helper = langs.GetLangHelper(a.Runtime)
 	}
 	if helper == nil {
-		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function", a.Runtime)
+		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function.\n", a.Runtime)
 	} else {
 		if a.Entrypoint == "" {
 			a.Entrypoint, err = helper.Entrypoint()
