@@ -145,6 +145,7 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 		params.PerPage = &per_page
 	}
 
+	var resCalls []*models.Call
 	for {
 		resp, err := call.client.Call.GetAppsAppCalls(&params)
 		if err != nil {
@@ -156,13 +157,15 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 			}
 		}
 
-		printCalls(resp.Payload.Calls)
-
-		if resp.Payload.NextCursor == "" {
+		resCalls = append(resCalls, resp.Payload.Calls...)
+		howManyMore := ctx.Int64("per-page") - int64(len(resCalls) + len(resp.Payload.Calls))
+		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
 		}
+
 		params.Cursor = &resp.Payload.NextCursor
 	}
 
+	printCalls(resCalls)
 	return nil
 }

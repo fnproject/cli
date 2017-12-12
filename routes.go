@@ -88,6 +88,17 @@ func routes() cli.Command {
 				Usage:     "list routes for `app`",
 				ArgsUsage: "<app>",
 				Action:    r.list,
+				Flags: []cli.Flag{
+					cli.StringFlag{
+						Name:  "cursor",
+						Usage: "pagination cursor",
+					},
+					cli.Int64Flag{
+						Name:  "per-page",
+						Usage: "number of calls to return",
+						Value: int64(30),
+					},
+				},
 			},
 			{
 				Name:      "create",
@@ -180,6 +191,8 @@ func (a *routesCmd) list(c *cli.Context) error {
 		Context: context.Background(),
 		App:     appName,
 	}
+
+	var resRoutes []*fnmodels.Route
 	for {
 		resp, err := a.client.Routes.GetAppsAppRoutes(params)
 
@@ -194,14 +207,16 @@ func (a *routesCmd) list(c *cli.Context) error {
 			}
 		}
 
-		printRoutes(appName, resp.Payload.Routes)
-
-		if resp.Payload.NextCursor == "" {
+		resRoutes = append(resRoutes, resp.Payload.Routes...)
+		howManyMore := c.Int64("per-page") - int64(len(resRoutes) + len(resp.Payload.Routes))
+		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
 		}
+
 		params.Cursor = &resp.Payload.NextCursor
 	}
 
+	printRoutes(appName, resRoutes)
 	return nil
 }
 

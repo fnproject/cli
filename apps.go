@@ -86,6 +86,17 @@ func apps() cli.Command {
 				Aliases: []string{"l"},
 				Usage:   "list all apps",
 				Action:  a.list,
+				Flags: []cli.Flag{
+					cli.StringFlag{
+						Name:  "cursor",
+						Usage: "pagination cursor",
+					},
+					cli.Int64Flag{
+						Name:  "per-page",
+						Usage: "number of calls to return",
+						Value: int64(30),
+					},
+				},
 			},
 			{
 				Name:    "delete",
@@ -100,6 +111,7 @@ func apps() cli.Command {
 func (a *appsCmd) list(c *cli.Context) error {
 
 	params := &apiapps.GetAppsParams{Context: context.Background()}
+	var resApps []*models.App
 	for {
 		resp, err := a.client.Apps.GetApps(params)
 
@@ -116,19 +128,24 @@ func (a *appsCmd) list(c *cli.Context) error {
 				return fmt.Errorf("%v", err)
 			}
 		}
-		if len(resp.Payload.Apps) == 0 {
-			fmt.Println("no apps found")
-			return nil
-		}
 
-		for _, app := range resp.Payload.Apps {
-			fmt.Println(app.Name)
-		}
+		resApps = append(resApps, resp.Payload.Apps...)
 
-		if resp.Payload.NextCursor == "" {
+		howManyMore := c.Int64("per-page") - int64(len(resApps) + len(resp.Payload.Apps))
+		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
 		}
+
 		params.Cursor = &resp.Payload.NextCursor
+	}
+
+	if len(resApps) == 0 {
+		fmt.Println("no apps found")
+		return nil
+	}
+
+	for _, app := range resApps {
+		fmt.Println(app.Name)
 	}
 
 	return nil
