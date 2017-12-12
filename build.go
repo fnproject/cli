@@ -54,7 +54,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
 	}
 
-	ff, err = buildfunc(fpath, ff, b.noCache)
+	ff, err = buildfunc(c, fpath, ff, b.noCache)
 	if err != nil {
 		return err
 	}

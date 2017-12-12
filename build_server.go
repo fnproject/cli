@@ -99,7 +99,7 @@ func (b *buildServerCmd) buildServer(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	err = runBuild(dir, c.String("tag"), "Dockerfile", b.noCache)
+	err = runBuild(c, dir, c.String("tag"), "Dockerfile", b.noCache)
 	if err != nil {
 		return err
 	}

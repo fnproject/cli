@@ -37,6 +37,13 @@ func newFn() *cli.App {
 	app.Authors = []cli.Author{{Name: "Fn Project"}}
 	app.Description = "Fn command line tool"
 	app.UsageText = `Check the docs at https://github.com/fnproject/fn/blob/master/fn/README.md`
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "log-level",
+			Value: "info",
+			Usage: "Use `--log-level debug` to enable debugging",
+		},
+	}
 
 	cli.AppHelpTemplate = `{{.Name}} {{.Version}}{{if .Description}}
 
