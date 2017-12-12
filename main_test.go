@@ -111,10 +111,10 @@ func checkInit(t *testing.T, testdir, version, bin string) {
 
 	_, err = exec.Command(bin, "init", runtime).CombinedOutput()
 	if err != nil {
-		t.Errorf("ERROR: Failed to run fn init with --runtime=java%s", version)
+		t.Errorf("ERROR: Failed to run fn init with --runtime=java%s. err: %v", version, err)
 	}
 
 	if _, err = os.Stat(fmt.Sprintf("%s/src/main", testdir)); err != nil && os.IsNotExist(err) {
-		t.Errorf("ERROR: failed to create java project with --runtime=java%s", version)
+		t.Errorf("ERROR: failed to create java project with --runtime=java%s. err: %v", version, err)
 	}
 }

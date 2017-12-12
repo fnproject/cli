@@ -11,6 +11,20 @@ type RubyLangHelper struct {
 	BaseHelper
 }
 
+func (h *RubyLangHelper) Handles(lang string) bool {
+	return defaultHandles(h, lang)
+}
+func (h *RubyLangHelper) Runtime() string {
+	return h.LangStrings()[0]
+}
+
+func (lh *RubyLangHelper) LangStrings() []string {
+	return []string{"ruby"}
+}
+func (lh *RubyLangHelper) Extensions() []string {
+	return []string{".rb"}
+}
+
 func (lh *RubyLangHelper) BuildFromImage() (string, error) {
 	return "fnproject/ruby:dev", nil
 }

@@ -32,28 +32,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-var (
-	fileExtToRuntime = map[string]string{
-		".go":   "go",
-		".js":   "node",
-		".rb":   "ruby",
-		".py":   "python",
-		".php":  "php",
-		".rs":   "rust",
-		".cs":   "dotnet",
-		".fs":   "dotnet",
-		".java": "java",
-	}
-
-	fnInitRuntimes []string
-)
-
-func init() {
-	for rt := range fileExtToRuntime {
-		fnInitRuntimes = append(fnInitRuntimes, rt)
-	}
-}
-
 type initFnCmd struct {
 	force bool
 	funcfile
@@ -73,7 +51,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 		},
 		cli.StringFlag{
 			Name:        "runtime",
-			Usage:       "choose an existing runtime - " + strings.Join(fnInitRuntimes, ", "),
+			Usage:       "choose an existing runtime - " + langsList(),
 			Destination: &a.Runtime,
 		},
 		cli.StringFlag{
@@ -95,6 +73,14 @@ func initFlags(a *initFnCmd) []cli.Flag {
 	}
 
 	return append(fgs, routeFlags...)
+}
+
+func langsList() string {
+	allLangs := []string{}
+	for _, h := range langs.Helpers() {
+		allLangs = append(allLangs, h.LangStrings()...)
+	}
+	return strings.Join(allLangs, ", ")
 }
 
 func initFn() cli.Command {
@@ -225,20 +211,19 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 		return errors.New("function file runtime is 'docker', but no Dockerfile exists")
 	}
 
-	var rt string
+	var helper langs.LangHelper
 	if a.Runtime == "" {
-		rt, err = detectRuntime(wd)
+		helper, err = detectRuntime(wd)
 		if err != nil {
 			return err
 		}
-		a.Runtime = rt
-		fmt.Printf("Found %v function, assuming %v runtime.\n", rt, rt)
+		fmt.Printf("Found %v function, assuming %v runtime.\n", helper.Runtime(), helper.Runtime())
 	} else {
 		fmt.Println("Runtime:", a.Runtime)
+		helper = langs.GetLangHelper(a.Runtime)
 	}
-	helper := langs.GetLangHelper(a.Runtime)
 	if helper == nil {
-		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function", a.Runtime)
+		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function.\n", a.Runtime)
 	} else {
 		if a.Entrypoint == "" {
 			a.Entrypoint, err = helper.Entrypoint()
@@ -286,18 +271,21 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 	return nil
 }
 
-func detectRuntime(path string) (runtime string, err error) {
-	for ext, runtime := range fileExtToRuntime {
-		filenames := []string{
-			filepath.Join(path, fmt.Sprintf("func%s", ext)),
-			filepath.Join(path, fmt.Sprintf("Func%s", ext)),
-			filepath.Join(path, fmt.Sprintf("src/main%s", ext)), // rust
+func detectRuntime(path string) (langs.LangHelper, error) {
+	for _, h := range langs.Helpers() {
+		filenames := []string{}
+		for _, ext := range h.Extensions() {
+			filenames = append(filenames,
+				filepath.Join(path, fmt.Sprintf("func%s", ext)),
+				filepath.Join(path, fmt.Sprintf("Func%s", ext)),
+				filepath.Join(path, fmt.Sprintf("src/main%s", ext)), // rust
+			)
 		}
 		for _, filename := range filenames {
 			if exists(filename) {
-				return runtime, nil
+				return h, nil
 			}
 		}
 	}
-	return "", fmt.Errorf("no supported files found to guess runtime, please set runtime explicitly with --runtime flag")
+	return nil, fmt.Errorf("no supported files found to guess runtime, please set runtime explicitly with --runtime flag")
 }
