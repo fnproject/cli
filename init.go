@@ -25,7 +25,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"sort"
 	"strings"
+
 
 	"github.com/fnproject/cli/langs"
 	"github.com/fnproject/fn_go/models"
@@ -49,9 +51,10 @@ var (
 )
 
 func init() {
-	for rt := range fileExtToRuntime {
+	for _, rt := range fileExtToRuntime {
 		fnInitRuntimes = append(fnInitRuntimes, rt)
 	}
+	fnInitRuntimes=removeDuplicates(fnInitRuntimes)
 }
 
 type initFnCmd struct {
@@ -301,3 +304,21 @@ func detectRuntime(path string) (runtime string, err error) {
 	}
 	return "", fmt.Errorf("no supported files found to guess runtime, please set runtime explicitly with --runtime flag")
 }
+
+func removeDuplicates(elements []string) []string {
+    // Use map to record duplicates as we find them.
+    encountered := map[string]bool{}
+    result := []string{}
+
+    for v := range elements {
+        if encountered[elements[v]] != true {
+            encountered[elements[v]] = true
+            // Append to result slice.
+            result = append(result, elements[v])
+        }
+    }
+	// Return the new sort after slice.
+	sort.Strings(result)
+    return result
+}
+

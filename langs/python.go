@@ -2,6 +2,9 @@ package langs
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -42,6 +45,25 @@ func (h *PythonLangHelper) DockerfileBuildCmds() []string {
 	return r
 }
 
+func (lh *PythonLangHelper) HasBoilerplate() bool { return true }
+
+func (lh *PythonLangHelper) GenerateBoilerplate() error {
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	codeFile := filepath.Join(wd, "func.py")
+	if exists(codeFile) {
+		return ErrBoilerplateExists
+	}
+
+	if err := ioutil.WriteFile(codeFile, []byte(helloPythonSrcBoilerplate), os.FileMode(0644)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (h *PythonLangHelper) IsMultiStage() bool {
 	return false
 }
@@ -53,3 +75,11 @@ func (h *PythonLangHelper) IsMultiStage() bool {
 // "COPY --from=build-stage /root/.cache/pip/ /root/.cache/pip/",
 // }
 // }
+
+const (
+	helloPythonSrcBoilerplate = 
+`#!/usr/bin/python
+# -*- coding: utf-8 -*-
+print ("Hello, fn!")
+`
+)
