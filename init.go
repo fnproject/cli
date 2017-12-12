@@ -76,10 +76,6 @@ func initFlags(a *initFnCmd) []cli.Flag {
 }
 
 func langsList() string {
-	// var b bytes.Buffer
-	// for _, h := range helpers {
-	// 	b.Write([]byte(h.))
-	// }
 	allLangs := []string{}
 	for _, h := range langs.Helpers() {
 		allLangs = append(allLangs, h.LangStrings()...)
