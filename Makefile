@@ -11,10 +11,10 @@ docker:
 	docker build -t fnproject/fn:latest .
 
 dep:
-	glide install -v
+	dep ensure
 
 dep-up:
-	glide up -v
+	dep ensure --update
 
 test:
 	./test.sh
