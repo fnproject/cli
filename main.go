@@ -36,7 +36,6 @@ func newFn() *cli.App {
 	app.Version = Version
 	app.Authors = []cli.Author{{Name: "Fn Project"}}
 	app.Description = "Fn command line tool"
-	app.UsageText = `Check the docs at https://github.com/fnproject/fn/blob/master/fn/README.md`
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "log-level",
@@ -44,33 +43,24 @@ func newFn() *cli.App {
 			Usage: "Use `--log-level debug` to enable debugging",
 		},
 	}
-
 	cli.AppHelpTemplate = `{{.Name}} {{.Version}}{{if .Description}}
 
 {{.Description}}{{end}}
 
-USAGE:
-   {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}
-
 ENVIRONMENT VARIABLES:
    FN_API_URL - Fn server address
-   FN_REGISTRY - Docker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]treeder]{{if .VisibleCommands}}
+   FN_REGISTRY - Docker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]USERNAME]{{if .VisibleCommands}}
 
 COMMANDS:{{range .VisibleCategories}}{{if .Name}}
    {{.Name}}:{{end}}{{range .VisibleCommands}}
      {{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
 
-ALIASES:
-     build    (images build)
-     bump     (images bump)
-     deploy   (images deploy)
-     run      (images run)
-     call     (routes call)
-     push     (images push)
-
 GLOBAL OPTIONS:
    {{range $index, $option := .VisibleFlags}}{{if $index}}
    {{end}}{{$option}}{{end}}{{end}}
+
+LEARN MORE:
+   https://github.com/fnproject/fn
 `
 
 	app.CommandNotFound = func(c *cli.Context, cmd string) {

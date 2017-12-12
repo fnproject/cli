@@ -12,6 +12,20 @@ type PhpLangHelper struct {
 	BaseHelper
 }
 
+func (h *PhpLangHelper) Handles(lang string) bool {
+	return defaultHandles(h, lang)
+}
+func (h *PhpLangHelper) Runtime() string {
+	return h.LangStrings()[0]
+}
+
+func (lh *PhpLangHelper) LangStrings() []string {
+	return []string{"php"}
+}
+func (lh *PhpLangHelper) Extensions() []string {
+	return []string{".php"}
+}
+
 func (lh *PhpLangHelper) BuildFromImage() (string, error) {
 	return "fnproject/php:dev", nil
 }

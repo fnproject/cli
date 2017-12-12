@@ -9,6 +9,19 @@ type DotNetLangHelper struct {
 	BaseHelper
 }
 
+func (h *DotNetLangHelper) Handles(lang string) bool {
+	return defaultHandles(h, lang)
+}
+func (h *DotNetLangHelper) Runtime() string {
+	return h.LangStrings()[0]
+}
+
+func (lh *DotNetLangHelper) LangStrings() []string {
+	return []string{"dotnet"}
+}
+func (lh *DotNetLangHelper) Extensions() []string {
+	return []string{".cs", ".fs"}
+}
 func (lh *DotNetLangHelper) BuildFromImage() (string, error) {
 	return "microsoft/dotnet:1.0.1-sdk-projectjson", nil
 }

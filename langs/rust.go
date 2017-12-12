@@ -11,6 +11,19 @@ type RustLangHelper struct {
 	BaseHelper
 }
 
+func (h *RustLangHelper) Handles(lang string) bool {
+	return defaultHandles(h, lang)
+}
+func (h *RustLangHelper) Runtime() string {
+	return h.LangStrings()[0]
+}
+func (lh *RustLangHelper) LangStrings() []string {
+	return []string{"rust"}
+}
+func (lh *RustLangHelper) Extensions() []string {
+	return []string{".rs"}
+}
+
 func (lh *RustLangHelper) BuildFromImage() (string, error) {
 	return "rust:1", nil
 }
