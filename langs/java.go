@@ -16,8 +16,32 @@ import (
 // JavaLangHelper provides a set of helper methods for the lifecycle of Java Maven projects
 type JavaLangHelper struct {
 	BaseHelper
-	version      string
+	version          string
 	latestFdkVersion string
+}
+
+func (h *JavaLangHelper) Handles(lang string) bool {
+	for _, s := range h.LangStrings() {
+		if lang == s {
+			return true
+		}
+	}
+	return false
+}
+func (h *JavaLangHelper) Runtime() string {
+	return h.LangStrings()[0]
+}
+
+// TOOD: same as python, I think we should just have version tags on the single runtime, eg: `java:8` or `java:9`
+func (lh *JavaLangHelper) LangStrings() []string {
+	if lh.version == "1.8" {
+		return []string{"java8"}
+	}
+	return []string{"java9", "java"}
+
+}
+func (lh *JavaLangHelper) Extensions() []string {
+	return []string{".java"}
 }
 
 // BuildFromImage returns the Docker image used to compile the Maven function project

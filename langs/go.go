@@ -10,6 +10,20 @@ type GoLangHelper struct {
 	BaseHelper
 }
 
+func (h *GoLangHelper) Handles(lang string) bool {
+	return defaultHandles(h, lang)
+}
+func (h *GoLangHelper) Runtime() string {
+	return h.LangStrings()[0]
+}
+
+func (lh *GoLangHelper) LangStrings() []string {
+	return []string{"go"}
+}
+func (lh *GoLangHelper) Extensions() []string {
+	return []string{".go"}
+}
+
 func (lh *GoLangHelper) BuildFromImage() (string, error) {
 	return "fnproject/go:dev", nil
 }

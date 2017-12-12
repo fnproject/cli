@@ -4,6 +4,21 @@ type NodeLangHelper struct {
 	BaseHelper
 }
 
+func (h *NodeLangHelper) Handles(lang string) bool {
+	return defaultHandles(h, lang)
+}
+func (h *NodeLangHelper) Runtime() string {
+	return h.LangStrings()[0]
+}
+
+func (lh *NodeLangHelper) LangStrings() []string {
+	return []string{"node"}
+}
+func (lh *NodeLangHelper) Extensions() []string {
+	// this won't be chosen by default
+	return []string{}
+}
+
 func (lh *NodeLangHelper) BuildFromImage() (string, error) {
 	return "fnproject/node:dev", nil
 }
