@@ -1,10 +1,10 @@
-hash: 9430b3554d0c48fbaff117fcdea193ad472c41520e212e0435c22f60cf57d3f4
-updated: 2017-11-17T10:10:35.815044+02:00
+hash: 9597b8d830f50ba4f279af59e2a3c4c5223443745d82c096e891efe0414c4379
+updated: 2017-12-11T16:04:54.98543-08:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 15028e809df8c71964e8efa6c11e81d5c0262302
 - name: github.com/aws/aws-sdk-go
-  version: 32f50a06b82225ea99d3c400c20cba02874f0db7
+  version: 71472b3d628115a0650f4851e48dde483cc84776
   subpackages:
   - aws
   - aws/awserr
@@ -44,13 +44,14 @@ imports:
 - name: github.com/docker/docker
   version: cdf870bd0b5fa678b10ef2708cca7ad776b4913c
   subpackages:
-  - pkg/jsonlog
   - pkg/term
   - pkg/term/windows
 - name: github.com/docker/go-units
   version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
+- name: github.com/fatih/color
+  version: 5df930a27be2502f99b292b7cc09ebad4d0891f4
 - name: github.com/fnproject/fn_go
-  version: 7ce3bb2e624df60cdfbfc1ee5483f6df80bb2b1b
+  version: 13499f6284ac08d162d4fe11a0d93943e094785b
   subpackages:
   - client
   - client/apps
@@ -102,6 +103,12 @@ imports:
   - buffer
   - jlexer
   - jwriter
+- name: github.com/mattn/go-colorable
+  version: 5411d3eea5978e6cdc258b30de592b60df6aba96
+  repo: https://github.com/mattn/go-colorable
+- name: github.com/mattn/go-isatty
+  version: 57fdcb988a5c543893cc61bce354a6e24ab70022
+  repo: https://github.com/mattn/go-isatty
 - name: github.com/mitchellh/mapstructure
   version: d0303fe809921458f417bcf828397a65db30a7e4
 - name: github.com/moby/moby
@@ -133,11 +140,11 @@ imports:
 - name: github.com/urfave/cli
   version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
 - name: golang.org/x/crypto
-  version: 1351f936d976c60a0a48d728281922cf63eafb8d
+  version: 9f005a07e0d31d45e6656d241bb5c0f2efd4bc94
   subpackages:
   - ssh/terminal
 - name: golang.org/x/net
-  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
+  version: 66aacef3dd8a676686c7ae3716979581e8b03c47
   subpackages:
   - context
   - context/ctxhttp
@@ -146,11 +153,13 @@ imports:
   - html/charset
   - idna
 - name: golang.org/x/sys
-  version: 07c182904dbd53199946ba614a412c61d3c548f5
+  version: e24f485414aeafb646f6fca458b0bf869c0880a1
+  repo: https://go.googlesource.com/sys
   subpackages:
   - unix
+  - windows
 - name: golang.org/x/text
-  version: e56139fd9c5bc7244c76116c68e500765bb6db6b
+  version: b19bf474d317b857955b12035d2c5acb57ce8b01
   subpackages:
   - encoding
   - encoding/charmap
