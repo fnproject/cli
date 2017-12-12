@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/coreos/go-semver/semver"
@@ -109,9 +110,6 @@ func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 			}
 		}
 	}
-
-	fmt.Printf("Building image %v\n", ff.ImageName())
-
 	err = runBuild(dir, ff.ImageName(), dockerfile, noCache)
 	if err != nil {
 		return err
@@ -133,6 +131,26 @@ func runBuild(dir, imageName, dockerfile string, noCache bool) error {
 
 	result := make(chan error, 1)
 
+	var buildOut bytes.Buffer
+	var buildErr bytes.Buffer
+
+	fmt.Printf("Building image %v ", imageName)
+
+	// https://stackoverflow.com/a/16466581/105562
+	ticker := time.NewTicker(1 * time.Second)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				fmt.Print(".")
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+
 	go func(done chan<- error) {
 		args := []string{
 			"build",
@@ -148,17 +166,22 @@ func runBuild(dir, imageName, dockerfile string, noCache bool) error {
 			".")
 		cmd := exec.Command("docker", args...)
 		cmd.Dir = dir
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
+		cmd.Stderr = &buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
+		cmd.Stdout = &buildOut
 		done <- cmd.Run()
 	}(result)
 
 	select {
 	case err := <-result:
+		close(quit)
+		fmt.Println()
 		if err != nil {
+			fmt.Printf("Error during build:\n%v\n", buildOut.String())
 			return fmt.Errorf("error running docker build: %v", err)
 		}
 	case signal := <-cancel:
+		close(quit)
+		fmt.Println()
 		return fmt.Errorf("build cancelled on signal %v", signal)
 	}
 	return nil
@@ -228,7 +251,7 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *funcfile) (stri
 		ri := ff.RunImage
 		if ri == "" {
 			ri, err = helper.RunFromImage()
-			if err !=nil {
+			if err != nil {
 				return "", err
 			}
 		}
