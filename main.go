@@ -37,11 +37,14 @@ func newFn() *cli.App {
 	app.Authors = []cli.Author{{Name: "Fn Project"}}
 	app.Description = "Fn command line tool"
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "log-level",
-			Value: "info",
-			Usage: "Use `--log-level debug` to enable debugging",
+		cli.BoolFlag{
+			Name:  "verbose,v", // v is taken for version by default with urfave/cli
+			Usage: "Use `--verbose` to enable verbose mode for debugging",
 		},
+	}
+	cli.VersionFlag = cli.BoolFlag{
+		Name:  "version",
+		Usage: "print only the version",
 	}
 	cli.AppHelpTemplate = `{{.Name}} {{.Version}}{{if .Description}}
 

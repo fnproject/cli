@@ -138,7 +138,8 @@ func runBuild(c *cli.Context, dir, imageName, dockerfile string, noCache bool) e
 
 	quit := make(chan struct{})
 	fmt.Printf("Building image %v ", imageName)
-	if strings.ToLower(c.GlobalString("log-level")) == "debug" {
+	if c.GlobalBool("verbose") {
+		fmt.Println()
 		buildOut = os.Stdout
 		buildErr = os.Stderr
 	} else {
@@ -182,7 +183,7 @@ func runBuild(c *cli.Context, dir, imageName, dockerfile string, noCache bool) e
 		close(quit)
 		fmt.Println()
 		if err != nil {
-			fmt.Printf("%v Run with `--log-level debug` flag to see what went wrong. eg: `fn --log-level debug CMD`\n", color.RedString("Error during build."))
+			fmt.Printf("%v Run with `--verbose` flag to see what went wrong. eg: `fn --verbose CMD`\n", color.RedString("Error during build."))
 			return fmt.Errorf("error running docker build: %v", err)
 		}
 	case signal := <-cancel:
