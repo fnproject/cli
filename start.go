@@ -17,25 +17,19 @@ func startCmd() cli.Command {
 		Usage:  "start a functions server",
 		Action: start,
 		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "log-level",
-				Usage: "--log-level DEBUG to enable debugging",
-			},
 			cli.BoolFlag{
 				Name:  "detach, d",
 				Usage: "Run container in background.",
+			},
+			cli.StringFlag{
+				Name: "config, c",
+				Usage: "Absolute path to Fn server configuration options file.",
 			},
 		},
 	}
 }
 
 func start(c *cli.Context) error {
-	denvs := []string{}
-	if c.String("log-level") != "" {
-		denvs = append(denvs, "GIN_MODE="+c.String("log-level"))
-	}
-	// Socket mount: docker run --rm -it --name functions -v ${PWD}/data:/app/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 fnproject/functions
-	// OR dind: docker run --rm -it --name functions -v ${PWD}/data:/app/data --privileged -p 8080:8080 fnproject/functions
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatalln("Getwd failed:", err)
@@ -47,8 +41,8 @@ func start(c *cli.Context) error {
 		"-p", "8080:8080",
 		"--privileged",
 	}
-	for _, v := range denvs {
-		args = append(args, "-e", v)
+	if c.String("config") != ""{
+		args = append(args, "--env-file", c.String("config"))
 	}
 	if c.Bool("detach") {
 		args = append(args, "-d")
