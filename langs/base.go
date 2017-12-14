@@ -21,6 +21,7 @@ func init() {
 	registerHelper(&PythonLangHelper{Version: "3.6"})
 	registerHelper(&RubyLangHelper{})
 	registerHelper(&RustLangHelper{})
+	registerHelper(&KotlinLangHelper{})
 
 }
 
