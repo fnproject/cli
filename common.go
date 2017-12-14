@@ -13,10 +13,13 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/coreos/go-semver/semver"
+	"github.com/fatih/color"
 	"github.com/fnproject/cli/langs"
+	"github.com/urfave/cli"
 )
 
 const (
@@ -47,7 +50,7 @@ func getWd() string {
 	return wd
 }
 
-func buildfunc(fpath string, funcfile *funcfile, noCache bool) (*funcfile, error) {
+func buildfunc(c *cli.Context, fpath string, funcfile *funcfile, noCache bool) (*funcfile, error) {
 	var err error
 	if funcfile.Version == "" {
 		funcfile, err = bumpIt(fpath, Patch)
@@ -60,7 +63,7 @@ func buildfunc(fpath string, funcfile *funcfile, noCache bool) (*funcfile, error
 		return nil, err
 	}
 
-	if err := dockerBuild(fpath, funcfile, noCache); err != nil {
+	if err := dockerBuild(c, fpath, funcfile, noCache); err != nil {
 		return nil, err
 	}
 
@@ -79,7 +82,7 @@ func localBuild(path string, steps []string) error {
 	return nil
 }
 
-func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
+func dockerBuild(c *cli.Context, fpath string, ff *funcfile, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
@@ -109,10 +112,7 @@ func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 			}
 		}
 	}
-
-	fmt.Printf("Building image %v\n", ff.ImageName())
-
-	err = runBuild(dir, ff.ImageName(), dockerfile, noCache)
+	err = runBuild(c, dir, ff.ImageName(), dockerfile, noCache)
 	if err != nil {
 		return err
 	}
@@ -126,12 +126,37 @@ func dockerBuild(fpath string, ff *funcfile, noCache bool) error {
 	return nil
 }
 
-func runBuild(dir, imageName, dockerfile string, noCache bool) error {
+func runBuild(c *cli.Context, dir, imageName, dockerfile string, noCache bool) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
 
 	result := make(chan error, 1)
+
+	buildOut := ioutil.Discard
+	buildErr := ioutil.Discard
+
+	quit := make(chan struct{})
+	fmt.Printf("Building image %v ", imageName)
+	if c.GlobalBool("verbose") {
+		fmt.Println()
+		buildOut = os.Stdout
+		buildErr = os.Stderr
+	} else {
+		// print dots. quit channel explanation: https://stackoverflow.com/a/16466581/105562
+		ticker := time.NewTicker(1 * time.Second)
+		go func() {
+			for {
+				select {
+				case <-ticker.C:
+					fmt.Print(".")
+				case <-quit:
+					ticker.Stop()
+					return
+				}
+			}
+		}()
+	}
 
 	go func(done chan<- error) {
 		args := []string{
@@ -148,17 +173,22 @@ func runBuild(dir, imageName, dockerfile string, noCache bool) error {
 			".")
 		cmd := exec.Command("docker", args...)
 		cmd.Dir = dir
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
+		cmd.Stderr = buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
+		cmd.Stdout = buildOut
 		done <- cmd.Run()
 	}(result)
 
 	select {
 	case err := <-result:
+		close(quit)
+		fmt.Println()
 		if err != nil {
+			fmt.Printf("%v Run with `--verbose` flag to see what went wrong. eg: `fn --verbose CMD`\n", color.RedString("Error during build."))
 			return fmt.Errorf("error running docker build: %v", err)
 		}
 	case signal := <-cancel:
+		close(quit)
+		fmt.Println()
 		return fmt.Errorf("build cancelled on signal %v", signal)
 	}
 	return nil
@@ -228,7 +258,7 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *funcfile) (stri
 		ri := ff.RunImage
 		if ri == "" {
 			ri, err = helper.RunFromImage()
-			if err !=nil {
+			if err != nil {
 				return "", err
 			}
 		}

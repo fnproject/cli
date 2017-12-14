@@ -116,7 +116,7 @@ func preRun(c *cli.Context) (string, *funcfile, []string, error) {
 		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
 	}
 
-	_, err = buildfunc(fpath, ff, c.Bool("no-cache"))
+	_, err = buildfunc(c, fpath, ff, c.Bool("no-cache"))
 	if err != nil {
 		return fpath, nil, nil, err
 	}

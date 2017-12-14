@@ -232,7 +232,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	funcfile.Version = funcfile2.Version
 	// TODO: this whole funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
 
-	_, err = buildfunc(funcfilePath, funcfile, p.noCache)
+	_, err = buildfunc(c, funcfilePath, funcfile, p.noCache)
 	if err != nil {
 		return err
 	}
