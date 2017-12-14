@@ -38,8 +38,8 @@ func start(c *cli.Context) error {
 		"--name", "fnserver",
 		"-v", fmt.Sprintf("%s/data:/app/data", wd),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
-		"-p", "8080:8080",
 		"--privileged",
+		"--publish-all",
 	}
 	if c.String("config") != ""{
 		args = append(args, "--env-file", c.String("config"))
