@@ -17,6 +17,10 @@ func startCmd() cli.Command {
 		Usage:  "start a functions server",
 		Action: start,
 		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "log-level",
+				Usage: "--log-level DEBUG to enable debugging",
+			},
 			cli.BoolFlag{
 				Name:  "detach, d",
 				Usage: "Run container in background.",
@@ -40,6 +44,9 @@ func start(c *cli.Context) error {
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"--privileged",
 		"-p", "8080:8080",
+	}
+	if c.String("log-level") != "" {
+		args = append(args, "-e", fmt.Sprintf("GIN_MODE=%v", c.String("log-level")))
 	}
 	if c.String("config") != ""{
 		args = append(args, "--env-file", c.String("config"))
