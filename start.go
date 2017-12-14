@@ -45,6 +45,7 @@ func start(c *cli.Context) error {
 		"-v", fmt.Sprintf("%s/data:/app/data", wd),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-p", "8080:8080",
+		"--privileged",
 	}
 	for _, v := range denvs {
 		args = append(args, "-e", v)
