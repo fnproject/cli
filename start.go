@@ -39,7 +39,7 @@ func start(c *cli.Context) error {
 		"-v", fmt.Sprintf("%s/data:/app/data", wd),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"--privileged",
-		"--publish-all",
+		"-p", "8080:8080",
 	}
 	if c.String("config") != ""{
 		args = append(args, "--env-file", c.String("config"))
