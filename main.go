@@ -69,6 +69,7 @@ LEARN MORE:
 		lambda(),
 		version(),
 		calls(),
+		deploy(),
 		logs(),
 		testfn(),
 		buildServer(),
