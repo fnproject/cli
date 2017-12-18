@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
 	"strings"
 
 	"github.com/fnproject/cli/langs"
@@ -34,7 +33,7 @@ import (
 
 type initFnCmd struct {
 	force bool
-	funcfile
+	ff    *funcfile
 }
 
 func initFlags(a *initFnCmd) []cli.Flag {
@@ -42,7 +41,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 		cli.StringFlag{
 			Name:        "name",
 			Usage:       "name of the function. Defaults to directory name.",
-			Destination: &a.Name,
+			Destination: &a.ff.Name,
 		},
 		cli.BoolFlag{
 			Name:        "force",
@@ -52,22 +51,22 @@ func initFlags(a *initFnCmd) []cli.Flag {
 		cli.StringFlag{
 			Name:        "runtime",
 			Usage:       "choose an existing runtime - " + langsList(),
-			Destination: &a.Runtime,
+			Destination: &a.ff.Runtime,
 		},
 		cli.StringFlag{
 			Name:        "entrypoint",
 			Usage:       "entrypoint is the command to run to start this function - equivalent to Dockerfile ENTRYPOINT.",
-			Destination: &a.Entrypoint,
+			Destination: &a.ff.Entrypoint,
 		},
 		cli.StringFlag{
 			Name:        "cmd",
 			Usage:       "command to run to start this function - equivalent to Dockerfile CMD.",
-			Destination: &a.Entrypoint,
+			Destination: &a.ff.Entrypoint,
 		},
 		cli.StringFlag{
 			Name:        "version",
 			Usage:       "set initial function version",
-			Destination: &a.Version,
+			Destination: &a.ff.Version,
 			Value:       initialVersion,
 		},
 	}
@@ -84,7 +83,7 @@ func langsList() string {
 }
 
 func initFn() cli.Command {
-	a := &initFnCmd{}
+	a := &initFnCmd{ff: &funcfile{}}
 
 	return cli.Command{
 		Name:        "init",
@@ -136,21 +135,23 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 	}
 
-	err = a.buildFuncFile(c)
+	err = a.buildFuncFile(c) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
 	if err != nil {
 		return err
 	}
 
-	runtimeSpecified := a.Runtime != ""
+	runtimeSpecified := a.ff.Runtime != ""
 
-	if runtimeSpecified && a.Runtime != funcfileDockerRuntime {
+	// TODO: why don't we treat "docker" runtime as just another language helper? Then can get rid of several Docker
+	// specific if/else's like this one.
+	if runtimeSpecified && a.ff.Runtime != funcfileDockerRuntime {
 		err := a.generateBoilerplate()
 		if err != nil {
 			return err
 		}
 	}
 
-	if err := encodeFuncfileYAML("func.yaml", &a.funcfile); err != nil {
+	if err := encodeFuncfileYAML("func.yaml", a.ff); err != nil {
 		return err
 	}
 	fmt.Println("func.yaml created.")
@@ -158,7 +159,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 }
 
 func (a *initFnCmd) generateBoilerplate() error {
-	helper := langs.GetLangHelper(a.Runtime)
+	helper := langs.GetLangHelper(a.ff.Runtime)
 	if helper != nil && helper.HasBoilerplate() {
 		if err := helper.GenerateBoilerplate(); err != nil {
 			if err == langs.ErrBoilerplateExists {
@@ -172,7 +173,7 @@ func (a *initFnCmd) generateBoilerplate() error {
 }
 
 func (a *initFnCmd) bindRoute(rt *models.Route) {
-	ff := &a.funcfile
+	ff := a.ff
 	if rt.Format != "" {
 		ff.Format = rt.Format
 	}
@@ -194,78 +195,82 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 	wd := getWd()
 	var err error
 
-	if a.Name == "" {
+	if a.ff.Name == "" {
 		// then defaults to current directory for name, we'll just leave it out of func.yaml
 		// a.Name = filepath.Base(pwd)
-	} else if strings.Contains(a.Name, ":") {
+	} else if strings.Contains(a.ff.Name, ":") {
 		return errors.New("function name cannot contain a colon")
 	}
 
 	//if Dockerfile present, use 'docker' as 'runtime'
 	if exists("Dockerfile") {
 		fmt.Println("Dockerfile found. Using runtime 'docker'.")
-		a.Runtime = funcfileDockerRuntime
+		a.ff.Runtime = funcfileDockerRuntime
 		return nil
 	}
-	if a.Runtime == funcfileDockerRuntime {
+	if a.ff.Runtime == funcfileDockerRuntime {
 		return errors.New("function file runtime is 'docker', but no Dockerfile exists")
 	}
 
 	var helper langs.LangHelper
-	if a.Runtime == "" {
+	if a.ff.Runtime == "" {
 		helper, err = detectRuntime(wd)
 		if err != nil {
 			return err
 		}
 		fmt.Printf("Found %v function, assuming %v runtime.\n", helper.Runtime(), helper.Runtime())
 	} else {
-		fmt.Println("Runtime:", a.Runtime)
-		helper = langs.GetLangHelper(a.Runtime)
+		fmt.Println("Runtime:", a.ff.Runtime)
+		helper = langs.GetLangHelper(a.ff.Runtime)
 	}
 	if helper == nil {
-		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function.\n", a.Runtime)
+		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function.\n", a.ff.Runtime)
 	} else {
-		if a.Entrypoint == "" {
-			a.Entrypoint, err = helper.Entrypoint()
+		if a.ff.Entrypoint == "" {
+			a.ff.Entrypoint, err = helper.Entrypoint()
 			if err != nil {
 				return err
 			}
 		}
 
-		if a.Format == "" {
-			a.Format = helper.DefaultFormat()
+		if a.ff.Runtime == "" {
+			a.ff.Runtime = helper.Runtime()
 		}
 
-		if a.Cmd == "" {
+		if a.ff.Format == "" {
+			a.ff.Format = helper.DefaultFormat()
+		}
+
+		if a.ff.Cmd == "" {
 			cmd, err := helper.Cmd()
 			if err != nil {
 				return err
 			}
-			a.Cmd = cmd
+			a.ff.Cmd = cmd
 		}
 
 		if helper.FixImagesOnInit() {
-			if a.BuildImage == "" {
+			if a.ff.BuildImage == "" {
 				buildImage, err := helper.BuildFromImage()
 				if err != nil {
 					return err
 				}
-				a.BuildImage = buildImage
+				a.ff.BuildImage = buildImage
 			}
 			if helper.IsMultiStage() {
-				if a.RunImage == "" {
+				if a.ff.RunImage == "" {
 					runImage, err := helper.RunFromImage()
 					if err != nil {
 						return err
 					}
-					a.RunImage = runImage
+					a.ff.RunImage = runImage
 				}
 			}
 		}
 	}
 
-	if a.Entrypoint == "" && a.Cmd == "" {
-		return fmt.Errorf("could not detect entrypoint or cmd for %v, use --entrypoint and/or --cmd to set them explicitly", a.Runtime)
+	if a.ff.Entrypoint == "" && a.ff.Cmd == "" {
+		return fmt.Errorf("could not detect entrypoint or cmd for %v, use --entrypoint and/or --cmd to set them explicitly", a.ff.Runtime)
 	}
 
 	return nil
