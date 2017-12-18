@@ -25,8 +25,6 @@ func TestInit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ERROR: Failed to cd to tmp test directory: err: %v", err)
 	}
-	d, _ := os.Getwd()
-	fmt.Printf("IN DIR: %v\n", d)
 
 	helper := &langs.GoLangHelper{}
 	helper.GenerateBoilerplate()
@@ -42,7 +40,6 @@ func TestInit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not open %s for parsing. Error: %v", ffname, err)
 	}
-	fmt.Printf("FUNC: %+v\n", string(b))
 	ff := &funcfile{}
 	err = yaml.Unmarshal(b, ff)
 	if err != nil {
