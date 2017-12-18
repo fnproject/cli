@@ -67,7 +67,7 @@ LEARN MORE:
 `
 
 	app.CommandNotFound = func(c *cli.Context, cmd string) {
-		fmt.Fprintf(os.Stderr, "command not found: %v\n", cmd)
+		fmt.Fprintf(os.Stderr, "Command not found: \"%v\" -- see `fn --help` for more information.\n", cmd)
 	}
 	app.Commands = []cli.Command{
 		startCmd(),
