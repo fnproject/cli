@@ -138,7 +138,7 @@ func runBuild(c *cli.Context, dir, imageName, dockerfile string, noCache bool) e
 
 	quit := make(chan struct{})
 	fmt.Printf("Building image %v ", imageName)
-	if c.GlobalBool("verbose") {
+	if c.Bool("verbose") {
 		fmt.Println()
 		buildOut = os.Stdout
 		buildErr = os.Stderr

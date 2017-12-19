@@ -27,7 +27,7 @@ type buildcmd struct {
 func (b *buildcmd) flags() []cli.Flag {
 	return []cli.Flag{
 		cli.BoolFlag{
-			Name:        "v",
+			Name:        "verbose",
 			Usage:       "verbose mode",
 			Destination: &b.verbose,
 		},
