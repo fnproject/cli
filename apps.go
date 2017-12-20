@@ -131,7 +131,7 @@ func (a *appsCmd) list(c *cli.Context) error {
 
 		resApps = append(resApps, resp.Payload.Apps...)
 
-		howManyMore := c.Int64("per-page") - int64(len(resApps) + len(resp.Payload.Apps))
+		howManyMore := c.Int64("per-page") - int64(len(resApps)+len(resp.Payload.Apps))
 		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
 		}

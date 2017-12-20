@@ -208,7 +208,7 @@ func (a *routesCmd) list(c *cli.Context) error {
 		}
 
 		resRoutes = append(resRoutes, resp.Payload.Routes...)
-		howManyMore := c.Int64("per-page") - int64(len(resRoutes) + len(resp.Payload.Routes))
+		howManyMore := c.Int64("per-page") - int64(len(resRoutes)+len(resp.Payload.Routes))
 		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
 		}

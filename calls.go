@@ -158,7 +158,7 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 		}
 
 		resCalls = append(resCalls, resp.Payload.Calls...)
-		howManyMore := ctx.Int64("per-page") - int64(len(resCalls) + len(resp.Payload.Calls))
+		howManyMore := ctx.Int64("per-page") - int64(len(resCalls)+len(resp.Payload.Calls))
 		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
 		}
