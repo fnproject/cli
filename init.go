@@ -98,6 +98,18 @@ func initFn() cli.Command {
 func (a *initFnCmd) init(c *cli.Context) error {
 	wd := getWd()
 
+	var rt models.Route
+	routeWithFlags(c, &rt)
+	a.bindRoute(&rt)
+
+	runtimeSpecified := a.ff.Runtime != ""
+	if runtimeSpecified {
+		// go no further if the specified runtime is not supported
+		if a.ff.Runtime != funcfileDockerRuntime && langs.GetLangHelper(a.ff.Runtime) == nil {
+			return fmt.Errorf("Init does not support the '%s' runtime.", a.ff.Runtime)
+		}
+	}
+
 	var err error
 	path := c.Args().First()
 	if path != "" {
@@ -109,7 +121,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 				return fmt.Errorf("directory %s already exists, cannot init function", dir)
 			}
 		} else {
-			err := os.MkdirAll(dir, 0755)
+			err = os.MkdirAll(dir, 0755)
 			if err != nil {
 				return err
 			}
@@ -120,10 +132,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 		defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
 	}
-
-	var rt models.Route
-	routeWithFlags(c, &rt)
-	a.bindRoute(&rt)
 
 	if !a.force {
 		_, ff, err := loadFuncfile()
@@ -139,8 +147,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-
-	runtimeSpecified := a.ff.Runtime != ""
 
 	// TODO: why don't we treat "docker" runtime as just another language helper? Then can get rid of several Docker
 	// specific if/else's like this one.
