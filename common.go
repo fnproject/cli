@@ -16,6 +16,8 @@ import (
 	"time"
 	"unicode"
 
+	"regexp"
+
 	"github.com/coreos/go-semver/semver"
 	"github.com/fatih/color"
 	"github.com/fnproject/cli/langs"
@@ -337,10 +339,36 @@ func validateImageName(n string) error {
 	if len(split) < 2 {
 		return errors.New("image name must have a tag")
 	}
-	split2 := strings.Split(split[0], "/")
+	tag := split[len(split)-1]
+	nWithoutTag := strings.Join(split[:len(split)-1], ":")
+	split2 := strings.Split(nWithoutTag, "/")
+
+	if len(tag) <= 0 || len(tag) > 128 {
+		return errors.New("tag name must be at least 1 character and not more than 128 characters")
+	}
+
+	if !regexp.MustCompile(`^[a-zA-Z0-9_][a-zA-Z0-9_.-]*`).MatchString(tag) {
+		return errors.New("tag name is limited to the set of characters [a-zA-Z0-9_.-] and may not start with a \".\" or \"-\" character")
+	}
+
 	if len(split2) < 2 {
 		return errors.New("image name must have an owner and name, eg: username/myfunc. Be sure to set FN_REGISTRY env var or pass in --registry.")
 	}
+
+	name := split2[len(split2)-1]
+	if !regexp.MustCompile(`^[a-z0-9]([a-z0-9_.-]*[a-z0-9])?$`).MatchString(name) ||
+		regexp.MustCompile(`\.{2}|_{3}`).MatchString(name) {
+		return errors.New("name may only contain lowercase characters, digits, and separators " +
+			"and may not start or end with a separator (separator is \".\", one or two \"_\", one or more \"-\")")
+	}
+
+	if len(split2) > 2 {
+		hostname := split2[0]
+		if strings.Contains(hostname, "_") {
+			return errors.New("hostname may not contain \"_\" characters")
+		}
+	}
+
 	return nil
 }
 
