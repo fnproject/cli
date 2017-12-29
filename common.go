@@ -331,15 +331,16 @@ func dockerPush(ff *funcfile) error {
 	return nil
 }
 
+// validateImageName validates that the full image name (FN_REGISTRY/name:tag) is allowed for push
+// remember that private registries must be supported here
 func validateImageName(n string) error {
-	// must have at least owner name and a tag
-	split := strings.Split(n, ":")
-	if len(split) < 2 {
-		return errors.New("image name must have a tag")
+	parts := strings.Split(n, "/")
+	if len(parts) < 2 {
+		return errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var or pass in --registry")
 	}
-	split2 := strings.Split(split[0], "/")
-	if len(split2) < 2 {
-		return errors.New("image name must have an owner and name, eg: username/myfunc. Be sure to set FN_REGISTRY env var or pass in --registry.")
+	lastParts := strings.Split(parts[len(parts)-1], ":")
+	if len(lastParts) != 2 {
+		return errors.New("image name must have a tag")
 	}
 	return nil
 }
