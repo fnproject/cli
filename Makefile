@@ -11,10 +11,10 @@ docker:
 	docker build -t fnproject/fn:latest .
 
 dep:
-	dep ensure
+	dep ensure --vendor-only
 
 dep-up:
-	dep ensure --update
+	dep ensure
 
 test:
 	./test.sh
