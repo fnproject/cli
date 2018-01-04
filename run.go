@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -228,8 +229,7 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	h.Set("FN_FORMAT", ff.Format)
 	h.Set("FN_MEMORY", strconv.Itoa(int(ff.Memory)))
 	h.Set("FN_TYPE", "sync")
-	h.Set("FN_DEADLINE", strfmt.DateTime(
-		time.Now().Add(30*time.Second)).String())
+	h.Set("FN_DEADLINE", getDeadline(ff))
 	if ff.Format == HttpFormat {
 		// let's swap out stdin for http formatted message
 		var b bytes.Buffer
@@ -302,4 +302,11 @@ func kvEq(k, v string) string {
 func toEnvName(envtype, name string) string {
 	name = strings.ToUpper(strings.Replace(name, "-", "_", -1))
 	return fmt.Sprintf("%s_%s", envtype, name)
+}
+
+func getDeadline(ff *funcfile) string {
+	if ff.Timeout == nil {
+		return strfmt.DateTime(time.Now().Add(30 * time.Second)).String()
+	}
+	return strfmt.DateTime(time.Now().Add(time.Duration(*ff.Timeout) * time.Second)).String()
 }
