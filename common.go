@@ -53,7 +53,7 @@ func getWd() string {
 func buildfunc(c *cli.Context, fpath string, funcfile *funcfile, noCache bool) (*funcfile, error) {
 	var err error
 	if funcfile.Version == "" {
-		funcfile, err = bumpIt(fpath, Patch)
+		funcfile, err = bumpVersion(funcfile, Patch)
 		if err != nil {
 			return nil, err
 		}

@@ -225,11 +225,10 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	}
 	fmt.Printf("Deploying %s to app: %s at path: %s\n", funcfile.Name, appName, funcfile.Path)
 
-	funcfile2, err := bumpIt(funcfilePath, Patch)
+	funcfile, err := bumpVersion(funcfile, Patch)
 	if err != nil {
 		return err
 	}
-	funcfile.Version = funcfile2.Version
 	// TODO: this whole funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
 
 	_, err = buildfunc(c, funcfilePath, funcfile, p.noCache)
@@ -241,6 +240,11 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 		if err := dockerPush(funcfile); err != nil {
 			return err
 		}
+	}
+
+	err = storeFuncfile(funcfilePath, funcfile)
+	if err != nil {
+		return err
 	}
 
 	return p.updateRoute(c, appName, funcfile)

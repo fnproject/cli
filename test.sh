@@ -77,4 +77,4 @@ $fn call myapp1 /$funcname
 $fn routes create myapp1 /another --image $FN_REGISTRY/$funcname:0.0.2
 $fn call myapp1 /another
 
-
+docker rm --force fnserver
