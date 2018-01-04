@@ -71,6 +71,6 @@ func (log *logsCmd) get(ctx *cli.Context) error {
 			return err
 		}
 	}
-	fmt.Print(resp.Payload)
+	fmt.Print(resp.Payload.Log.Log)
 	return nil
 }
