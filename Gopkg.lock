@@ -40,8 +40,8 @@
 [[projects]]
   name = "github.com/aws/aws-sdk-go"
   packages = ["aws","aws/awserr","aws/awsutil","aws/client","aws/client/metadata","aws/corehandlers","aws/credentials","aws/credentials/ec2rolecreds","aws/credentials/endpointcreds","aws/credentials/stscreds","aws/defaults","aws/ec2metadata","aws/endpoints","aws/request","aws/session","aws/signer/v4","internal/shareddefaults","private/protocol","private/protocol/json/jsonutil","private/protocol/jsonrpc","private/protocol/query","private/protocol/query/queryutil","private/protocol/rest","private/protocol/restjson","private/protocol/xml/xmlutil","service/lambda","service/sts"]
-  revision = "82ad808f2307df0776c038bfd7ea85440a35c02e"
-  version = "v1.12.53"
+  revision = "71472b3d628115a0650f4851e48dde483cc84776"
+  version = "v1.12.45"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -70,8 +70,8 @@
 [[projects]]
   name = "github.com/fnproject/fn_go"
   packages = ["client","client/apps","client/call","client/operations","client/routes","client/version","models"]
-  revision = "847fec724330b2741336431502db292fc5a45211"
-  version = "0.2.3"
+  revision = "13499f6284ac08d162d4fe11a0d93943e094785b"
+  version = "0.2.2"
 
 [[projects]]
   name = "github.com/giantswarm/semver-bump"
@@ -89,7 +89,7 @@
   branch = "master"
   name = "github.com/go-openapi/analysis"
   packages = ["."]
-  revision = "2bbaa248df987bc6fbd0210da05071e111dec40c"
+  revision = "5c7230aa5ab8abb751bf85916c87ecd4e1698bd9"
 
 [[projects]]
   branch = "master"
@@ -119,19 +119,19 @@
   branch = "master"
   name = "github.com/go-openapi/runtime"
   packages = [".","client","logger","middleware","middleware/denco","middleware/header","middleware/untyped","security"]
-  revision = "a76104f379d3c5041f2a56e69db3ad8404ce4826"
+  revision = "55d76b2319213cf30fdb7c4ae3a01541f5404c16"
 
 [[projects]]
   branch = "master"
   name = "github.com/go-openapi/spec"
   packages = ["."]
-  revision = "fa03337d7da5735229ee8f5e9d5d0b996014b7f8"
+  revision = "01738944bdee0f26bf66420c5b17d54cfdf55341"
 
 [[projects]]
   branch = "master"
   name = "github.com/go-openapi/strfmt"
   packages = ["."]
-  revision = "4dd3d302e100bae008baedc42d446ce83bdd10ad"
+  revision = "610b6cacdcde6852f4de68998bd20ce1dac85b22"
 
 [[projects]]
   branch = "master"
@@ -143,7 +143,7 @@
   branch = "master"
   name = "github.com/go-openapi/validate"
   packages = ["."]
-  revision = "0e805b142cf7a9f578a775ff7d05745534371f9d"
+  revision = "d509235108fcf6ab4913d2dcb3a2260c0db2108e"
 
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
@@ -208,7 +208,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "d585fd2cc9195196078f516b69daff6744ef5e84"
+  revision = "94eea52f7b742c7cbe0b03b22f0c4c8631ece122"
 
 [[projects]]
   branch = "master"
@@ -220,13 +220,13 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "83801418e1b59fb1880e363299581ee543af32ca"
+  revision = "53aa286056ef226755cd898109dbcdaba8ac0b81"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
   packages = ["collate","collate/build","encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/colltab","internal/gen","internal/tag","internal/triegen","internal/ucd","internal/utf8internal","language","runes","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable","width"]
-  revision = "eb22672bea55af56d225d4e35405f4d2e9f062a0"
+  revision = "3b24cac7bc3a458991ab409aa2a339ac9e0d60d6"
 
 [[projects]]
   branch = "v2"
