@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -10,7 +11,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/urfave/cli"
 )
 
@@ -116,6 +119,11 @@ func preRun(c *cli.Context) (string, *funcfile, []string, error) {
 		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
 	}
 
+	deadline, err := getDeadline(ff)
+	if err == nil {
+		envVars = append(envVars, kvEq("FN_DEADLINE", deadline))
+	}
+
 	_, err = buildfunc(c, fpath, ff, c.Bool("no-cache"))
 	if err != nil {
 		return fpath, nil, nil, err
@@ -219,6 +227,12 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 			if err != nil {
 				return fmt.Errorf("error creating http request: %v", err)
 			}
+
+			deadline, err := getDeadline(ff)
+			if err == nil {
+				req.Header.Set("FN_DEADLINE", deadline)
+			}
+
 			err = req.Write(&b)
 			b.Write([]byte("\n"))
 		}
@@ -264,4 +278,11 @@ func kvEq(k, v string) string {
 func toEnvName(envtype, name string) string {
 	name = strings.ToUpper(strings.Replace(name, "-", "_", -1))
 	return fmt.Sprintf("%s_%s", envtype, name)
+}
+
+func getDeadline(ff *funcfile) (string, error) {
+	if ff.Timeout == nil {
+		return "", errors.New("no Timeout specified")
+	}
+	return strfmt.DateTime(time.Now().Add(time.Duration(*ff.Timeout) * time.Second)).String(), nil
 }
