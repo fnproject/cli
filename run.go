@@ -149,7 +149,7 @@ func (r *runCmd) run(c *cli.Context) error {
 		ff.Memory = c.Uint64("memory")
 	}
 
-	return runff(ff, stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"))
+	return runff(ff, stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.Int("runs"))
 }
 
 type jsonProtocol struct {
@@ -159,7 +159,7 @@ type jsonProtocol struct {
 }
 
 // TODO: share all this stuff with the Docker driver in server or better yet, actually use the Docker driver
-func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int) error {
+func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, runs int) error {
 	sh := []string{"docker", "run", "--rm", "-i", fmt.Sprintf("--memory=%dm", ff.Memory)}
 
 	var err error
@@ -173,8 +173,8 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 			method = "POST"
 		}
 	}
-	if format == "" {
-		format = DefaultFormat
+	if ff.Format == "" {
+		ff.Format = DefaultFormat
 	}
 	// Add expected env vars that service will add
 	runEnv = append(runEnv, kvEq("FN_CALL_ID", "12345678901234567890123456"))
@@ -182,7 +182,7 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	runEnv = append(runEnv, kvEq("FN_REQUEST_URL", LocalTestURL))
 	runEnv = append(runEnv, kvEq("FN_APP_NAME", "myapp"))
 	runEnv = append(runEnv, kvEq("FN_PATH", "/hello")) // TODO: should we change this to PATH ?
-	runEnv = append(runEnv, kvEq("FN_FORMAT", format))
+	runEnv = append(runEnv, kvEq("FN_FORMAT", ff.Format))
 	runEnv = append(runEnv, kvEq("FN_MEMORY", fmt.Sprintf("%d", ff.Memory)))
 	runEnv = append(runEnv, kvEq("FN_TYPE", "sync"))
 
@@ -225,12 +225,12 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	h.Set("FN_REQUEST_URL", LocalTestURL)
 	h.Set("FN_APP_NAME", "myapp")
 	h.Set("FN_PATH", ff.Path)
-	h.Set("FN_FORMAT", format)
+	h.Set("FN_FORMAT", ff.Format)
 	h.Set("FN_MEMORY", strconv.Itoa(int(ff.Memory)))
 	h.Set("FN_TYPE", "sync")
 	h.Set("FN_DEADLINE", strfmt.DateTime(
-		time.Now().Add(time.Duration(int64(*ff.Timeout)) * time.Second)).String())
-	if format == HttpFormat {
+		time.Now().Add(30*time.Second)).String())
+	if ff.Format == HttpFormat {
 		// let's swap out stdin for http formatted message
 		var b bytes.Buffer
 		for i := 0; i < runs; i++ {
@@ -247,8 +247,9 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 		if err != nil {
 			return fmt.Errorf("error writing to byte buffer: %v", err)
 		}
-		stdin = &b
-	} else if format == JSONFormat {
+		body := b.String()
+		stdin = strings.NewReader(body)
+	} else if ff.Format == JSONFormat {
 		in := &struct {
 			CallID   string       `json:"call_id"`
 			Body     string       `json:"body"`
@@ -267,6 +268,8 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 		b.Write(body)
 		fmt.Println("body: ", b.String())
 		stdin = &b
+	} else if ff.Format == DefaultFormat {
+		stdin = bytes.NewReader(input)
 	}
 
 	sh = append(sh, ff.ImageName())
