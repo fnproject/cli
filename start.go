@@ -19,7 +19,7 @@ func startCmd() cli.Command {
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "log-level",
-				Usage: "--log-level=debug to enable debugging",
+				Usage: "--log-level debug to enable debugging",
 			},
 			cli.BoolFlag{
 				Name:  "detach, d",
