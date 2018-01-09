@@ -48,6 +48,11 @@ func (b *buildServerCmd) flags() []cli.Flag {
 			Name:  "tag,t",
 			Usage: "image name and optional tag",
 		},
+		cli.StringFlag{
+			Name:  "fn-branch",
+			Value: "master",
+			Usage: "branch in github.com/fnproject/fn to build off",
+		},
 	}
 }
 
@@ -64,10 +69,6 @@ func (b *buildServerCmd) buildServer(c *cli.Context) error {
 		return errors.New("docker tag required")
 	}
 
-	// path, err := os.Getwd()
-	// if err != nil {
-	// 	return err
-	// }
 	fpath := "ext.yaml"
 	bb, err := ioutil.ReadFile(fpath)
 	if err != nil {
@@ -88,6 +89,10 @@ func (b *buildServerCmd) buildServer(c *cli.Context) error {
 		return err
 	}
 	err = generateMain(ef)
+	if err != nil {
+		return err
+	}
+	err = generateGopkg(c.String("fn-branch"))
 	if err != nil {
 		return err
 	}
@@ -118,6 +123,23 @@ func generateMain(ef *extFile) error {
 	}
 	defer f.Close()
 	err = tmpl.Execute(f, ef)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func generateGopkg(branch string) error {
+	tmpl, err := template.New("gopkg").Parse(gopkgTmpl)
+	if err != nil {
+		return err
+	}
+	f, err := os.Create("Gopkg.toml")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	err = tmpl.Execute(f, &constraint{Branch: branch})
 	if err != nil {
 		return err
 	}
@@ -162,20 +184,24 @@ func main() {
 }
 `
 
-// NOTE: Getting build errors with dep, probably because our vendor dir is wack. Might work again once we switch to dep.
-// vendor/github.com/fnproject/fn/api/agent/drivers/docker/registry.go:93: too many arguments in call to client.NewRepository
-// have ("context".Context, reference.Named, string, http.RoundTripper) want (reference.Named, string, http.RoundTripper)
-// go build github.com/x/y/vendor/github.com/rdallman/migrate/database/mysql: no buildable Go source files in /go/src/github.com/x/y/vendor/github.com/rdallman/migrate/database/mysql
-// # github.com/x/y/vendor/github.com/openzipkin/zipkin-go-opentracing/thrift/gen-go/scribe
-// vendor/github.com/openzipkin/zipkin-go-opentracing/thrift/gen-go/scribe/scribe.go:210: undefined: thrift.TClient
+type constraint struct {
+	Branch string
+}
+
+var gopkgTmpl = `
+[[constraint]]
+  name = "github.com/fnproject/fn"
+  branch = "{{.Branch}}"
+`
+
 var dockerFileTmpl = `# build stage
 FROM golang:1.9-alpine AS build-env
 RUN apk --no-cache add build-base git bzr mercurial gcc
-# RUN go get -u github.com/golang/dep/cmd/dep
+RUN go get -u github.com/golang/dep/cmd/dep
 ENV D=/go/src/github.com/x/y
-ADD main.go $D/
-RUN cd $D && go get
-# RUN cd $D && dep init && dep ensure
+ADD main.go Gopkg.toml $D/
+RUN cd $D && dep ensure
+# RUN cd $D && go get
 RUN cd $D && go build -o fnserver && cp fnserver /tmp/
 
 # final stage
