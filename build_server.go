@@ -9,7 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 
 	"github.com/urfave/cli"
@@ -130,19 +132,58 @@ func generateMain(ef *extFile) error {
 }
 
 func generateGopkg(branch string) error {
-	tmpl, err := template.New("gopkg").Parse(gopkgTmpl)
+
+	// Attempting using the full Gopkg files from fn, still doesn't fix this issue: https://github.com/fnproject/cli/pull/142#issuecomment-356684123
+	err := downloadFile("https://raw.githubusercontent.com/fnproject/fn/master/Gopkg.toml", "Gopkg.toml")
 	if err != nil {
 		return err
 	}
-	f, err := os.Create("Gopkg.toml")
+	err = downloadFile("https://raw.githubusercontent.com/fnproject/fn/master/Gopkg.lock", "Gopkg.lock")
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	err = tmpl.Execute(f, &constraint{Branch: branch})
+
+	// BELOW IS FOR using fn-branch flag
+	// tmpl, err := template.New("gopkg").Parse(gopkgTmpl)
+	// if err != nil {
+	// 	return err
+	// }
+	// f, err := os.Create("Gopkg.toml")
+	// if err != nil {
+	// 	return err
+	// }
+	// defer f.Close()
+	// err = tmpl.Execute(f, &constraint{Branch: branch})
+	// if err != nil {
+	// 	return err
+	// }
+	return nil
+}
+
+// downloadFile will download a url to a local file. It's efficient because it will
+// write as it downloads and not load the whole file into memory.
+func downloadFile(fromURL, toFile string) error {
+
+	// Create the file
+	out, err := os.Create(toFile)
 	if err != nil {
 		return err
 	}
+	defer out.Close()
+
+	// Get the data
+	resp, err := http.Get(fromURL)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Write the body to file
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
