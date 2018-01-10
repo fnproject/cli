@@ -205,7 +205,7 @@ RUN cd $D && dep ensure
 RUN cd $D && go build -o fnserver && cp fnserver /tmp/
 
 # final stage
-FROM fnproject/dind
+FROM fnproject/dind:17.12
 RUN apk add --no-cache ca-certificates
 WORKDIR /app
 COPY --from=build-env /tmp/fnserver /app/fnserver
