@@ -73,6 +73,20 @@ func apps() cli.Command {
 						Action:    a.configSet,
 					},
 					{
+						Name:      "get",
+						Aliases:   []string{"g"},
+						Usage:     "inspect configuration key for this application",
+						ArgsUsage: "<app> <key>",
+						Action:    a.configGet,
+					},
+					{
+						Name:      "list",
+						Aliases:   []string{"l"},
+						Usage:     "list configuration key/value pairs for this application",
+						ArgsUsage: "<app>",
+						Action:    a.configList,
+					},
+					{
 						Name:      "unset",
 						Aliases:   []string{"u"},
 						Usage:     "remove a configuration key for this application",
@@ -88,10 +102,10 @@ func apps() cli.Command {
 				Action:  a.list,
 			},
 			{
-				Name:   "delete",
-				Aliases:   []string{"d"},
-				Usage:  "delete an app",
-				Action: a.delete,
+				Name:    "delete",
+				Aliases: []string{"d"},
+				Usage:   "delete an app",
+				Action:  a.delete,
 			},
 		},
 	}
@@ -188,6 +202,48 @@ func (a *appsCmd) configSet(c *cli.Context) error {
 	}
 
 	fmt.Println(appName, "updated", key, "with", value)
+	return nil
+}
+
+func (a *appsCmd) configGet(c *cli.Context) error {
+	appName := c.Args().Get(0)
+	key := c.Args().Get(1)
+
+	resp, err := a.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
+		App:     appName,
+		Context: context.Background(),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	val, ok := resp.Payload.App.Config[key]
+	if !ok {
+		return fmt.Errorf("config key does not exist")
+	}
+
+	fmt.Println(val)
+
+	return nil
+}
+
+func (a *appsCmd) configList(c *cli.Context) error {
+	appName := c.Args().Get(0)
+
+	resp, err := a.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
+		App:     appName,
+		Context: context.Background(),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for key, val := range resp.Payload.App.Config {
+		fmt.Printf("%s=%s\n", key, val)
+	}
+
 	return nil
 }
 
