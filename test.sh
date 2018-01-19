@@ -57,7 +57,7 @@ $fn apps l
 $fn deploy --local --app myapp1
 $fn call myapp1 /$funcname
 # todo: would be nice to have a flag to output parseable formats in cli, eg: `fn deploy --output json` would return json with version and other info 
-$fn routes create myapp1 /another --image $FN_REGISTRY/$funcname:0.0.2
+$fn routes create myapp1 /another --image $DOCKER_USER/$funcname:0.0.2
 $fn call myapp1 /another
 
 docker rm --force functions
