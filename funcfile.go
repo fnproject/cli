@@ -72,8 +72,10 @@ type funcfile struct {
 
 func (ff *funcfile) ImageName() string {
 	fname := ff.Name
-	if !strings.Contains(fname, "/") {
-		// then we'll prefix FN_REGISTRY
+
+	// prefix FN_REGISTRY, if provided (important) AND if the image does not
+	// itself contain a registry.
+	if len(strings.SplitN(fname, "/", 3)) < 3 {
 		reg := os.Getenv(envFnRegistry)
 		if reg != "" {
 			if reg[len(reg)-1] != '/' {
