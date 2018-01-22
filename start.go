@@ -44,6 +44,7 @@ func start(c *cli.Context) error {
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"--privileged",
 		"-p", "8080:8080",
+		"--entry-point ./fnserver",
 	}
 	if c.String("log-level") != "" {
 		args = append(args, "-e", fmt.Sprintf("FN_LOG_LEVEL=%v", c.String("log-level")))
