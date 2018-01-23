@@ -3,6 +3,7 @@ set -ex
 
 function cleanup {
 	if [ ! -z "$CONTAINER_ID" ]; then
+		docker logs ${CONTAINER_ID}
 		docker kill ${CONTAINER_ID}
 	fi
 	if [ -d "$WORK_DIR" ]; then
@@ -35,7 +36,6 @@ touch data/fn.db data/fn.mq
 # start fn
 CONTAINER_ID=$($fn start -d)
 sleep 7
-docker logs ${CONTAINER_ID}
 docker inspect -f {{.State.Running}} $CONTAINER_ID | grep '^true$'
 
 # This tests all the quickstart commands on the cli on a live server
