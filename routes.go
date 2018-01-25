@@ -117,6 +117,20 @@ func routes() cli.Command {
 						Action:    r.configSet,
 					},
 					{
+						Name:      "get",
+						Aliases:   []string{"g"},
+						Usage:     "inspect configuration key for this route",
+						ArgsUsage: "<app> </path> <key>",
+						Action:    r.configGet,
+					},
+					{
+						Name:      "list",
+						Aliases:   []string{"l"},
+						Usage:     "list configuration key/value pairs for this route",
+						ArgsUsage: "<app> </path>",
+						Action:    r.configList,
+					},
+					{
 						Name:      "unset",
 						Aliases:   []string{"u"},
 						Usage:     "remove a configuration key for this route",
@@ -440,6 +454,52 @@ func (a *routesCmd) configSet(c *cli.Context) error {
 	}
 
 	fmt.Println(appName, route, "updated", key, "with", value)
+	return nil
+}
+
+func (a *routesCmd) configGet(c *cli.Context) error {
+	appName := c.Args().Get(0)
+	route := cleanRoutePath(c.Args().Get(1))
+	key := c.Args().Get(2)
+
+	resp, err := a.client.Routes.GetAppsAppRoutesRoute(&apiroutes.GetAppsAppRoutesRouteParams{
+		Context: context.Background(),
+		App:     appName,
+		Route:   route,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	val, ok := resp.Payload.Route.Config[key]
+	if !ok {
+		return fmt.Errorf("config key does not exist")
+	}
+
+	fmt.Println(val)
+
+	return nil
+}
+
+func (a *routesCmd) configList(c *cli.Context) error {
+	appName := c.Args().Get(0)
+	route := cleanRoutePath(c.Args().Get(1))
+
+	resp, err := a.client.Routes.GetAppsAppRoutesRoute(&apiroutes.GetAppsAppRoutesRouteParams{
+		Context: context.Background(),
+		App:     appName,
+		Route:   route,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for key, val := range resp.Payload.Route.Config {
+		fmt.Printf("%s=%s\n", key, val)
+	}
+
 	return nil
 }
 
