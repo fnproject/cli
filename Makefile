@@ -16,13 +16,15 @@ dep:
 dep-up:
 	dep ensure
 
-
-test:
+test-cross-compile:
 	GOOS=windows go build -o fn
 	GOOS=linux GOARCH=arm64 go build -o fn
 	GOOS=darwin go build -o fn
 	GOOS=linux go build -o fn
-	go build -o fn
+	# clean up
+	rm -fr fn
+
+test: test-cross-compile build
 	./test.sh
 
 release:
