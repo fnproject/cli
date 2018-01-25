@@ -55,9 +55,9 @@ func calls() cli.Command {
 						Usage: "'stop' timestamp",
 					},
 					cli.Int64Flag{
-						Name:  "per-page",
+						Name:  "n",
 						Usage: "number of calls to return",
-						Value: int64(0),
+						Value: int64(100),
 					},
 				},
 			},
@@ -140,9 +140,10 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 		res := toTime_int64.Unix()
 		params.ToTime = &res
 	}
-	if ctx.Int64("per-page") > 0 {
-		per_page := ctx.Int64("per-page")
-		params.PerPage = &per_page
+
+	n := ctx.Int64("n")
+	if n < 0 {
+		return errors.New("number of calls: negative value not allowed")
 	}
 
 	var resCalls []*models.Call
@@ -158,7 +159,7 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 		}
 
 		resCalls = append(resCalls, resp.Payload.Calls...)
-		howManyMore := ctx.Int64("per-page") - int64(len(resCalls)+len(resp.Payload.Calls))
+		howManyMore := n - int64(len(resCalls)+len(resp.Payload.Calls))
 		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
 		}
