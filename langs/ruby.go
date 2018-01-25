@@ -11,12 +11,26 @@ type RubyLangHelper struct {
 	BaseHelper
 }
 
-func (lh *RubyLangHelper) BuildFromImage() string {
-	return "fnproject/ruby:dev"
+func (h *RubyLangHelper) Handles(lang string) bool {
+	return defaultHandles(h, lang)
+}
+func (h *RubyLangHelper) Runtime() string {
+	return h.LangStrings()[0]
 }
 
-func (lh *RubyLangHelper) RunFromImage() string {
-	return "fnproject/ruby"
+func (lh *RubyLangHelper) LangStrings() []string {
+	return []string{"ruby"}
+}
+func (lh *RubyLangHelper) Extensions() []string {
+	return []string{".rb"}
+}
+
+func (lh *RubyLangHelper) BuildFromImage() (string, error) {
+	return "fnproject/ruby:dev", nil
+}
+
+func (lh *RubyLangHelper) RunFromImage() (string, error) {
+	return "fnproject/ruby", nil
 }
 
 func (h *RubyLangHelper) DockerfileBuildCmds() []string {
@@ -37,8 +51,8 @@ func (h *RubyLangHelper) DockerfileCopyCmds() []string {
 	}
 }
 
-func (lh *RubyLangHelper) Entrypoint() string {
-	return "ruby func.rb"
+func (lh *RubyLangHelper) Entrypoint() (string, error) {
+	return "ruby func.rb", nil
 }
 
 func (lh *RubyLangHelper) HasBoilerplate() bool { return true }

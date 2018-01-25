@@ -4,15 +4,30 @@ type NodeLangHelper struct {
 	BaseHelper
 }
 
-func (lh *NodeLangHelper) BuildFromImage() string {
-	return "fnproject/node:dev"
+func (h *NodeLangHelper) Handles(lang string) bool {
+	return defaultHandles(h, lang)
 }
-func (lh *NodeLangHelper) RunFromImage() string {
-	return "fnproject/node"
+func (h *NodeLangHelper) Runtime() string {
+	return h.LangStrings()[0]
 }
 
-func (lh *NodeLangHelper) Entrypoint() string {
-	return "node func.js"
+func (lh *NodeLangHelper) LangStrings() []string {
+	return []string{"node"}
+}
+func (lh *NodeLangHelper) Extensions() []string {
+	// this won't be chosen by default
+	return []string{}
+}
+
+func (lh *NodeLangHelper) BuildFromImage() (string, error) {
+	return "fnproject/node:dev", nil
+}
+func (lh *NodeLangHelper) RunFromImage() (string, error) {
+	return "fnproject/node", nil
+}
+
+func (lh *NodeLangHelper) Entrypoint() (string, error) {
+	return "node func.js", nil
 }
 
 func (h *NodeLangHelper) DockerfileBuildCmds() []string {

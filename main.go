@@ -36,38 +36,38 @@ func newFn() *cli.App {
 	app.Version = Version
 	app.Authors = []cli.Author{{Name: "Fn Project"}}
 	app.Description = "Fn command line tool"
-	app.UsageText = `Check the docs at https://github.com/fnproject/fn/blob/master/fn/README.md`
-
+	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "verbose,v", // v is taken for version by default with urfave/cli
+			Usage: "Use `--verbose` to enable verbose mode for debugging",
+		},
+	}
+	cli.VersionFlag = cli.BoolFlag{
+		Name:  "version",
+		Usage: "print only the version",
+	}
 	cli.AppHelpTemplate = `{{.Name}} {{.Version}}{{if .Description}}
 
 {{.Description}}{{end}}
 
-USAGE:
-   {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}
-
 ENVIRONMENT VARIABLES:
-   API_URL - Fn server address
-   FN_REGISTRY - Docker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]treeder]{{if .VisibleCommands}}
+   FN_API_URL - Fn server address
+   FN_REGISTRY - Docker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]USERNAME]{{if .VisibleCommands}}
 
 COMMANDS:{{range .VisibleCategories}}{{if .Name}}
    {{.Name}}:{{end}}{{range .VisibleCommands}}
      {{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
 
-ALIASES:
-     build    (images build)
-     bump     (images bump)
-     deploy   (images deploy)
-     run      (images run)
-     call     (routes call)
-     push     (images push)
-
 GLOBAL OPTIONS:
    {{range $index, $option := .VisibleFlags}}{{if $index}}
    {{end}}{{$option}}{{end}}{{end}}
+
+LEARN MORE:
+   https://github.com/fnproject/fn
 `
 
 	app.CommandNotFound = func(c *cli.Context, cmd string) {
-		fmt.Fprintf(os.Stderr, "command not found: %v\n", cmd)
+		fmt.Fprintf(os.Stderr, "Command not found: \"%v\" -- see `fn --help` for more information.\n", cmd)
 	}
 	app.Commands = []cli.Command{
 		startCmd(),
@@ -81,6 +81,7 @@ GLOBAL OPTIONS:
 		calls(),
 		logs(),
 		testfn(),
+		buildServer(),
 	}
 	app.Commands = append(app.Commands, aliasesFn()...)
 

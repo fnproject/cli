@@ -10,12 +10,26 @@ type GoLangHelper struct {
 	BaseHelper
 }
 
-func (lh *GoLangHelper) BuildFromImage() string {
-	return "fnproject/go:dev"
+func (h *GoLangHelper) Handles(lang string) bool {
+	return defaultHandles(h, lang)
+}
+func (h *GoLangHelper) Runtime() string {
+	return h.LangStrings()[0]
 }
 
-func (lh *GoLangHelper) RunFromImage() string {
-	return "fnproject/go"
+func (lh *GoLangHelper) LangStrings() []string {
+	return []string{"go"}
+}
+func (lh *GoLangHelper) Extensions() []string {
+	return []string{".go"}
+}
+
+func (lh *GoLangHelper) BuildFromImage() (string, error) {
+	return "fnproject/go:dev", nil
+}
+
+func (lh *GoLangHelper) RunFromImage() (string, error) {
+	return "fnproject/go", nil
 }
 
 func (h *GoLangHelper) DockerfileBuildCmds() []string {
@@ -41,8 +55,8 @@ func (h *GoLangHelper) DockerfileCopyCmds() []string {
 	}
 }
 
-func (lh *GoLangHelper) Entrypoint() string {
-	return "./func"
+func (lh *GoLangHelper) Entrypoint() (string, error) {
+	return "./func", nil
 }
 
 func (lh *GoLangHelper) HasBoilerplate() bool { return true }

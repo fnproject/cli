@@ -1,4 +1,4 @@
-all: vendor build	
+all: dep build	
 	./fn
 
 build: 
@@ -11,10 +11,11 @@ docker:
 	docker build -t fnproject/fn:latest .
 
 dep:
-	glide install -v
+	dep ensure --vendor-only
 
 dep-up:
-	glide up -v
+	dep ensure
+
 
 test:
 	GOOS=windows go build -o fn
@@ -29,6 +30,7 @@ release:
 	GOOS=darwin go build -o fn_mac
 	GOOS=windows go build -o fn.exe
 	GOOS=linux GOARCH=arm64 go build -o fn_linux_arm64
-	docker run --rm -v ${PWD}:/go/src/github.com/fnproject/cli -w /go/src/github.com/fnproject/cli golang:alpine go build -o fn_alpine
+	# Uses fnproject/go:x.x-dev because golang:alpine has this issue: https://github.com/docker-library/golang/issues/155 and this https://github.com/docker-library/golang/issues/153
+	docker run --rm -v ${PWD}:/go/src/github.com/fnproject/cli -w /go/src/github.com/fnproject/cli fnproject/go:1.9-dev go build -o fn_alpine
 
-.PHONY: install
+.PHONY: install test build

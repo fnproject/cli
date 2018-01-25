@@ -12,11 +12,30 @@ type PhpLangHelper struct {
 	BaseHelper
 }
 
-func (lh *PhpLangHelper) BuildFromImage() string {
-	return "fnproject/php:dev"
+func (h *PhpLangHelper) Handles(lang string) bool {
+	return defaultHandles(h, lang)
 }
-func (lh *PhpLangHelper) Entrypoint() string {
-	return "php func.php"
+func (h *PhpLangHelper) Runtime() string {
+	return h.LangStrings()[0]
+}
+
+func (lh *PhpLangHelper) LangStrings() []string {
+	return []string{"php"}
+}
+func (lh *PhpLangHelper) Extensions() []string {
+	return []string{".php"}
+}
+
+func (lh *PhpLangHelper) BuildFromImage() (string, error) {
+	return "fnproject/php:dev", nil
+}
+
+func (lh *PhpLangHelper) RunFromImage() (string, error) {
+	return "fnproject/php:dev", nil
+}
+
+func (lh *PhpLangHelper) Entrypoint() (string, error) {
+	return "php func.php", nil
 }
 
 func (lh *PhpLangHelper) HasPreBuild() bool {
@@ -37,7 +56,7 @@ func (lh *PhpLangHelper) PreBuild() error {
 	fmt.Println("Running prebuild command:", pbcmd)
 	parts := strings.Fields(pbcmd)
 	head := parts[0]
-	parts = parts[1:len(parts)]
+	parts = parts[1:]
 	cmd := exec.Command(head, parts...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout

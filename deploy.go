@@ -116,11 +116,10 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 		return errors.New("app name must be provided, try `--app APP_NAME`.")
 	}
 
-	if !p.all {
-		return p.deploySingle(c, appName, appf)
+	if p.all {
+		return p.deployAll(c, appName, appf)
 	}
-
-	return p.deployAll(c, appName, appf)
+	return p.deploySingle(c, appName, appf)
 }
 
 // deploySingle deploys a single function, either the current directory or if in the context
@@ -158,22 +157,8 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 	wd := getWd()
 
 	var funcFound bool
-	err := filepath.Walk(wd, func(path string, info os.FileInfo, err error) error {
-		if path != wd && info.IsDir() {
-			return nil
-		}
-
-		if !isFuncfile(path, info) {
-			return nil
-		}
-
-		// TODO: test/try this again to speed up deploys.
-		if false && !isstale(path) {
-			return nil
-		}
-		// Then we found a func file, so let's deploy it:
-		ff, err := parseFuncfile(path)
-		if err != nil {
+	err := walkFuncs(wd, func(path string, ff *funcfile, err error) error {
+		if err != nil { // probably some issue with funcfile parsing, can decide to handle this differently if we'd like
 			return err
 		}
 		dir := filepath.Dir(path)
@@ -205,7 +190,7 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 		now := time.Now()
 		os.Chtimes(path, now, now)
 		funcFound = true
-		return err
+		return nil
 	})
 	if err != nil {
 		return err
@@ -247,7 +232,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	funcfile.Version = funcfile2.Version
 	// TODO: this whole funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
 
-	_, err = buildfunc(funcfilePath, funcfile, p.noCache)
+	_, err = buildfunc(c, funcfilePath, funcfile, p.noCache)
 	if err != nil {
 		return err
 	}

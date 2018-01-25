@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/fnproject/cli/client"
 	functions "github.com/fnproject/fn_go/client"
 	"github.com/onsi/gomega"
@@ -42,15 +43,14 @@ type testcmd struct {
 
 func (t *testcmd) flags() []cli.Flag {
 	return []cli.Flag{
-		// cli.BoolFlag{
-		// 	Name:        "b",
-		// 	Usage:       "build before test",
-		// 	Destination: &t.build,
-		// },
 		cli.StringFlag{
 			Name:        "remote",
-			Usage:       "run tests by calling the function on `appname`",
+			Usage:       "run tests against a remote fn server",
 			Destination: &t.remote,
+		},
+		cli.BoolFlag{
+			Name:  "all",
+			Usage: "if in root directory containing `app.yaml`, this will deploy all functions",
 		},
 	}
 }
@@ -62,19 +62,81 @@ func (t *testcmd) test(c *cli.Context) error {
 
 	wd := getWd()
 
-	fpath, ff, err := findAndParseFuncfile(wd)
+	if c.Bool("all") {
+		fmt.Println("Testing all functions in this directory and all sub directories.")
+		return t.testAll(c, wd)
+	}
+
+	_, _, err := t.testSingle(c, wd)
+	return err
+}
+
+func (t *testcmd) testAll(c *cli.Context, wd string) error {
+	testCount := 0
+	errorCount := 0
+	err := walkFuncs(wd, func(path string, ff *funcfile, err error) error {
+		if err != nil { // probably some issue with funcfile parsing, can decide to handle this differently if we'd like
+			return err
+		}
+		dir := filepath.Dir(path)
+		if dir == wd {
+			// TODO: needed for tests?
+			// setRootFuncInfo(ff, appName)
+		} else {
+			// change dirs
+			err = os.Chdir(dir)
+			if err != nil {
+				return err
+			}
+			p2 := strings.TrimPrefix(dir, wd)
+			if ff.Name == "" {
+				ff.Name = strings.Replace(p2, "/", "-", -1)
+				if strings.HasPrefix(ff.Name, "-") {
+					ff.Name = ff.Name[1:]
+				}
+				// todo: should we prefix appname too?
+			}
+			if ff.Path == "" {
+				ff.Path = p2
+			}
+		}
+		tc, ec, err := t.testSingle(c, dir)
+		if err != nil {
+			fmt.Printf("test error on %s: %v\n", path, err)
+			// TOOD: store these logs and print them at the end?
+		}
+		testCount += tc
+		errorCount += ec
+		now := time.Now()
+		os.Chtimes(path, now, now)
+		// funcFound = true
+		return nil
+	})
 	if err != nil {
 		return err
 	}
+	errmsg := "0 FAILED"
+	if errorCount > 0 {
+		errmsg = color.RedString(fmt.Sprintf("%v FAILED", errorCount))
+	}
+	passed := testCount - errorCount
+	fmt.Printf("\nAll %v tests finished.\n%v\n%v\n", testCount, color.GreenString(fmt.Sprintf("%v PASSED", passed)), errmsg)
+	if errorCount > 0 {
+		return fmt.Errorf("%v tests failed", errorCount)
+	}
+	return nil
+}
+
+func (t *testcmd) testSingle(c *cli.Context, wd string) (totalTests, errorCount int, err error) {
+	// TODO: prerun should take a wd
+	fpath, ff, envVars, err := preRun(c)
+	if err != nil {
+		return 0, 0, err
+	}
+
 	// get name from directory if it's not defined
 	if ff.Name == "" {
 		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
-	}
-
-	ff, err = buildfunc(fpath, ff, false)
-	ff, envVars, err := preRun(c)
-	if err != nil {
-		return err
 	}
 
 	var tests []fftest
@@ -84,33 +146,31 @@ func (t *testcmd) test(c *cli.Context) error {
 	if exists(tfile) {
 		f, err := os.Open(tfile)
 		if err != nil {
-			return fmt.Errorf("could not open %s for parsing. %v", tfile, err)
+			return 0, 0, fmt.Errorf("could not open %s for parsing. %v", tfile, err)
 		}
 		ts := &testStruct{}
 		err = json.NewDecoder(f).Decode(ts)
 		if err != nil {
 			fmt.Println("Invalid tests.json file:", err)
-			return err
+			return 0, 0, err
 		}
 		tests = ts.Tests
 	} else {
 		tests = ff.Tests
 	}
 	if len(tests) == 0 {
-		return errors.New("no tests found for this function")
+		return 0, 0, errors.New("no tests found for this function")
 	}
-
-	fmt.Printf("Running %v tests...", len(tests))
 
 	target := ff.ImageName()
 	runtest := runlocaltest
 	if t.remote != "" {
 		if ff.Path == "" {
-			return errors.New("execution of tests on remote server demand that this function has a `path`")
+			return 0, 0, errors.New("execution of tests on remote server demand that this function has a `path`")
 		}
 		baseURL, err := client.HostURL()
 		if err != nil {
-			return fmt.Errorf("error parsing base path: %v", err)
+			return 0, 0, fmt.Errorf("error parsing base path: %v", err)
 		}
 
 		u, err := url.Parse("../")
@@ -119,15 +179,15 @@ func (t *testcmd) test(c *cli.Context) error {
 		runtest = runremotetest
 	}
 
-	errorCount := 0
-	fmt.Println("running tests on", ff.ImageName(), ":")
+	// todo: make path here relative to the app root
+	fmt.Printf("Running %v tests on %v (image: %v):", len(tests), fpath, ff.ImageName())
 	for i, tt := range tests {
 		fmt.Printf("\nTest %v\n", i+1)
 		start := time.Now()
 		var err error
 		err = runtest(target, tt.Input, tt.Output, tt.Err, envVars)
 		if err != nil {
-			fmt.Print("FAILED")
+			fmt.Print(color.RedString("FAILED"))
 			errorCount++
 			scanner := bufio.NewScanner(strings.NewReader(err.Error()))
 			for scanner.Scan() {
@@ -138,16 +198,21 @@ func (t *testcmd) test(c *cli.Context) error {
 				break
 			}
 		} else {
-			fmt.Print("PASSED")
+			fmt.Print(color.GreenString("PASSED"))
 		}
 		fmt.Println(" - ", tt.Name, " (", time.Since(start), ")")
 
 	}
-	fmt.Printf("\n%v tests passed, %v tests failed.\n", len(tests)-errorCount, errorCount)
+	passed := len(tests) - errorCount
+	errmsg := "0 failed"
 	if errorCount > 0 {
-		return errors.New("tests failed, errors found")
+		errmsg = color.RedString(fmt.Sprintf("%v failed", errorCount))
 	}
-	return nil
+	fmt.Printf("\ntests run: %v, %v\n", color.GreenString(fmt.Sprintf("%v passed", passed)), errmsg)
+	if errorCount > 0 {
+		return len(tests), errorCount, fmt.Errorf("%v tests failed", errorCount)
+	}
+	return len(tests), errorCount, nil
 }
 
 func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {

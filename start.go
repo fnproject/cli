@@ -19,23 +19,21 @@ func startCmd() cli.Command {
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "log-level",
-				Usage: "--log-level DEBUG to enable debugging",
+				Usage: "--log-level debug to enable debugging",
 			},
 			cli.BoolFlag{
 				Name:  "detach, d",
 				Usage: "Run container in background.",
+			},
+			cli.StringFlag{
+				Name:  "env-file",
+				Usage: "Path to Fn server configuration file.",
 			},
 		},
 	}
 }
 
 func start(c *cli.Context) error {
-	denvs := []string{}
-	if c.String("log-level") != "" {
-		denvs = append(denvs, "GIN_MODE="+c.String("log-level"))
-	}
-	// Socket mount: docker run --rm -it --name functions -v ${PWD}/data:/app/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 fnproject/functions
-	// OR dind: docker run --rm -it --name functions -v ${PWD}/data:/app/data --privileged -p 8080:8080 fnproject/functions
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatalln("Getwd failed:", err)
@@ -44,10 +42,15 @@ func start(c *cli.Context) error {
 		"--name", "fnserver",
 		"-v", fmt.Sprintf("%s/data:/app/data", wd),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
+		"--privileged",
 		"-p", "8080:8080",
+		"--entrypoint", "./fnserver",
 	}
-	for _, v := range denvs {
-		args = append(args, "-e", v)
+	if c.String("log-level") != "" {
+		args = append(args, "-e", fmt.Sprintf("FN_LOG_LEVEL=%v", c.String("log-level")))
+	}
+	if c.String("env-file") != "" {
+		args = append(args, "--env-file", c.String("env-file"))
 	}
 	if c.Bool("detach") {
 		args = append(args, "-d")

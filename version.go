@@ -1,19 +1,20 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/fnproject/cli/client"
 	fnclient "github.com/fnproject/fn_go/client/version"
 	"github.com/urfave/cli"
-	"fmt"
 )
 
 // Version of Fn CLI
-var Version = "0.4.23"
+var Version = "0.4.41"
 
 func version() cli.Command {
 	return cli.Command{
 		Name:   "version",
-		Usage:  "displays fn and functions daemon versions",
+		Usage:  "displays cli and server versions",
 		Action: versionCMD,
 	}
 }
