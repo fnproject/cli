@@ -94,9 +94,9 @@ func routes() cli.Command {
 						Usage: "pagination cursor",
 					},
 					cli.Int64Flag{
-						Name:  "per-page",
-						Usage: "number of calls to return",
-						Value: int64(0),
+						Name:  "n",
+						Usage: "number of routes to return",
+						Value: int64(100),
 					},
 				},
 			},
@@ -206,9 +206,13 @@ func (a *routesCmd) list(c *cli.Context) error {
 				return err
 			}
 		}
+		n := c.Int64("n")
+		if n < 0 {
+			return errors.New("number of calls: negative value not allowed")
+		}
 
 		resRoutes = append(resRoutes, resp.Payload.Routes...)
-		howManyMore := c.Int64("per-page") - int64(len(resRoutes)+len(resp.Payload.Routes))
+		howManyMore := n - int64(len(resRoutes)+len(resp.Payload.Routes))
 		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
 		}

@@ -92,9 +92,9 @@ func apps() cli.Command {
 						Usage: "pagination cursor",
 					},
 					cli.Int64Flag{
-						Name:  "per-page",
-						Usage: "number of calls to return",
-						Value: int64(0),
+						Name:  "n",
+						Usage: "number of apps to return",
+						Value: int64(100),
 					},
 				},
 			},
@@ -131,7 +131,12 @@ func (a *appsCmd) list(c *cli.Context) error {
 
 		resApps = append(resApps, resp.Payload.Apps...)
 
-		howManyMore := c.Int64("per-page") - int64(len(resApps)+len(resp.Payload.Apps))
+		n := c.Int64("n")
+		if n < 0 {
+			return errors.New("number of calls: negative value not allowed")
+		}
+
+		howManyMore := n - int64(len(resApps)+len(resp.Payload.Apps))
 		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
 		}
