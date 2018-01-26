@@ -85,8 +85,8 @@ func start(c *cli.Context) error {
 			if err != nil {
 				log.Println("error: processed finished with error", err)
 			}
-			return err
 		}
+		return err
 	}
 
 	return nil

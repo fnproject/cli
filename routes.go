@@ -88,6 +88,17 @@ func routes() cli.Command {
 				Usage:     "list routes for `app`",
 				ArgsUsage: "<app>",
 				Action:    r.list,
+				Flags: []cli.Flag{
+					cli.StringFlag{
+						Name:  "cursor",
+						Usage: "pagination cursor",
+					},
+					cli.Int64Flag{
+						Name:  "n",
+						Usage: "number of routes to return",
+						Value: int64(100),
+					},
+				},
 			},
 			{
 				Name:      "create",
@@ -177,37 +188,53 @@ func cleanRoutePath(p string) string {
 	return p
 }
 
-func (a *routesCmd) list(c *cli.Context) error {
-	appName := c.Args().Get(0)
-
-	resp, err := a.client.Routes.GetAppsAppRoutes(&apiroutes.GetAppsAppRoutesParams{
-		Context: context.Background(),
-		App:     appName,
-	})
-
-	if err != nil {
-		switch e := err.(type) {
-		case *apiroutes.GetAppsAppRoutesNotFound:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
-		case *apiroutes.GetAppsAppRoutesDefault:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
-		default:
-			return err
-		}
-	}
-
+func printRoutes(appName string, routes []*fnmodels.Route) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprint(w, "path", "\t", "image", "\t", "endpoint", "\n")
-	for _, route := range resp.Payload.Routes {
+	for _, route := range routes {
 		endpoint := path.Join(client.Host(), "r", appName, route.Path)
-		if err != nil {
-			return fmt.Errorf("error parsing functions route path: %s", err)
-		}
-
 		fmt.Fprint(w, route.Path, "\t", route.Image, "\t", endpoint, "\n")
 	}
 	w.Flush()
+}
 
+func (a *routesCmd) list(c *cli.Context) error {
+	appName := c.Args().Get(0)
+
+	params := &apiroutes.GetAppsAppRoutesParams{
+		Context: context.Background(),
+		App:     appName,
+	}
+
+	var resRoutes []*fnmodels.Route
+	for {
+		resp, err := a.client.Routes.GetAppsAppRoutes(params)
+
+		if err != nil {
+			switch e := err.(type) {
+			case *apiroutes.GetAppsAppRoutesNotFound:
+				return fmt.Errorf("%s", e.Payload.Error.Message)
+			case *apiroutes.GetAppsAppRoutesDefault:
+				return fmt.Errorf("%s", e.Payload.Error.Message)
+			default:
+				return err
+			}
+		}
+		n := c.Int64("n")
+		if n < 0 {
+			return errors.New("number of calls: negative value not allowed")
+		}
+
+		resRoutes = append(resRoutes, resp.Payload.Routes...)
+		howManyMore := n - int64(len(resRoutes)+len(resp.Payload.Routes))
+		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
+			break
+		}
+
+		params.Cursor = &resp.Payload.NextCursor
+	}
+
+	printRoutes(appName, resRoutes)
 	return nil
 }
 

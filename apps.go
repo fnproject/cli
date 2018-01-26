@@ -100,6 +100,17 @@ func apps() cli.Command {
 				Aliases: []string{"l"},
 				Usage:   "list all apps",
 				Action:  a.list,
+				Flags: []cli.Flag{
+					cli.StringFlag{
+						Name:  "cursor",
+						Usage: "pagination cursor",
+					},
+					cli.Int64Flag{
+						Name:  "n",
+						Usage: "number of apps to return",
+						Value: int64(100),
+					},
+				},
 			},
 			{
 				Name:    "delete",
@@ -112,30 +123,47 @@ func apps() cli.Command {
 }
 
 func (a *appsCmd) list(c *cli.Context) error {
-	resp, err := a.client.Apps.GetApps(&apiapps.GetAppsParams{
-		Context: context.Background(),
-	})
 
-	if err != nil {
-		switch e := err.(type) {
-		case *apiapps.GetAppsAppNotFound:
-			return fmt.Errorf("%v", e.Payload.Error.Message)
-		case *apiapps.GetAppsAppDefault:
-			return fmt.Errorf("%v", e.Payload.Error.Message)
-		case *apiapps.GetAppsDefault:
-			// this is the one getting called, not sure what the one above is?
-			return fmt.Errorf("%v", e.Payload.Error.Message)
-		default:
-			return fmt.Errorf("%v", err)
+	params := &apiapps.GetAppsParams{Context: context.Background()}
+	var resApps []*models.App
+	for {
+		resp, err := a.client.Apps.GetApps(params)
+
+		if err != nil {
+			switch e := err.(type) {
+			case *apiapps.GetAppsAppNotFound:
+				return fmt.Errorf("%v", e.Payload.Error.Message)
+			case *apiapps.GetAppsAppDefault:
+				return fmt.Errorf("%v", e.Payload.Error.Message)
+			case *apiapps.GetAppsDefault:
+				// this is the one getting called, not sure what the one above is?
+				return fmt.Errorf("%v", e.Payload.Error.Message)
+			default:
+				return fmt.Errorf("%v", err)
+			}
 		}
+
+		resApps = append(resApps, resp.Payload.Apps...)
+
+		n := c.Int64("n")
+		if n < 0 {
+			return errors.New("number of calls: negative value not allowed")
+		}
+
+		howManyMore := n - int64(len(resApps)+len(resp.Payload.Apps))
+		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
+			break
+		}
+
+		params.Cursor = &resp.Payload.NextCursor
 	}
 
-	if len(resp.Payload.Apps) == 0 {
+	if len(resApps) == 0 {
 		fmt.Println("no apps found")
 		return nil
 	}
 
-	for _, app := range resp.Payload.Apps {
+	for _, app := range resApps {
 		fmt.Println(app.Name)
 	}
 

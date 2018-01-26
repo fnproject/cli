@@ -208,7 +208,7 @@ func dockerVersionCheck() error {
 	}
 	vMin, err := semver.NewVersion(minRequiredDockerVersion)
 	if err != nil {
-		return fmt.Errorf("our bad, sorry... please make an issue.", err)
+		return fmt.Errorf("our bad, sorry... please make an issue, detailed error: %v", err)
 	}
 	if v.LessThan(*vMin) {
 		return fmt.Errorf("please upgrade your version of Docker to %s or greater", minRequiredDockerVersion)

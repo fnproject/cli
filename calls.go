@@ -55,9 +55,9 @@ func calls() cli.Command {
 						Usage: "'stop' timestamp",
 					},
 					cli.Int64Flag{
-						Name:  "per-page",
+						Name:  "n",
 						Usage: "number of calls to return",
-						Value: int64(30),
+						Value: int64(100),
 					},
 				},
 			},
@@ -77,6 +77,9 @@ func printCalls(calls []*models.Call) {
 				"Status: %v\n",
 			call.ID, call.AppName, call.Path, call.CreatedAt,
 			call.StartedAt, call.CompletedAt, call.Status))
+		if call.Error != "" {
+			fmt.Println(fmt.Sprintf("Error reason: %v\n", call.Error))
+		}
 	}
 }
 
@@ -124,6 +127,7 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 		params.FromTime = &res
 
 	}
+
 	if ctx.String("to-time") != "" {
 		toTime := ctx.String("to-time")
 		toTime_int64, err := time.Parse(time.RFC3339, toTime)
@@ -133,20 +137,33 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 		res := toTime_int64.Unix()
 		params.ToTime = &res
 	}
-	if ctx.Int64("per-page") > 0 {
-		per_page := ctx.Int64("per-page")
-		params.PerPage = &per_page
+
+	n := ctx.Int64("n")
+	if n < 0 {
+		return errors.New("number of calls: negative value not allowed")
 	}
 
-	resp, err := call.client.Call.GetAppsAppCalls(&params)
-	if err != nil {
-		switch e := err.(type) {
-		case *apicall.GetAppsAppCallsNotFound:
-			return errors.New(e.Payload.Error.Message)
-		default:
-			return err
+	var resCalls []*models.Call
+	for {
+		resp, err := call.client.Call.GetAppsAppCalls(&params)
+		if err != nil {
+			switch e := err.(type) {
+			case *apicall.GetAppsAppCallsNotFound:
+				return errors.New(e.Payload.Error.Message)
+			default:
+				return err
+			}
 		}
+
+		resCalls = append(resCalls, resp.Payload.Calls...)
+		howManyMore := n - int64(len(resCalls)+len(resp.Payload.Calls))
+		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
+			break
+		}
+
+		params.Cursor = &resp.Payload.NextCursor
 	}
-	printCalls(resp.Payload.Calls)
+
+	printCalls(resCalls)
 	return nil
 }
