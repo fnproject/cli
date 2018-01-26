@@ -126,9 +126,6 @@ func (call *callsCmd) list(ctx *cli.Context) error {
 		res := fromTime_int64.Unix()
 		params.FromTime = &res
 
-	} else {
-		lastHour := time.Now().Add(-time.Hour).Unix()
-		params.FromTime = &lastHour
 	}
 
 	if ctx.String("to-time") != "" {
