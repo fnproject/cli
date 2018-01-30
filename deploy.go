@@ -182,6 +182,16 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 				ff.Path = p2
 			}
 		}
+		if appf.Config != nil {
+			if ff.Config == nil {
+				ff.Config = make(map[string]string)
+			}
+			for k, v := range appf.Config {
+				if _, there := ff.Config[k]; !there {
+					ff.Config[k] = v
+				}
+			}
+		}
 		err = p.deployFunc(c, appName, wd, path, ff)
 		if err != nil {
 			return fmt.Errorf("deploy error on %s: %v", path, err)
