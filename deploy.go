@@ -148,6 +148,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *appfile) 
 		if dir == wd {
 			setRootFuncInfo(ff, appf.Name)
 		}
+		ff.Config = mergeConfigs(appf.Config, ff.Config)
 	}
 	return p.deployFunc(c, appName, wd, fpath, ff)
 }
