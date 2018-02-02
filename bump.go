@@ -135,10 +135,14 @@ func bumpVersion(funcfile *funcfile, t VType) (*funcfile, error) {
 	return funcfile, nil
 }
 
+// cleanImageName is intended to remove any trailing tag from the image name
+// since the version field conveys this information. More cleanup could be done
+// here in future if necessary.
 func cleanImageName(name string) string {
-	if i := strings.Index(name, ":"); i != -1 {
-		name = name[:i]
+	slashParts := strings.Split(name, "/")
+	l := len(slashParts) - 1
+	if i := strings.Index(slashParts[l], ":"); i > -1 {
+		slashParts[l] = slashParts[l][:i]
 	}
-
-	return name
+	return strings.Join(slashParts, "/")
 }
