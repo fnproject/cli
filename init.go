@@ -215,7 +215,7 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 
 	if a.ff.Name == "" {
 		// then defaults to current directory for name, the name must be lowercase
-		a.ff.Name = strings.ToLower(filepath.Base(filepath.Dir(wd)))
+		a.ff.Name = strings.ToLower(filepath.Base(wd))
 	}
 
 	if err = validateFuncName(a.ff.Name); err != nil {
