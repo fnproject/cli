@@ -40,7 +40,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 	fgs := []cli.Flag{
 		cli.StringFlag{
 			Name:        "name",
-			Usage:       "name of the function. Defaults to directory name.",
+			Usage:       "name of the function. Defaults to directory name in lowercase.",
 			Destination: &a.ff.Name,
 		},
 		cli.BoolFlag{
@@ -197,15 +197,29 @@ func (a *initFnCmd) bindRoute(rt *models.Route) {
 	}
 }
 
+// validateFuncName checks if the func name is valid, the name can't contain a colon and
+// must be all lowercase
+func validateFuncName(name string) error {
+	if strings.Contains(name, ":") {
+		return errors.New("function name cannot contain a colon")
+	}
+	if strings.ToLower(name) != name {
+		return errors.New("function name must be lowercase")
+	}
+	return nil
+}
+
 func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 	wd := getWd()
 	var err error
 
 	if a.ff.Name == "" {
-		// then defaults to current directory for name, we'll just leave it out of func.yaml
-		// a.Name = filepath.Base(pwd)
-	} else if strings.Contains(a.ff.Name, ":") {
-		return errors.New("function name cannot contain a colon")
+		// then defaults to current directory for name, the name must be lowercase
+		a.ff.Name = strings.ToLower(filepath.Base(filepath.Dir(wd)))
+	}
+
+	if err = validateFuncName(a.ff.Name); err != nil {
+		return err
 	}
 
 	//if Dockerfile present, use 'docker' as 'runtime'
