@@ -44,6 +44,7 @@ func start(c *cli.Context) error {
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"--privileged",
 		"-p", "8080:8080",
+		"--net", "host",
 		"--entrypoint", "./fnserver",
 	}
 	if c.String("log-level") != "" {
