@@ -64,9 +64,9 @@ func funcNameValidation(name string, t *testing.T) {
 }
 
 func TestFuncNameWithUpperCase(t *testing.T) {
-	funcNameValidation("fooFunc", t)
+	funcNameValidation("fooMyFunc", t)
 }
 
 func TestFuncNameWithColon(t *testing.T) {
-	funcNameValidation("foo:func", t)
+	funcNameValidation("foo:myfunc", t)
 }
