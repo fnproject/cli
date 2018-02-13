@@ -55,3 +55,18 @@ func TestInit(t *testing.T) {
 		t.Errorf("no entrypoint found in generated %s", ffname)
 	}
 }
+
+func funcNameValidation(name string, t *testing.T) {
+	err := validateFuncName("fooFunc")
+	if err == nil {
+		t.Error("Expected validation error for function name")
+	}
+}
+
+func TestFuncNameWithUpperCase(t *testing.T) {
+	funcNameValidation("fooMyFunc", t)
+}
+
+func TestFuncNameWithColon(t *testing.T) {
+	funcNameValidation("foo:myfunc", t)
+}
