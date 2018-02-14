@@ -22,8 +22,8 @@ func startCmd() cli.Command {
 				Usage: "--log-level debug to enable debugging",
 			},
 			cli.BoolFlag{
-				Name:  "detach, d",
-				Usage: "Run container in background.",
+				Name:  "foreground, fg",
+				Usage: "Run container in the foreground.",
 			},
 			cli.StringFlag{
 				Name:  "env-file",
@@ -53,7 +53,7 @@ func start(c *cli.Context) error {
 	if c.String("env-file") != "" {
 		args = append(args, "--env-file", c.String("env-file"))
 	}
-	if c.Bool("detach") {
+	if !c.Bool("foreground") {
 		args = append(args, "-d")
 	}
 	args = append(args, functionsDockerImage)
