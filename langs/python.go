@@ -2,6 +2,9 @@ package langs
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -63,6 +66,85 @@ func (h *PythonLangHelper) DockerfileBuildCmds() []string {
 func (h *PythonLangHelper) IsMultiStage() bool {
 	return false
 }
+
+// HasBoilerplate return whether the Python runtime has boilerplate that can be generated
+func (h *PythonLangHelper) HasBoilerplate() bool { return true }
+
+// GenerateBoilerplate creates the func file and test file for the Python runtime
+func (h *PythonLangHelper) GenerateBoilerplate() error {
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	codeFile := filepath.Join(wd, "func.py")
+	if exists(codeFile) {
+		return ErrBoilerplateExists
+	}
+	testFile := filepath.Join(wd, "test.json")
+	if exists(testFile) {
+		return ErrBoilerplateExists
+	}
+
+	if err := ioutil.WriteFile(codeFile, []byte(helloPythonSrcBoilerplate), os.FileMode(0644)); err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(testFile, []byte(pythonTestBoilerPlate), os.FileMode(0644)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+const (
+	helloPythonSrcBoilerplate = `
+import sys
+import json
+
+
+def sayHello(name=None):
+    salutation = {"message": "Hello World"}
+    if name is not None:
+        salutation["message"]= "Hello " + name
+    return json.dumps(salutation)
+
+
+try:
+    data = json.loads(sys.stdin.read())
+    print(sayHello(data["name"]))
+except ValueError:
+    print(sayHello())
+
+`
+
+	pythonTestBoilerPlate = `{
+    "tests": [
+        {
+            "input": {
+                "body": {
+                    "name": "Johnny"
+                }
+            },
+            "output": {
+                "body": {
+                    "message": "Hello Johnny"
+                }
+            }
+        },
+        {
+            "input": {
+                "body": ""
+            },
+            "output": {
+                "body": {
+                    "message": "Hello World"
+                }
+            }
+        }
+    ]
+}
+`
+)
 
 // The multi-stage build didn't work, pip seems to be required for it to load the modules
 // func (h *PythonLangHelper) DockerfileCopyCmds() []string {
