@@ -9,7 +9,7 @@ import (
 )
 
 // Version of Fn CLI
-var Version = "0.4.47"
+var Version = "0.4.48"
 
 func version() cli.Command {
 	return cli.Command{
