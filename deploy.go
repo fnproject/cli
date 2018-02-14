@@ -148,6 +148,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *appfile) 
 		if dir == wd {
 			setRootFuncInfo(ff, appf.Name)
 		}
+		ff.Config = mergeConfigs(appf.Config, ff.Config)
 	}
 	return p.deployFunc(c, appName, wd, fpath, ff)
 }
@@ -182,6 +183,9 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 				ff.Path = p2
 			}
 		}
+
+		ff.Config = mergeConfigs(appf.Config, ff.Config)
+
 		err = p.deployFunc(c, appName, wd, path, ff)
 		if err != nil {
 			return fmt.Errorf("deploy error on %s: %v", path, err)
