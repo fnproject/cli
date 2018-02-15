@@ -34,7 +34,7 @@ mkdir data
 touch data/fn.db data/fn.mq
 
 # start fn
-CONTAINER_ID=$($fn start -d)
+CONTAINER_ID=$($fn start)
 sleep 7
 docker inspect -f {{.State.Running}} $CONTAINER_ID | grep '^true$'
 
@@ -64,7 +64,7 @@ $fn test
 # Test 'docker' runtime deploy
 cd $WORK_DIR
 funcname="dockerfunc"
-mkdir $funcname 
+mkdir $funcname
 cp ${CUR_DIR}/test/funcfile-docker-rt-tests/testfiles/Dockerfile $funcname/
 cp ${CUR_DIR}/test/funcfile-docker-rt-tests/testfiles/func.go $funcname/
 cd $funcname
@@ -73,8 +73,6 @@ $fn apps create myapp1
 $fn apps l
 $fn deploy --local --app myapp1
 $fn call myapp1 /$funcname
-# todo: would be nice to have a flag to output parseable formats in cli, eg: `fn deploy --output json` would return json with version and other info 
+# todo: would be nice to have a flag to output parseable formats in cli, eg: `fn deploy --output json` would return json with version and other info
 $fn routes create myapp1 /another --image $FN_REGISTRY/$funcname:0.0.2
 $fn call myapp1 /another
-
-
