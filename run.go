@@ -158,7 +158,11 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	var runEnv []string // env to pass into the container via -e's
 	callID := "12345678901234567890123456"
 	contentType := "application/json"
-	deadline := time.Now().Add(time.Duration(*ff.Timeout) * time.Second)
+	to := int32(30)
+	if ff.Timeout != nil {
+		to = *ff.Timeout
+	}
+	deadline := time.Now().Add(time.Duration(to) * time.Second)
 	deadlineS := deadline.Format(time.RFC3339)
 
 	if method == "" {
