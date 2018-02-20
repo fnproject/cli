@@ -39,7 +39,7 @@ type jsonOut struct {
 	Protocol    *CallResponseHTTP `json:"protocol,omitempty"`
 }
 
-func createJSONInput(callID, contentType string, stdin io.Reader) (string, error) {
+func createJSONInput(callID, contentType, deadline string, stdin io.Reader) (string, error) {
 	var err error
 	input := []byte("")
 	if stdin != nil {
@@ -54,6 +54,7 @@ func createJSONInput(callID, contentType string, stdin io.Reader) (string, error
 	jin := &jsonIn{
 		CallID:      callID,
 		ContentType: contentType,
+		Deadline:    deadline,
 		Body:        string(input),
 	}
 	err = enc.Encode(jin)
