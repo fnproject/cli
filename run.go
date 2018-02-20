@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/urfave/cli"
 )
@@ -144,7 +145,6 @@ func (r *runCmd) run(c *cli.Context) error {
 	if c.Uint64("memory") != 0 {
 		ff.Memory = c.Uint64("memory")
 	}
-
 	return runff(ff, stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"))
 }
 
@@ -155,6 +155,14 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	var err error
 	var env []string    // env for the shelled out docker run command
 	var runEnv []string // env to pass into the container via -e's
+	callID := "12345678901234567890123456"
+	contentType := "application/json"
+	to := int32(30)
+	if ff.Timeout != nil {
+		to = *ff.Timeout
+	}
+	deadline := time.Now().Add(time.Duration(to) * time.Second)
+	deadlineS := deadline.Format(time.RFC3339)
 
 	if method == "" {
 		if stdin == nil {
@@ -164,37 +172,29 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 		}
 	}
 	if format == "" {
-		format = DefaultFormat
+		if ff.Format != "" {
+			format = ff.Format
+		} else {
+			format = DefaultFormat
+		}
 	}
+
 	// Add expected env vars that service will add
-	runEnv = append(runEnv, kvEq("FN_CALL_ID", "12345678901234567890123456"))
-	runEnv = append(runEnv, kvEq("FN_METHOD", method))
-	runEnv = append(runEnv, kvEq("FN_REQUEST_URL", LocalTestURL))
-	runEnv = append(runEnv, kvEq("FN_APP_NAME", "myapp"))
-	runEnv = append(runEnv, kvEq("FN_PATH", "/hello")) // TODO: should we change this to PATH ?
-	runEnv = append(runEnv, kvEq("FN_FORMAT", format))
-	runEnv = append(runEnv, kvEq("FN_MEMORY", fmt.Sprintf("%d", ff.Memory)))
+	// Full set here: https://github.com/fnproject/fn/pull/660#issuecomment-356157279
 	runEnv = append(runEnv, kvEq("FN_TYPE", "sync"))
+	runEnv = append(runEnv, kvEq("FN_FORMAT", format))
+	runEnv = append(runEnv, kvEq("FN_PATH", "/hello"))
+	runEnv = append(runEnv, kvEq("FN_MEMORY", fmt.Sprintf("%d", ff.Memory)))
+	runEnv = append(runEnv, kvEq("FN_APP_NAME", "myapp"))
 
 	// add user defined envs
 	runEnv = append(runEnv, envVars...)
 
-	for _, l := range links {
-		sh = append(sh, "--link", l)
-	}
-
-	dockerenv := []string{"DOCKER_TLS_VERIFY", "DOCKER_HOST", "DOCKER_CERT_PATH", "DOCKER_MACHINE_NAME"}
-	for _, e := range dockerenv {
-		env = append(env, fmt.Sprint(e, "=", os.Getenv(e)))
-	}
-
-	for _, e := range runEnv {
-		sh = append(sh, "-e", e)
-	}
-
 	if runs <= 0 {
 		runs = 1
 	}
+
+	fmt.Fprintln(os.Stderr, "FORMAT:", format)
 
 	if ff.Type != "" && ff.Type == "async" {
 		// if async, we'll run this in a separate thread and wait for it to complete
@@ -203,6 +203,7 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	}
 	body := "" // used for hot functions
 	if format == HttpFormat {
+		// TODO: this isn't do the headers like recent changes on the server side
 		// let's swap out stdin for http formatted message
 		input := []byte("")
 		if stdin != nil {
@@ -215,10 +216,13 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 		var b bytes.Buffer
 		for i := 0; i < runs; i++ {
 			// making new request each time since Write closes the body
+			// todo: add headers
 			req, err := http.NewRequest(method, LocalTestURL, strings.NewReader(string(input)))
 			if err != nil {
 				return fmt.Errorf("error creating http request: %v", err)
 			}
+			req.Header.Set("Content-Type", contentType)
+			req.Header.Set("Fn_deadline", deadlineS)
 			err = req.Write(&b)
 			b.Write([]byte("\n"))
 		}
@@ -230,8 +234,36 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 		// fmt.Println("body:", s)
 		stdin = strings.NewReader(body)
 	} else if format == JSONFormat {
-		// TODO: We need to use the same structs as in the server to keep these things all in line
-		return fmt.Errorf("Format %v not supported", format)
+		var b strings.Builder
+		for i := 0; i < runs; i++ {
+			body, err := createJSONInput(callID, contentType, deadlineS, stdin)
+			if err != nil {
+				return err
+			}
+			b.WriteString(body)
+			b.Write([]byte("\n"))
+		}
+		stdin = strings.NewReader(b.String())
+		stdout = stdoutJSON(stdout)
+	} else { // default
+		// todo: CONTENT_TYPE should be top level in default too, instead of under FN_HEADER_
+		runEnv = append(runEnv, kvEq("FN_REQUEST_URL", LocalTestURL))
+		runEnv = append(runEnv, kvEq("FN_CALL_ID", callID))
+		runEnv = append(runEnv, kvEq("FN_METHOD", method))
+		runEnv = append(runEnv, kvEq("FN_DEADLINE", deadlineS))
+	}
+
+	for _, l := range links {
+		sh = append(sh, "--link", l)
+	}
+
+	dockerenv := []string{"DOCKER_TLS_VERIFY", "DOCKER_HOST", "DOCKER_CERT_PATH", "DOCKER_MACHINE_NAME"}
+	for _, e := range dockerenv {
+		env = append(env, fmt.Sprint(e, "=", os.Getenv(e)))
+	}
+
+	for _, e := range runEnv {
+		sh = append(sh, "-e", e)
 	}
 
 	sh = append(sh, ff.ImageName())

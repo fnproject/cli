@@ -137,7 +137,7 @@ func runBuild(c *cli.Context, dir, imageName, dockerfile string, noCache bool) e
 	buildErr := ioutil.Discard
 
 	quit := make(chan struct{})
-	fmt.Printf("Building image %v ", imageName)
+	fmt.Fprintf(os.Stderr, "Building image %v ", imageName)
 	if c.GlobalBool("verbose") {
 		fmt.Println()
 		buildOut = os.Stdout
@@ -149,7 +149,7 @@ func runBuild(c *cli.Context, dir, imageName, dockerfile string, noCache bool) e
 			for {
 				select {
 				case <-ticker.C:
-					fmt.Print(".")
+					fmt.Fprintf(os.Stderr, ".")
 				case <-quit:
 					ticker.Stop()
 					return
@@ -181,14 +181,14 @@ func runBuild(c *cli.Context, dir, imageName, dockerfile string, noCache bool) e
 	select {
 	case err := <-result:
 		close(quit)
-		fmt.Println()
+		fmt.Fprintln(os.Stderr)
 		if err != nil {
 			fmt.Printf("%v Run with `--verbose` flag to see what went wrong. eg: `fn --verbose CMD`\n", color.RedString("Error during build."))
 			return fmt.Errorf("error running docker build: %v", err)
 		}
 	case signal := <-cancel:
 		close(quit)
-		fmt.Println()
+		fmt.Fprintln(os.Stderr)
 		return fmt.Errorf("build cancelled on signal %v", signal)
 	}
 	return nil
