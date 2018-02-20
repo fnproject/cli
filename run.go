@@ -11,7 +11,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"encoding/json"
+	"github.com/go-openapi/strfmt"
 	"github.com/urfave/cli"
+	"strconv"
+	"time"
 )
 
 const (
@@ -50,7 +54,7 @@ func runflags() []cli.Flag {
 		},
 		cli.StringFlag{
 			Name:  "format",
-			Usage: "format to use. `default` and `http` (hot) formats currently supported.",
+			Usage: "format to use. `default` and `http`, `json` (hot) formats currently supported.",
 		},
 		cli.IntFlag{
 			Name:  "runs",
@@ -145,11 +149,17 @@ func (r *runCmd) run(c *cli.Context) error {
 		ff.Memory = c.Uint64("memory")
 	}
 
-	return runff(ff, stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"))
+	return runff(ff, stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.Int("runs"))
+}
+
+type jsonProtocol struct {
+	Type       string      `json:"type"`
+	RequestURL string      `json:"request_url"`
+	Headers    http.Header `json:"headers"`
 }
 
 // TODO: share all this stuff with the Docker driver in server or better yet, actually use the Docker driver
-func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int) error {
+func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, runs int) error {
 	sh := []string{"docker", "run", "--rm", "-i", fmt.Sprintf("--memory=%dm", ff.Memory)}
 
 	var err error
@@ -163,8 +173,8 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 			method = "POST"
 		}
 	}
-	if format == "" {
-		format = DefaultFormat
+	if ff.Format == "" {
+		ff.Format = DefaultFormat
 	}
 	// Add expected env vars that service will add
 	runEnv = append(runEnv, kvEq("FN_CALL_ID", "12345678901234567890123456"))
@@ -172,7 +182,7 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	runEnv = append(runEnv, kvEq("FN_REQUEST_URL", LocalTestURL))
 	runEnv = append(runEnv, kvEq("FN_APP_NAME", "myapp"))
 	runEnv = append(runEnv, kvEq("FN_PATH", "/hello")) // TODO: should we change this to PATH ?
-	runEnv = append(runEnv, kvEq("FN_FORMAT", format))
+	runEnv = append(runEnv, kvEq("FN_FORMAT", ff.Format))
 	runEnv = append(runEnv, kvEq("FN_MEMORY", fmt.Sprintf("%d", ff.Memory)))
 	runEnv = append(runEnv, kvEq("FN_TYPE", "sync"))
 
@@ -201,17 +211,26 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 		// reqID := id.New().String()
 		// I'm starting to think maybe `fn run` locally should work the same whether sync or async?  Or how would we allow to test the output?
 	}
-	body := "" // used for hot functions
-	if format == HttpFormat {
-		// let's swap out stdin for http formatted message
-		input := []byte("")
-		if stdin != nil {
-			input, err = ioutil.ReadAll(stdin)
-			if err != nil {
-				return fmt.Errorf("error reading from stdin: %v", err)
-			}
-		}
 
+	input := []byte("")
+	if stdin != nil {
+		input, err = ioutil.ReadAll(stdin)
+		if err != nil {
+			return fmt.Errorf("error reading from STDIN: %v", err)
+		}
+	}
+	h := http.Header{}
+	h.Set("FN_CALL_ID", "12345678901234567890123456")
+	h.Set("FN_METHOD", method)
+	h.Set("FN_REQUEST_URL", LocalTestURL)
+	h.Set("FN_APP_NAME", "myapp")
+	h.Set("FN_PATH", ff.Path)
+	h.Set("FN_FORMAT", ff.Format)
+	h.Set("FN_MEMORY", strconv.Itoa(int(ff.Memory)))
+	h.Set("FN_TYPE", "sync")
+	h.Set("FN_DEADLINE", getDeadline(ff))
+	if ff.Format == HttpFormat {
+		// let's swap out stdin for http formatted message
 		var b bytes.Buffer
 		for i := 0; i < runs; i++ {
 			// making new request each time since Write closes the body
@@ -219,6 +238,7 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 			if err != nil {
 				return fmt.Errorf("error creating http request: %v", err)
 			}
+			req.Header = h
 			err = req.Write(&b)
 			b.Write([]byte("\n"))
 		}
@@ -226,12 +246,29 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 		if err != nil {
 			return fmt.Errorf("error writing to byte buffer: %v", err)
 		}
-		body = b.String()
-		// fmt.Println("body:", s)
+		body := b.String()
 		stdin = strings.NewReader(body)
-	} else if format == JSONFormat {
-		// TODO: We need to use the same structs as in the server to keep these things all in line
-		return fmt.Errorf("Format %v not supported", format)
+	} else if ff.Format == JSONFormat {
+		in := &struct {
+			CallID   string       `json:"call_id"`
+			Body     string       `json:"body"`
+			Protocol jsonProtocol `json:"protocol"`
+		}{
+			CallID: "12345678901234567890123456",
+			Body:   string(input),
+			Protocol: jsonProtocol{
+				Type:       "json",
+				RequestURL: LocalTestURL,
+				Headers:    h,
+			},
+		}
+		body, _ := json.Marshal(in)
+		b := bytes.Buffer{}
+		b.Write(body)
+		fmt.Println("body: ", b.String())
+		stdin = &b
+	} else if ff.Format == DefaultFormat {
+		stdin = bytes.NewReader(input)
 	}
 
 	sh = append(sh, ff.ImageName())
@@ -264,4 +301,11 @@ func kvEq(k, v string) string {
 func toEnvName(envtype, name string) string {
 	name = strings.ToUpper(strings.Replace(name, "-", "_", -1))
 	return fmt.Sprintf("%s_%s", envtype, name)
+}
+
+func getDeadline(ff *funcfile) string {
+	if ff.Timeout == nil {
+		return strfmt.DateTime(time.Now().Add(30 * time.Second)).String()
+	}
+	return strfmt.DateTime(time.Now().Add(time.Duration(*ff.Timeout) * time.Second)).String()
 }
