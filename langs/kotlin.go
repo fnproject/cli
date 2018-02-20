@@ -111,8 +111,7 @@ func (lh *KotlinLangHelper) FixImagesOnInit() bool {
 }
 
 const (
-	helloKotlinSrcBoilerplate = `class Input ( var name: String = "")
-	
+	helloKotlinSrcBoilerplate = `class Input ( var name: String = "")	
 class Response( var message: String = "Hello World" )
 	
 fun hello(param: Input): Response {
@@ -120,7 +119,7 @@ fun hello(param: Input): Response {
 	var response = Response()
 	
 	if (param.name.isNotEmpty()) {
-		response.message = "Hello " + param.name.replace("\"", "") 
+		response.message = "Hello " + param.name
 	}
 	
 	return response   
