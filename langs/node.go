@@ -1,9 +1,10 @@
 package langs
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
-	"io/ioutil"
 )
 
 type NodeLangHelper struct {
@@ -32,22 +33,30 @@ func (lh *NodeLangHelper) RunFromImage() (string, error) {
 	return "fnproject/node", nil
 }
 
-const funcJsContent = "const fdk = require('@fnproject/fdk') \n\n" +
-	"fdk.handle(function (input, ctx) { \n" +
-	"  return 'Hello ' + JSON.stringify(input) \n" +
-	"}) \n"
+const funcJsContent = `var fdk=require('@fnproject/fdk');
 
-const packageJsonContent = "{\n" +
-	"   \"name\": \"hellofn\", \n" +
-	"   \"version\": \"1.0.0\", \n" +
-	"   \"description\": \"example function\",\n" +
-	"   \"main\": \"func.js\",\n" +
-	"   \"author\": \"\",\n" +
-	"   \"license\": \"Apache-2.0\", \n" +
-	"   \"dependencies\": { \n" +
-	"      \"@fnproject/fdk\": \"0.x\"\n " +
-	"    }\n" +
-	"}\n"
+fdk.handle(function(input){
+  var name = 'World';
+  if (input.name) {
+    name = input.name;
+  }
+  response = {'message': 'Hello ' + name}
+  return response
+})
+`
+
+const packageJsonContent = `{
+	"name": "hellofn",
+    "version": "1.0.0",
+	"description": "example function",
+	"main": "func.js",
+	"author": "",
+	"license": "Apache-2.0",
+	"dependencies": {
+		"@fnproject/fdk": "0.x"
+	}
+}
+`
 
 func (lh *NodeLangHelper) GenerateBoilerplate() error {
 	wd, err := os.Getwd()
@@ -57,6 +66,7 @@ func (lh *NodeLangHelper) GenerateBoilerplate() error {
 
 	pathToPackageJsonFile := filepath.Join(wd, "package.json")
 	pathToFuncJs := filepath.Join(wd, "func.js")
+	testFile := filepath.Join(wd, "test.json")
 
 	if exists(pathToPackageJsonFile) || exists(pathToFuncJs) {
 		return ErrBoilerplateExists
@@ -66,7 +76,19 @@ func (lh *NodeLangHelper) GenerateBoilerplate() error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(pathToFuncJs, []byte(funcJsContent), os.FileMode(0644))
+	err = ioutil.WriteFile(pathToFuncJs, []byte(funcJsContent), os.FileMode(0644))
+	if err != nil {
+		return err
+	}
+
+	if exists(testFile) {
+		fmt.Println("test.json already exists, skipping")
+	} else {
+		if err := ioutil.WriteFile(testFile, []byte(goTestBoilerPlate), os.FileMode(0644)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (lh *NodeLangHelper) HasBoilerplate() bool { return true }
@@ -96,10 +118,9 @@ func (h *NodeLangHelper) DockerfileBuildCmds() []string {
 func (h *NodeLangHelper) DockerfileCopyCmds() []string {
 	// excessive but content could be anything really
 	r := []string{"ADD . /function/"}
-	if exists("package.json") &&  !exists("node_modules") {
+	if exists("package.json") && !exists("node_modules") {
 		r = append(r, "COPY --from=build-stage /function/node_modules/ /function/node_modules/")
 	}
-
 
 	return r
 }

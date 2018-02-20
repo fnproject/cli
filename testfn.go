@@ -162,21 +162,11 @@ func (t *testcmd) testSingle(c *cli.Context, wd string) (totalTests, errorCount 
 		return 0, 0, errors.New("no tests found for this function")
 	}
 
-	target := ff.ImageName()
+	fmt.Fprintf(os.Stderr, "FUNCFILE: %+v", ff)
+
 	runtest := runlocaltest
 	if t.remote != "" {
-		if ff.Path == "" {
-			return 0, 0, errors.New("execution of tests on remote server demand that this function has a `path`")
-		}
-		baseURL, err := client.HostURL()
-		if err != nil {
-			return 0, 0, fmt.Errorf("error parsing base path: %v", err)
-		}
-
-		u, err := url.Parse("../")
-		u.Path = path.Join(u.Path, "r", t.remote, ff.Path)
-		target = baseURL.ResolveReference(u).String()
-		runtest = runremotetest
+		runtest = t.runremotetest
 	}
 
 	// todo: make path here relative to the app root
@@ -185,7 +175,7 @@ func (t *testcmd) testSingle(c *cli.Context, wd string) (totalTests, errorCount 
 		fmt.Printf("\nTest %v\n", i+1)
 		start := time.Now()
 		var err error
-		err = runtest(target, tt.Input, tt.Output, tt.Err, envVars)
+		err = runtest(ff, tt.Input, tt.Output, tt.Err, envVars)
 		if err != nil {
 			fmt.Print(color.RedString("FAILED"))
 			errorCount++
@@ -215,7 +205,7 @@ func (t *testcmd) testSingle(c *cli.Context, wd string) (totalTests, errorCount 
 	return len(tests), errorCount, nil
 }
 
-func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
+func runlocaltest(ff *funcfile, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
 	inBytes, err := json.Marshal(in.Body)
 	if err != nil {
 		return err
@@ -237,8 +227,7 @@ func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedE
 
 	var stdout, stderr bytes.Buffer
 
-	ff := &funcfile{Name: target}
-	if err := runff(ff, stdin, &stdout, &stderr, "", envVars, nil, DefaultFormat, 1); err != nil {
+	if err := runff(ff, stdin, &stdout, &stderr, "", envVars, nil, "", 1); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\nstderr:%s\n", err, stdout.String(), stderr.String())
 	}
 
@@ -254,7 +243,19 @@ func runlocaltest(target string, in *inputMap, expectedOut *outputMap, expectedE
 	return fmt.Errorf("mismatched output found.\nexpected:\n%s\ngot:\n%s\nlogs:\n%s\n", expectedString, out, stderr.String())
 }
 
-func runremotetest(target string, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
+func (t *testcmd) runremotetest(ff *funcfile, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
+	if ff.Path == "" {
+		return errors.New("execution of tests on remote server demand that this function has a `path`")
+	}
+	baseURL, err := client.HostURL()
+	if err != nil {
+		return fmt.Errorf("error parsing base path: %v", err)
+	}
+
+	u, err := url.Parse("../")
+	u.Path = path.Join(u.Path, "r", t.remote, ff.Path)
+	target := baseURL.ResolveReference(u).String()
+
 	inBytes, err := json.Marshal(in)
 	if err != nil {
 		return err

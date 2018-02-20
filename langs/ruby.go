@@ -114,7 +114,7 @@ STDERR.puts "---> STDERR goes to server logs"
 
 	rubyGemfileBoilerplate = `source 'https://rubygems.org'
 
-gem 'json', '> 1.8.2'	
+gem 'json', '>= 2.0.0'
 `
 
 	// Could use same test for most langs

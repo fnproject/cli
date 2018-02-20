@@ -1,6 +1,8 @@
 package langs
 
 import (
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -68,19 +70,19 @@ func (lh *GoLangHelper) GenerateBoilerplate() error {
 	}
 	codeFile := filepath.Join(wd, "func.go")
 	if exists(codeFile) {
-		return ErrBoilerplateExists
+		return errors.New("func.go already exists, canceling init.")
 	}
-	testFile := filepath.Join(wd, "test.json")
-	if exists(testFile) {
-		return ErrBoilerplateExists
-	}
-
 	if err := ioutil.WriteFile(codeFile, []byte(helloGoSrcBoilerplate), os.FileMode(0644)); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(testFile, []byte(goTestBoilerPlate), os.FileMode(0644)); err != nil {
-		return err
+	testFile := filepath.Join(wd, "test.json")
+	if exists(testFile) {
+		fmt.Println("test.json already exists, skipping")
+	} else {
+		if err := ioutil.WriteFile(testFile, []byte(goTestBoilerPlate), os.FileMode(0644)); err != nil {
+			return err
+		}
 	}
 	return nil
 }
