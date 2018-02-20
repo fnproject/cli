@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/urfave/cli"
 )
@@ -157,6 +158,8 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	var runEnv []string // env to pass into the container via -e's
 	callID := "12345678901234567890123456"
 	contentType := "application/json"
+	deadline := time.Now().Add(time.Duration(*ff.Timeout) * time.Second)
+	deadlineS := deadline.Format(time.RFC3339)
 
 	if method == "" {
 		if stdin == nil {
@@ -216,6 +219,7 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 				return fmt.Errorf("error creating http request: %v", err)
 			}
 			req.Header.Set("Content-Type", contentType)
+			req.Header.Set("Fn_deadline", deadlineS)
 			err = req.Write(&b)
 			b.Write([]byte("\n"))
 		}
@@ -229,7 +233,7 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	} else if format == JSONFormat {
 		var b strings.Builder
 		for i := 0; i < runs; i++ {
-			body, err := createJSONInput(callID, contentType, stdin)
+			body, err := createJSONInput(callID, contentType, deadlineS, stdin)
 			if err != nil {
 				return err
 			}
@@ -243,6 +247,7 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 		runEnv = append(runEnv, kvEq("FN_REQUEST_URL", LocalTestURL))
 		runEnv = append(runEnv, kvEq("FN_CALL_ID", callID))
 		runEnv = append(runEnv, kvEq("FN_METHOD", method))
+		runEnv = append(runEnv, kvEq("FN_DEADLINE", deadlineS))
 	}
 
 	for _, l := range links {
