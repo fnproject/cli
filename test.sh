@@ -26,7 +26,12 @@ export FN_API_URL="http://localhost:8080"
 go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
 
 # Our test directory
-WORK_DIR=$(mktemp -d)
+OS=$(uname -s)
+if [ $OS = "Darwin" ]; then
+	WORK_DIR=$(mktemp -d /tmp/temp.XXXXXX)
+else
+	WORK_DIR=$(mktemp -d)
+fi
 cd $WORK_DIR
 
 # HACK: if we don't pre touch these, fn server will create these as 'root'
