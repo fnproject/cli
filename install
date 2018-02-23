@@ -19,13 +19,6 @@ case "$(uname -m)" in
     ;;
 esac
 
-if command_exists fn ; then
-  echo >&2 'Warning: "fn" command appears to already exist.'
-  echo >&2 'If you are just upgrading your functions cli client, ignore this and wait a few seconds.'
-  echo >&2 'You may press Ctrl+C now to abort this process.'
-  ( set -x; sleep 5 )
-fi
-
 user="$(id -un 2>/dev/null || true)"
 
 sh_c='sh -c'
