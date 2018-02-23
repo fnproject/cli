@@ -39,15 +39,13 @@ func (h *GoLangHelper) DockerfileBuildCmds() []string {
 	vendor := exists("vendor/")
 	// skip dep/glide tool install if vendor is there
 	if !vendor {
-		if exists("Gopkg.toml"){
+		if exists("Gopkg.toml") && exists("Gopkg.lock"){
 			r = append(r, "RUN go get -u github.com/golang/dep/cmd/dep",
 				"RUN cd /go/src/func/ && dep ensure -v")
 		}
 	}
 
 	r = append(r, "RUN cd /go/src/func/ && go build -o func")
-	// get rid of vendor after binary executable creation
-	r = append(r, "RUN cd /go/src/func/ && rm -fr vendor/")
 
 	return r
 }

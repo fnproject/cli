@@ -85,7 +85,8 @@ cd $funcname
 $fn init --runtime go
 rm func.go
 curl -L https://raw.githubusercontent.com/fnproject/fdk-go/master/examples/hello/func.go -o func.go
-curl -L https://gist.githubusercontent.com/denismakogon/873ddb7517d774691dae926f7ecb3d49/raw/79f93069f78dc08f5bd2912d9b440230fc0c95eb/gistfile1.txt -o Gopkg.toml
+curl -L https://raw.githubusercontent.com/fnproject/fdk-go/master/examples/hello/Gopkg.toml -o Gopkg.toml
+curl -L https://raw.githubusercontent.com/fnproject/fdk-go/master/examples/hello/Gopkg.lock -o Gopkg.lock
 # checking how CLI works with dep tool
 $fn -v build
 # checking how CLI works with vendor
