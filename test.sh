@@ -26,7 +26,12 @@ export FN_API_URL="http://localhost:8080"
 go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
 
 # Our test directory
-WORK_DIR=$(mktemp -d)
+OS=$(uname -s)
+if [ $OS = "Darwin" ]; then
+	WORK_DIR=$(mktemp -d /tmp/temp.XXXXXX)
+else
+	WORK_DIR=$(mktemp -d)
+fi
 cd $WORK_DIR
 
 # HACK: if we don't pre touch these, fn server will create these as 'root'
@@ -77,4 +82,19 @@ $fn call myapp1 /$funcname
 $fn routes create myapp1 /another --image $FN_REGISTRY/$funcname:0.0.2
 $fn call myapp1 /another
 
-
+# Test go func
+cd $WORK_DIR
+funcname="gofunc"
+mkdir $funcname
+cd $funcname
+$fn init --runtime go
+rm func.go
+curl -L https://raw.githubusercontent.com/fnproject/fdk-go/master/examples/hello/func.go -o func.go
+curl -L https://raw.githubusercontent.com/fnproject/fdk-go/master/examples/hello/Gopkg.toml -o Gopkg.toml
+curl -L https://raw.githubusercontent.com/fnproject/fdk-go/master/examples/hello/Gopkg.lock -o Gopkg.lock
+# checking how CLI works with dep tool
+$fn -v build
+# checking how CLI works with vendor
+$fn -v build
+$fn run
+$fn test

@@ -1,6 +1,8 @@
 package langs
 
 import (
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -35,17 +37,18 @@ func (lh *GoLangHelper) RunFromImage() (string, error) {
 func (h *GoLangHelper) DockerfileBuildCmds() []string {
 	r := []string{}
 	// more info on Go multi-stage builds: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
-	// For now we assume that dependencies are vendored already, but we could vendor them
-	// inside the container. Maybe we should check for /vendor dir and if it doesn't exist,
-	// either run `dep init` if no Gopkg.toml/lock found or `dep ensure` if it's there.
 	r = append(r, "ADD . /go/src/func/")
-	// if exists("Gopkg.toml") {
-	// r = append(r,
-	// 	"RUN go get -u github.com/golang/dep/cmd/dep",
-	// 	"RUN cd /src && dep ensure",
-	// )
-	// }
+	vendor := exists("vendor/")
+	// skip dep/glide tool install if vendor is there
+	if !vendor {
+		if exists("Gopkg.toml") && exists("Gopkg.lock"){
+			r = append(r, "RUN go get -u github.com/golang/dep/cmd/dep",
+				"RUN cd /go/src/func/ && dep ensure -v")
+		}
+	}
+
 	r = append(r, "RUN cd /go/src/func/ && go build -o func")
+
 	return r
 }
 
@@ -68,19 +71,19 @@ func (lh *GoLangHelper) GenerateBoilerplate() error {
 	}
 	codeFile := filepath.Join(wd, "func.go")
 	if exists(codeFile) {
-		return ErrBoilerplateExists
+		return errors.New("func.go already exists, canceling init.")
 	}
-	testFile := filepath.Join(wd, "test.json")
-	if exists(testFile) {
-		return ErrBoilerplateExists
-	}
-
 	if err := ioutil.WriteFile(codeFile, []byte(helloGoSrcBoilerplate), os.FileMode(0644)); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(testFile, []byte(goTestBoilerPlate), os.FileMode(0644)); err != nil {
-		return err
+	testFile := filepath.Join(wd, "test.json")
+	if exists(testFile) {
+		fmt.Println("test.json already exists, skipping")
+	} else {
+		if err := ioutil.WriteFile(testFile, []byte(goTestBoilerPlate), os.FileMode(0644)); err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -88,6 +88,5 @@ func start(c *cli.Context) error {
 		}
 		return err
 	}
-
 	return nil
 }
