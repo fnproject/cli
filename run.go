@@ -194,8 +194,6 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 		runs = 1
 	}
 
-	fmt.Fprintln(os.Stderr, "FORMAT:", format)
-
 	if ff.Type != "" && ff.Type == "async" {
 		// if async, we'll run this in a separate thread and wait for it to complete
 		// reqID := id.New().String()
