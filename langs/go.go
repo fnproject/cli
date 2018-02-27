@@ -19,6 +19,10 @@ func (h *GoLangHelper) Runtime() string {
 	return h.LangStrings()[0]
 }
 
+func (h *GoLangHelper) DefaultFormat() string {
+	return "json"
+}
+
 func (lh *GoLangHelper) LangStrings() []string {
 	return []string{"go"}
 }
@@ -37,13 +41,18 @@ func (lh *GoLangHelper) RunFromImage() (string, error) {
 func (h *GoLangHelper) DockerfileBuildCmds() []string {
 	r := []string{}
 	// more info on Go multi-stage builds: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
+	// TODO: if we keep the Gopkg.lock on user's drive, we can put this after the dep commands and then the dep layers will be cached.
 	r = append(r, "ADD . /go/src/func/")
 	vendor := exists("vendor/")
-	// skip dep/glide tool install if vendor is there
+	// skip dep tool install if vendor is there
 	if !vendor {
-		if exists("Gopkg.toml") && exists("Gopkg.lock"){
-			r = append(r, "RUN go get -u github.com/golang/dep/cmd/dep",
-				"RUN cd /go/src/func/ && dep ensure -v")
+		if exists("Gopkg.toml") {
+			r = append(r, "RUN go get -u github.com/golang/dep/cmd/dep")
+			if exists("Gopkg.lock") {
+				r = append(r, "RUN cd /go/src/func/ && dep ensure --vendor-only")
+			} else {
+				r = append(r, "RUN cd /go/src/func/ && dep ensure")
+			}
 		}
 	}
 
@@ -71,9 +80,13 @@ func (lh *GoLangHelper) GenerateBoilerplate() error {
 	}
 	codeFile := filepath.Join(wd, "func.go")
 	if exists(codeFile) {
-		return errors.New("func.go already exists, canceling init.")
+		return errors.New("func.go already exists, canceling init")
 	}
 	if err := ioutil.WriteFile(codeFile, []byte(helloGoSrcBoilerplate), os.FileMode(0644)); err != nil {
+		return err
+	}
+	depFile := "Gopkg.toml"
+	if err := ioutil.WriteFile(depFile, []byte(depBoilerplate), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -92,22 +105,42 @@ const (
 	helloGoSrcBoilerplate = `package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"os"
+	"io"
+
+	fdk "github.com/fnproject/fdk-go"
 )
 
-type Person struct {
-	Name string
+func main() {
+	fdk.Handle(fdk.HandlerFunc(myHandler))
 }
 
-func main() {
-	p := &Person{Name: "World"}
-	json.NewDecoder(os.Stdin).Decode(p)
-	mapD := map[string]string{"message": fmt.Sprintf("Hello %s", p.Name)}
-	mapB, _ := json.Marshal(mapD)
-	fmt.Println(string(mapB))
+type Person struct {
+	Name string ` + "`json:\"name\"`" + `
 }
+
+func myHandler(ctx context.Context, in io.Reader, out io.Writer) {
+	p := &Person{Name: "World"}
+	json.NewDecoder(in).Decode(p)
+	msg := struct {
+		Msg string ` + "`json:\"message\"`" + `
+	}{
+		Msg: fmt.Sprintf("Hello %s", p.Name),
+	}
+	json.NewEncoder(out).Encode(&msg)
+}
+`
+
+	depBoilerplate = `
+[[constraint]]
+  branch = "master"
+  name = "github.com/fnproject/fdk-go"
+
+[prune]
+  go-tests = true
+  unused-packages = true
 `
 
 	// Could use same test for most langs
