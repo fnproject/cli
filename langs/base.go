@@ -70,7 +70,7 @@ type LangHelper interface {
 	// Entrypoint sets the Docker Entrypoint. One of Entrypoint or Cmd is required.
 	Entrypoint() (string, error)
 	// Cmd sets the Docker command. One of Entrypoint or Cmd is required.
-	Cmd() (string, error)
+	Cmd(...string) (string, error)
 	// DefaultFormat provides the default fn format to set in func.yaml fn init, return "" for an empty format.
 	DefaultFormat() string
 	HasPreBuild() bool
@@ -80,7 +80,7 @@ type LangHelper interface {
 	HasBoilerplate() bool
 	// GenerateBoilerplate generates basic function boilerplate. Returns ErrBoilerplateExists if the function file
 	// already exists.
-	GenerateBoilerplate() error
+	GenerateBoilerplate(...string) error
 	// FixImagesOnInit determines if images should be fixed on initialization - BuildFromImage and RunFromImage will be written to func.yaml
 	FixImagesOnInit() bool
 }
@@ -98,18 +98,18 @@ func defaultHandles(h LangHelper, lang string) bool {
 type BaseHelper struct {
 }
 
-func (h *BaseHelper) IsMultiStage() bool            { return true }
-func (h *BaseHelper) DockerfileBuildCmds() []string { return []string{} }
-func (h *BaseHelper) DockerfileCopyCmds() []string  { return []string{} }
-func (h *BaseHelper) Entrypoint() (string, error)   { return "", nil }
-func (h *BaseHelper) Cmd() (string, error)          { return "", nil }
-func (h *BaseHelper) HasPreBuild() bool             { return false }
-func (h *BaseHelper) PreBuild() error               { return nil }
-func (h *BaseHelper) AfterBuild() error             { return nil }
-func (h *BaseHelper) HasBoilerplate() bool          { return false }
-func (h *BaseHelper) GenerateBoilerplate() error    { return nil }
-func (h *BaseHelper) DefaultFormat() string         { return "" }
-func (h *BaseHelper) FixImagesOnInit() bool         { return false }
+func (h *BaseHelper) IsMultiStage() bool                  { return true }
+func (h *BaseHelper) DockerfileBuildCmds() []string       { return []string{} }
+func (h *BaseHelper) DockerfileCopyCmds() []string        { return []string{} }
+func (h *BaseHelper) Entrypoint() (string, error)         { return "", nil }
+func (h *BaseHelper) Cmd(...string) (string, error)       { return "", nil }
+func (h *BaseHelper) HasPreBuild() bool                   { return false }
+func (h *BaseHelper) PreBuild() error                     { return nil }
+func (h *BaseHelper) AfterBuild() error                   { return nil }
+func (h *BaseHelper) HasBoilerplate() bool                { return false }
+func (h *BaseHelper) GenerateBoilerplate(...string) error { return nil }
+func (h *BaseHelper) DefaultFormat() string               { return "" }
+func (h *BaseHelper) FixImagesOnInit() bool               { return false }
 
 // exists checks if a file exists
 func exists(name string) bool {

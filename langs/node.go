@@ -58,7 +58,7 @@ const packageJsonContent = `{
 }
 `
 
-func (lh *NodeLangHelper) GenerateBoilerplate() error {
+func (lh *NodeLangHelper) GenerateBoilerplate(...string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err

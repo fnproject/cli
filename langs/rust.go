@@ -51,7 +51,7 @@ func mainContent() string {
 `
 }
 
-func (lh *RustLangHelper) GenerateBoilerplate() error {
+func (lh *RustLangHelper) GenerateBoilerplate(properties ...string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err

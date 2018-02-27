@@ -57,7 +57,7 @@ func (lh *RubyLangHelper) Entrypoint() (string, error) {
 
 func (lh *RubyLangHelper) HasBoilerplate() bool { return true }
 
-func (lh *RubyLangHelper) GenerateBoilerplate() error {
+func (lh *RubyLangHelper) GenerateBoilerplate(...string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err

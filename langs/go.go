@@ -41,7 +41,7 @@ func (h *GoLangHelper) DockerfileBuildCmds() []string {
 	vendor := exists("vendor/")
 	// skip dep/glide tool install if vendor is there
 	if !vendor {
-		if exists("Gopkg.toml") && exists("Gopkg.lock"){
+		if exists("Gopkg.toml") && exists("Gopkg.lock") {
 			r = append(r, "RUN go get -u github.com/golang/dep/cmd/dep",
 				"RUN cd /go/src/func/ && dep ensure -v")
 		}
@@ -64,7 +64,7 @@ func (lh *GoLangHelper) Entrypoint() (string, error) {
 
 func (lh *GoLangHelper) HasBoilerplate() bool { return true }
 
-func (lh *GoLangHelper) GenerateBoilerplate() error {
+func (lh *GoLangHelper) GenerateBoilerplate(properties ...string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
