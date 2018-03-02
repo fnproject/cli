@@ -18,18 +18,20 @@ func (h *RubyLangHelper) Runtime() string {
 	return h.LangStrings()[0]
 }
 
-func (lh *RubyLangHelper) LangStrings() []string {
+func (h *RubyLangHelper) LangStrings() []string {
 	return []string{"ruby"}
 }
-func (lh *RubyLangHelper) Extensions() []string {
+func (h *RubyLangHelper) Extensions() []string {
 	return []string{".rb"}
 }
-
-func (lh *RubyLangHelper) BuildFromImage() (string, error) {
+func (h *RubyLangHelper) DefaultFormat() string {
+	return "json"
+}
+func (h *RubyLangHelper) BuildFromImage() (string, error) {
 	return "fnproject/ruby:dev", nil
 }
 
-func (lh *RubyLangHelper) RunFromImage() (string, error) {
+func (h *RubyLangHelper) RunFromImage() (string, error) {
 	return "fnproject/ruby", nil
 }
 
@@ -51,13 +53,13 @@ func (h *RubyLangHelper) DockerfileCopyCmds() []string {
 	}
 }
 
-func (lh *RubyLangHelper) Entrypoint() (string, error) {
+func (h *RubyLangHelper) Entrypoint() (string, error) {
 	return "ruby func.rb", nil
 }
 
-func (lh *RubyLangHelper) HasBoilerplate() bool { return true }
+func (h *RubyLangHelper) HasBoilerplate() bool { return true }
 
-func (lh *RubyLangHelper) GenerateBoilerplate() error {
+func (h *RubyLangHelper) GenerateBoilerplate() error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -91,30 +93,25 @@ func (lh *RubyLangHelper) GenerateBoilerplate() error {
 }
 
 const (
-	rubySrcBoilerplate = `require 'json'
+	rubySrcBoilerplate = `require 'fdk'
 
-# Default value(s)
-name = "World"
-
-# Parse input
-payload = STDIN.read
-if payload != ""
-	payload = JSON.parse(payload)
-	name = payload['name']
+def myhandler(context, input)
+	STDERR.puts "call_id: " + context.call_id
+	name = "World"
+	nin = input['name']
+	if nin && nin != ""
+		name = nin
+	end
+	return {message: "Hello " + name.to_s + "!"}
 end
 
-# Print response
-x = {message:"Hello #{name}"}
-# STDERR.puts x.inspect
-puts x.to_json
-
-# Logging
-STDERR.puts "---> STDERR goes to server logs"
+FDK.handle(:myhandler)
 `
 
 	rubyGemfileBoilerplate = `source 'https://rubygems.org'
 
-gem 'json', '>= 2.0.0'
+gem 'json', '~> 2.0'
+gem 'fdk', '>= 0.0.8', '< 2.0.0'
 `
 
 	// Could use same test for most langs
@@ -128,7 +125,7 @@ gem 'json', '>= 2.0.0'
             },
             "output": {
                 "body": {
-                    "message": "Hello Johnny"
+                    "message": "Hello Johnny!"
                 }
             }
         },
@@ -138,7 +135,7 @@ gem 'json', '>= 2.0.0'
             },
             "output": {
                 "body": {
-                    "message": "Hello World"
+                    "message": "Hello World!"
                 }
             }
         }
