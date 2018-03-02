@@ -30,12 +30,12 @@ asking for suggestions on how to address the documentation part.
 - [Go](https://golang.org/doc/install)
 - [Dep](https://github.com/golang/dep)
 
-### Cloning the Repository ###
+### Getting the Repository ###
 
-`$ go get github.com/fnproject/cli`
+`$ git clone https://github.com/fnproject/cli.git $GOPATH/src/github.com/fnproject/cli`
 
-Note that we use `dep` for dependencies, and this will not do an installation.
-See below.
+Note that Go will require the exact path given above in order to build (beware
+forkers).
 
 ### Building ###
 
