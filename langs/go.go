@@ -44,17 +44,15 @@ func (h *GoLangHelper) DockerfileBuildCmds() []string {
 	// TODO: if we keep the Gopkg.lock on user's drive, we can put this after the dep commands and then the dep layers will be cached.
 	vendor := exists("vendor/")
 	// skip dep tool install if vendor is there
-	if !vendor {
-		if exists("Gopkg.toml") {
-			r = append(r, "RUN go get -u github.com/golang/dep/cmd/dep")
-			if exists("Gopkg.lock") {
-				r = append(r, "ADD Gopkg.* /go/src/func/")
-				r = append(r, "RUN cd /go/src/func/ && dep ensure --vendor-only")
-				r = append(r, "ADD . /go/src/func/")
-			} else {
-				r = append(r, "ADD . /go/src/func/")
-				r = append(r, "RUN cd /go/src/func/ && dep ensure")
-			}
+	if !vendor && exists("Gopkg.toml") {
+		r = append(r, "RUN go get -u github.com/golang/dep/cmd/dep")
+		if exists("Gopkg.lock") {
+			r = append(r, "ADD Gopkg.* /go/src/func/")
+			r = append(r, "RUN cd /go/src/func/ && dep ensure --vendor-only")
+			r = append(r, "ADD . /go/src/func/")
+		} else {
+			r = append(r, "ADD . /go/src/func/")
+			r = append(r, "RUN cd /go/src/func/ && dep ensure")
 		}
 	} else {
 		r = append(r, "ADD . /go/src/func/")

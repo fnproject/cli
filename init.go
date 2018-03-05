@@ -239,6 +239,10 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 			return err
 		}
 		fmt.Printf("Found %v function, assuming %v runtime.\n", helper.Runtime(), helper.Runtime())
+		// need to default this to default format to be backwards compatible. Might want to just not allow this anymore, fail here.
+		if a.ff.Format == "" {
+			a.ff.Format = "default"
+		}
 	} else {
 		fmt.Println("Runtime:", a.ff.Runtime)
 		helper = langs.GetLangHelper(a.ff.Runtime)
