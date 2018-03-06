@@ -2,7 +2,6 @@ package langs
 
 import (
 	"fmt"
-	"strings"
 )
 
 type PythonLangHelper struct {
@@ -19,17 +18,15 @@ func (h *PythonLangHelper) Runtime() string {
 
 // TODO: I feel like this whole versioning thing here could be done better. eg: `runtime: python:2` where we have a single lang, but support versions in tags (like docker tags).
 func (lh *PythonLangHelper) LangStrings() []string {
-	if strings.HasPrefix(lh.Version, "3.6") {
-		return []string{"python3.6"}
-	}
-	return []string{"python", "python2.7"}
+	return []string{"python3.6"}
 }
+
 func (lh *PythonLangHelper) Extensions() []string {
 	return []string{".py"}
 }
 
 func (lh *PythonLangHelper) BuildFromImage() (string, error) {
-	return fmt.Sprintf("fnproject/python:%v", lh.Version), nil
+	return fmt.Sprintf("python:%v", lh.Version), nil
 }
 
 func (lh *PythonLangHelper) RunFromImage() (string, error) {
@@ -37,18 +34,11 @@ func (lh *PythonLangHelper) RunFromImage() (string, error) {
 }
 
 func (lh *PythonLangHelper) Entrypoint() (string, error) {
-	python := "python2"
-	if strings.HasPrefix(lh.Version, "3.6") {
-		python = "python3"
-	}
-	return fmt.Sprintf("%v func.py", python), nil
+	return "python3 func.py", nil
 }
 
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
-	pip := "pip"
-	if strings.HasPrefix(h.Version, "3.6") {
-		pip = "pip3"
-	}
+	pip := "pip3"
 	r := []string{}
 	if exists("requirements.txt") {
 		r = append(r,

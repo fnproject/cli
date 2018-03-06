@@ -17,7 +17,6 @@ func init() {
 	registerHelper(&LambdaNodeHelper{})
 	registerHelper(&NodeLangHelper{})
 	registerHelper(&PhpLangHelper{})
-	registerHelper(&PythonLangHelper{Version: "2.7.13"})
 	registerHelper(&PythonLangHelper{Version: "3.6"})
 	registerHelper(&RubyLangHelper{})
 	registerHelper(&RustLangHelper{})
