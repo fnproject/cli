@@ -20,7 +20,6 @@ const (
 	HttpFormat    = "http"
 	JSONFormat    = "json"
 	LocalTestURL  = "http://localhost:8080/myapp/hello"
-
 )
 
 func run() cli.Command {
@@ -239,7 +238,7 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	} else if format == JSONFormat {
 		var b strings.Builder
 		for i := 0; i < runs; i++ {
-			body, err := createJSONInput(callID, contentType, deadlineS,method,LocalTestURL, stdin)
+			body, err := createJSONInput(callID, contentType, deadlineS, method, LocalTestURL, stdin)
 			if err != nil {
 				return err
 			}
