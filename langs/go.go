@@ -6,6 +6,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/fnproject/cli/common"
 )
 
 type GoLangHelper struct {
@@ -100,7 +103,15 @@ func (lh *GoLangHelper) GenerateBoilerplate() error {
 			return err
 		}
 	}
-	return nil
+
+	// Generate Gopkg.lock here, too slow to not have this
+	// TODO: Should have a fn `fn dep` command that updates dependencies for whatever language.
+	// TODO: copy the exec thing from runBuild to have cancellation
+	err = common.UberExec(true, wd, "docker", strings.Split("run --rm -i -v "+wd+":/go/src/func -w /go/src/func treeder/dep ensure", " "))
+	if err != nil {
+		return err
+	}
+	return common.UberExec(true, wd, "rm", []string{"-rf", "vendor"})
 }
 
 const (

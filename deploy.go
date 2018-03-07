@@ -214,19 +214,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	if appName == "" {
 		return errors.New("app name must be provided, try `--app APP_NAME`.")
 	}
-	dir := filepath.Dir(funcfilePath)
-	// get name from directory if it's not defined
-	if funcfile.Name == "" {
-		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
-	}
-	if funcfile.Path == "" {
-		if dir == "." {
-			funcfile.Path = "/"
-		} else {
-			funcfile.Path = "/" + filepath.Base(dir)
-		}
-
-	}
+	funcfile = figureOutName(funcfilePath, funcfile)
 	fmt.Printf("Deploying %s to app: %s at path: %s\n", funcfile.Name, appName, funcfile.Path)
 
 	funcfile2, err := bumpIt(funcfilePath, Patch)

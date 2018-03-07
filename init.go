@@ -102,10 +102,11 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	routeWithFlags(c, &rt)
 	a.bindRoute(&rt)
 
+	helper := langs.GetLangHelper(a.ff.Runtime)
 	runtimeSpecified := a.ff.Runtime != ""
 	if runtimeSpecified {
 		// go no further if the specified runtime is not supported
-		if a.ff.Runtime != funcfileDockerRuntime && langs.GetLangHelper(a.ff.Runtime) == nil {
+		if a.ff.Runtime != funcfileDockerRuntime && helper == nil {
 			return fmt.Errorf("Init does not support the '%s' runtime.", a.ff.Runtime)
 		}
 	}
@@ -151,7 +152,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	// TODO: why don't we treat "docker" runtime as just another language helper? Then can get rid of several Docker
 	// specific if/else's like this one.
 	if runtimeSpecified && a.ff.Runtime != funcfileDockerRuntime {
-		err := a.generateBoilerplate()
+		err := a.generateBoilerplate(helper)
 		if err != nil {
 			return err
 		}
@@ -164,8 +165,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	return nil
 }
 
-func (a *initFnCmd) generateBoilerplate() error {
-	helper := langs.GetLangHelper(a.ff.Runtime)
+func (a *initFnCmd) generateBoilerplate(helper langs.LangHelper) error {
 	if helper != nil && helper.HasBoilerplate() {
 		if err := helper.GenerateBoilerplate(); err != nil {
 			if err == langs.ErrBoilerplateExists {

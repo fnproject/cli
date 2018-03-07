@@ -10,14 +10,12 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"strings"
-	"time"
 	"unicode"
 
 	"github.com/coreos/go-semver/semver"
-	"github.com/fatih/color"
+	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/langs"
 	"github.com/urfave/cli"
 )
@@ -68,6 +66,25 @@ func buildfunc(c *cli.Context, fpath string, funcfile *funcfile, noCache bool) (
 	}
 
 	return funcfile, nil
+}
+
+func figureOutName(ffpath string, ffIn *funcfile) *funcfile {
+	ff := &funcfile{}
+	*ff = *ffIn // make copy
+	dir := filepath.Dir(ffpath)
+	// get name from directory if it's not defined
+	if ff.Name == "" {
+		ff.Name = filepath.Base(filepath.Dir(ffpath)) // todo: should probably make a copy of ff before changing it
+	}
+	if ff.Path == "" {
+		if dir == "." {
+			ff.Path = "/"
+		} else {
+			ff.Path = "/" + filepath.Base(dir)
+		}
+	}
+	// this verifies it's a copy: fmt.Printf("ffIn: %+v\n\nff: %+v\n", ffIn, ff)
+	return ff
 }
 
 func localBuild(path string, steps []string) error {
@@ -127,71 +144,22 @@ func dockerBuild(c *cli.Context, fpath string, ff *funcfile, noCache bool) error
 }
 
 func runBuild(c *cli.Context, dir, imageName, dockerfile string, noCache bool) error {
-	cancel := make(chan os.Signal, 3)
-	signal.Notify(cancel, os.Interrupt) // and others perhaps
-	defer signal.Stop(cancel)
-
-	result := make(chan error, 1)
-
-	buildOut := ioutil.Discard
-	buildErr := ioutil.Discard
-
-	quit := make(chan struct{})
 	fmt.Fprintf(os.Stderr, "Building image %v ", imageName)
-	if c.GlobalBool("verbose") {
-		fmt.Println()
-		buildOut = os.Stdout
-		buildErr = os.Stderr
-	} else {
-		// print dots. quit channel explanation: https://stackoverflow.com/a/16466581/105562
-		ticker := time.NewTicker(1 * time.Second)
-		go func() {
-			for {
-				select {
-				case <-ticker.C:
-					fmt.Fprintf(os.Stderr, ".")
-				case <-quit:
-					ticker.Stop()
-					return
-				}
-			}
-		}()
-	}
 
-	go func(done chan<- error) {
-		args := []string{
-			"build",
-			"-t", imageName,
-			"-f", dockerfile,
-		}
-		if noCache {
-			args = append(args, "--no-cache")
-		}
-		args = append(args,
-			"--build-arg", "HTTP_PROXY",
-			"--build-arg", "HTTPS_PROXY",
-			".")
-		cmd := exec.Command("docker", args...)
-		cmd.Dir = dir
-		cmd.Stderr = buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
-		cmd.Stdout = buildOut
-		done <- cmd.Run()
-	}(result)
-
-	select {
-	case err := <-result:
-		close(quit)
-		fmt.Fprintln(os.Stderr)
-		if err != nil {
-			fmt.Printf("%v Run with `--verbose` flag to see what went wrong. eg: `fn --verbose CMD`\n", color.RedString("Error during build."))
-			return fmt.Errorf("error running docker build: %v", err)
-		}
-	case signal := <-cancel:
-		close(quit)
-		fmt.Fprintln(os.Stderr)
-		return fmt.Errorf("build cancelled on signal %v", signal)
+	cmd := "docker"
+	args := []string{
+		"build",
+		"-t", imageName,
+		"-f", dockerfile,
 	}
-	return nil
+	if noCache {
+		args = append(args, "--no-cache")
+	}
+	args = append(args,
+		"--build-arg", "HTTP_PROXY",
+		"--build-arg", "HTTPS_PROXY",
+		".")
+	return common.UberExec(c.GlobalBool("verbose"), dir, cmd, args)
 }
 
 func dockerVersionCheck() error {

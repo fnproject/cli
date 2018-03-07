@@ -48,6 +48,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	ff = figureOutName(fpath, ff)
 
 	ff, err = buildfunc(c, fpath, ff, b.noCache)
 	if err != nil {
