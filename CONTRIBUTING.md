@@ -14,7 +14,7 @@ We welcome all contributions
 
 ## Advice for Forkers ##
 
-We do not advise cloning from your own fork (see [Getting the Repository](#Getting_the_Repository) below).
+We do not advise cloning from your own fork (see [Getting the Repository](#getting-the-repository) below).
 
 Instead we suggest:
 1. Clone from the original repo
@@ -40,7 +40,7 @@ asking for suggestions on how to address the documentation part.
 - [Go](https://golang.org/doc/install)
 - [Dep](https://github.com/golang/dep)
 
-### Getting the Repository <a name="Getting_the_Repository"></a> ###
+### Getting the Repository ###
 
 `$ git clone https://github.com/fnproject/cli.git $GOPATH/src/github.com/fnproject/cli`
 
