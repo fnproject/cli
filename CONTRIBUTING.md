@@ -30,23 +30,12 @@ asking for suggestions on how to address the documentation part.
 - [Go](https://golang.org/doc/install)
 - [Dep](https://github.com/golang/dep)
 
-### Cloning the Repository ###
+### Getting the Repository ###
 
-Whether cloning from your Fn CLI repo or your own fork, you need to take care with the location.
+`$ git clone https://github.com/fnproject/cli.git $GOPATH/src/github.com/fnproject/cli`
 
-`$ mkdir $GOPATH/src/github.com/fnproject/cli `
-
-`$ cd $GOPATH/src/github.com/fnproject/cli `
-
-Then you can either
-
-1. Clone from the Fn CLI repo:
-
-	`$ git clone https://github.com/fnproject/cli.git`
-
-2. Clone from your own fork:
-
-	`$ git clone git@github.com:<YOUR-GITHUB_USERNAME>/cli.git`
+Note that Go will require the exact path given above in order to build (beware
+forkers).
 
 ### Building ###
 
@@ -64,7 +53,7 @@ Then you can either
 
 ### Testing ###
 
-To test that you're client has built correctly:
+To test that your client has built correctly:
 
 `$ fn --version`
 
