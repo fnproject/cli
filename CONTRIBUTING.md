@@ -12,6 +12,16 @@ We welcome all contributions
 5. Once processed, our CLA bot will automatically clear the CLA check on the PR
 6. Good Job! Thanks for being awesome!
 
+## Advice for Forkers ##
+
+We do not advise cloning from your own fork (see [Getting the Repository](#getting-the-repository) below).
+
+Instead we suggest:
+1. Clone from the original repo
+2. Add your fork as a remote
+3. Push your changes to your fork
+4. Create your Pull Requests as normal
+
 ## Documentation
 
 When creating a Pull Request, make sure that you also update the documentation
