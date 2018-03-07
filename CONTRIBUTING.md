@@ -19,7 +19,7 @@ We do not advise cloning from your own fork (see [Getting the Repository](#Getti
 Instead we suggest:
 1. Clone from the original repo
 2. Add your fork as a remote
-3. Push your changes your fork
+3. Push your changes to your fork
 4. Create your Pull Requests as normal
 
 ## Documentation
