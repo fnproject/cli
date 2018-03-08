@@ -162,8 +162,6 @@ func (t *testcmd) testSingle(c *cli.Context, wd string) (totalTests, errorCount 
 		return 0, 0, errors.New("no tests found for this function")
 	}
 
-	fmt.Fprintf(os.Stderr, "FUNCFILE: %+v", ff)
-
 	runtest := runlocaltest
 	if t.remote != "" {
 		runtest = t.runremotetest
