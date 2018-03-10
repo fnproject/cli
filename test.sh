@@ -57,6 +57,15 @@ $fn apps l
 $fn deploy --local --app myapp
 $fn call myapp $funcname
 
+cd $WORK_DIR
+funcname="py3-func"
+mkdir $funcname
+cd $funcname
+$fn init --name $funcname --runtime python3.6
+$fn deploy --local --app myapp
+$fn call myapp /$funcname
+echo '{"name": "John"}' | $fn call myapp /$funcname
+
 # Test ruby func
 cd $WORK_DIR
 funcname="rubyfunc"
