@@ -55,7 +55,7 @@ func (h *PythonLangHelper) Runtime() string {
 }
 
 func (h *PythonLangHelper) LangStrings() []string {
-	return []string{"python3.6"}
+	return []string{"python","python3.6"}
 }
 
 func (h *PythonLangHelper) Extensions() []string {
