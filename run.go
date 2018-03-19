@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -152,11 +152,10 @@ func (r *runCmd) run(c *cli.Context) error {
 func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int) error {
 	sh := []string{"docker", "run", "--rm", "-i", fmt.Sprintf("--memory=%dm", ff.Memory)}
 
-	var err error
 	var env []string    // env for the shelled out docker run command
 	var runEnv []string // env to pass into the container via -e's
 	callID := "12345678901234567890123456"
-	contentType := "application/json"
+	contentType := "application/json" // TODO this is not a default in the server. remove.
 	to := int32(30)
 	if ff.Timeout != nil {
 		to = *ff.Timeout
@@ -190,69 +189,37 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	// add user defined envs
 	runEnv = append(runEnv, envVars...)
 
-	if runs <= 0 {
-		runs = 1
-	}
-
-	if ff.Type != "" && ff.Type == "async" {
-		// if async, we'll run this in a separate thread and wait for it to complete
-		// reqID := id.New().String()
-		// I'm starting to think maybe `fn run` locally should work the same whether sync or async?  Or how would we allow to test the output?
-	}
-	body := "" // used for hot functions
-	if format == HttpFormat {
-		// TODO: this isn't do the headers like recent changes on the server side
-		// let's swap out stdin for http formatted message
-		input := []byte("")
-		if stdin != nil {
-			input, err = ioutil.ReadAll(stdin)
-			if err != nil {
-				return fmt.Errorf("error reading from stdin: %v", err)
-			}
-		}
-
-		var b bytes.Buffer
-		for i := 0; i < runs; i++ {
-			// making new request each time since Write closes the body
-			// todo: add headers
-			req, err := http.NewRequest(method, LocalTestURL, strings.NewReader(string(input)))
-			if err != nil {
-				return fmt.Errorf("error creating http request: %v", err)
-			}
-			req.Header.Set("Content-Type", contentType)
-
-			req.Header.Set("FN_REQUEST_URL", LocalTestURL)
-			req.Header.Set("FN_CALL_ID", callID)
-			req.Header.Set("FN_METHOD", method)
-			req.Header.Set("FN_DEADLINE", deadlineS)
-			err = req.Write(&b)
-		}
-
-		if err != nil {
-			return fmt.Errorf("error writing to byte buffer: %v", err)
-		}
-
-		body = b.String()
-		// fmt.Println("body:", s)
-		stdin = strings.NewReader(body)
-	} else if format == JSONFormat {
-		var b strings.Builder
-		for i := 0; i < runs; i++ {
-			body, err := createJSONInput(callID, contentType, deadlineS, method, LocalTestURL, stdin)
-			if err != nil {
-				return err
-			}
-			b.WriteString(body)
-			b.Write([]byte("\n"))
-		}
-		stdin = strings.NewReader(b.String())
-		stdout = stdoutJSON(stdout)
-	} else { // default
-		// todo: CONTENT_TYPE should be top level in default too, instead of under FN_HEADER_
+	if format == DefaultFormat {
 		runEnv = append(runEnv, kvEq("FN_REQUEST_URL", LocalTestURL))
 		runEnv = append(runEnv, kvEq("FN_CALL_ID", callID))
 		runEnv = append(runEnv, kvEq("FN_METHOD", method))
 		runEnv = append(runEnv, kvEq("FN_DEADLINE", deadlineS))
+	}
+
+	if runs <= 0 {
+		runs = 1
+	}
+
+	// NOTE: 'run' does 'sync'
+
+	handler := handle(format)
+
+	// TODO: we really should handle multiple runs better, clearly delimiting them,
+	// as well as at least an option for outputting the entire http / json blob.
+
+	stdin, stdout, err := handler(runConfig{
+		runs:        runs,
+		method:      method,
+		url:         LocalTestURL,
+		contentType: contentType,
+		callID:      callID,
+		deadline:    deadlineS,
+		stdin:       stdin,
+		stdout:      stdout,
+	})
+
+	if err != nil {
+		return err
 	}
 
 	for _, l := range links {
@@ -275,6 +242,96 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	cmd.Stderr = stderr
 	// cmd.Env = env
 	return cmd.Run()
+}
+
+type runConfig struct {
+	runs        int
+	method      string
+	url         string
+	contentType string
+	callID      string
+	deadline    string
+	stdin       io.Reader
+	stdout      io.Writer
+}
+
+type handlerFunc func(runConfig) (stdin io.Reader, stdout io.Writer, err error)
+
+func handle(format string) handlerFunc {
+	switch format {
+	case HttpFormat:
+		return handleHTTP
+	case JSONFormat:
+		return handleJSON
+	default:
+		return handleDefault
+	}
+}
+
+func handleDefault(conf runConfig) (io.Reader, io.Writer, error) {
+	return conf.stdin, conf.stdout, nil
+}
+
+func handleHTTP(conf runConfig) (io.Reader, io.Writer, error) {
+	var b bytes.Buffer
+	for i := 0; i < conf.runs; i++ {
+		// making new request each time since Write closes the body
+		// TODO: this isn't do the headers like recent changes on the server side
+		// let's swap out stdin for http formatted message
+		req, err := http.NewRequest(conf.method, conf.url, conf.stdin)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error creating http request: %v", err)
+		}
+		req.Header.Set("Content-Type", conf.contentType) // TODO this isn't a thing (see add headers)
+
+		req.Header.Set("FN_REQUEST_URL", conf.url)
+		req.Header.Set("FN_CALL_ID", conf.callID)
+		req.Header.Set("FN_METHOD", conf.method)
+		req.Header.Set("FN_DEADLINE", conf.deadline)
+		err = req.Write(&b)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error writing to byte buffer: %v", err)
+		}
+	}
+
+	body := b.String()
+	stdin := strings.NewReader(body)
+	stdout := stdoutHTTP(conf.stdout)
+	return stdin, stdout, nil
+}
+
+// TODO run should not be setup like this and this should get shot. hot patching...
+func stdoutHTTP(stdout io.Writer) io.Writer {
+	pr, pw := io.Pipe()
+
+	go func() {
+		buf := bufio.NewReader(pr)
+		for {
+			resp, err := http.ReadResponse(buf, nil)
+			if err != nil {
+				fmt.Println("error reading http", err)
+				return
+			}
+			io.Copy(stdout, resp.Body)
+			resp.Body.Close()
+		}
+	}()
+	return pw
+}
+
+func handleJSON(conf runConfig) (io.Reader, io.Writer, error) {
+	var b strings.Builder
+	for i := 0; i < conf.runs; i++ {
+		body, err := createJSONInput(conf.callID, conf.contentType, conf.deadline, conf.method, conf.url, conf.stdin)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error creating input: %v", err)
+		}
+		b.WriteString(body)
+		b.Write([]byte("\n"))
+	}
+	stdin := strings.NewReader(b.String())
+	stdout := stdoutJSON(conf.stdout)
+	return stdin, stdout, nil
 }
 
 func extractEnvVar(e string) ([]string, string) {
