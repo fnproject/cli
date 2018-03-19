@@ -39,7 +39,7 @@ type jsonOut struct {
 	Protocol    *CallResponseHTTP `json:"protocol,omitempty"`
 }
 
-func createJSONInput(callID, contentType, deadline string, stdin io.Reader) (string, error) {
+func createJSONInput(callID, contentType, deadline string, method string, requestURL string, stdin io.Reader) (string, error) {
 	var err error
 	input := []byte("")
 	if stdin != nil {
@@ -56,6 +56,14 @@ func createJSONInput(callID, contentType, deadline string, stdin io.Reader) (str
 		ContentType: contentType,
 		Deadline:    deadline,
 		Body:        string(input),
+		Protocol: CallRequestHTTP{
+			Method:     method,
+			RequestURL: requestURL,
+			Type:       "http",
+			Headers: map[string][]string{
+				"Content-Type": {contentType},
+			},
+		},
 	}
 	err = enc.Encode(jin)
 	if err != nil {

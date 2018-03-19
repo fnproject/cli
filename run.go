@@ -194,8 +194,6 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 		runs = 1
 	}
 
-	fmt.Fprintln(os.Stderr, "FORMAT:", format)
-
 	if ff.Type != "" && ff.Type == "async" {
 		// if async, we'll run this in a separate thread and wait for it to complete
 		// reqID := id.New().String()
@@ -222,21 +220,25 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 				return fmt.Errorf("error creating http request: %v", err)
 			}
 			req.Header.Set("Content-Type", contentType)
-			req.Header.Set("Fn_deadline", deadlineS)
+
+			req.Header.Set("FN_REQUEST_URL", LocalTestURL)
+			req.Header.Set("FN_CALL_ID", callID)
+			req.Header.Set("FN_METHOD", method)
+			req.Header.Set("FN_DEADLINE", deadlineS)
 			err = req.Write(&b)
-			b.Write([]byte("\n"))
 		}
 
 		if err != nil {
 			return fmt.Errorf("error writing to byte buffer: %v", err)
 		}
+
 		body = b.String()
 		// fmt.Println("body:", s)
 		stdin = strings.NewReader(body)
 	} else if format == JSONFormat {
 		var b strings.Builder
 		for i := 0; i < runs; i++ {
-			body, err := createJSONInput(callID, contentType, deadlineS, stdin)
+			body, err := createJSONInput(callID, contentType, deadlineS, method, LocalTestURL, stdin)
 			if err != nil {
 				return err
 			}
