@@ -23,7 +23,7 @@ $fn --version
 
 export FN_API_URL="http://localhost:8080"
 
-go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
+go test $(go list ./... | grep -v /vendor/ | grep -v /test)
 
 # Our test directory
 OS=$(uname -s)
