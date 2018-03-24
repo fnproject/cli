@@ -107,3 +107,10 @@ $fn -v build
 $fn -v build
 $fn run
 $fn test
+
+# Test Golang time.LoadLocation
+cd $WORK_DIR
+cp -r ${CUR_DIR}/test/go_location_loader $WORK_DIR/go_location_loader
+cd $WORK_DIR/go_location_loader
+$fn -v run
+$fn -v test
