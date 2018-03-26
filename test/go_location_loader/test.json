@@ -1,0 +1,12 @@
+{
+    "tests": [
+        {
+            "input": {
+                "body": {}
+            },
+            "output": {
+                "body": "America/New_York"
+            }
+        }
+    ]
+}

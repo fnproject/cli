@@ -65,6 +65,8 @@ func (h *GoLangHelper) DockerfileBuildCmds() []string {
 
 func (h *GoLangHelper) DockerfileCopyCmds() []string {
 	return []string{
+		"COPY --from=build-stage /usr/local/go/lib/time/zoneinfo.zip " +
+			"/usr/local/go/lib/time/zoneinfo.zip",
 		"COPY --from=build-stage /go/src/func/func /function/",
 	}
 }

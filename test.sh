@@ -23,7 +23,7 @@ $fn --version
 
 export FN_API_URL="http://localhost:8080"
 
-go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
+go test $(go list ./... | grep -v /vendor/ | grep -v /test)
 
 # Our test directory
 OS=$(uname -s)
@@ -107,3 +107,10 @@ $fn -v build
 $fn -v build
 $fn run
 $fn test
+
+# Test Golang time.LoadLocation
+cd $WORK_DIR
+cp -r ${CUR_DIR}/test/go_location_loader $WORK_DIR/go_location_loader
+cd $WORK_DIR/go_location_loader
+$fn -v run
+$fn -v test
