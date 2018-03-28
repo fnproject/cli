@@ -214,8 +214,6 @@ func (a *routesCmd) list(c *cli.Context) error {
 			switch e := err.(type) {
 			case *apiroutes.GetAppsAppRoutesNotFound:
 				return fmt.Errorf("%s", e.Payload.Error.Message)
-			case *apiroutes.GetAppsAppRoutesDefault:
-				return fmt.Errorf("%s", e.Payload.Error.Message)
 			default:
 				return err
 			}
@@ -384,10 +382,8 @@ func (a *routesCmd) postRoute(c *cli.Context, appName string, rt *fnmodels.Route
 			return fmt.Errorf("%s", e.Payload.Error.Message)
 		case *apiroutes.PostAppsAppRoutesConflict:
 			return fmt.Errorf("%s", e.Payload.Error.Message)
-		case *apiroutes.PostAppsAppRoutesDefault:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("%v", err)
+			return err
 		}
 	}
 
@@ -416,10 +412,8 @@ func (a *routesCmd) patchRoute(c *cli.Context, appName, routePath string, r *fnm
 			return fmt.Errorf("%s", e.Payload.Error.Message)
 		case *apiroutes.PatchAppsAppRoutesRouteNotFound:
 			return fmt.Errorf("%s", e.Payload.Error.Message)
-		case *apiroutes.PatchAppsAppRoutesRouteDefault:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("%v", err)
+			return err
 		}
 	}
 
@@ -437,10 +431,8 @@ func (a *routesCmd) putRoute(c *cli.Context, appName, routePath string, r *fnmod
 		switch e := err.(type) {
 		case *apiroutes.PutAppsAppRoutesRouteBadRequest:
 			return fmt.Errorf("%s", e.Payload.Error.Message)
-		case *apiroutes.PutAppsAppRoutesRouteDefault:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("%v", err)
+			return err
 		}
 	}
 	return nil
@@ -565,10 +557,8 @@ func (a *routesCmd) inspect(c *cli.Context) error {
 		switch e := err.(type) {
 		case *apiroutes.GetAppsAppRoutesRouteNotFound:
 			return fmt.Errorf("%s", e.Payload.Error.Message)
-		case *apiroutes.GetAppsAppRoutesRouteDefault:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("%v", err)
+			return err
 		}
 	}
 
@@ -613,10 +603,8 @@ func (a *routesCmd) delete(c *cli.Context) error {
 		switch e := err.(type) {
 		case *apiroutes.DeleteAppsAppRoutesRouteNotFound:
 			return fmt.Errorf("%s", e.Payload.Error.Message)
-		case *apiroutes.DeleteAppsAppRoutesRouteDefault:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("%v", err)
+			return err
 		}
 	}
 
