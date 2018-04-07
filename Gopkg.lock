@@ -4,7 +4,10 @@
 [[projects]]
   branch = "master"
   name = "github.com/Azure/go-ansiterm"
-  packages = [".","winterm"]
+  packages = [
+    ".",
+    "winterm"
+  ]
   revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
 
 [[projects]]
@@ -39,7 +42,35 @@
 
 [[projects]]
   name = "github.com/aws/aws-sdk-go"
-  packages = ["aws","aws/awserr","aws/awsutil","aws/client","aws/client/metadata","aws/corehandlers","aws/credentials","aws/credentials/ec2rolecreds","aws/credentials/endpointcreds","aws/credentials/stscreds","aws/defaults","aws/ec2metadata","aws/endpoints","aws/request","aws/session","aws/signer/v4","internal/shareddefaults","private/protocol","private/protocol/json/jsonutil","private/protocol/jsonrpc","private/protocol/query","private/protocol/query/queryutil","private/protocol/rest","private/protocol/restjson","private/protocol/xml/xmlutil","service/lambda","service/sts"]
+  packages = [
+    "aws",
+    "aws/awserr",
+    "aws/awsutil",
+    "aws/client",
+    "aws/client/metadata",
+    "aws/corehandlers",
+    "aws/credentials",
+    "aws/credentials/ec2rolecreds",
+    "aws/credentials/endpointcreds",
+    "aws/credentials/stscreds",
+    "aws/defaults",
+    "aws/ec2metadata",
+    "aws/endpoints",
+    "aws/request",
+    "aws/session",
+    "aws/signer/v4",
+    "internal/shareddefaults",
+    "private/protocol",
+    "private/protocol/json/jsonutil",
+    "private/protocol/jsonrpc",
+    "private/protocol/query",
+    "private/protocol/query/queryutil",
+    "private/protocol/rest",
+    "private/protocol/restjson",
+    "private/protocol/xml/xmlutil",
+    "service/lambda",
+    "service/sts"
+  ]
   revision = "71472b3d628115a0650f4851e48dde483cc84776"
   version = "v1.12.45"
 
@@ -51,7 +82,11 @@
 
 [[projects]]
   name = "github.com/docker/docker"
-  packages = ["pkg/jsonlog","pkg/term","pkg/term/windows"]
+  packages = [
+    "pkg/jsonlog",
+    "pkg/term",
+    "pkg/term/windows"
+  ]
   revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
   version = "v1.13.1"
 
@@ -69,13 +104,24 @@
 
 [[projects]]
   name = "github.com/fnproject/fn_go"
-  packages = ["client","client/apps","client/call","client/operations","client/routes","client/version","models"]
-  revision = "13499f6284ac08d162d4fe11a0d93943e094785b"
-  version = "0.2.2"
+  packages = [
+    "client",
+    "client/apps",
+    "client/call",
+    "client/operations",
+    "client/routes",
+    "client/version",
+    "models"
+  ]
+  revision = "e2f92e36625a4b93c596ac3b912a4994ae574f64"
+  version = "0.2.6"
 
 [[projects]]
   name = "github.com/giantswarm/semver-bump"
-  packages = ["bump","storage"]
+  packages = [
+    "bump",
+    "storage"
+  ]
   revision = "88e6c9f2fe390c48839eaba32490fd09cb3b581c"
   version = "1.1.1"
 
@@ -118,7 +164,16 @@
 [[projects]]
   branch = "master"
   name = "github.com/go-openapi/runtime"
-  packages = [".","client","logger","middleware","middleware/denco","middleware/header","middleware/untyped","security"]
+  packages = [
+    ".",
+    "client",
+    "logger",
+    "middleware",
+    "middleware/denco",
+    "middleware/header",
+    "middleware/untyped",
+    "security"
+  ]
   revision = "55d76b2319213cf30fdb7c4ae3a01541f5404c16"
 
 [[projects]]
@@ -165,7 +220,11 @@
 [[projects]]
   branch = "master"
   name = "github.com/mailru/easyjson"
-  packages = ["buffer","jlexer","jwriter"]
+  packages = [
+    "buffer",
+    "jlexer",
+    "jwriter"
+  ]
   revision = "32fa128f234d041f196a9f3e0fea5ac9772c08e1"
 
 [[projects]]
@@ -194,7 +253,20 @@
 
 [[projects]]
   name = "github.com/onsi/gomega"
-  packages = [".","format","internal/assertion","internal/asyncassertion","internal/oraclematcher","internal/testingtsupport","matchers","matchers/support/goraph/bipartitegraph","matchers/support/goraph/edge","matchers/support/goraph/node","matchers/support/goraph/util","types"]
+  packages = [
+    ".",
+    "format",
+    "internal/assertion",
+    "internal/asyncassertion",
+    "internal/oraclematcher",
+    "internal/testingtsupport",
+    "matchers",
+    "matchers/support/goraph/bipartitegraph",
+    "matchers/support/goraph/edge",
+    "matchers/support/goraph/node",
+    "matchers/support/goraph/util",
+    "types"
+  ]
   revision = "c893efa28eb45626cdaa76c9f653b62488858837"
   version = "v1.2.0"
 
@@ -213,25 +285,66 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context","context/ctxhttp","html","html/atom","html/charset","idna"]
+  packages = [
+    "context",
+    "context/ctxhttp",
+    "html",
+    "html/atom",
+    "html/charset",
+    "idna"
+  ]
   revision = "d866cfc389cec985d6fda2859936a575a55a3ab6"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix","windows"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "53aa286056ef226755cd898109dbcdaba8ac0b81"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
-  packages = ["collate","collate/build","encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/colltab","internal/gen","internal/tag","internal/triegen","internal/ucd","internal/utf8internal","language","runes","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable","width"]
+  packages = [
+    "collate",
+    "collate/build",
+    "encoding",
+    "encoding/charmap",
+    "encoding/htmlindex",
+    "encoding/internal",
+    "encoding/internal/identifier",
+    "encoding/japanese",
+    "encoding/korean",
+    "encoding/simplifiedchinese",
+    "encoding/traditionalchinese",
+    "encoding/unicode",
+    "internal/colltab",
+    "internal/gen",
+    "internal/tag",
+    "internal/triegen",
+    "internal/ucd",
+    "internal/utf8internal",
+    "language",
+    "runes",
+    "secure/bidirule",
+    "transform",
+    "unicode/bidi",
+    "unicode/cldr",
+    "unicode/norm",
+    "unicode/rangetable",
+    "width"
+  ]
   revision = "3b24cac7bc3a458991ab409aa2a339ac9e0d60d6"
 
 [[projects]]
   branch = "v2"
   name = "gopkg.in/mgo.v2"
-  packages = ["bson","internal/json"]
+  packages = [
+    "bson",
+    "internal/json"
+  ]
   revision = "3f83fa5005286a7fe593b055f0d7771a7dce4655"
 
 [[projects]]

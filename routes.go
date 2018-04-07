@@ -273,6 +273,11 @@ func routeWithFlags(c *cli.Context, rt *fnmodels.Route) {
 			rt.Memory = m
 		}
 	}
+	if rt.Cpus == "" {
+		if m := c.String("cpus"); m != "" {
+			rt.Cpus = m
+		}
+	}
 	if rt.Timeout == nil {
 		if t := c.Int("timeout"); t > 0 {
 			to := int32(t)
@@ -327,6 +332,9 @@ func routeWithFuncFile(ff *funcfile, rt *fnmodels.Route) error {
 	}
 	if ff.Memory != 0 {
 		rt.Memory = ff.Memory
+	}
+	if ff.Cpus != "" {
+		rt.Cpus = ff.Cpus
 	}
 	if ff.IDLETimeout != nil {
 		rt.IDLETimeout = ff.IDLETimeout
