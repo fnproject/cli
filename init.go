@@ -189,6 +189,9 @@ func (a *initFnCmd) bindRoute(rt *models.Route) {
 	if rt.Memory > 0 {
 		ff.Memory = rt.Memory
 	}
+	if rt.Cpus != "" {
+		ff.Cpus = rt.Cpus
+	}
 	if rt.Timeout != nil {
 		ff.Timeout = rt.Timeout
 	}

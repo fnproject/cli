@@ -40,7 +40,25 @@ touch data/fn.db data/fn.mq
 
 # start fn
 CONTAINER_ID=$($fn start -d)
-sleep 7
+
+TRIES=15
+while [ ${TRIES} -gt 0 ]; do
+
+	set +e
+	curl -sS --max-time 1 ${FN_API_URL} > /dev/null
+	RESULT=$?
+	set -e
+
+	if [ ${RESULT} -ne 0 ]; then
+		sleep 1
+		TRIES=$((${TRIES}-1))
+	fi
+	break
+done
+# exhausted all tries?
+test ${TRIES} -gt 0
+
+# be safe, check the fn container too.
 docker inspect -f {{.State.Running}} $CONTAINER_ID | grep '^true$'
 
 # This tests all the quickstart commands on the cli on a live server
@@ -83,10 +101,15 @@ cp ${CUR_DIR}/test/funcfile-docker-rt-tests/testfiles/Dockerfile $funcname/
 cp ${CUR_DIR}/test/funcfile-docker-rt-tests/testfiles/func.go $funcname/
 cd $funcname
 $fn init --name $funcname
+# add 50 millicpus
+echo "cpus: 50m" >> func.yaml
 $fn apps create myapp1
 $fn apps l
 $fn deploy --local --app myapp1
 $fn call myapp1 /$funcname
+# grab the route config and see if cpu is in there
+$fn routes inspect myapp1 /$funcname > ./${funcname}.route
+grep "\"cpus\": \"50m\"" ./${funcname}.route
 # todo: would be nice to have a flag to output parseable formats in cli, eg: `fn deploy --output json` would return json with version and other info 
 $fn routes create myapp1 /another --image $FN_REGISTRY/$funcname:0.0.2
 $fn call myapp1 /another

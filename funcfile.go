@@ -59,6 +59,7 @@ type funcfile struct {
 	// TODO embed models.Route
 	Type        string              `yaml:"type,omitempty" json:"type,omitempty"`
 	Memory      uint64              `yaml:"memory,omitempty" json:"memory,omitempty"`
+	Cpus        string              `yaml:"cpus,omitempty" json:"cpus,omitempty"`
 	Format      string              `yaml:"format,omitempty" json:"format,omitempty"`
 	Timeout     *int32              `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 	Path        string              `yaml:"path,omitempty" json:"path,omitempty"`
