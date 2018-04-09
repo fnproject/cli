@@ -326,7 +326,7 @@ func dockerPush(ff *funcfile) error {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("error running docker push: %v", err)
+		return fmt.Errorf("error running docker push, are you logged into docker?: %v", err)
 	}
 	return nil
 }
