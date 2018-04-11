@@ -6,19 +6,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
 
-var aliases = map[string]cli.Command{
-	"build":  build(),
-	"bump":   bump(),
-	"deploy": deploy(),
-	"push":   push(),
-	"run":    run(),
-	"call":   call(),
-	"calls":  calls(),
-	"logs":   logs(),
-}
+var aliases map[string]cli.Command
 
 func aliasesFn() []cli.Command {
 	cmds := []cli.Command{}
@@ -36,6 +28,7 @@ func newFn() *cli.App {
 	app.Version = Version
 	app.Authors = []cli.Author{{Name: "Fn Project"}}
 	app.Description = "Fn command line tool"
+	app.Before = cli.BeforeFunc(commandArgOverrides)
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose,v", // v is taken for version by default with urfave/cli
@@ -126,6 +119,33 @@ func prepareCmdArgsValidation(cmds []cli.Command) {
 		}
 		cmds[i] = cmd
 	}
+}
+
+func init() {
+	viper.AutomaticEnv() // read in environment variables that match
+
+	viper.SetEnvPrefix("fn")
+	viper.SetDefault("api_url", "http://localhost:8080")
+
+	// create aliases after api_url set
+	aliases = map[string]cli.Command{
+		"build":  build(),
+		"bump":   bump(),
+		"deploy": deploy(),
+		"push":   push(),
+		"run":    run(),
+		"call":   call(),
+		"calls":  calls(),
+		"logs":   logs(),
+	}
+}
+
+func commandArgOverrides(c *cli.Context) error {
+	if registry := c.String("registry"); registry != "" {
+		viper.Set("registry", registry)
+	}
+
+	return nil
 }
 
 func main() {

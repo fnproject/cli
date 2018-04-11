@@ -4,23 +4,20 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path"
 	"testing"
+
+	"github.com/spf13/viper"
 )
 
 func init() {
 	dockerUser := os.Getenv("DOCKER_USER")
-	var err error
 	if dockerUser == "" {
 		dockerUser = "funcster"
 	}
-	err = os.Setenv("FN_REGISTRY", dockerUser)
-	if err != nil {
-		log.Fatalf("couldn't set env var: %v", err)
-	}
+	viper.Set("registry", dockerUser)
 	return
 }
 

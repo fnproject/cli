@@ -26,21 +26,7 @@ const (
 	functionsDockerImage     = "fnproject/fnserver"
 	funcfileDockerRuntime    = "docker"
 	minRequiredDockerVersion = "17.5.0"
-	envFnRegistry            = "FN_REGISTRY"
 )
-
-type HasRegistry interface {
-	Registry() string
-}
-
-func setRegistryEnv(hr HasRegistry) {
-	if hr.Registry() != "" {
-		err := os.Setenv(envFnRegistry, hr.Registry())
-		if err != nil {
-			log.Fatalf("Couldn't set %s env var: %v\n", envFnRegistry, err)
-		}
-	}
-}
 
 func getWd() string {
 	wd, err := os.Getwd()
@@ -331,12 +317,12 @@ func dockerPush(ff *funcfile) error {
 	return nil
 }
 
-// validateImageName validates that the full image name (FN_REGISTRY/name:tag) is allowed for push
+// validateImageName validates that the full image name (REGISTRY/name:tag) is allowed for push
 // remember that private registries must be supported here
 func validateImageName(n string) error {
 	parts := strings.Split(n, "/")
 	if len(parts) < 2 {
-		return errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var or pass in --registry")
+		return errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var, pass in --registry or configure your context file")
 	}
 	lastParts := strings.Split(parts[len(parts)-1], ":")
 	if len(lastParts) != 2 {

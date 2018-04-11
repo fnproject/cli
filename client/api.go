@@ -8,6 +8,7 @@ import (
 	fnclient "github.com/fnproject/fn_go/client"
 	openapi "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -24,31 +25,22 @@ func Host() string {
 }
 
 func HostURL() (*url.URL, error) {
-	apiURL := os.Getenv("FN_API_URL")
-
-	if apiURL == "" {
-		if os.Getenv("API_URL") != "" {
-			fmt.Fprint(os.Stderr, "Error: API_URL is deprecated, please use FN_API_URL.")
-			os.Exit(1)
-		}
-		apiURL = "http://localhost:8080"
-	}
-
+	apiURL := viper.GetString("api_url")
 	return url.Parse(apiURL)
 }
 
 func GetTransportAndRegistry() (*openapi.Runtime, strfmt.Registry) {
 	transport := openapi.New(Host(), "/v1", []string{"http"})
-	if os.Getenv(envFnToken) != "" {
-		transport.DefaultAuthentication = openapi.BearerToken(os.Getenv(envFnToken))
+	if token := viper.GetString("token"); token != "" {
+		transport.DefaultAuthentication = openapi.BearerToken(token)
 	}
 	return transport, strfmt.Default
 }
 
 func APIClient() *fnclient.Fn {
 	transport := openapi.New(Host(), "/v1", []string{"http"})
-	if os.Getenv(envFnToken) != "" {
-		transport.DefaultAuthentication = openapi.BearerToken(os.Getenv(envFnToken))
+	if token := viper.GetString("token"); token != "" {
+		transport.DefaultAuthentication = openapi.BearerToken(token)
 	}
 
 	// create the API client, with the transport

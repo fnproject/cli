@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/viper"
+
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -74,8 +76,8 @@ type funcfile struct {
 func (ff *funcfile) ImageName() string {
 	fname := ff.Name
 	if !strings.Contains(fname, "/") {
-		// then we'll prefix FN_REGISTRY
-		reg := os.Getenv(envFnRegistry)
+
+		reg := viper.GetString("registry")
 		if reg != "" {
 			if reg[len(reg)-1] != '/' {
 				reg += "/"

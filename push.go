@@ -24,10 +24,6 @@ type pushcmd struct {
 	registry string
 }
 
-func (cmd *pushcmd) Registry() string {
-	return cmd.registry
-}
-
 func (p *pushcmd) flags() []cli.Flag {
 	return []cli.Flag{
 		cli.BoolFlag{
@@ -48,8 +44,6 @@ func (p *pushcmd) flags() []cli.Flag {
 // push the container, and finally it will update function's route. Optionally,
 // the route can be overriden inside the functions file.
 func (p *pushcmd) push(c *cli.Context) error {
-	setRegistryEnv(p)
-
 	_, ff, err := loadFuncfile()
 	if err != nil {
 		if _, ok := err.(*notFoundError); ok {
