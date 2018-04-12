@@ -50,7 +50,7 @@
 
 [[constraint]]
   name = "github.com/moby/moby"
-  version = "17.5.0-ce-rc3"
+  version = "v17.03.2-ce"
 
 [[constraint]]
   name = "github.com/onsi/gomega"

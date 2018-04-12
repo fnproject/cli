@@ -11,10 +11,10 @@
   revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/Nvveen/Gotty"
+  name = "github.com/Microsoft/go-winio"
   packages = ["."]
-  revision = "cd527374f1e5bff4938207604a14f2e38a9cf512"
+  revision = "7da180ee92d8bd8bb8c37fc560e673e6557c392f"
+  version = "v0.4.7"
 
 [[projects]]
   name = "github.com/PuerkitoBio/purell"
@@ -81,14 +81,49 @@
   version = "v0.2.0"
 
 [[projects]]
+  name = "github.com/docker/distribution"
+  packages = [
+    "digest",
+    "reference"
+  ]
+  revision = "48294d928ced5dd9b378f7fd7c6f5da3ff3f2c89"
+  version = "v2.6.2"
+
+[[projects]]
   name = "github.com/docker/docker"
   packages = [
+    "api/types",
+    "api/types/blkiodev",
+    "api/types/container",
+    "api/types/events",
+    "api/types/filters",
+    "api/types/mount",
+    "api/types/network",
+    "api/types/reference",
+    "api/types/registry",
+    "api/types/strslice",
+    "api/types/swarm",
+    "api/types/time",
+    "api/types/versions",
+    "api/types/volume",
+    "client",
     "pkg/jsonlog",
     "pkg/term",
-    "pkg/term/windows"
+    "pkg/term/windows",
+    "pkg/tlsconfig"
   ]
   revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
   version = "v1.13.1"
+
+[[projects]]
+  name = "github.com/docker/go-connections"
+  packages = [
+    "nat",
+    "sockets",
+    "tlsconfig"
+  ]
+  revision = "3ede32e2033de7505e6500d6c868c2b9ed9f169d"
+  version = "v0.3.0"
 
 [[projects]]
   name = "github.com/docker/go-units"
@@ -247,9 +282,12 @@
 
 [[projects]]
   name = "github.com/moby/moby"
-  packages = ["pkg/jsonmessage"]
-  revision = "90d35abf7b3535c1c319c872900fbd76374e521c"
-  version = "v17.05.0-ce-rc3"
+  packages = [
+    "api/types",
+    "pkg/jsonmessage"
+  ]
+  revision = "eef6495eddab52828327aade186443681ed71a4e"
+  version = "v17.03.2-ce-rc1"
 
 [[projects]]
   name = "github.com/onsi/gomega"
@@ -269,6 +307,12 @@
   ]
   revision = "c893efa28eb45626cdaa76c9f653b62488858837"
   version = "v1.2.0"
+
+[[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   name = "github.com/urfave/cli"
@@ -291,7 +335,8 @@
     "html",
     "html/atom",
     "html/charset",
-    "idna"
+    "idna",
+    "proxy"
   ]
   revision = "d866cfc389cec985d6fda2859936a575a55a3ab6"
 
@@ -356,6 +401,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c6b05fb1308e848d160b758f140bca8702af3e44b3a83ace91e15db189083b31"
+  inputs-digest = "98273b1f9ddb2f717848178f3d1f3b85908c39f63131c61b03de85cce557bbc9"
   solver-name = "gps-cdcl"
   solver-version = 1
