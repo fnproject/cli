@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
@@ -28,11 +30,23 @@ func newFn() *cli.App {
 	app.Version = Version
 	app.Authors = []cli.Author{{Name: "Fn Project"}}
 	app.Description = "Fn command line tool"
-	app.Before = cli.BeforeFunc(commandArgOverrides)
+	app.Before = func(c *cli.Context) error {
+		loadConfiguration(c)
+		commandArgOverrides(c)
+		return nil
+	}
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose,v", // v is taken for version by default with urfave/cli
-			Usage: "Use `--verbose` to enable verbose mode for debugging",
+			Usage: "Use --verbose to enable verbose mode for debugging",
+		},
+		cli.StringFlag{
+			Name:  "context",
+			Usage: "Use --context to select context configuration file",
+		},
+		cli.StringFlag{
+			Name:  "registry",
+			Usage: "Use --registry to select registry",
 		},
 	}
 	cli.VersionFlag = cli.BoolFlag{
@@ -76,6 +90,7 @@ LEARN MORE:
 		logs(),
 		testfn(),
 		buildServer(),
+		contextCmd(),
 	}
 	app.Commands = append(app.Commands, aliasesFn()...)
 
@@ -125,7 +140,7 @@ func init() {
 	viper.AutomaticEnv() // read in environment variables that match
 
 	viper.SetEnvPrefix("fn")
-	viper.SetDefault("api_url", "http://localhost:8080")
+	viper.SetDefault(envFnAPIURL, "http://localhost:8080")
 
 	// create aliases after api_url set
 	aliases = map[string]cli.Command{
@@ -138,14 +153,55 @@ func init() {
 		"calls":  calls(),
 		"logs":   logs(),
 	}
+
+	EnsureConfiguration()
 }
 
-func commandArgOverrides(c *cli.Context) error {
-	if registry := c.String("registry"); registry != "" {
-		viper.Set("registry", registry)
+func loadConfiguration(c *cli.Context) error {
+	// Find home directory.
+	home, err := homedir.Dir()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
+	context := ""
+
+	if context = c.String(envFnContext); context == "" {
+		viper.AddConfigPath(filepath.Join(home, rootConfigPathName))
+		viper.SetConfigName(configName)
+
+		readConfig()
+
+		context = viper.GetString(currentContext)
+		if context == "" {
+			fmt.Println("Config file does not contain context")
+			os.Exit(1)
+		}
+	}
+
+	fmt.Println("Context: ", context)
+
+	viper.AddConfigPath(filepath.Join(home, rootConfigPathName, contextsPathName))
+	viper.SetConfigName(context)
+	readConfig()
+
+	fmt.Println("envFnApiUrl", viper.GetString(envFnAPIURL))
 	return nil
+}
+
+func commandArgOverrides(c *cli.Context) {
+	if registry := c.String(envFnRegistry); registry != "" {
+		viper.Set(envFnRegistry, registry)
+	}
+}
+
+func readConfig() {
+	// If a config file is found, read it in.
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
 }
 
 func main() {
