@@ -12,7 +12,16 @@ import (
 	"github.com/urfave/cli"
 )
 
-var aliases map[string]cli.Command
+var aliases = map[string]cli.Command{
+	"build":  build(),
+	"bump":   bump(),
+	"deploy": deploy(),
+	"push":   push(),
+	"run":    run(),
+	"call":   call(),
+	"calls":  calls(),
+	"logs":   logs(),
+}
 
 func aliasesFn() []cli.Command {
 	cmds := []cli.Command{}
@@ -142,18 +151,6 @@ func init() {
 	viper.SetEnvPrefix("fn")
 	viper.SetDefault(envFnAPIURL, "http://localhost:8080")
 
-	// create aliases after api_url set
-	aliases = map[string]cli.Command{
-		"build":  build(),
-		"bump":   bump(),
-		"deploy": deploy(),
-		"push":   push(),
-		"run":    run(),
-		"call":   call(),
-		"calls":  calls(),
-		"logs":   logs(),
-	}
-
 	EnsureConfiguration()
 }
 
@@ -180,13 +177,10 @@ func loadConfiguration(c *cli.Context) error {
 		}
 	}
 
-	fmt.Println("Context: ", context)
-
 	viper.AddConfigPath(filepath.Join(home, rootConfigPathName, contextsPathName))
 	viper.SetConfigName(context)
 	readConfig()
 
-	fmt.Println("envFnApiUrl", viper.GetString(envFnAPIURL))
 	return nil
 }
 
