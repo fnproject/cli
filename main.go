@@ -99,7 +99,6 @@ LEARN MORE:
 		logs(),
 		testfn(),
 		buildServer(),
-		contextCmd(),
 	}
 	app.Commands = append(app.Commands, aliasesFn()...)
 

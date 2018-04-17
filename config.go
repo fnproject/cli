@@ -62,14 +62,14 @@ func EnsureConfiguration() {
 		}
 	}
 
-	contextsPath = filepath.Join(rootConfigPath, contextsPathName)
+	contextsPath := filepath.Join(rootConfigPath, contextsPathName)
 	if _, err = os.Stat(contextsPath); os.IsNotExist(err) {
 		if err = os.Mkdir(contextsPath, readWritePerms); err != nil {
 			panic(err)
 		}
 	}
 
-	defaultContextPath = filepath.Join(contextsPath, defaultContextFileName)
+	defaultContextPath := filepath.Join(contextsPath, defaultContextFileName)
 	if _, err = os.Stat(defaultContextPath); os.IsNotExist(err) {
 		_, err = os.Create(defaultContextPath)
 		if err != nil {
