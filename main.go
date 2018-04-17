@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/fnproject/cli/config"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
@@ -40,7 +39,7 @@ func newFn() *cli.App {
 	app.Authors = []cli.Author{{Name: "Fn Project"}}
 	app.Description = "Fn command line tool"
 	app.Before = func(c *cli.Context) error {
-		loadConfiguration(c)
+		config.LoadConfiguration(c)
 		commandArgOverrides(c)
 		return nil
 	}
@@ -148,52 +147,14 @@ func init() {
 	viper.AutomaticEnv() // read in environment variables that match
 
 	viper.SetEnvPrefix("fn")
-	viper.SetDefault(envFnAPIURL, "http://localhost:8080")
+	viper.SetDefault(config.EnvFnAPIURL, "http://localhost:8080")
 
-	EnsureConfiguration()
-}
-
-func loadConfiguration(c *cli.Context) error {
-	// Find home directory.
-	home, err := homedir.Dir()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	context := ""
-
-	if context = c.String(envFnContext); context == "" {
-		viper.AddConfigPath(filepath.Join(home, rootConfigPathName))
-		viper.SetConfigName(configName)
-
-		readConfig()
-
-		context = viper.GetString(currentContext)
-		if context == "" {
-			fmt.Println("Config file does not contain context")
-			os.Exit(1)
-		}
-	}
-
-	viper.AddConfigPath(filepath.Join(home, rootConfigPathName, contextsPathName))
-	viper.SetConfigName(context)
-	readConfig()
-
-	return nil
+	config.EnsureConfiguration()
 }
 
 func commandArgOverrides(c *cli.Context) {
-	if registry := c.String(envFnRegistry); registry != "" {
-		viper.Set(envFnRegistry, registry)
-	}
-}
-
-func readConfig() {
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+	if registry := c.String(config.EnvFnRegistry); registry != "" {
+		viper.Set(config.EnvFnRegistry, registry)
 	}
 }
 
