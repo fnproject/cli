@@ -9,7 +9,7 @@ import (
 	"context"
 	"strings"
 
-	client "github.com/fnproject/cli/client"
+	"github.com/fnproject/cli/client"
 	fnclient "github.com/fnproject/fn_go/client"
 	apiapps "github.com/fnproject/fn_go/client/apps"
 	"github.com/fnproject/fn_go/models"
@@ -22,11 +22,15 @@ type appsCmd struct {
 }
 
 func apps() cli.Command {
-	a := appsCmd{client: client.APIClient()}
+	a := appsCmd{}
 
 	return cli.Command{
 		Name:  "apps",
 		Usage: "manage applications",
+		Before: func(c *cli.Context) error {
+			a.client = client.APIClient()
+			return nil
+		},
 		Subcommands: []cli.Command{
 			{
 				Name:      "create",

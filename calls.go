@@ -18,11 +18,15 @@ type callsCmd struct {
 }
 
 func calls() cli.Command {
-	c := callsCmd{client: client.APIClient()}
+	c := callsCmd{}
 
 	return cli.Command{
 		Name:  "calls",
 		Usage: "manage function calls for apps",
+		Before: func(cxt *cli.Context) error {
+			c.client = client.APIClient()
+			return nil
+		},
 		Subcommands: []cli.Command{
 			{
 				Name:      "get",

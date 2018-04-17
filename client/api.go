@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	envFnToken = "FN_TOKEN"
+	envFnToken  = "token"
+	envFnAPIURL = "api_url"
 )
 
 func Host() string {
@@ -25,13 +26,13 @@ func Host() string {
 }
 
 func HostURL() (*url.URL, error) {
-	apiURL := viper.GetString("api_url")
+	apiURL := viper.GetString(envFnAPIURL)
 	return url.Parse(apiURL)
 }
 
 func GetTransportAndRegistry() (*openapi.Runtime, strfmt.Registry) {
 	transport := openapi.New(Host(), "/v1", []string{"http"})
-	if token := viper.GetString("token"); token != "" {
+	if token := viper.GetString(envFnToken); token != "" {
 		transport.DefaultAuthentication = openapi.BearerToken(token)
 	}
 	return transport, strfmt.Default
@@ -39,7 +40,7 @@ func GetTransportAndRegistry() (*openapi.Runtime, strfmt.Registry) {
 
 func APIClient() *fnclient.Fn {
 	transport := openapi.New(Host(), "/v1", []string{"http"})
-	if token := viper.GetString("token"); token != "" {
+	if token := viper.GetString(envFnToken); token != "" {
 		transport.DefaultAuthentication = openapi.BearerToken(token)
 	}
 

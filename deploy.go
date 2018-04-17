@@ -15,9 +15,7 @@ import (
 )
 
 func deploy() cli.Command {
-	cmd := deploycmd{
-		Fn: client.APIClient(),
-	}
+	cmd := deploycmd{}
 	var flags []cli.Flag
 	flags = append(flags, cmd.flags()...)
 	return cli.Command{
@@ -25,6 +23,10 @@ func deploy() cli.Command {
 		Usage:  "deploys a function to the functions server. (bumps, build, pushes and updates route)",
 		Flags:  flags,
 		Action: cmd.deploy,
+		Before: func(cxt *cli.Context) error {
+			cmd.Fn = client.APIClient()
+			return nil
+		},
 	}
 }
 

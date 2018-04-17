@@ -69,11 +69,15 @@ var callFnFlags = append(runflags(),
 
 func routes() cli.Command {
 
-	r := routesCmd{client: client.APIClient()}
+	r := routesCmd{}
 
 	return cli.Command{
 		Name:  "routes",
 		Usage: "manage routes",
+		Before: func(c *cli.Context) error {
+			r.client = client.APIClient()
+			return nil
+		},
 		Subcommands: []cli.Command{
 			{
 				Name:      "call",

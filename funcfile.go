@@ -77,7 +77,7 @@ func (ff *funcfile) ImageName() string {
 	fname := ff.Name
 	if !strings.Contains(fname, "/") {
 
-		reg := viper.GetString("registry")
+		reg := viper.GetString(envFnRegistry)
 		if reg != "" {
 			if reg[len(reg)-1] != '/' {
 				reg += "/"

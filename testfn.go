@@ -25,12 +25,16 @@ type testStruct struct {
 }
 
 func testfn() cli.Command {
-	cmd := testcmd{Fn: client.APIClient()}
+	cmd := testcmd{}
 	return cli.Command{
 		Name:   "test",
 		Usage:  "run functions test if present",
 		Flags:  cmd.flags(),
 		Action: cmd.test,
+		Before: func(cxt *cli.Context) error {
+			cmd.Fn = client.APIClient()
+			return nil
+		},
 	}
 }
 
