@@ -249,10 +249,7 @@ func (t *testcmd) runremotetest(ff *funcfile, in *inputMap, expectedOut *outputM
 	if ff.Path == "" {
 		return errors.New("execution of tests on remote server demand that this function has a `path`")
 	}
-	baseURL, err := client.HostURL()
-	if err != nil {
-		return fmt.Errorf("error parsing base path: %v", err)
-	}
+	baseURL := client.HostURL()
 
 	u, err := url.Parse("../")
 	u.Path = path.Join(u.Path, "r", t.remote, ff.Path)

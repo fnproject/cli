@@ -147,7 +147,7 @@ func init() {
 	viper.AutomaticEnv() // read in environment variables that match
 
 	viper.SetEnvPrefix("fn")
-	viper.SetDefault(config.EnvFnAPIURL, "http://localhost:8080")
+	viper.SetDefault(config.EnvFnAPIURL, "http://localhost:8080/v1")
 
 	config.EnsureConfiguration()
 }
