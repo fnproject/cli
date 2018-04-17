@@ -5,15 +5,11 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/fnproject/cli/config"
 	fnclient "github.com/fnproject/fn_go/client"
 	openapi "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	"github.com/spf13/viper"
-)
-
-const (
-	envFnToken  = "token"
-	envFnAPIURL = "api_url"
 )
 
 func Host() string {
@@ -26,13 +22,16 @@ func Host() string {
 }
 
 func HostURL() (*url.URL, error) {
-	apiURL := viper.GetString(envFnAPIURL)
+	apiURL := viper.GetString(config.EnvFnAPIURL)
 	return url.Parse(apiURL)
 }
 
 func GetTransportAndRegistry() (*openapi.Runtime, strfmt.Registry) {
 	transport := openapi.New(Host(), "/v1", []string{"http"})
-	if token := viper.GetString(envFnToken); token != "" {
+
+	switch viper.GetString(config.ContextProvider) {
+	}
+	if token := viper.GetString(config.EnvFnToken); token != "" {
 		transport.DefaultAuthentication = openapi.BearerToken(token)
 	}
 	return transport, strfmt.Default
@@ -40,7 +39,7 @@ func GetTransportAndRegistry() (*openapi.Runtime, strfmt.Registry) {
 
 func APIClient() *fnclient.Fn {
 	transport := openapi.New(Host(), "/v1", []string{"http"})
-	if token := viper.GetString(envFnToken); token != "" {
+	if token := viper.GetString(config.EnvFnToken); token != "" {
 		transport.DefaultAuthentication = openapi.BearerToken(token)
 	}
 
