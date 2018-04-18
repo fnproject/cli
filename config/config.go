@@ -1,11 +1,14 @@
-package main
+package config
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/spf13/viper"
+	"github.com/urfave/cli"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -18,20 +21,20 @@ const (
 
 	readWritePerms = os.FileMode(0755)
 
-	currentContext  = "current-context"
-	contextProvider = "provider"
+	CurrentContext  = "current-context"
+	ContextProvider = "provider"
 
-	envFnRegistry = "registry"
-	envFnToken    = "token"
-	envFnAPIURL   = "api_url"
-	envFnContext  = "context"
+	EnvFnRegistry = "registry"
+	EnvFnToken    = "token"
+	EnvFnAPIURL   = "api_url"
+	EnvFnContext  = "context"
 )
 
-var defaultRootConfigContents = map[string]string{currentContext: "default"}
+var defaultRootConfigContents = map[string]string{CurrentContext: "default"}
 var defaultContextConfigContents = map[string]string{
-	contextProvider: "default",
-	envFnAPIURL:     "https://localhost:8080",
-	envFnRegistry:   "",
+	ContextProvider: "default",
+	EnvFnAPIURL:     "https://localhost:8080",
+	EnvFnRegistry:   "",
 }
 
 // EnsureConfiguration ensures context configuration directory hierarchy is in place, if not
@@ -90,4 +93,42 @@ func writeYamlFile(filename string, value map[string]string) error {
 	}
 
 	return ioutil.WriteFile(filename, marshaled, readWritePerms)
+}
+
+func LoadConfiguration(c *cli.Context) error {
+	// Find home directory.
+	home, err := homedir.Dir()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	context := ""
+
+	if context = c.String(EnvFnContext); context == "" {
+		viper.AddConfigPath(filepath.Join(home, rootConfigPathName))
+		viper.SetConfigName(configName)
+
+		readConfig()
+
+		context = viper.GetString(CurrentContext)
+		if context == "" {
+			fmt.Println("Config file does not contain context")
+			os.Exit(1)
+		}
+	}
+
+	viper.AddConfigPath(filepath.Join(home, rootConfigPathName, contextsPathName))
+	viper.SetConfigName(context)
+	readConfig()
+
+	return nil
+}
+
+func readConfig() {
+	// If a config file is found, read it in.
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
 }

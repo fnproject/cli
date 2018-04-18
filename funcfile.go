@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fnproject/cli/config"
 	"github.com/spf13/viper"
 
 	yaml "gopkg.in/yaml.v2"
@@ -77,7 +78,7 @@ func (ff *funcfile) ImageName() string {
 	fname := ff.Name
 	if !strings.Contains(fname, "/") {
 
-		reg := viper.GetString(envFnRegistry)
+		reg := viper.GetString(config.EnvFnRegistry)
 		if reg != "" {
 			if reg[len(reg)-1] != '/' {
 				reg += "/"
