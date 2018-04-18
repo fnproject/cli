@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 	"syscall"
 
@@ -27,14 +28,21 @@ func HostURL() *url.URL {
 }
 
 func hostURL(urlStr string) *url.URL {
+	apiUrl := os.Getenv("FN_API_URL")
+	currentContext := viper.Get(config.CurrentContext)
+	if apiUrl != "" && currentContext != "" {
+		fmt.Println("Warning: environment variable FN_API_URL is overriding configured context property api_url from current-context")
+	}
 
 	if !strings.Contains(urlStr, "://") {
 		urlStr = fmt.Sprint("http://", urlStr)
 	}
 
 	url, err := url.Parse(urlStr)
+
 	if err != nil {
-		panic(fmt.Sprintf("Unparsable FN API Url: %s. Error: %s", urlStr, err))
+		fmt.Printf("Unparsable FN API Url: %s. Error: %s", urlStr, err)
+		os.Exit(1)
 	}
 
 	if url.Port() == "" {

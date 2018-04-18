@@ -132,7 +132,6 @@ func (a *appsCmd) list(c *cli.Context) error {
 	var resApps []*models.App
 	for {
 		resp, err := a.client.Apps.GetApps(params)
-
 		if err != nil {
 			switch e := err.(type) {
 			case *apiapps.GetAppsAppNotFound:

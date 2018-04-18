@@ -13,11 +13,13 @@ import (
 )
 
 const (
-	rootConfigPathName     = ".fn"
-	contextsPathName       = "contexts"
-	configName             = "config"
-	contextConfigFileName  = "config.yaml"
-	defaultContextFileName = "default.yaml"
+	RootConfigPathName     = ".fn"
+	ContextsPathName       = "contexts"
+	ConfigName             = "config"
+	ContextConfigFileName  = "config.yaml"
+	DefaultContextFileName = "default.yaml"
+	DefaultLocalApiUrl     = "http://localhost:8080/v1"
+	DefaultProvider        = "default"
 
 	readWritePerms = os.FileMode(0755)
 
@@ -35,105 +37,134 @@ const (
 	OracleDisableCerts  = "disable_certs"
 )
 
-var defaultRootConfigContents = map[string]string{CurrentContext: "default"}
-var defaultContextConfigContents = map[string]string{
-	ContextProvider: "default",
-	EnvFnAPIURL:     "http://localhost:8080/v1",
+var DefaultRootConfigContents = map[string]string{CurrentContext: ""}
+var DefaultContextConfigContents = map[string]string{
+	ContextProvider: DefaultProvider,
+	EnvFnAPIURL:     DefaultLocalApiUrl,
 	EnvFnRegistry:   "",
+}
+
+type ContextFile struct {
+	ContextProvider string `yaml:"provider"`
+	EnvFnAPIURL     string `yaml:"api_url"`
+	EnvFnRegistry   string `yaml:"registry"`
 }
 
 // EnsureConfiguration ensures context configuration directory hierarchy is in place, if not
 // creates it and the default context configuration files
 func EnsureConfiguration() {
-	home, err := homedir.Dir()
+	home, err := GetHomeDir()
 	if err != nil {
-		panic(err)
+		fmt.Printf("%v", err)
 	}
 
-	rootConfigPath := filepath.Join(home, rootConfigPathName)
+	rootConfigPath := filepath.Join(home, RootConfigPathName)
 	if _, err := os.Stat(rootConfigPath); os.IsNotExist(err) {
 		if err = os.Mkdir(rootConfigPath, readWritePerms); err != nil {
-			panic(err)
+			fmt.Printf("error creating .fn directory %v", err)
 		}
 	}
 
-	contextConfigFilePath := filepath.Join(rootConfigPath, contextConfigFileName)
-	if _, err = os.Stat(contextConfigFilePath); os.IsNotExist(err) {
+	contextConfigFilePath := filepath.Join(rootConfigPath, ContextConfigFileName)
+	if _, err := os.Stat(contextConfigFilePath); os.IsNotExist(err) {
 		_, err = os.Create(contextConfigFilePath)
 		if err != nil {
-			panic(err)
+			fmt.Printf("error creating config.yaml file %v", err)
 		}
 
-		err = writeYamlFile(contextConfigFilePath, defaultRootConfigContents)
+		err = WriteYamlFile(contextConfigFilePath, DefaultRootConfigContents)
 		if err != nil {
-			panic(err)
+			fmt.Printf("%v", err)
 		}
 	}
 
-	contextsPath := filepath.Join(rootConfigPath, contextsPathName)
-	if _, err = os.Stat(contextsPath); os.IsNotExist(err) {
+	contextsPath := filepath.Join(rootConfigPath, ContextsPathName)
+	if _, err := os.Stat(contextsPath); os.IsNotExist(err) {
 		if err = os.Mkdir(contextsPath, readWritePerms); err != nil {
-			panic(err)
+			fmt.Printf("error creating contexts directory %v", err)
 		}
 	}
 
-	defaultContextPath := filepath.Join(contextsPath, defaultContextFileName)
-	if _, err = os.Stat(defaultContextPath); os.IsNotExist(err) {
+	defaultContextPath := filepath.Join(contextsPath, DefaultContextFileName)
+	if _, err := os.Stat(defaultContextPath); os.IsNotExist(err) {
 		_, err = os.Create(defaultContextPath)
 		if err != nil {
-			panic(err)
+			fmt.Printf("error creating default.yaml context file %v", err)
 		}
 
-		err = writeYamlFile(defaultContextPath, defaultContextConfigContents)
+		err = WriteYamlFile(defaultContextPath, DefaultContextConfigContents)
 		if err != nil {
-			panic(err)
+			fmt.Printf("%v", err)
 		}
 	}
 }
 
-func writeYamlFile(filename string, value map[string]string) error {
-	marshaled, err := yaml.Marshal(value)
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(filename, marshaled, readWritePerms)
-}
-
-func LoadConfiguration(c *cli.Context) error {
+func LoadConfiguration(c *cli.Context) {
 	// Find home directory.
-	home, err := homedir.Dir()
+	home, err := GetHomeDir()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		fmt.Printf("%v", err)
 	}
 
 	context := ""
-
 	if context = c.String(EnvFnContext); context == "" {
-		viper.AddConfigPath(filepath.Join(home, rootConfigPathName))
-		viper.SetConfigName(configName)
+		viper.AddConfigPath(filepath.Join(home, RootConfigPathName))
+		viper.SetConfigName(ConfigName)
 
-		readConfig()
+		if err := readConfig(); err != nil {
+			fmt.Printf("%v: ", err)
+		}
 
 		context = viper.GetString(CurrentContext)
-		if context == "" {
-			fmt.Println("Config file does not contain context")
-			os.Exit(1)
-		}
 	}
 
-	viper.AddConfigPath(filepath.Join(home, rootConfigPathName, contextsPathName))
+	viper.AddConfigPath(filepath.Join(home, RootConfigPathName, ContextsPathName))
 	viper.SetConfigName(context)
-	readConfig()
+
+	if err := readConfig(); err != nil {
+		fmt.Printf("%v \n", err)
+		configFilePath := filepath.Join(home, RootConfigPathName, ContextConfigFileName)
+		configCurrentContext := map[string]string{CurrentContext: "default"}
+		err = WriteYamlFile(configFilePath, configCurrentContext)
+		if err != nil {
+			fmt.Printf("%v \n", err)
+		}
+
+		fmt.Println("current context has been set to default")
+		os.Exit(1)
+	}
+
+	viper.Set(CurrentContext, context)
+}
+
+// WriteYamlFile writes to the yaml file
+func WriteYamlFile(filename string, value map[string]string) error {
+	marshaled, err := yaml.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("%v", err)
+	}
+
+	err = ioutil.WriteFile(filename, marshaled, readWritePerms)
+	if err != nil {
+		return fmt.Errorf("error writing to file %v", err)
+	}
 
 	return nil
 }
 
-func readConfig() {
+func readConfig() error {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("%v", err)
 	}
+	return nil
+}
+
+func GetHomeDir() (string, error) {
+	home, err := homedir.Dir()
+	if err != nil {
+		return "", fmt.Errorf("error getting home directory %v", err)
+	}
+
+	return home, nil
 }

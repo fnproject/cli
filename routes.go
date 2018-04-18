@@ -173,9 +173,13 @@ func routes() cli.Command {
 }
 
 func call() cli.Command {
-	r := routesCmd{client: client.APIClient()}
+	r := routesCmd{}
 
 	return cli.Command{
+		Before: func(c *cli.Context) error {
+			r.client = client.APIClient()
+			return nil
+		},
 		Name:      "call",
 		Usage:     "call a remote function",
 		ArgsUsage: "<app> </path>",

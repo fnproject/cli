@@ -98,6 +98,7 @@ LEARN MORE:
 		logs(),
 		testfn(),
 		buildServer(),
+		contextCmd(),
 	}
 	app.Commands = append(app.Commands, aliasesFn()...)
 
@@ -145,10 +146,7 @@ func prepareCmdArgsValidation(cmds []cli.Command) {
 
 func init() {
 	viper.AutomaticEnv() // read in environment variables that match
-
 	viper.SetEnvPrefix("fn")
-	viper.SetDefault(config.EnvFnAPIURL, "http://localhost:8080/v1")
-
 	config.EnsureConfiguration()
 }
 
