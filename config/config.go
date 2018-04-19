@@ -28,12 +28,17 @@ const (
 	EnvFnToken    = "token"
 	EnvFnAPIURL   = "api_url"
 	EnvFnContext  = "context"
+
+	OracleKeyID         = "key_id"
+	OraclePrivateKey    = "private_key"
+	OracleCompartmentID = "compartment_id"
+	OracleDisableCerts  = "disable_certs"
 )
 
 var defaultRootConfigContents = map[string]string{CurrentContext: "default"}
 var defaultContextConfigContents = map[string]string{
 	ContextProvider: "default",
-	EnvFnAPIURL:     "https://localhost:8080",
+	EnvFnAPIURL:     "http://localhost:8080/v1",
 	EnvFnRegistry:   "",
 }
 

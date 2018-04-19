@@ -21,7 +21,7 @@ if [[ -z "$FN_REGISTRY" ]]; then
 fi
 $fn --version
 
-export FN_API_URL="http://localhost:8080"
+export FN_API_URL="http://localhost:8080/v1"
 
 go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
 
@@ -96,7 +96,7 @@ $fn test
 # Test 'docker' runtime deploy
 cd $WORK_DIR
 funcname="dockerfunc"
-mkdir $funcname 
+mkdir $funcname
 cp ${CUR_DIR}/test/funcfile-docker-rt-tests/testfiles/Dockerfile $funcname/
 cp ${CUR_DIR}/test/funcfile-docker-rt-tests/testfiles/func.go $funcname/
 cd $funcname
@@ -110,7 +110,7 @@ $fn call myapp1 /$funcname
 # grab the route config and see if cpu is in there
 $fn routes inspect myapp1 /$funcname > ./${funcname}.route
 grep "\"cpus\": \"50m\"" ./${funcname}.route
-# todo: would be nice to have a flag to output parseable formats in cli, eg: `fn deploy --output json` would return json with version and other info 
+# todo: would be nice to have a flag to output parseable formats in cli, eg: `fn deploy --output json` would return json with version and other info
 $fn routes create myapp1 /another --image $FN_REGISTRY/$funcname:0.0.2
 $fn call myapp1 /another
 
