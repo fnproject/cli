@@ -16,10 +16,11 @@ import (
 )
 
 const (
-	DefaultFormat = "default"
-	HttpFormat    = "http"
-	JSONFormat    = "json"
-	LocalTestURL  = "http://localhost:8080/myapp/hello"
+	DefaultFormat    = "default"
+	HttpFormat       = "http"
+	JSONFormat       = "json"
+	CloudEventFormat = "cloudevent"
+	LocalTestURL     = "http://localhost:8080/myapp/hello"
 )
 
 func run() cli.Command {
@@ -263,6 +264,8 @@ func handle(format string) handlerFunc {
 		return handleHTTP
 	case JSONFormat:
 		return handleJSON
+	case CloudEventFormat:
+		return handleCloudEvent
 	default:
 		return handleDefault
 	}
@@ -331,6 +334,23 @@ func handleJSON(conf runConfig) (io.Reader, io.Writer, error) {
 	}
 	stdin := strings.NewReader(b.String())
 	stdout := stdoutJSON(conf.stdout)
+	return stdin, stdout, nil
+}
+
+func handleCloudEvent(conf runConfig) (io.Reader, io.Writer, error) {
+	fmt.Println("HANDLE CLOUD EVENT")
+	var b strings.Builder
+	for i := 0; i < conf.runs; i++ {
+		body, err := createCloudEventInput(conf.callID, conf.contentType, conf.deadline, conf.method, conf.url, conf.stdin)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error creating input: %v", err)
+		}
+		fmt.Println("Sending in: ", body)
+		b.WriteString(body)
+		b.Write([]byte("\n"))
+	}
+	stdin := strings.NewReader(b.String())
+	stdout := stdoutCloudEvent(conf.stdout)
 	return stdin, stdout, nil
 }
 
