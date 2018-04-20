@@ -33,8 +33,9 @@ go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
 export FN_API_URL="http://localhost:8080/"
 go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
 
-export FN_API_URL="localhost:8080"
-go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
+# TODO this would be nice, too
+#export FN_API_URL="localhost:8080"
+#go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
 
 # Our test directory
 OS=$(uname -s)
