@@ -1,4 +1,4 @@
-# Fn CLI (Rik Fork)
+# Fn CLI
 [![CircleCI](https://circleci.com/gh/fnproject/cli.svg?style=svg)](https://circleci.com/gh/fnproject/cli)
 
 ## Install
