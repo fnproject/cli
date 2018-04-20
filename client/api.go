@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"strings"
 	"syscall"
 
 	"github.com/fnproject/cli/config"
@@ -27,6 +28,14 @@ func HostURL() *url.URL {
 	url, err := url.Parse(apiURL)
 	if err != nil {
 		panic(fmt.Sprintf("Unparsable FN API Url: %s. Error: %s", apiURL, err))
+	}
+
+	// TODO is this ok for providers? idk, this could be specific. this allows `/v*`
+	if !strings.HasPrefix(url.Path, "/v") {
+		url.Path = "/v1"
+	}
+	if url.Scheme == "" {
+		url.Scheme = "http"
 	}
 
 	return url
