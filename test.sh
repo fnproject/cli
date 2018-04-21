@@ -21,21 +21,8 @@ if [[ -z "$FN_REGISTRY" ]]; then
 fi
 $fn --version
 
-# test the 'full' way
-export FN_API_URL="http://localhost:8080/v1"
-
+export FN_API_URL="localhost:8080"
 go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
-
-# test various 'stripped' ways
-export FN_API_URL="http://localhost:8080"
-go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
-
-export FN_API_URL="http://localhost:8080/"
-go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
-
-# TODO this would be nice, too
-#export FN_API_URL="localhost:8080"
-#go test $(go list ./... | grep -v /vendor/ | grep -v /tests)
 
 # Our test directory
 OS=$(uname -s)

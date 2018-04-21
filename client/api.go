@@ -23,19 +23,32 @@ func Host() string {
 }
 
 func HostURL() *url.URL {
-	apiURL := viper.GetString(config.EnvFnAPIURL)
+	return hostURL(viper.GetString(config.EnvFnAPIURL))
+}
 
-	url, err := url.Parse(apiURL)
+func hostURL(urlStr string) *url.URL {
+
+	if !strings.Contains(urlStr, "://") {
+		urlStr = fmt.Sprint("http://", urlStr)
+	}
+
+	url, err := url.Parse(urlStr)
 	if err != nil {
-		panic(fmt.Sprintf("Unparsable FN API Url: %s. Error: %s", apiURL, err))
+		panic(fmt.Sprintf("Unparsable FN API Url: %s. Error: %s", urlStr, err))
 	}
 
-	// TODO is this ok for providers? idk, this could be specific. this allows `/v*`
-	if !strings.HasPrefix(url.Path, "/v") {
-		url.Path = "/v1"
+	if url.Port() == "" {
+		if url.Scheme == "http" {
+			url.Host = fmt.Sprint(url.Host, ":80")
+		}
+		if url.Scheme == "https" {
+			url.Host = fmt.Sprint(url.Host, ":443")
+		}
 	}
-	if url.Scheme == "" {
-		url.Scheme = "http"
+
+	//maintain backwards compatibility with first version FN_API_URL env vars
+	if url.Path == "" || url.Path == "/" {
+		url.Path = "/v1"
 	}
 
 	return url
