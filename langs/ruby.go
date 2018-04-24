@@ -99,9 +99,6 @@ def myhandler(context, input)
 	STDERR.puts "call_id: " + context.call_id
 	name = "World"
 	if input != nil
-		STDERR.puts 'CONTEXT: #{context}'
-		STDERR.puts "INPUT: #{input}"
-		STDERR.puts "CT: #{context.content_type}"
 		if context.content_type == "application/json"
 			nin = input['name']
 			if nin && nin != ""
