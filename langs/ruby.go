@@ -98,9 +98,17 @@ const (
 def myhandler(context, input)
 	STDERR.puts "call_id: " + context.call_id
 	name = "World"
-	nin = input['name']
-	if nin && nin != ""
-		name = nin
+	if input != nil
+		if context.content_type == "application/json"
+			nin = input['name']
+			if nin && nin != ""
+				name = nin
+			end
+		elsif context.content_type == "text/plain"
+			name = input
+		else
+			raise "Invalid input, expecting JSON!"
+		end
 	end
 	return {message: "Hello " + name.to_s + "!"}
 end
@@ -111,7 +119,8 @@ FDK.handle(:myhandler)
 	rubyGemfileBoilerplate = `source 'https://rubygems.org'
 
 gem 'json', '~> 2.0'
-gem 'fdk', '>= 0.0.8', '< 2.0.0'
+gem 'fdk', '>= 0.0.11', '< 2.0.0'
+gem 'yajl-ruby', require: 'yajl'
 `
 
 	// Could use same test for most langs
