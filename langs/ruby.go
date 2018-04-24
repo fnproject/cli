@@ -99,11 +99,16 @@ def myhandler(context, input)
 	STDERR.puts "call_id: " + context.call_id
 	name = "World"
 	if input != nil
-		if input.respond_to?(:has_key?)
+		STDERR.puts 'CONTEXT: #{context}'
+		STDERR.puts "INPUT: #{input}"
+		STDERR.puts "CT: #{context.content_type}"
+		if context.content_type == "application/json"
 			nin = input['name']
 			if nin && nin != ""
 				name = nin
 			end
+		elsif context.content_type == "text/plain"
+			name = input
 		else
 			raise "Invalid input, expecting JSON!"
 		end
