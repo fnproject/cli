@@ -338,14 +338,12 @@ func handleJSON(conf runConfig) (io.Reader, io.Writer, error) {
 }
 
 func handleCloudEvent(conf runConfig) (io.Reader, io.Writer, error) {
-	fmt.Println("HANDLE CLOUD EVENT")
 	var b strings.Builder
 	for i := 0; i < conf.runs; i++ {
 		body, err := createCloudEventInput(conf.callID, conf.contentType, conf.deadline, conf.method, conf.url, conf.stdin)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error creating input: %v", err)
 		}
-		fmt.Println("Sending in: ", body)
 		b.WriteString(body)
 		b.Write([]byte("\n"))
 	}

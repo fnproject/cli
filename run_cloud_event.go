@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 )
@@ -49,7 +50,6 @@ func createCloudEventInput(callID, contentType, deadline string, method string, 
 			"deadline": deadline,
 		},
 	}
-	fmt.Println("INPUT:", string(input))
 	if len(input) == 0 {
 		// nada
 		// todo: should we leave as null, pass in empty string, omitempty or some default for the content type, eg: {} for json?
@@ -84,20 +84,20 @@ func stdoutCloudEvent(stdout io.Writer) io.Writer {
 			jsout := &CloudEvent{}
 			err = dec.Decode(jsout)
 			if err != nil {
-				fmt.Println("error decoding", err)
+				fmt.Fprintln(os.Stderr, "error decoding", err)
 				return
 			}
 			if jsout.ContentType == "application/json" {
 				d, err := json.Marshal(jsout.Data)
 				if err != nil {
-					fmt.Printf("Error marshalling function response 'data' to json. %v\n", err)
+					fmt.Fprintf(os.Stderr, "Error marshalling function response 'data' to json. %v\n", err)
 					return
 				}
 				stdout.Write(d)
 			} else if jsout.ContentType == "text/plain" {
 				stdout.Write([]byte(jsout.Data.(string)))
 			} else {
-				fmt.Printf("Error: Unknown content type: %v\n", jsout.ContentType)
+				fmt.Fprintf(os.Stderr, "Error: Unknown content type: %v\n", jsout.ContentType)
 				return
 			}
 
