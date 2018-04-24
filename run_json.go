@@ -23,7 +23,6 @@ type CallResponseHTTP struct {
 	Headers    http.Header `json:"headers,omitempty"`
 }
 
-// jsonIn We're not using this since we're writing JSON directly right now, but trying to keep it current anyways, much easier to read/follow
 type jsonIn struct {
 	CallID      string          `json:"call_id"`
 	ContentType string          `json:"content_type"`
