@@ -67,6 +67,11 @@ func contextCmd() cli.Command {
 				ArgsUsage: "<context>",
 				Action:    set,
 			},
+			{
+				Name:   "unset",
+				Usage:  "unset current-context",
+				Action: unset,
+			},
 		},
 	}
 }
@@ -157,13 +162,6 @@ func delete(c *cli.Context) error {
 func set(c *cli.Context) error {
 	context := c.Args().Get(0)
 
-	home, err := config.GetHomeDir()
-	if err != nil {
-		return fmt.Errorf("%v", err)
-	}
-
-	configFilePath := filepath.Join(home, config.RootConfigPathName, config.ContextConfigFileName)
-
 	if check, err := checkContextFileExists(context); !check {
 		if err != nil {
 			return fmt.Errorf("%v", err)
@@ -175,15 +173,27 @@ func set(c *cli.Context) error {
 		return fmt.Errorf("context %v already set", context)
 	}
 
+	err := wrtieToConfigFile(context)
+	if err != nil {
+		return fmt.Errorf("%v", err)
+	}
 	viper.Set(config.CurrentContext, context)
 
-	configCurrentContext := map[string]string{config.CurrentContext: context}
-	err = config.WriteYamlFile(configFilePath, configCurrentContext)
+	fmt.Printf("Successfully set context: %v \n", context)
+	return nil
+}
+
+func unset(c *cli.Context) error {
+	if currentContext := viper.GetString(config.CurrentContext); currentContext == "" {
+		return fmt.Errorf("no context set")
+	}
+
+	err := wrtieToConfigFile("")
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
 
-	fmt.Printf("Successfully set context: %v \n", context)
+	fmt.Printf("Successfully unset current context \n")
 	return nil
 }
 
@@ -258,4 +268,21 @@ func getAvailableContexts() ([]os.FileInfo, error) {
 	}
 
 	return files, nil
+}
+
+func wrtieToConfigFile(value string) error {
+	home, err := config.GetHomeDir()
+	if err != nil {
+		return fmt.Errorf("%v", err)
+	}
+
+	configFilePath := filepath.Join(home, config.RootConfigPathName, config.ContextConfigFileName)
+
+	configCurrentContext := map[string]string{config.CurrentContext: value}
+	err = config.WriteYamlFile(configFilePath, configCurrentContext)
+	if err != nil {
+		return fmt.Errorf("%v", err)
+	}
+
+	return nil
 }
