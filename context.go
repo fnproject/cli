@@ -77,7 +77,7 @@ func create(c *cli.Context) error {
 	re := regexp.MustCompile("[^a-zA-Z0-9_-]+")
 
 	for range re.FindAllString(context, -1) {
-		fmt.Println("please enter a context name with ASCII characters only")
+		fmt.Fprintf(os.Stderr, "please enter a context name with ASCII characters only \n")
 		os.Exit(1)
 	}
 

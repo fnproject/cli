@@ -61,7 +61,7 @@ func EnsureConfiguration() {
 	rootConfigPath := filepath.Join(home, RootConfigPathName)
 	if _, err := os.Stat(rootConfigPath); os.IsNotExist(err) {
 		if err = os.Mkdir(rootConfigPath, readWritePerms); err != nil {
-			fmt.Printf("error creating .fn directory %v", err)
+			fmt.Fprintf(os.Stderr, "error creating .fn directory %v \n", err)
 		}
 	}
 
@@ -69,19 +69,19 @@ func EnsureConfiguration() {
 	if _, err := os.Stat(contextConfigFilePath); os.IsNotExist(err) {
 		_, err = os.Create(contextConfigFilePath)
 		if err != nil {
-			fmt.Printf("error creating config.yaml file %v", err)
+			fmt.Fprintf(os.Stderr, "error creating config.yaml file %v \n", err)
 		}
 
 		err = WriteYamlFile(contextConfigFilePath, DefaultRootConfigContents)
 		if err != nil {
-			fmt.Printf("%v", err)
+			fmt.Fprintf(os.Stderr, "%v \n", err)
 		}
 	}
 
 	contextsPath := filepath.Join(rootConfigPath, ContextsPathName)
 	if _, err := os.Stat(contextsPath); os.IsNotExist(err) {
 		if err = os.Mkdir(contextsPath, readWritePerms); err != nil {
-			fmt.Printf("error creating contexts directory %v", err)
+			fmt.Fprintf(os.Stderr, "error creating contexts directory %v \n", err)
 		}
 	}
 
@@ -89,12 +89,12 @@ func EnsureConfiguration() {
 	if _, err := os.Stat(defaultContextPath); os.IsNotExist(err) {
 		_, err = os.Create(defaultContextPath)
 		if err != nil {
-			fmt.Printf("error creating default.yaml context file %v", err)
+			fmt.Fprintf(os.Stderr, "error creating default.yaml context file %v \n", err)
 		}
 
 		err = WriteYamlFile(defaultContextPath, DefaultContextConfigContents)
 		if err != nil {
-			fmt.Printf("%v", err)
+			fmt.Fprintf(os.Stderr, "%v \n", err)
 		}
 	}
 }
@@ -103,7 +103,7 @@ func LoadConfiguration(c *cli.Context) {
 	// Find home directory.
 	home, err := GetHomeDir()
 	if err != nil {
-		fmt.Printf("%v", err)
+		fmt.Fprintf(os.Stderr, "%v \n", err)
 	}
 
 	context := ""
@@ -112,7 +112,7 @@ func LoadConfiguration(c *cli.Context) {
 		viper.SetConfigName(ConfigName)
 
 		if err := readConfig(); err != nil {
-			fmt.Printf("%v: ", err)
+			fmt.Fprintf(os.Stderr, "%v \n", err)
 		}
 
 		context = viper.GetString(CurrentContext)
@@ -122,12 +122,12 @@ func LoadConfiguration(c *cli.Context) {
 	viper.SetConfigName(context)
 
 	if err := readConfig(); err != nil {
-		fmt.Printf("%v \n", err)
+		fmt.Fprintf(os.Stderr, "%v \n", err)
 		configFilePath := filepath.Join(home, RootConfigPathName, ContextConfigFileName)
 		configCurrentContext := map[string]string{CurrentContext: "default"}
 		err = WriteYamlFile(configFilePath, configCurrentContext)
 		if err != nil {
-			fmt.Printf("%v \n", err)
+			fmt.Fprintf(os.Stderr, "%v \n", err)
 		}
 
 		fmt.Println("current context has been set to default")

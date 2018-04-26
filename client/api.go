@@ -31,7 +31,7 @@ func hostURL(urlStr string) *url.URL {
 	apiUrl := os.Getenv("FN_API_URL")
 	currentContext := viper.Get(config.CurrentContext)
 	if apiUrl != "" && currentContext != "" {
-		fmt.Println("Warning: environment variable FN_API_URL is overriding configured context property api_url from current-context")
+		fmt.Fprintf(os.Stderr, "Warning: environment variable FN_API_URL is overriding configured context property api_url from current-context \n")
 	}
 
 	if !strings.Contains(urlStr, "://") {
@@ -41,7 +41,7 @@ func hostURL(urlStr string) *url.URL {
 	url, err := url.Parse(urlStr)
 
 	if err != nil {
-		fmt.Printf("Unparsable FN API Url: %s. Error: %s", urlStr, err)
+		fmt.Fprintf(os.Stderr, "Unparsable FN API Url: %s. Error: %s \n", urlStr, err)
 		os.Exit(1)
 	}
 
