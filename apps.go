@@ -137,13 +137,8 @@ func (a *appsCmd) list(c *cli.Context) error {
 			switch e := err.(type) {
 			case *apiapps.GetAppsAppNotFound:
 				return fmt.Errorf("%v", e.Payload.Error.Message)
-			case *apiapps.GetAppsAppDefault:
-				return fmt.Errorf("%v", e.Payload.Error.Message)
-			case *apiapps.GetAppsDefault:
-				// this is the one getting called, not sure what the one above is?
-				return fmt.Errorf("%v", e.Payload.Error.Message)
 			default:
-				return fmt.Errorf("%v", err)
+				return err
 			}
 		}
 
@@ -191,10 +186,8 @@ func (a *appsCmd) create(c *cli.Context) error {
 			return fmt.Errorf("%v", e.Payload.Error.Message)
 		case *apiapps.PostAppsConflict:
 			return fmt.Errorf("%v", e.Payload.Error.Message)
-		case *apiapps.PostAppsDefault:
-			return fmt.Errorf("%v", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("%v", err)
+			return err
 		}
 	}
 
@@ -310,10 +303,8 @@ func (a *appsCmd) patchApp(appName string, app *models.App) error {
 			return errors.New(e.Payload.Error.Message)
 		case *apiapps.PatchAppsAppNotFound:
 			return errors.New(e.Payload.Error.Message)
-		case *apiapps.PatchAppsAppDefault:
-			return errors.New(e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("%v", err)
+			return err
 		}
 	}
 
@@ -337,10 +328,8 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 		switch e := err.(type) {
 		case *apiapps.GetAppsAppNotFound:
 			return fmt.Errorf("%v", e.Payload.Error.Message)
-		case *apiapps.GetAppsAppDefault:
-			return fmt.Errorf("%v", e.Payload.Error.Message)
 		default:
-			return fmt.Errorf("%v", err)
+			return err
 		}
 	}
 
@@ -389,10 +378,8 @@ func (a *appsCmd) delete(c *cli.Context) error {
 		switch e := err.(type) {
 		case *apiapps.DeleteAppsAppNotFound:
 			return errors.New(e.Payload.Error.Message)
-		case *apiapps.DeleteAppsAppDefault:
-			return errors.New(e.Payload.Error.Message)
 		}
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	fmt.Println("App", appName, "deleted")
