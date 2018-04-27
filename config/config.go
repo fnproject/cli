@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
@@ -53,16 +54,28 @@ type ContextFile struct {
 	EnvFnRegistry   string `yaml:"registry"`
 }
 
+// Init : Initialise/load config direc
+func Init() error {
+	viper.AutomaticEnv() // read in environment variables that match
+	viper.SetEnvPrefix("fn")
+
+	replacer := strings.NewReplacer("-", "_")
+	viper.SetEnvKeyReplacer(replacer)
+
+	viper.SetDefault(EnvFnAPIURL, defaultLocalAPIURL)
+
+	return ensureConfiguration()
+}
+
 // EnsureConfiguration ensures context configuration directory hierarchy is in place, if not
 // creates it and the default context configuration files
-func EnsureConfiguration() error {
+func ensureConfiguration() error {
 	home := GetHomeDir()
 
 	rootConfigPath := filepath.Join(home, rootConfigPathName)
 	if _, err := os.Stat(rootConfigPath); os.IsNotExist(err) {
 		if err = os.Mkdir(rootConfigPath, readWritePerms); err != nil {
 			return fmt.Errorf("error creating .fn directory %v", err)
-
 		}
 	}
 

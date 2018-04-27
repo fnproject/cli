@@ -148,13 +148,7 @@ func prepareCmdArgsValidation(cmds []cli.Command) {
 }
 
 func init() {
-	viper.AutomaticEnv() // read in environment variables that match
-	viper.SetEnvPrefix("fn")
-
-	replacer := strings.NewReplacer("-", "_")
-	viper.SetEnvKeyReplacer(replacer)
-
-	err := config.EnsureConfiguration()
+	err := config.Init()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		os.Exit(1)
