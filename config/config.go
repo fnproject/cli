@@ -14,12 +14,13 @@ import (
 )
 
 const (
-	RootConfigPathName     = ".fn"
-	ContextsPathName       = "contexts"
-	ConfigName             = "config"
-	ContextConfigFileName  = "config.yaml"
-	DefaultContextFileName = "default.yaml"
-	DefaultLocalApiUrl     = "http://localhost:8080/v1"
+	rootConfigPathName = ".fn"
+
+	contextsPathName       = "contexts"
+	configName             = "config"
+	contextConfigFileName  = "config.yaml"
+	defaultContextFileName = "default.yaml"
+	defaultLocalAPIURL     = "http://localhost:8080/v1"
 	DefaultProvider        = "default"
 
 	readWritePerms = os.FileMode(0755)
@@ -29,25 +30,26 @@ const (
 
 	EnvFnRegistry = "registry"
 	EnvFnToken    = "token"
-	EnvFnAPIURL   = "api_url"
+	EnvFnAPIURL   = "api-url"
 	EnvFnContext  = "context"
 
-	OracleKeyID         = "key_id"
-	OraclePrivateKey    = "private_key"
-	OracleCompartmentID = "compartment_id"
-	OracleDisableCerts  = "disable_certs"
+	OracleKeyID         = "key-id"
+	OraclePrivateKey    = "private-key"
+	OracleCompartmentID = "compartment-id"
+	OracleDisableCerts  = "disable-certs"
 )
 
-var DefaultRootConfigContents = map[string]string{CurrentContext: ""}
-var DefaultContextConfigContents = map[string]string{
+var defaultRootConfigContents = map[string]string{CurrentContext: ""}
+var defaultContextConfigContents = map[string]string{
 	ContextProvider: DefaultProvider,
-	EnvFnAPIURL:     DefaultLocalApiUrl,
+	EnvFnAPIURL:     defaultLocalAPIURL,
 	EnvFnRegistry:   "",
 }
 
+// ContextFile defines the internal structure of a default context
 type ContextFile struct {
 	ContextProvider string `yaml:"provider"`
-	EnvFnAPIURL     string `yaml:"api_url"`
+	EnvFnAPIURL     string `yaml:"api-url"`
 	EnvFnRegistry   string `yaml:"registry"`
 }
 
@@ -56,7 +58,7 @@ type ContextFile struct {
 func EnsureConfiguration() error {
 	home := GetHomeDir()
 
-	rootConfigPath := filepath.Join(home, RootConfigPathName)
+	rootConfigPath := filepath.Join(home, rootConfigPathName)
 	if _, err := os.Stat(rootConfigPath); os.IsNotExist(err) {
 		if err = os.Mkdir(rootConfigPath, readWritePerms); err != nil {
 			return fmt.Errorf("error creating .fn directory %v", err)
@@ -64,34 +66,34 @@ func EnsureConfiguration() error {
 		}
 	}
 
-	contextConfigFilePath := filepath.Join(rootConfigPath, ContextConfigFileName)
+	contextConfigFilePath := filepath.Join(rootConfigPath, contextConfigFileName)
 	if _, err := os.Stat(contextConfigFilePath); os.IsNotExist(err) {
 		_, err = os.Create(contextConfigFilePath)
 		if err != nil {
 			return fmt.Errorf("error creating config.yaml file %v", err)
 		}
 
-		err = WriteYamlFile(contextConfigFilePath, DefaultRootConfigContents)
+		err = WriteYamlFile(contextConfigFilePath, defaultRootConfigContents)
 		if err != nil {
 			return err
 		}
 	}
 
-	contextsPath := filepath.Join(rootConfigPath, ContextsPathName)
+	contextsPath := filepath.Join(rootConfigPath, contextsPathName)
 	if _, err := os.Stat(contextsPath); os.IsNotExist(err) {
 		if err = os.Mkdir(contextsPath, readWritePerms); err != nil {
 			return fmt.Errorf("error creating contexts directory %v", err)
 		}
 	}
 
-	defaultContextPath := filepath.Join(contextsPath, DefaultContextFileName)
+	defaultContextPath := filepath.Join(contextsPath, defaultContextFileName)
 	if _, err := os.Stat(defaultContextPath); os.IsNotExist(err) {
 		_, err = os.Create(defaultContextPath)
 		if err != nil {
 			return fmt.Errorf("error creating default.yaml context file %v", err)
 		}
 
-		err = WriteYamlFile(defaultContextPath, DefaultContextConfigContents)
+		err = WriteYamlFile(defaultContextPath, defaultContextConfigContents)
 		if err != nil {
 			return err
 		}
@@ -100,13 +102,19 @@ func EnsureConfiguration() error {
 	return nil
 }
 
+// GetContextsPath : Returns the path to the contexts directory.
+func GetContextsPath() string {
+	contextsPath := filepath.Join(rootConfigPathName, contextsPathName)
+	return contextsPath
+}
+
 func LoadConfiguration(c *cli.Context) error {
 	// Find home directory.
 	home := GetHomeDir()
 	context := ""
 	if context = c.String(EnvFnContext); context == "" {
-		viper.AddConfigPath(filepath.Join(home, RootConfigPathName))
-		viper.SetConfigName(ConfigName)
+		viper.AddConfigPath(filepath.Join(home, rootConfigPathName))
+		viper.SetConfigName(configName)
 
 		if err := viper.ReadInConfig(); err != nil {
 			return err
@@ -114,7 +122,7 @@ func LoadConfiguration(c *cli.Context) error {
 		context = viper.GetString(CurrentContext)
 	}
 
-	viper.AddConfigPath(filepath.Join(home, RootConfigPathName, ContextsPathName))
+	viper.AddConfigPath(filepath.Join(home, rootConfigPathName, contextsPathName))
 	viper.SetConfigName(context)
 
 	if err := viper.ReadInConfig(); err != nil {
@@ -149,7 +157,7 @@ func WriteYamlFile(filename string, value map[string]string) error {
 func WriteCurrentContextToConfigFile(value string) error {
 	home := GetHomeDir()
 
-	configFilePath := filepath.Join(home, RootConfigPathName, ContextConfigFileName)
+	configFilePath := filepath.Join(home, rootConfigPathName, contextConfigFileName)
 	file, err := decodeYAMLFile(configFilePath)
 	if err != nil {
 		return err

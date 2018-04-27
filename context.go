@@ -18,7 +18,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var contextsPath = filepath.Join(config.RootConfigPathName, config.ContextsPathName)
+var contextsPath = config.GetContextsPath()
 
 func contextCmd() cli.Command {
 	return cli.Command{
