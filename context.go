@@ -19,7 +19,6 @@ import (
 )
 
 var contextsPath = filepath.Join(config.RootConfigPathName, config.ContextsPathName)
-var defaultContextPath string
 
 func contextCmd() cli.Command {
 	return cli.Command{
@@ -79,11 +78,9 @@ func contextCmd() cli.Command {
 func create(c *cli.Context) error {
 	context := c.Args().Get(0)
 
-	re := regexp.MustCompile("[^a-zA-Z0-9_-]+")
-
-	for range re.FindAllString(context, -1) {
-		fmt.Fprintf(os.Stderr, "please enter a context name with ASCII characters only \n")
-		os.Exit(1)
+	err := ValidateContextName(context)
+	if err != nil {
+		return err
 	}
 
 	provider := config.DefaultProvider
@@ -91,7 +88,7 @@ func create(c *cli.Context) error {
 		provider = cProvider
 	}
 
-	apiUrl := config.DefaultLocalApiUrl
+	apiUrl := ""
 	if cApiUrl := c.String("api-url"); cApiUrl != "" {
 		apiUrl = cApiUrl
 	}
@@ -103,18 +100,14 @@ func create(c *cli.Context) error {
 
 	if check, err := checkContextFileExists(context); check {
 		if err != nil {
-			return fmt.Errorf("%v", err)
+			return err
 		}
 		return errors.New("context already exists")
 
 	}
 	path, err := createFilePath(context)
 	if err != nil {
-		return fmt.Errorf("%v", err)
-	}
-	_, err = os.Create(path)
-	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	contextValues := map[string]string{
@@ -125,7 +118,7 @@ func create(c *cli.Context) error {
 
 	err = config.WriteYamlFile(path, contextValues)
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	fmt.Printf("Successfully created context: %v \n", context)
@@ -137,7 +130,7 @@ func delete(c *cli.Context) error {
 
 	if check, err := checkContextFileExists(context); !check {
 		if err != nil {
-			return fmt.Errorf("%v", err)
+			return err
 		}
 		return errors.New("context file not found")
 	}
@@ -152,9 +145,14 @@ func delete(c *cli.Context) error {
 
 	path, err := createFilePath(context)
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
-	os.Remove(path)
+
+	err = os.Remove(path)
+	if err != nil {
+		return err
+	}
+
 	fmt.Printf("Context %v deleted \n", context)
 	return nil
 }
@@ -164,7 +162,7 @@ func set(c *cli.Context) error {
 
 	if check, err := checkContextFileExists(context); !check {
 		if err != nil {
-			return fmt.Errorf("%v", err)
+			return err
 		}
 		return errors.New("context file not found")
 	}
@@ -173,9 +171,9 @@ func set(c *cli.Context) error {
 		return fmt.Errorf("context %v already set", context)
 	}
 
-	err := wrtieToConfigFile(context)
+	err := config.WriteCurrentContextToConfigFile(context)
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 	viper.Set(config.CurrentContext, context)
 
@@ -185,12 +183,12 @@ func set(c *cli.Context) error {
 
 func unset(c *cli.Context) error {
 	if currentContext := viper.GetString(config.CurrentContext); currentContext == "" {
-		return fmt.Errorf("no context set")
+		return errors.New("no context set")
 	}
 
-	err := wrtieToConfigFile("")
+	err := config.WriteCurrentContextToConfigFile("")
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	fmt.Printf("Successfully unset current context \n")
@@ -201,7 +199,7 @@ func list(c *cli.Context) error {
 	currentContext := viper.GetString(config.CurrentContext)
 	files, err := getAvailableContexts()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
@@ -209,20 +207,18 @@ func list(c *cli.Context) error {
 
 	for _, f := range files {
 		current := ""
-
-		home, err := config.GetHomeDir()
-		if err != nil {
-			return fmt.Errorf("%v", err)
-		}
-
+		home := config.GetHomeDir()
 		path := filepath.Join(home, contextsPath, f.Name())
 		yamlFile, err := ioutil.ReadFile(path)
 		if err != nil {
-			return fmt.Errorf("%v", err)
+			return err
 		}
 
 		v := config.ContextFile{}
 		err = yaml.Unmarshal(yamlFile, &v)
+		if err != nil {
+			return err
+		}
 
 		name := strings.Replace(f.Name(), ".yaml", "", 1)
 		if currentContext == name {
@@ -236,10 +232,7 @@ func list(c *cli.Context) error {
 
 func createFilePath(filename string) (string, error) {
 	contextFileName := filename + ".yaml"
-	home, err := config.GetHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("%v", err)
-	}
+	home := config.GetHomeDir()
 	path := filepath.Join(home, contextsPath, contextFileName)
 	return path, nil
 }
@@ -247,21 +240,17 @@ func createFilePath(filename string) (string, error) {
 func checkContextFileExists(filename string) (bool, error) {
 	path, err := createFilePath(filename)
 	if err != nil {
-		return false, fmt.Errorf("%v", err)
+		return false, err
 	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return false, nil
+		return false, err
 	}
 	return true, nil
 }
 
 func getAvailableContexts() ([]os.FileInfo, error) {
-	home, err := config.GetHomeDir()
-	if err != nil {
-		return nil, fmt.Errorf("%v", err)
-	}
-
+	home := config.GetHomeDir()
 	files, err := ioutil.ReadDir(filepath.Join(home, contextsPath))
 	if err != nil {
 		return nil, err
@@ -270,19 +259,11 @@ func getAvailableContexts() ([]os.FileInfo, error) {
 	return files, nil
 }
 
-func wrtieToConfigFile(value string) error {
-	home, err := config.GetHomeDir()
-	if err != nil {
-		return fmt.Errorf("%v", err)
+func ValidateContextName(context string) error {
+	re := regexp.MustCompile("[^a-zA-Z0-9_-]+")
+
+	for range re.FindAllString(context, -1) {
+		return errors.New("please enter a context name with ASCII characters only")
 	}
-
-	configFilePath := filepath.Join(home, config.RootConfigPathName, config.ContextConfigFileName)
-
-	configCurrentContext := map[string]string{config.CurrentContext: value}
-	err = config.WriteYamlFile(configFilePath, configCurrentContext)
-	if err != nil {
-		return fmt.Errorf("%v", err)
-	}
-
 	return nil
 }

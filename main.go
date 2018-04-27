@@ -39,7 +39,10 @@ func newFn() *cli.App {
 	app.Authors = []cli.Author{{Name: "Fn Project"}}
 	app.Description = "Fn command line tool"
 	app.Before = func(c *cli.Context) error {
-		config.LoadConfiguration(c)
+		err := config.LoadConfiguration(c)
+		if err != nil {
+			return err
+		}
 		commandArgOverrides(c)
 		return nil
 	}
@@ -147,7 +150,11 @@ func prepareCmdArgsValidation(cmds []cli.Command) {
 func init() {
 	viper.AutomaticEnv() // read in environment variables that match
 	viper.SetEnvPrefix("fn")
-	config.EnsureConfiguration()
+	err := config.EnsureConfiguration()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+		os.Exit(1)
+	}
 }
 
 func commandArgOverrides(c *cli.Context) {
