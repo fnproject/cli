@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -333,9 +332,6 @@ func isstale(path string) bool {
 }
 
 func (p *deploycmd) updateAppConfig(appf *appfile) error {
-	log.Println(appf.Name, "Hi james")
-	log.Println(appf.Config)
-
 	param := clientApps.NewPatchAppsAppParams()
 	param.App = appf.Name
 	param.Body = &models.AppWrapper{
