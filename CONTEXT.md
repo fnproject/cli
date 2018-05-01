@@ -43,19 +43,19 @@ $ fn context create <context>
 $ fn context create <context> --api-url foo --provider bar --registry <dockerhub-username>
 ```
 
-### Setting a Context 
+### Using a Context
 
-To set a context use `s` or `set`.
+To use a context use `u` or `use`.
 
 ```
-$ fn context set <context>
+$ fn context use <context>
 ```
 
 ### Deleting a Context 
  
 To delete a context use `d` or `delete`.
 
-_You can not delete the currently set context or the default context as it is protected._
+_You can not delete the currently used context or the default context as it is protected._
 
 ```
 $ fn context delete <context>
