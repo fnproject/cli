@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 	"syscall"
 
@@ -27,14 +28,15 @@ func HostURL() *url.URL {
 }
 
 func hostURL(urlStr string) *url.URL {
-
 	if !strings.Contains(urlStr, "://") {
 		urlStr = fmt.Sprint("http://", urlStr)
 	}
 
 	url, err := url.Parse(urlStr)
+
 	if err != nil {
-		panic(fmt.Sprintf("Unparsable FN API Url: %s. Error: %s", urlStr, err))
+		fmt.Fprintf(os.Stderr, "Unparsable FN API Url: %s. Error: %s \n", urlStr, err)
+		os.Exit(1)
 	}
 
 	if url.Port() == "" {
