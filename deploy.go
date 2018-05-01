@@ -153,22 +153,30 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *appfile) 
 		}
 	}
 
-	err = p.deployFunc(c, appName, wd, fpath, ff)
-	if err != nil {
-		return err
-	}
-
 	if appf != nil {
 		err = p.updateAppConfig(appf)
 		if err != nil {
 			return fmt.Errorf("failed to update app config: %v", err)
 		}
 	}
+
+	err = p.deployFunc(c, appName, wd, fpath, ff)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // deployAll deploys all functions in an app.
 func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) error {
+	if appf != nil {
+		err := p.updateAppConfig(appf)
+		if err != nil {
+			return fmt.Errorf("failed to update app config: %v", err)
+		}
+	}
+
 	wd := getWd()
 
 	var funcFound bool
@@ -214,13 +222,6 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 
 	if !funcFound {
 		return errors.New("no functions found to deploy")
-	}
-
-	if appf != nil {
-		err := p.updateAppConfig(appf)
-		if err != nil {
-			return fmt.Errorf("failed to update app config: %v", err)
-		}
 	}
 
 	return nil
@@ -341,5 +342,19 @@ func (p *deploycmd) updateAppConfig(appf *appfile) error {
 	}
 
 	_, err := p.Apps.PatchAppsApp(param)
-	return err
+	if err != nil {
+		params := clientApps.NewPostAppsParams()
+		param.Body = &models.AppWrapper{
+			App: &models.App{
+				Name:   appf.Name,
+				Config: appf.Config,
+			},
+		}
+
+		_, err = p.Apps.PostApps(params)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
