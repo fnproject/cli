@@ -60,11 +60,11 @@ func contextCmd() cli.Command {
 				Action:  list,
 			},
 			{
-				Name:      "set",
-				Aliases:   []string{"s"},
-				Usage:     "set context for future invocations",
+				Name:      "use",
+				Aliases:   []string{"u"},
+				Usage:     "use context for future invocations",
 				ArgsUsage: "<context>",
-				Action:    set,
+				Action:    use,
 			},
 			{
 				Name:   "unset",
@@ -157,7 +157,7 @@ func delete(c *cli.Context) error {
 	return nil
 }
 
-func set(c *cli.Context) error {
+func use(c *cli.Context) error {
 	context := c.Args().Get(0)
 
 	if check, err := checkContextFileExists(context); !check {
@@ -168,7 +168,7 @@ func set(c *cli.Context) error {
 	}
 
 	if context == viper.GetString(config.CurrentContext) {
-		return fmt.Errorf("context %v already set", context)
+		return fmt.Errorf("context %v currently in use", context)
 	}
 
 	err := config.WriteCurrentContextToConfigFile(context)
@@ -177,13 +177,13 @@ func set(c *cli.Context) error {
 	}
 	viper.Set(config.CurrentContext, context)
 
-	fmt.Printf("Successfully set context: %v \n", context)
+	fmt.Printf("Successfully using context: %v \n", context)
 	return nil
 }
 
 func unset(c *cli.Context) error {
 	if currentContext := viper.GetString(config.CurrentContext); currentContext == "" {
-		return errors.New("no context set")
+		return errors.New("no context currently in use")
 	}
 
 	err := config.WriteCurrentContextToConfigFile("")
