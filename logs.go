@@ -30,7 +30,7 @@ func logs() cli.Command {
 			{
 				Name:      "get",
 				Aliases:   []string{"g"},
-				Usage:     "get logs for a call. Must provide call_id or last to retrieve the most recent calls logs.",
+				Usage:     "get logs for a call. Must provide call_id or last (l) to retrieve the most recent calls logs.",
 				ArgsUsage: "<app> <call-id>",
 				Action:    c.get,
 			},
@@ -40,7 +40,7 @@ func logs() cli.Command {
 
 func (log *logsCmd) get(ctx *cli.Context) error {
 	app, callID := ctx.Args().Get(0), ctx.Args().Get(1)
-	if callID == "last" {
+	if callID == "last" || callID == "l" {
 		params := ccall.GetAppsAppCallsParams{
 			App:     app,
 			Context: context.Background(),
