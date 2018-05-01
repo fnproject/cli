@@ -342,18 +342,3 @@ func appNamePath(img string) (string, string) {
 	}
 	return img[:sep], img[sep : sep+tag]
 }
-
-func mergeConfigs(configToApply map[string]string, configToKeep map[string]string) map[string]string {
-	if configToApply == nil {
-		return configToKeep
-	}
-	if configToKeep == nil {
-		configToKeep = make(map[string]string)
-	}
-	for k, v := range configToApply {
-		if _, there := configToKeep[k]; !there {
-			configToKeep[k] = v
-		}
-	}
-	return configToKeep
-}

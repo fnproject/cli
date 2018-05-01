@@ -10,6 +10,7 @@ import (
 
 	client "github.com/fnproject/cli/client"
 	fnclient "github.com/fnproject/fn_go/client"
+	clientApps "github.com/fnproject/fn_go/client/apps"
 	"github.com/fnproject/fn_go/models"
 	"github.com/urfave/cli"
 )
@@ -150,13 +151,32 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *appfile) 
 		if dir == wd {
 			setRootFuncInfo(ff, appf.Name)
 		}
-		ff.Config = mergeConfigs(appf.Config, ff.Config)
 	}
-	return p.deployFunc(c, appName, wd, fpath, ff)
+
+	if appf != nil {
+		err = p.updateAppConfig(appf)
+		if err != nil {
+			return fmt.Errorf("failed to update app config: %v", err)
+		}
+	}
+
+	err = p.deployFunc(c, appName, wd, fpath, ff)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // deployAll deploys all functions in an app.
 func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) error {
+	if appf != nil {
+		err := p.updateAppConfig(appf)
+		if err != nil {
+			return fmt.Errorf("failed to update app config: %v", err)
+		}
+	}
+
 	wd := getWd()
 
 	var funcFound bool
@@ -186,8 +206,6 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 			}
 		}
 
-		ff.Config = mergeConfigs(appf.Config, ff.Config)
-
 		err = p.deployFunc(c, appName, wd, path, ff)
 		if err != nil {
 			return fmt.Errorf("deploy error on %s: %v", path, err)
@@ -205,6 +223,7 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 	if !funcFound {
 		return errors.New("no functions found to deploy")
 	}
+
 	return nil
 }
 
@@ -311,4 +330,31 @@ func isstale(path string) bool {
 	})
 
 	return err != nil
+}
+
+func (p *deploycmd) updateAppConfig(appf *appfile) error {
+	param := clientApps.NewPatchAppsAppParams()
+	param.App = appf.Name
+	param.Body = &models.AppWrapper{
+		App: &models.App{
+			Config: appf.Config,
+		},
+	}
+
+	_, err := p.Apps.PatchAppsApp(param)
+	if err != nil {
+		params := clientApps.NewPostAppsParams() //XXX switch to put when v2.0 Fn
+		param.Body = &models.AppWrapper{
+			App: &models.App{
+				Name:   appf.Name,
+				Config: appf.Config,
+			},
+		}
+
+		_, err = p.Apps.PostApps(params)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
