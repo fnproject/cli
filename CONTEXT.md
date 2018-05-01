@@ -1,6 +1,6 @@
 # Context command
 
-Context files are used to define deplployment enviroments. Multiple contexts representing different enviroments can be created with each context specifying an appropriate provider  and a set of properties required/understood by that provider with the ability to switch between them. Contexts are persisted in individual files under the `.fn` directory which, if not present, is created on launch.
+Context files are used to define deployment enviroments. Multiple contexts representing different enviroments can be created with each context specifying an appropriate provider  and a set of properties required/understood by that provider with the ability to switch between them. Contexts are persisted in individual files under the `.fn` directory which, if not present, is created on launch.
 
 ```
 ~ 

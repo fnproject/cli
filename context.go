@@ -226,8 +226,7 @@ func list(c *cli.Context) error {
 		}
 		fmt.Fprint(w, current, "\t", name, "\t", v.ContextProvider, "\t", v.EnvFnAPIURL, "\t", v.EnvFnRegistry, "\n")
 	}
-	w.Flush()
-	return nil
+	return w.Flush()
 }
 
 func createFilePath(filename string) (string, error) {
@@ -263,7 +262,7 @@ func ValidateContextName(context string) error {
 	re := regexp.MustCompile("[^a-zA-Z0-9_-]+")
 
 	for range re.FindAllString(context, -1) {
-		return errors.New("please enter a context name with ASCII characters only")
+		return errors.New("please enter a context name with only Alphanumeric, _, or -")
 	}
 	return nil
 }

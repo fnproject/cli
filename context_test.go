@@ -11,13 +11,13 @@ func TestValidateContextName(t *testing.T) {
 	}{
 		{name: "local", expectedErr: ""},
 		{name: "Local", expectedErr: ""},
-		{name: "../local", expectedErr: "please enter a context name with ASCII characters only"},
+		{name: "../local", expectedErr: "please enter a context name with only Alphanumeric, _, or -"},
 		{name: "local-context", expectedErr: ""},
 		{name: "local_context", expectedErr: ""},
 		{name: "local1", expectedErr: ""},
 		{name: "local-context-1", expectedErr: ""},
-		{name: "local?context", expectedErr: "please enter a context name with ASCII characters only"},
-		{name: "context>?", expectedErr: "please enter a context name with ASCII characters only"},
+		{name: "local?context", expectedErr: "please enter a context name with only Alphanumeric, _, or -"},
+		{name: "context>?", expectedErr: "please enter a context name with only Alphanumeric, _, or -"},
 	}
 	for _, tc := range testsCases {
 		t.Run(tc.name, func(t *testing.T) {
