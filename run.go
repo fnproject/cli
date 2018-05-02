@@ -66,6 +66,10 @@ func runflags() []cli.Flag {
 			Name:  "no-cache",
 			Usage: "Don't use Docker cache for the build",
 		},
+		cli.StringSliceFlag{
+			Name:  "build-arg",
+			Usage: "set build time variables",
+		},
 	}
 }
 
@@ -118,7 +122,8 @@ func preRun(c *cli.Context) (string, *funcfile, []string, error) {
 		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
 	}
 
-	_, err = buildfunc(c, fpath, ff, c.Bool("no-cache"))
+	buildArgs := c.StringSlice("build-arg")
+	_, err = buildfunc(c, fpath, ff, buildArgs, c.Bool("no-cache"))
 	if err != nil {
 		return fpath, nil, nil, err
 	}

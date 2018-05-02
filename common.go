@@ -36,7 +36,7 @@ func getWd() string {
 	return wd
 }
 
-func buildfunc(c *cli.Context, fpath string, funcfile *funcfile, noCache bool) (*funcfile, error) {
+func buildfunc(c *cli.Context, fpath string, funcfile *funcfile, buildArg []string, noCache bool) (*funcfile, error) {
 	var err error
 	if funcfile.Version == "" {
 		funcfile, err = bumpIt(fpath, Patch)
@@ -49,7 +49,7 @@ func buildfunc(c *cli.Context, fpath string, funcfile *funcfile, noCache bool) (
 		return nil, err
 	}
 
-	if err := dockerBuild(c, fpath, funcfile, noCache); err != nil {
+	if err := dockerBuild(c, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
 	}
 
@@ -68,7 +68,7 @@ func localBuild(path string, steps []string) error {
 	return nil
 }
 
-func dockerBuild(c *cli.Context, fpath string, ff *funcfile, noCache bool) error {
+func dockerBuild(c *cli.Context, fpath string, ff *funcfile, buildArgs []string, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
@@ -98,7 +98,7 @@ func dockerBuild(c *cli.Context, fpath string, ff *funcfile, noCache bool) error
 			}
 		}
 	}
-	err = runBuild(c, dir, ff.ImageName(), dockerfile, noCache)
+	err = runBuild(c, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func dockerBuild(c *cli.Context, fpath string, ff *funcfile, noCache bool) error
 	return nil
 }
 
-func runBuild(c *cli.Context, dir, imageName, dockerfile string, noCache bool) error {
+func runBuild(c *cli.Context, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -152,6 +152,12 @@ func runBuild(c *cli.Context, dir, imageName, dockerfile string, noCache bool) e
 		}
 		if noCache {
 			args = append(args, "--no-cache")
+		}
+
+		if len(buildArgs) > 0 {
+			for _, buildArg := range buildArgs {
+				args = append(args, "--build-arg", buildArg)
+			}
 		}
 		args = append(args,
 			"--build-arg", "HTTP_PROXY",
