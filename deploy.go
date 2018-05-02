@@ -343,15 +343,15 @@ func (p *deploycmd) updateAppConfig(appf *appfile) error {
 
 	_, err := p.Apps.PatchAppsApp(param)
 	if err != nil {
-		params := clientApps.NewPostAppsParams() //XXX switch to put when v2.0 Fn
-		param.Body = &models.AppWrapper{
+		postParams := clientApps.NewPostAppsParams() //XXX switch to put when v2.0 Fn
+		postParams.Body = &models.AppWrapper{
 			App: &models.App{
 				Name:   appf.Name,
 				Config: appf.Config,
 			},
 		}
 
-		_, err = p.Apps.PostApps(params)
+		_, err = p.Apps.PostApps(postParams)
 		if err != nil {
 			return err
 		}
