@@ -336,7 +336,7 @@ func (h *CLIHarness) Cd(s string) {
 
 }
 func (h *CLIHarness) pushHistoryf(s string, args ... interface{}) {
-	log.Printf(s, args...)
+	//log.Printf(s, args...)
 	h.history = append(h.history, fmt.Sprintf(s, args...))
 
 }
