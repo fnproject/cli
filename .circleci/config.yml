@@ -1,7 +1,6 @@
 version: 2
 jobs:
   build:
-    timeout: 1200
     machine: true
     working_directory: ~/go/src/github.com/fnproject/cli
     environment: # apparently expansion doesn't work here yet: https://discuss.circleci.com/t/environment-variable-expansion-in-working-directory/11322
@@ -33,7 +32,10 @@ jobs:
           command: |
             go get -u github.com/golang/dep/cmd/dep
             ${GOPATH}/bin/dep ensure --vendor-only
-      - run: make test
+      - run:
+          name: build and test
+          command: make test
+          no_output_timeout: 10m
       - deploy:
           command: |
             if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
