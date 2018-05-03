@@ -86,7 +86,7 @@ func TestRouteUpdateValues(t *testing.T) {
 			}
 
 			if val != tc.result {
-				t.Fatalf("Expected %s to be %s  after running %s but was %s", strings.Join(tc.query, "."), tc.result, strings.Join(tc.args, " "), val, resJson)
+				t.Fatalf("Expected %s to be %s  after running %s but was %s, %v", strings.Join(tc.query, "."), tc.result, strings.Join(tc.args, " "), val, resJson)
 			}
 
 		})
