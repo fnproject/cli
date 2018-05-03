@@ -1,4 +1,4 @@
-package cliharness
+package testharness
 
 import (
 	"testing"
@@ -48,7 +48,7 @@ func TestDirOps(t *testing.T) {
 	ctx.Cd("bar")
 	ctx.MkDir("baz")
 	ctx.Cd("baz")
-	ctx.WithFile("bob.txt","some text")
+	ctx.WithFile("bob.txt","some text",0644)
 
 	assertFileExists(t, ctx.testDir, "foo")
 	assertFileExists(t, ctx.testDir, "bar")

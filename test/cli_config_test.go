@@ -2,11 +2,12 @@ package test
 
 import (
 	"testing"
-	"github.com/fnproject/cli/test/cliharness"
+	"github.com/fnproject/cli/testharness"
 )
 
 func TestContextCrud(t *testing.T) {
-	h := cliharness.Create(t)
+	t.Parallel()
+	h := testharness.Create(t)
 	defer h.Cleanup()
 
 	h.Fn("context", "list").AssertSuccess().AssertStdoutContains("default")

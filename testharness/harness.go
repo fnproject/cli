@@ -1,4 +1,4 @@
-package cliharness
+package testharness
 
 import (
 	"testing"
@@ -29,12 +29,12 @@ type CLIHarness struct {
 	history []string
 }
 
-//CmdResult wraps the result of a single command
+//CmdResult wraps the result of a single command - this includes the diagnostic history of commands that led to this command in a given context for easier test diagnosis
 type CmdResult struct {
 	t               *testing.T
 	OriginalCommand string
 	Cwd             string
-	Env             []string
+	ExtraEnv        []string
 	Stdout          string
 	Stderr          string
 	Input           string
@@ -43,7 +43,7 @@ type CmdResult struct {
 }
 
 func (cr *CmdResult) String() string {
-	return fmt.Sprintf("COMMAND: %s\nINPUT:%s\nRESULT: %t\nSTDERR:\n%s\nSTDOUT:%s\nHISTORY:\n%s\n", cr.OriginalCommand, cr.Input, cr.Success, cr.Stderr, cr.Stdout, strings.Join(cr.History, "\n"))
+	return fmt.Sprintf("COMMAND: %s\nINPUT:%s\nRESULT: %t\nSTDERR:\n%s\nSTDOUT:%s\nHISTORY:\n%s\nEXTRAENV:\n%s\n", cr.OriginalCommand, cr.Input, cr.Success, cr.Stderr, cr.Stdout, strings.Join(cr.History, "\n"), strings.Join(cr.ExtraEnv, "\n"))
 }
 
 //AssertSuccess checks the command was success
@@ -88,6 +88,7 @@ func randString(n int) string {
 }
 
 // Create creates a CLI test harness that that runs CLI operations in a test directory
+// test harness operations will propagate most environment variables to tests (with the exception of HOME, which is faked)
 func Create(t *testing.T) *CLIHarness {
 	testDir, err := ioutil.TempDir("", "")
 	if err != nil {
@@ -210,14 +211,15 @@ func (h *CLIHarness) CopyFiles(files map[string]string) {
 }
 
 // WithFile creates a file relative to the cwd
-func (h *CLIHarness) WithFile(rPath string, content string) {
+func (h *CLIHarness) WithFile(rPath string, content string, perm os.FileMode) {
 
 	fullPath := h.relativeToCwd(rPath)
 
-	err := ioutil.WriteFile(fullPath, []byte(content), 0555)
+	err := ioutil.WriteFile(fullPath, []byte(content), perm)
 	if err != nil {
 		h.t.Fatalf("failed to create file %s", fullPath)
 	}
+	h.pushHistoryf("echo `%s` >> %s",content,fullPath)
 
 }
 
@@ -245,8 +247,11 @@ func (h *CLIHarness) FnWithInput(input string, args ... string) (*CmdResult) {
 		mergedEnv[m[1]] = m[2]
 	}
 
+	extraEnv := make([]string, 0, len(h.env))
+
 	for k, v := range h.env {
 		mergedEnv[k] = v
+		extraEnv = append(extraEnv, fmt.Sprintf("%s=%s", k, v))
 	}
 	env := make([]string, 0, len(mergedEnv))
 
@@ -270,7 +275,7 @@ func (h *CLIHarness) FnWithInput(input string, args ... string) (*CmdResult) {
 		OriginalCommand: cmdString,
 		Stdout:          stdOut.String(),
 		Stderr:          stdErr.String(),
-		Env:             env,
+		ExtraEnv:        extraEnv,
 		Cwd:             h.cwd,
 		Input:           input,
 		History:         h.history,
@@ -291,6 +296,30 @@ func (h *CLIHarness) FnWithInput(input string, args ... string) (*CmdResult) {
 // Fn runs the Fn ClI with the specified arguments
 func (h *CLIHarness) Fn(args ... string) (*CmdResult) {
 	return h.FnWithInput("", args...)
+}
+
+// Writes the relevent files to the CWD to procduce the smallest function that can be written
+func (h *CLIHarness) WithMinimalFunctionSource() (*CLIHarness) {
+
+	const dockerFile = `FROM busybox:1.28.3
+RUN mkdir /app
+ADD main.sh /app
+WORKDIR /app
+CMD ["./main.sh"]
+`
+	const mainSh = `#!/bin/sh
+echo "hello world";
+`
+
+	const funcYaml = `version: 0.0.1
+runtime: docker
+`
+
+	h.WithFile("func.yaml", funcYaml,0644)
+	h.WithFile("Dockerfile", dockerFile,0644)
+	h.WithFile("main.sh", mainSh,0755)
+
+	return h
 }
 
 //NewFuncName creates a valid function name
@@ -359,7 +388,7 @@ func (h *CLIHarness) FileAppend(file string, val string) {
 	newV := string(fileV) + val
 	err = ioutil.WriteFile(filePath, []byte(newV), 0555)
 	if err != nil {
-		h.t.Fatalf("failed to write appended file")
+		h.t.Fatalf("failed to write appended file %s",err)
 	}
 
 	h.pushHistoryf("echo '%s' >> %s", val, filePath)
@@ -375,4 +404,3 @@ func (h *CLIHarness) GetFile(s string) string {
 	return string(v)
 
 }
-

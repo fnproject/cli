@@ -2,7 +2,7 @@ package test
 
 import (
 	"testing"
-	"github.com/fnproject/cli/test/cliharness"
+	"github.com/fnproject/cli/testharness"
 	"strings"
 	"fmt"
 	"os"
@@ -11,20 +11,22 @@ import (
 )
 
 func TestFnVersion(t *testing.T) {
-	tctx := cliharness.Create(t)
+	t.Parallel()
+
+	tctx := testharness.Create(t)
 	res := tctx.Fn("version")
 	res.AssertSuccess()
 }
 
 // this is messy and nasty  as we generate different potential values for FN_API_URL based on its type
 func fnApiUrlVariations(t *testing.T) []string {
+
 	srcUrl := os.Getenv("FN_API_URL")
 
 	if srcUrl == "" {
 		srcUrl = "http://localhost:8080/"
 	}
 
-	log.Printf("srcUrl %s",srcUrl)
 	if !strings.HasPrefix(srcUrl, "http:") && !strings.HasPrefix(srcUrl, "https:") {
 		srcUrl = "http://" + srcUrl
 	}
@@ -54,11 +56,12 @@ func fnApiUrlVariations(t *testing.T) []string {
 
 
 func TestFnApiUrlSupportsDifferentFormats(t *testing.T) {
-	h := cliharness.Create(t)
+	t.Parallel()
+
+	h := testharness.Create(t)
 	defer h.Cleanup()
 
 	for _, candidateUrl := range fnApiUrlVariations(t) {
-		log.Printf("testing url %s", candidateUrl)
 		h.WithEnv("FN_API_URL", candidateUrl)
 		h.Fn("apps", "list").AssertSuccess()
 	}
@@ -66,7 +69,9 @@ func TestFnApiUrlSupportsDifferentFormats(t *testing.T) {
 
 // Not sure what this test was intending (copied from old test.sh)
 func TestSettingMillisWorks(t *testing.T) {
-	h := cliharness.Create(t)
+	t.Parallel()
+
+	h := testharness.Create(t)
 	defer h.Cleanup()
 	h.WithEnv("FN_REGISTRY", "some_random_registry")
 
@@ -82,7 +87,7 @@ func TestSettingMillisWorks(t *testing.T) {
 
 	h.MkDir(funcName)
 	h.Cd(funcName)
-	h.Fn("init", "--runtime", "go", "--name", funcName).AssertSuccess()
+	h.WithMinimalFunctionSource()
 	h.FileAppend("func.yaml", "\ncpus: 50m\n")
 
 	h.Fn("deploy", "--app", appName, "--local").AssertSuccess()
@@ -99,7 +104,9 @@ func TestSettingMillisWorks(t *testing.T) {
 }
 
 func TestAllMainCommandsExist(t *testing.T) {
-	h := cliharness.Create(t)
+	t.Parallel()
+
+	h := testharness.Create(t)
 	defer h.Cleanup()
 
 	testCommands := []string{
@@ -125,4 +132,73 @@ func TestAllMainCommandsExist(t *testing.T) {
 			t.Errorf("expected command %s to exist", cmd)
 		}
 	}
+}
+
+
+
+func TestAppYamlDeploy(t *testing.T) {
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+
+	appName := h.NewAppName()
+	fnName := h.NewFuncName()
+	h.WithFile("app.yaml", fmt.Sprintf(`name: %s`, appName),0644)
+	h.MkDir(fnName)
+	h.Cd(fnName)
+	h.WithMinimalFunctionSource()
+	h.Cd("")
+	h.Fn("deploy", "--all", "--local").AssertSuccess()
+	h.Fn("call", appName, fnName).AssertSuccess()
+	h.Fn("deploy", "--all", "--local").AssertSuccess()
+	h.Fn("call", appName, fnName).AssertSuccess()
+
+}
+
+
+func TestBump(t *testing.T) {
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+
+	expectFuncYamlVersion := func(v string) {
+		funcYaml := h.GetFile("func.yaml")
+		if !strings.Contains(funcYaml, fmt.Sprintf("version: %s", v)) {
+			t.Fatalf("exepected version to be %s but got %s", v, funcYaml)
+		}
+
+	}
+
+	appName := h.NewAppName()
+	fnName := h.NewFuncName()
+	h.MkDir(fnName)
+	h.Cd(fnName)
+	h.WithMinimalFunctionSource()
+
+	expectFuncYamlVersion("0.0.1")
+
+	h.Fn("bump").AssertSuccess()
+	expectFuncYamlVersion("0.0.2")
+
+	h.Fn("bump", "--major").AssertSuccess()
+	expectFuncYamlVersion("1.0.0")
+
+	h.Fn("bump").AssertSuccess()
+	expectFuncYamlVersion("1.0.1")
+
+	h.Fn("bump", "--minor").AssertSuccess()
+	expectFuncYamlVersion("1.1.0")
+
+	h.Fn("deploy", "--local", "--app", appName).AssertSuccess()
+	expectFuncYamlVersion("1.1.1")
+
+	h.Fn("routes", "i", appName, fnName).AssertSuccess().AssertStdoutContains(fmt.Sprintf(`%s:1.1.1`, fnName))
+
+	h.Fn("deploy", "--local", "--no-bump", "--app", appName).AssertSuccess()
+	expectFuncYamlVersion("1.1.1")
+
+	h.Fn("routes", "i", appName, fnName).AssertSuccess().AssertStdoutContains(fmt.Sprintf(`%s:1.1.1`, fnName))
+
 }

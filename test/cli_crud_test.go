@@ -2,7 +2,7 @@ package test
 
 import (
 	"testing"
-	"github.com/fnproject/cli/test/cliharness"
+	"github.com/fnproject/cli/testharness"
 	"fmt"
 	"github.com/jmoiron/jsonq"
 	"encoding/json"
@@ -11,7 +11,9 @@ import (
 
 // TODO: These are both  Super minimal
 func TestFnAppUpdateCycle(t *testing.T) {
-	h := cliharness.Create(t)
+	t.Parallel()
+
+	h := testharness.Create(t)
 	defer h.Cleanup()
 
 	appName := h.NewAppName()
@@ -30,7 +32,9 @@ func TestFnAppUpdateCycle(t *testing.T) {
 }
 
 func TestSimpleFnRouteUpdateCycle(t *testing.T) {
-	h := cliharness.Create(t)
+	t.Parallel()
+
+	h := testharness.Create(t)
 	defer h.Cleanup()
 	appName1 := h.NewAppName()
 	h.Fn("routes", "create", appName1, "myroute", "--image", "foo/duffimage:0.0.1").AssertSuccess()
@@ -46,6 +50,8 @@ func TestSimpleFnRouteUpdateCycle(t *testing.T) {
 
 
 func TestRouteUpdateValues(t *testing.T) {
+	t.Parallel()
+
 
 	validCases := []struct {
 		args   []string
@@ -64,8 +70,8 @@ func TestRouteUpdateValues(t *testing.T) {
 	for i, tcI := range validCases {
 		tc := tcI
 		t.Run(fmt.Sprintf("Valid Case %d", i), func(t *testing.T) {
-			//t.Parallel()
-			h := cliharness.Create(t)
+			t.Parallel()
+			h := testharness.Create(t)
 			defer h.Cleanup()
 			appName1 := h.NewAppName()
 			h.Fn("routes", "create", appName1, "myroute", "--image", "foo/someimage:0.0.1").AssertSuccess()
@@ -108,8 +114,8 @@ func TestRouteUpdateValues(t *testing.T) {
 	for i, tcI := range invalidCases {
 		tc := tcI
 		t.Run(fmt.Sprintf("Invalid Case %d", i), func(t *testing.T) {
-			//t.Parallel()
-			h := cliharness.Create(t)
+			t.Parallel()
+			h := testharness.Create(t)
 			defer h.Cleanup()
 			appName1 := h.NewAppName()
 			h.Fn("routes", "create", appName1, "myroute", "--image", "foo/someimage:0.0.1").AssertSuccess()

@@ -2,7 +2,7 @@ package test
 
 import (
 	"testing"
-	"github.com/fnproject/cli/test/cliharness"
+	"github.com/fnproject/cli/testharness"
 	"log"
 	"strings"
 )
@@ -31,10 +31,10 @@ path: /fn_test_hello_docker_runtime`
 
 func TestDockerRuntimeInit(t *testing.T) {
 	t.Parallel()
-	tctx := cliharness.Create(t)
+	tctx := testharness.Create(t)
 	defer tctx.Cleanup()
-	tctx.WithFile("Dockerfile", dockerFile)
-	tctx.WithFile("func.go", goFuncDotGo)
+	tctx.WithFile("Dockerfile", dockerFile,0644)
+	tctx.WithFile("func.go", goFuncDotGo,0644)
 
 	tctx.Fn("init").AssertSuccess()
 	tctx.Fn("build").AssertSuccess()
@@ -43,11 +43,12 @@ func TestDockerRuntimeInit(t *testing.T) {
 }
 
 func TestDockerRuntimeBuildFailsWithNoDockerfile(t *testing.T) {
-	tctx := cliharness.Create(t)
+	t.Parallel()
+	tctx := testharness.Create(t)
 	defer tctx.Cleanup()
 
-	tctx.WithFile("func.yaml", funcYaml)
-	tctx.WithFile("func.go", goFuncDotGo)
+	tctx.WithFile("func.yaml", funcYaml,0644)
+	tctx.WithFile("func.go", goFuncDotGo,0644)
 
 	res := tctx.Fn("build")
 
