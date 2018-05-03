@@ -17,7 +17,8 @@ CUR_DIR=$(pwd)
 export fn="${CUR_DIR}/fn"
 
 
-go test -v $(go list ./... |  grep -pv "^github.com/fnproject/cli/test$")
+#on CI these can take a while
+go test -timeout 20m -v $(go list ./... |  grep -pv "^github.com/fnproject/cli/test$")
 
 # Our test directory
 OS=$(uname -s)
