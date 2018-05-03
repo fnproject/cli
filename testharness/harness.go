@@ -57,7 +57,15 @@ func (cr *CmdResult) AssertSuccess() *CmdResult {
 // AssertStdoutContains asserts that the string appears somewhere in the stdout
 func (cr *CmdResult) AssertStdoutContains(match string) *CmdResult {
 	if !strings.Contains(cr.Stdout, match) {
-		log.Fatalf("Expected error message (%s) not found in result: %v", match, cr)
+		log.Fatalf("Expected stdout  message (%s) not found in result: %v", match, cr)
+	}
+	return cr
+}
+
+// AssertStdoutContains asserts that the string appears somewhere in the stderr
+func (cr *CmdResult) AssertStderrContains(match string) *CmdResult{
+	if !strings.Contains(cr.Stderr, match) {
+		log.Fatalf("Expected sdterr message (%s) not found in result: %v", match, cr)
 	}
 	return cr
 }
@@ -76,6 +84,7 @@ func (cr *CmdResult) AssertStdoutEmpty() {
 		cr.t.Fatalf("Expecting empty stdout, got %v", cr)
 	}
 }
+
 
 func randString(n int) string {
 
@@ -219,7 +228,7 @@ func (h *CLIHarness) WithFile(rPath string, content string, perm os.FileMode) {
 	if err != nil {
 		h.t.Fatalf("failed to create file %s", fullPath)
 	}
-	h.pushHistoryf("echo `%s` >> %s",content,fullPath)
+	h.pushHistoryf("echo `%s` > %s",content,fullPath)
 
 }
 
