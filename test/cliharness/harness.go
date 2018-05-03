@@ -375,3 +375,4 @@ func (h *CLIHarness) GetFile(s string) string {
 	return string(v)
 
 }
+

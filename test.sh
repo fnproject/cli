@@ -35,13 +35,13 @@ touch data/fn.db data/fn.mq
 # start fn
 CONTAINER_ID=$($fn start -d)
 
-TEST_API_URL="localhost:8080"
+FN_API_URL="localhost:8080"
 
 TRIES=15
 while [ ${TRIES} -gt 0 ]; do
 
 	set +e
-	curl -sS --max-time 1 ${TEST_API_URL} > /dev/null
+	curl -sS --max-time 1 ${FN_API_URL} > /dev/null
 	RESULT=$?
 	set -e
 

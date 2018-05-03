@@ -7,14 +7,34 @@ import (
 	"strings"
 )
 
+const dockerFile = `FROM golang:latest
+RUN mkdir /app
+ADD . /app
+WORKDIR /app
+RUN go build -o hello .
+CMD ["./hello"]
+`
+const goFuncDotGo = `package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	fmt.Println("Hello from Fn for func file 'docker' runtime test !")
+}`
+
+const funcYaml = `name: fn_test_hello_docker_runtime
+version: 0.0.1
+runtime: docker
+path: /fn_test_hello_docker_runtime`
+
 func TestDockerRuntimeInit(t *testing.T) {
 	t.Parallel()
 	tctx := cliharness.Create(t)
 	defer tctx.Cleanup()
-	tctx.CopyFiles(map[string]string{
-		"testfuncs/docker/Dockerfile": "Dockerfile",
-		"testfuncs/docker/func.go":    "func.go",
-	})
+	tctx.WithFile("Dockerfile", dockerFile)
+	tctx.WithFile("func.go", goFuncDotGo)
 
 	tctx.Fn("init").AssertSuccess()
 	tctx.Fn("build").AssertSuccess()
@@ -26,10 +46,8 @@ func TestDockerRuntimeBuildFailsWithNoDockerfile(t *testing.T) {
 	tctx := cliharness.Create(t)
 	defer tctx.Cleanup()
 
-	tctx.CopyFiles(map[string]string{
-		"testfuncs/docker/func.yaml": "func.yaml",
-		"testfuncs/docker/func.go":   "func.go",
-	})
+	tctx.WithFile("func.yaml", funcYaml)
+	tctx.WithFile("func.go", goFuncDotGo)
 
 	res := tctx.Fn("build")
 
@@ -40,4 +58,3 @@ func TestDockerRuntimeBuildFailsWithNoDockerfile(t *testing.T) {
 		log.Fatalf("Expected error message not found in result: %v", res)
 	}
 }
-

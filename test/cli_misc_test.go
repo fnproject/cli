@@ -5,6 +5,9 @@ import (
 	"github.com/fnproject/cli/test/cliharness"
 	"strings"
 	"fmt"
+	"os"
+	"net/url"
+	"log"
 )
 
 func TestFnVersion(t *testing.T) {
@@ -13,11 +16,51 @@ func TestFnVersion(t *testing.T) {
 	res.AssertSuccess()
 }
 
-func TestFnApiUrlDifferentFormats(t *testing.T) {
-	tctx := cliharness.Create(t)
-	for _, url := range []string{"http://localhost:8080", "http://localhost:8080/v1", "localhost:8080", "localhost:8080/v1"} {
-		tctx.WithEnv("FN_API_URL", url)
-		tctx.Fn("apps", "list").AssertSuccess()
+// this is messy and nasty  as we generate different potential values for FN_API_URL based on its type
+func fnApiUrlVariations(t *testing.T) []string {
+	srcUrl := os.Getenv("FN_API_URL")
+
+	if srcUrl == "" {
+		srcUrl = "http://localhost:8080/"
+	}
+
+	log.Printf("srcUrl %s",srcUrl)
+	if !strings.HasPrefix(srcUrl, "http:") && !strings.HasPrefix(srcUrl, "https:") {
+		srcUrl = "http://" + srcUrl
+	}
+	parsed, err := url.Parse(srcUrl)
+
+	if err != nil {
+		t.Fatalf("invalid/unparsable TEST_API_URL %s: %s", srcUrl, err)
+	}
+
+	var cases []string
+
+	if parsed.Scheme == "http"{
+		cases = append(cases, "http://"+parsed.Host+parsed.Path)
+		cases = append(cases, parsed.Host+parsed.Path)
+		cases = append(cases, parsed.Host)
+		cases = append(cases, parsed.Host+"/v1")
+	} else if parsed.Scheme == "https" {
+		cases = append(cases, "https://"+parsed.Host+parsed.Path)
+		cases = append(cases, "https://"+parsed.Host+"/v1")
+		cases = append(cases, "https://"+parsed.Host)
+	} else {
+		log.Fatalf("unsupported url scheme for testing %s: %s", srcUrl, parsed.Scheme)
+	}
+
+	return cases
+}
+
+
+func TestFnApiUrlSupportsDifferentFormats(t *testing.T) {
+	h := cliharness.Create(t)
+	defer h.Cleanup()
+
+	for _, candidateUrl := range fnApiUrlVariations(t) {
+		log.Printf("testing url %s", candidateUrl)
+		h.WithEnv("FN_API_URL", candidateUrl)
+		h.Fn("apps", "list").AssertSuccess()
 	}
 }
 
