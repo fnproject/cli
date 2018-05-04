@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/fnproject/cli/utils"
-
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )

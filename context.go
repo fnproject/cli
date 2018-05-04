@@ -19,7 +19,7 @@ import (
 )
 
 var contextsPath = config.GetContextsPath()
-var fileExtensoin = ".yaml"
+var fileExtension = ".yaml"
 
 type ContextMap utils.ContextMap
 
@@ -118,7 +118,7 @@ func createCtx(c *cli.Context) error {
 		}
 		return errors.New("context already exists")
 	}
-	path := createFilePath(context + fileExtensoin)
+	path := createFilePath(context + fileExtension)
 	file, err := os.Create(path)
 	if err != nil {
 		return err
@@ -158,7 +158,7 @@ func deleteCtx(c *cli.Context) error {
 		return errors.New("can not delete default context")
 	}
 
-	path := createFilePath(context + fileExtensoin)
+	path := createFilePath(context + fileExtension)
 	err := os.Remove(path)
 	if err != nil {
 		return err
@@ -231,7 +231,7 @@ func listCtx(c *cli.Context) error {
 			return err
 		}
 
-		name := strings.Replace(f.Name(), fileExtensoin, "", 1)
+		name := strings.Replace(f.Name(), fileExtension, "", 1)
 		if currentContext == name {
 			current = "*"
 		}
@@ -258,7 +258,7 @@ func createFilePath(filename string) string {
 }
 
 func checkContextFileExists(filename string) (bool, error) {
-	path := createFilePath(filename + fileExtensoin)
+	path := createFilePath(filename + fileExtension)
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return false, err
@@ -274,7 +274,7 @@ func getAvailableContexts() ([]os.FileInfo, error) {
 
 func ValidateAPIURL(apiURL string) error {
 	if !strings.Contains(apiURL, "://") {
-		return errors.New("invalid url does not contain ://")
+		return errors.New("invalid Fn API URL: does not contain ://")
 	}
 
 	_, err := url.Parse(apiURL)
@@ -294,7 +294,7 @@ func ValidateContextName(context string) error {
 }
 
 func (ctxMap *ContextMap) Set(key, value string) error {
-	contextFilePath := createFilePath(viper.GetString(config.CurrentContext) + fileExtensoin)
+	contextFilePath := createFilePath(viper.GetString(config.CurrentContext) + fileExtension)
 	f, err := os.OpenFile(contextFilePath, os.O_RDWR, config.ReadWritePerms)
 	if err != nil {
 		return err
