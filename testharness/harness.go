@@ -1,19 +1,24 @@
 package testharness
 
 import (
-	"testing"
-	"math/rand"
-	"io/ioutil"
-	"fmt"
-	"os"
-	"path"
-	"log"
-	"path/filepath"
-	"os/exec"
 	"bytes"
-	"strings"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"math/rand"
+	"os"
+	"os/exec"
+	"path"
+	"path/filepath"
 	"regexp"
+	"strings"
+	"syscall"
+	"testing"
+	"time"
 )
+
+// Max duration a command can run for before being killed
+var commandTimeout = 5 * time.Minute
 
 //CLIHarness encapsulates a single CLI session
 type CLIHarness struct {
@@ -24,8 +29,7 @@ type CLIHarness struct {
 	homeDir  string
 	cwd      string
 
-	env map[string]string
-
+	env     map[string]string
 	history []string
 }
 
@@ -38,12 +42,31 @@ type CmdResult struct {
 	Stdout          string
 	Stderr          string
 	Input           string
+	ExitState       *os.ProcessState
 	Success         bool
 	History         []string
 }
 
 func (cr *CmdResult) String() string {
-	return fmt.Sprintf("COMMAND: %s\nINPUT:%s\nRESULT: %t\nSTDERR:\n%s\nSTDOUT:%s\nHISTORY:\n%s\nEXTRAENV:\n%s\n", cr.OriginalCommand, cr.Input, cr.Success, cr.Stderr, cr.Stdout, strings.Join(cr.History, "\n"), strings.Join(cr.ExtraEnv, "\n"))
+	return fmt.Sprintf(`COMMAND: %s
+INPUT:%s
+RESULT: %t
+STDERR:
+%s
+STDOUT:%s
+HISTORY:
+%s
+EXTRAENV:
+%s
+EXITSTATE: %s
+`, cr.OriginalCommand,
+		cr.Input,
+		cr.Success,
+		cr.Stderr,
+		cr.Stdout,
+		strings.Join(cr.History, "\n"),
+		strings.Join(cr.ExtraEnv, "\n"),
+		cr.ExitState)
 }
 
 //AssertSuccess checks the command was success
@@ -63,7 +86,7 @@ func (cr *CmdResult) AssertStdoutContains(match string) *CmdResult {
 }
 
 // AssertStdoutContains asserts that the string appears somewhere in the stderr
-func (cr *CmdResult) AssertStderrContains(match string) *CmdResult{
+func (cr *CmdResult) AssertStderrContains(match string) *CmdResult {
 	if !strings.Contains(cr.Stderr, match) {
 		log.Fatalf("Expected sdterr message (%s) not found in result: %v", match, cr)
 	}
@@ -84,7 +107,6 @@ func (cr *CmdResult) AssertStdoutEmpty() {
 		cr.t.Fatalf("Expecting empty stdout, got %v", cr)
 	}
 }
-
 
 func randString(n int) string {
 
@@ -109,14 +131,19 @@ func Create(t *testing.T) *CLIHarness {
 		t.Fatal("Failed to create home dir")
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("failed to get CWD, %v", err)
-	}
+	cliPath := os.Getenv("TEST_CLI_BINARY")
 
+	if cliPath == "" {
+		wd, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("failed to get CWD, %v", err)
+		}
+
+		cliPath = path.Join(wd, "../fn")
+	}
 	ctx := &CLIHarness{
 		t:       t,
-		cliPath: path.Join(wd, "../fn"),
+		cliPath: cliPath,
 		testDir: testDir,
 		homeDir: homeDir,
 		cwd:     testDir,
@@ -228,12 +255,13 @@ func (h *CLIHarness) WithFile(rPath string, content string, perm os.FileMode) {
 	if err != nil {
 		h.t.Fatalf("failed to create file %s", fullPath)
 	}
-	h.pushHistoryf("echo `%s` > %s",content,fullPath)
+	h.pushHistoryf("echo `%s` > %s", content, fullPath)
 
 }
 
 // FnWithInput runs the Fn ClI with an input string
-func (h *CLIHarness) FnWithInput(input string, args ... string) (*CmdResult) {
+// If a command takes more than a certain timeout then this will send a SIGQUIT to the process resulting in a stacktrace on stderr
+func (h *CLIHarness) FnWithInput(input string, args ...string) *CmdResult {
 
 	stdOut := bytes.Buffer{}
 	stdErr := bytes.Buffer{}
@@ -277,8 +305,23 @@ func (h *CLIHarness) FnWithInput(input string, args ... string) (*CmdResult) {
 	} else {
 		h.pushHistoryf("%s", cmdString)
 	}
+	done := make(chan interface{})
+	timer := time.NewTimer(commandTimeout)
+
+	// If the CLI stalls for more than commandTimeout we send a SIQQUIT which should result in a stack trace in stderr
+	go func() {
+		select {
+		case <-done:
+			return
+		case <-timer.C:
+			h.t.Errorf("Command timed out - killing CLI with SIGQUIT - see STDERR log for stack trace of where it was stalled")
+
+			cmd.Process.Signal(syscall.SIGQUIT)
+		}
+	}()
 
 	err := cmd.Run()
+	close(done)
 
 	cmdResult := &CmdResult{
 		OriginalCommand: cmdString,
@@ -288,13 +331,14 @@ func (h *CLIHarness) FnWithInput(input string, args ... string) (*CmdResult) {
 		Cwd:             h.cwd,
 		Input:           input,
 		History:         h.history,
+		ExitState:       cmd.ProcessState,
 		t:               h.t,
 	}
 
-	if _, ok := err.(*exec.ExitError); ok {
+	if err, ok := err.(*exec.ExitError); ok {
 		cmdResult.Success = false
 	} else if err != nil {
-		log.Fatalf("Failed to run cmd %v :  %v", args, err)
+		h.t.Fatalf("Failed to run cmd %v :  %v", args, err)
 	} else {
 		cmdResult.Success = true
 	}
@@ -303,16 +347,16 @@ func (h *CLIHarness) FnWithInput(input string, args ... string) (*CmdResult) {
 }
 
 // Fn runs the Fn ClI with the specified arguments
-func (h *CLIHarness) Fn(args ... string) (*CmdResult) {
+func (h *CLIHarness) Fn(args ...string) *CmdResult {
 	return h.FnWithInput("", args...)
 }
 
-// Writes the relevent files to the CWD to procduce the smallest function that can be written
-func (h *CLIHarness) WithMinimalFunctionSource() (*CLIHarness) {
+// Writes the relevant files to the CWD to produce the smallest function that can be written
+func (h *CLIHarness) WithMinimalFunctionSource() *CLIHarness {
 
 	const dockerFile = `FROM busybox:1.28.3
-RUN mkdir /app
-ADD main.sh /app
+RUN	mkdir /app
+ADD	main.sh /app
 WORKDIR /app
 CMD ["./main.sh"]
 `
@@ -324,9 +368,9 @@ echo "hello world";
 runtime: docker
 `
 
-	h.WithFile("func.yaml", funcYaml,0644)
-	h.WithFile("Dockerfile", dockerFile,0644)
-	h.WithFile("main.sh", mainSh,0755)
+	h.WithFile("func.yaml", funcYaml, 0644)
+	h.WithFile("Dockerfile", dockerFile, 0644)
+	h.WithFile("main.sh", mainSh, 0755)
 
 	return h
 }
@@ -373,7 +417,7 @@ func (h *CLIHarness) Cd(s string) {
 	h.pushHistoryf("cd %s", h.cwd)
 
 }
-func (h *CLIHarness) pushHistoryf(s string, args ... interface{}) {
+func (h *CLIHarness) pushHistoryf(s string, args ...interface{}) {
 	//log.Printf(s, args...)
 	h.history = append(h.history, fmt.Sprintf(s, args...))
 
@@ -381,9 +425,7 @@ func (h *CLIHarness) pushHistoryf(s string, args ... interface{}) {
 
 // MkDir creates a directory in the current cwd
 func (h *CLIHarness) MkDir(dir string) {
-	dirPath := path.Join(h.cwd, dir)
-	h.relativeToTestDir(dirPath)
-	os.Mkdir(dirPath, 0777)
+	os.Mkdir(h.relativeToCwd(dir), 0777)
 
 }
 
@@ -391,13 +433,15 @@ func (h *CLIHarness) MkDir(dir string) {
 func (h *CLIHarness) FileAppend(file string, val string) {
 	filePath := h.relativeToCwd(file)
 	fileV, err := ioutil.ReadFile(filePath)
+
 	if err != nil {
 		h.t.Fatalf("failed to read file %s: %v", file, err)
 	}
+
 	newV := string(fileV) + val
 	err = ioutil.WriteFile(filePath, []byte(newV), 0555)
 	if err != nil {
-		h.t.Fatalf("failed to write appended file %s",err)
+		h.t.Fatalf("failed to write appended file %s", err)
 	}
 
 	h.pushHistoryf("echo '%s' >> %s", val, filePath)

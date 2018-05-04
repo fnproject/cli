@@ -1,13 +1,13 @@
 package test
 
 import (
-	"testing"
-	"github.com/fnproject/cli/testharness"
-	"strings"
 	"fmt"
-	"os"
-	"net/url"
+	"github.com/fnproject/cli/testharness"
 	"log"
+	"net/url"
+	"os"
+	"strings"
+	"testing"
 )
 
 func TestFnVersion(t *testing.T) {
@@ -38,7 +38,7 @@ func fnApiUrlVariations(t *testing.T) []string {
 
 	var cases []string
 
-	if parsed.Scheme == "http"{
+	if parsed.Scheme == "http" {
 		cases = append(cases, "http://"+parsed.Host+parsed.Path)
 		cases = append(cases, parsed.Host+parsed.Path)
 		cases = append(cases, parsed.Host)
@@ -53,7 +53,6 @@ func fnApiUrlVariations(t *testing.T) []string {
 
 	return cases
 }
-
 
 func TestFnApiUrlSupportsDifferentFormats(t *testing.T) {
 	t.Parallel()
@@ -90,7 +89,7 @@ func TestSettingMillisWorks(t *testing.T) {
 	h.WithMinimalFunctionSource()
 	h.FileAppend("func.yaml", "\ncpus: 50m\n")
 
-	h.Fn("deploy", "--app", appName, "--local").AssertSuccess()
+	h.Fn("--verbose", "deploy", "--app", appName, "--local").AssertSuccess()
 	h.Fn("call", appName, funcName).AssertSuccess()
 	inspectRes := h.Fn("routes", "inspect", appName, funcName)
 	inspectRes.AssertSuccess()
@@ -134,8 +133,6 @@ func TestAllMainCommandsExist(t *testing.T) {
 	}
 }
 
-
-
 func TestAppYamlDeploy(t *testing.T) {
 	t.Parallel()
 
@@ -144,7 +141,7 @@ func TestAppYamlDeploy(t *testing.T) {
 
 	appName := h.NewAppName()
 	fnName := h.NewFuncName()
-	h.WithFile("app.yaml", fmt.Sprintf(`name: %s`, appName),0644)
+	h.WithFile("app.yaml", fmt.Sprintf(`name: %s`, appName), 0644)
 	h.MkDir(fnName)
 	h.Cd(fnName)
 	h.WithMinimalFunctionSource()
@@ -155,7 +152,6 @@ func TestAppYamlDeploy(t *testing.T) {
 	h.Fn("call", appName, fnName).AssertSuccess()
 
 }
-
 
 func TestBump(t *testing.T) {
 	t.Parallel()

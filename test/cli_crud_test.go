@@ -1,12 +1,12 @@
 package test
 
 import (
-	"testing"
-	"github.com/fnproject/cli/testharness"
-	"fmt"
-	"github.com/jmoiron/jsonq"
 	"encoding/json"
+	"fmt"
+	"github.com/fnproject/cli/testharness"
+	"github.com/jmoiron/jsonq"
 	"strings"
+	"testing"
 )
 
 // TODO: These are both  Super minimal
@@ -48,10 +48,8 @@ func TestSimpleFnRouteUpdateCycle(t *testing.T) {
 	h.Fn("routes", "config", "get", appName1, "myroute", "confA").AssertFailed()
 }
 
-
 func TestRouteUpdateValues(t *testing.T) {
 	t.Parallel()
-
 
 	validCases := []struct {
 		args   []string
@@ -100,7 +98,7 @@ func TestRouteUpdateValues(t *testing.T) {
 
 	invalidCases := [][]string{
 		{"--image", "fooimage:1.0.0"}, // image with no registry
-	//	{"--memory", "0"},  bug?
+		//	{"--memory", "0"},  bug?
 		{"--memory", "wibble"},
 		{"--type", "blancmange"},
 		{"--headers", "potatocakes"},
