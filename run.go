@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"crypto/md5"
 	"github.com/urfave/cli"
 )
 
@@ -151,8 +152,16 @@ func (r *runCmd) run(c *cli.Context) error {
 
 // TODO: share all this stuff with the Docker driver in server or better yet, actually use the Docker driver
 func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int) error {
-	sh := []string{"docker", "run", "--rm", "-i", fmt.Sprintf("--memory=%dm", ff.Memory)}
-
+	containerName := md5.Sum([]byte(time.Now().Format(time.RFC3339) + ff.Name))
+	startFunc := []string{
+		"docker", "run",
+		fmt.Sprintf("--name=%x", containerName),
+		"--rm", "-i",
+		fmt.Sprintf("--memory=%dm", ff.Memory),
+	}
+	stopFunc := []string{
+		"docker", "rm", "-f", fmt.Sprintf("%x", containerName),
+	}
 	var env []string    // env for the shelled out docker run command
 	var runEnv []string // env to pass into the container via -e's
 	callID := "12345678901234567890123456"
@@ -224,7 +233,7 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	}
 
 	for _, l := range links {
-		sh = append(sh, "--link", l)
+		startFunc = append(startFunc, "--link", l)
 	}
 
 	dockerenv := []string{"DOCKER_TLS_VERIFY", "DOCKER_HOST", "DOCKER_CERT_PATH", "DOCKER_MACHINE_NAME"}
@@ -233,16 +242,35 @@ func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method strin
 	}
 
 	for _, e := range runEnv {
-		sh = append(sh, "-e", e)
+		startFunc = append(startFunc, "-e", e)
 	}
 
-	sh = append(sh, ff.ImageName())
-	cmd := exec.Command(sh[0], sh[1:]...)
+	startFunc = append(startFunc, ff.ImageName())
+	cmd := exec.Command(startFunc[0], startFunc[1:]...)
 	cmd.Stdin = stdin
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	// cmd.Env = env
-	return cmd.Run()
+
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+
+	done := make(chan error)
+	go func() { done <- cmd.Wait() }()
+	timeout := time.After(time.Duration(to) * time.Second)
+	select {
+	case <-timeout:
+		cmd.Process.Kill()
+		exec.Command(stopFunc[0], stopFunc[1:]...).Run()
+	case err := <-done:
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type runConfig struct {
