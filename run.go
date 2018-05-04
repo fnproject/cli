@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"crypto/md5"
 	"github.com/urfave/cli"
 )
 
@@ -151,14 +152,15 @@ func (r *runCmd) run(c *cli.Context) error {
 
 // TODO: share all this stuff with the Docker driver in server or better yet, actually use the Docker driver
 func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int) error {
+	containerName := md5.Sum([]byte(time.Now().Format(time.RFC3339) + ff.Name))
 	startFunc := []string{
 		"docker", "run",
-		fmt.Sprintf("--name=%s", ff.Name),
+		fmt.Sprintf("--name=%x", containerName),
 		"--rm", "-i",
 		fmt.Sprintf("--memory=%dm", ff.Memory),
 	}
 	stopFunc := []string{
-		"docker", "rm", "-f", ff.Name,
+		"docker", "rm", "-f", fmt.Sprintf("%x", containerName),
 	}
 	var env []string    // env for the shelled out docker run command
 	var runEnv []string // env to pass into the container via -e's
