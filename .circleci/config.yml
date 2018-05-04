@@ -32,7 +32,10 @@ jobs:
           command: |
             go get -u github.com/golang/dep/cmd/dep
             ${GOPATH}/bin/dep ensure --vendor-only
-      - run: make test
+      - run:
+          name: build and test
+          command: make test
+          no_output_timeout: 20m
       - deploy:
           command: |
             if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
