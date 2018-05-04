@@ -55,7 +55,7 @@ func (h *PythonLangHelper) Runtime() string {
 }
 
 func (h *PythonLangHelper) LangStrings() []string {
-	return []string{"python","python3.6"}
+	return []string{"python", "python3.6"}
 }
 
 func (h *PythonLangHelper) Extensions() []string {
@@ -63,11 +63,11 @@ func (h *PythonLangHelper) Extensions() []string {
 }
 
 func (h *PythonLangHelper) BuildFromImage() (string, error) {
-	return fmt.Sprintf("python:%v", h.Version), nil
+	return fmt.Sprintf("python:%s-slim-stretch", h.Version), nil
 }
 
 func (h *PythonLangHelper) RunFromImage() (string, error) {
-	return fmt.Sprintf("fnproject/python:%v", h.Version), nil
+	return fmt.Sprintf("python:%s-slim-stretch", h.Version), nil
 }
 
 func (h *PythonLangHelper) Entrypoint() (string, error) {
@@ -77,13 +77,15 @@ func (h *PythonLangHelper) Entrypoint() (string, error) {
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
 	pip := "pip3"
 	r := []string{}
+	r = append(r, "RUN apt-get update && apt-get install --no-install-recommends -qy build-essential gcc")
 	if exists("requirements.txt") {
 		r = append(r,
 			"ADD requirements.txt /function/",
-			fmt.Sprintf("RUN %v install -r requirements.txt", pip),
+			fmt.Sprintf("RUN %v install --no-cache --no-cache-dir -r requirements.txt", pip),
 		)
 	}
 	r = append(r, "ADD . /function/")
+	r = append(r, "RUN rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv")
 	return r
 }
 
@@ -92,8 +94,7 @@ func (h *PythonLangHelper) IsMultiStage() bool {
 }
 
 const (
-	helloPythonSrcBoilerplate = `
-import fdk
+	helloPythonSrcBoilerplate = `import fdk
 import json
 
 
