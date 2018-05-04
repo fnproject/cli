@@ -4,7 +4,6 @@ import (
 	"testing"
 )
 
-
 func TestCleanImageName(t *testing.T) {
 	testCases := []struct {
 		input    string

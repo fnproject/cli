@@ -19,7 +19,7 @@ var runtimes = []struct {
 	{"node", false, ""},
 	{"ruby", true, ""},
 	{"rust", false, ""},
-	//	{"python", true, `{"name": "John"}\n`}, //  fn run goes into infinite loop  , https://github.com/fnproject/fdk-python/issues/36
+	{"python", true, `{"name": "John"}\n`},
 }
 
 func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
@@ -51,24 +51,5 @@ func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 			h.FnWithInput(rt.callInput, "call", appName, funcName)
 		})
 	}
-
-}
-
-// This should move above but fn run does not work with python
-func TestPythonCall(t *testing.T) {
-	t.Parallel()
-
-	h := testharness.Create(t)
-	defer h.Cleanup()
-
-	funcName := h.NewFuncName()
-
-	h.MkDir(funcName)
-	h.Cd(funcName)
-	h.Fn("init", "--name", funcName, "--runtime", "python3.6").AssertSuccess()
-	appName := h.NewAppName()
-	h.Fn("deploy", "--local", "--app", appName).AssertSuccess()
-	h.Fn("call", appName, funcName).AssertSuccess()
-	h.FnWithInput(`{"name": "John"}`, "call", appName, funcName).AssertSuccess()
 
 }
