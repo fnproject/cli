@@ -39,8 +39,8 @@ func TestValidateAPIURL(t *testing.T) {
 	}{
 		{apiURL: "http://test.com", expectedErr: ""},
 		{apiURL: "http://test", expectedErr: ""},
-		{apiURL: "test.com", expectedErr: "invalid url does not contain ://"},
-		{apiURL: "http:/test.com", expectedErr: "invalid url does not contain ://"},
+		{apiURL: "test.com", expectedErr: "invalid Fn API URL: does not contain ://"},
+		{apiURL: "http:/test.com", expectedErr: "invalid Fn API URL: does not contain ://"},
 		{apiURL: "://testcom", expectedErr: "invalid Fn API URL: parse ://testcom: missing protocol scheme"},
 	}
 	for _, tc := range testCases {
