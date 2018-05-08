@@ -69,6 +69,14 @@ To unset the current context use `unset`:
 $ fn context unset
 ```
 
+### Updating Context 
+
+To update the current context use `update` with a key value pair:
+
+```
+$ fn context update <key> <value>
+```
+
 # Enviroment Variables
 
 _The current supported env vars 'FN_API_URL' and 'FN_REGISTRY' will override the configured context properties_.
