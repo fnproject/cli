@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -21,7 +22,11 @@ func DecodeYAMLFile(file *os.File) (*ContextMap, error) {
 }
 
 func WriteYamlFile(file *os.File, values *ContextMap) error {
-	return yaml.NewEncoder(file).Encode(&values)
+	b, err := yaml.Marshal(values)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(file.Name(), b, readWritePerms)
 }
 
 func GetHomeDir() string {
