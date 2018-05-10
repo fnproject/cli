@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/fnproject/cli/utils"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
@@ -37,12 +36,14 @@ const (
 	OracleDisableCerts  = "disable-certs"
 )
 
-var defaultRootConfigContents = &utils.ContextMap{CurrentContext: ""}
-var defaultContextConfigContents = &utils.ContextMap{
+var defaultRootConfigContents = &ContextMap{CurrentContext: ""}
+var defaultContextConfigContents = &ContextMap{
 	ContextProvider: DefaultProvider,
 	EnvFnAPIURL:     defaultLocalAPIURL,
 	EnvFnRegistry:   "",
 }
+
+type ContextMap map[string]string
 
 // ContextFile defines the internal structure of a default context
 type ContextFile struct {
@@ -67,7 +68,7 @@ func Init() error {
 // EnsureConfiguration ensures context configuration directory hierarchy is in place, if not
 // creates it and the default context configuration files
 func ensureConfiguration() error {
-	home := utils.GetHomeDir()
+	home := GetHomeDir()
 
 	rootConfigPath := filepath.Join(home, rootConfigPathName)
 	if _, err := os.Stat(rootConfigPath); os.IsNotExist(err) {
@@ -83,7 +84,7 @@ func ensureConfiguration() error {
 			return fmt.Errorf("error creating config.yaml file %v", err)
 		}
 
-		err = utils.WriteYamlFile(file, defaultRootConfigContents)
+		err = WriteYamlFile(file.Name(), defaultRootConfigContents)
 		if err != nil {
 			return err
 		}
@@ -103,7 +104,7 @@ func ensureConfiguration() error {
 			return fmt.Errorf("error creating default.yaml context file %v", err)
 		}
 
-		err = utils.WriteYamlFile(file, defaultContextConfigContents)
+		err = WriteYamlFile(file.Name(), defaultContextConfigContents)
 		if err != nil {
 			return err
 		}
@@ -120,7 +121,7 @@ func GetContextsPath() string {
 
 func LoadConfiguration(c *cli.Context) error {
 	// Find home directory.
-	home := utils.GetHomeDir()
+	home := GetHomeDir()
 	context := ""
 	if context = c.String(EnvFnContext); context == "" {
 		viper.AddConfigPath(filepath.Join(home, rootConfigPathName))
@@ -150,7 +151,7 @@ func LoadConfiguration(c *cli.Context) error {
 }
 
 func WriteCurrentContextToConfigFile(value string) error {
-	home := utils.GetHomeDir()
+	home := GetHomeDir()
 
 	configFilePath := filepath.Join(home, rootConfigPathName, contextConfigFileName)
 	f, err := os.OpenFile(configFilePath, os.O_RDWR, ReadWritePerms)
@@ -159,12 +160,12 @@ func WriteCurrentContextToConfigFile(value string) error {
 	}
 	defer f.Close()
 
-	file, err := utils.DecodeYAMLFile(f)
+	file, err := DecodeYAMLFile(f.Name())
 	if err != nil {
 		return err
 	}
 
-	configValues := utils.ContextMap{}
+	configValues := ContextMap{}
 	for k, v := range *file {
 		if k == CurrentContext {
 			configValues[k] = value
@@ -173,7 +174,7 @@ func WriteCurrentContextToConfigFile(value string) error {
 		}
 	}
 
-	err = utils.WriteYamlFile(f, &configValues)
+	err = WriteYamlFile(f.Name(), &configValues)
 	if err != nil {
 		return err
 	}

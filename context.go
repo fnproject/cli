@@ -12,7 +12,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/fnproject/cli/config"
-	"github.com/fnproject/cli/utils"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 	yaml "gopkg.in/yaml.v2"
@@ -21,7 +20,7 @@ import (
 var contextsPath = config.GetContextsPath()
 var fileExtension = ".yaml"
 
-type ContextMap utils.ContextMap
+type ContextMap config.ContextMap
 
 func contextCmd() cli.Command {
 	ctxMap := ContextMap{}
@@ -125,13 +124,13 @@ func createCtx(c *cli.Context) error {
 	}
 	defer file.Close()
 
-	contextValues := &utils.ContextMap{
+	contextValues := &config.ContextMap{
 		config.ContextProvider: provider,
 		config.EnvFnAPIURL:     apiURL,
 		config.EnvFnRegistry:   registry,
 	}
 
-	err = utils.WriteYamlFile(file, contextValues)
+	err = config.WriteYamlFile(file.Name(), contextValues)
 	if err != nil {
 		return err
 	}
@@ -218,7 +217,7 @@ func listCtx(c *cli.Context) error {
 
 	for _, f := range files {
 		current := ""
-		home := utils.GetHomeDir()
+		home := config.GetHomeDir()
 		path := filepath.Join(home, contextsPath, f.Name())
 		yamlFile, err := ioutil.ReadFile(path)
 		if err != nil {
@@ -253,7 +252,7 @@ func (ctxMap *ContextMap) updateCtx(c *cli.Context) error {
 }
 
 func createFilePath(filename string) string {
-	home := utils.GetHomeDir()
+	home := config.GetHomeDir()
 	return filepath.Join(home, contextsPath, filename)
 }
 
@@ -267,7 +266,7 @@ func checkContextFileExists(filename string) (bool, error) {
 }
 
 func getAvailableContexts() ([]os.FileInfo, error) {
-	home := utils.GetHomeDir()
+	home := config.GetHomeDir()
 	files, err := ioutil.ReadDir(filepath.Join(home, contextsPath))
 	return files, err
 }
@@ -301,7 +300,7 @@ func (ctxMap *ContextMap) Set(key, value string) error {
 	}
 	defer f.Close()
 
-	file, err := utils.DecodeYAMLFile(f)
+	file, err := config.DecodeYAMLFile(f.Name())
 	if err != nil {
 		return err
 	}
@@ -314,5 +313,5 @@ func (ctxMap *ContextMap) Set(key, value string) error {
 	}
 
 	(*file)[key] = value
-	return utils.WriteYamlFile(f, file)
+	return config.WriteYamlFile(f.Name(), file)
 }
