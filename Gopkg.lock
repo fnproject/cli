@@ -316,7 +316,7 @@
   packages = [
     ".",
     "common"
-  ]
+  ] 
   revision = "da236067a45ec155db5196363079c8db6fb7657e"
   version = "v1.4.0"
 
@@ -445,6 +445,10 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
+<<<<<<< HEAD
   inputs-digest = "4636dc75bd93dc8837fa60dcc9c3ff25d40fab3f3eaba6bab340f8bd81cb6bca"
+=======
+  inputs-digest = "45e59942884c330ac0680379310c97d6ad2dbb8fa78e38850aff6f0bb0a0abeb"
+>>>>>>> e4a8ff5... Add the ability to have no pass-phrase for a private key.
   solver-name = "gps-cdcl"
   solver-version = 1
