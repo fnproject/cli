@@ -81,6 +81,10 @@ func (p *deploycmd) flags() []cli.Flag {
 			Usage:       "Don't bump the version, assuming external version management",
 			Destination: &p.noBump,
 		},
+		cli.StringSliceFlag{
+			Name:  "build-arg",
+			Usage: "set build time variables",
+		},
 	}
 }
 
@@ -260,7 +264,8 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 		// TODO: this whole funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
 	}
 
-	_, err = buildfunc(c, funcfilePath, funcfile, p.noCache)
+	buildArgs := c.StringSlice("build-arg")
+	_, err = buildfunc(c, funcfilePath, funcfile, buildArgs, p.noCache)
 	if err != nil {
 		return err
 	}
