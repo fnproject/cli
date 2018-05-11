@@ -75,7 +75,7 @@ func signRequest(signer common.HTTPRequestSigner, request *http.Request) (signed
 	return request, err
 }
 
-//  http.RoundTripper middleware that adds a compartmentId query parameter to all requests
+//  http.RoundTripper middleware that adds an opc-compartment-id header to all requests
 type CompartmentIDRoundTripper struct {
 	transport     http.RoundTripper
 	compartmentID string
@@ -89,9 +89,7 @@ func NewCompartmentIDRoundTripper(compartmentID string, transport http.RoundTrip
 }
 
 func (t CompartmentIDRoundTripper) RoundTrip(request *http.Request) (response *http.Response, e error) {
-	params := request.URL.Query()
-	params.Add("compartmentId", t.compartmentID)
-	request.URL.RawQuery = params.Encode()
+	request.Header.Set("opc-compartment-id", t.compartmentID)
 	response, e = t.transport.RoundTrip(request)
 	return
 }
