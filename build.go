@@ -35,6 +35,10 @@ func (b *buildcmd) flags() []cli.Flag {
 			Usage:       "Don't use docker cache",
 			Destination: &b.noCache,
 		},
+		cli.StringSliceFlag{
+			Name:  "build-arg",
+			Usage: "set build-time variables",
+		},
 	}
 }
 
@@ -49,7 +53,8 @@ func (b *buildcmd) build(c *cli.Context) error {
 		return err
 	}
 
-	ff, err = buildfunc(c, fpath, ff, b.noCache)
+	buildArgs := c.StringSlice("build-arg")
+	ff, err = buildfunc(c, fpath, ff, buildArgs, b.noCache)
 	if err != nil {
 		return err
 	}

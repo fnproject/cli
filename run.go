@@ -70,6 +70,10 @@ func runflags() []cli.Flag {
 			Name:  "content-type",
 			Usage: "The payload Content-Type for the function invocation.",
 		},
+		cli.StringSliceFlag{
+			Name:  "build-arg",
+			Usage: "set build time variables",
+		},
 	}
 }
 
@@ -122,7 +126,8 @@ func preRun(c *cli.Context) (string, *funcfile, []string, error) {
 		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
 	}
 
-	_, err = buildfunc(c, fpath, ff, c.Bool("no-cache"))
+	buildArgs := c.StringSlice("build-arg")
+	_, err = buildfunc(c, fpath, ff, buildArgs, c.Bool("no-cache"))
 	if err != nil {
 		return fpath, nil, nil, err
 	}
@@ -150,17 +155,19 @@ func (r *runCmd) run(c *cli.Context) error {
 	if c.Uint64("memory") != 0 {
 		ff.Memory = c.Uint64("memory")
 	}
-	return runff(ff, stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"))
+	return runff(ff, stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"), c.String("content-type"))
 }
 
 // TODO: share all this stuff with the Docker driver in server or better yet, actually use the Docker driver
-func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int) error {
+func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int, contentType string) error {
 	sh := []string{"docker", "run", "--rm", "-i", fmt.Sprintf("--memory=%dm", ff.Memory)}
 
 	var env []string    // env for the shelled out docker run command
 	var runEnv []string // env to pass into the container via -e's
 	callID := "12345678901234567890123456"
-	contentType := "application/json" // TODO this is not a default in the server. remove.
+	if contentType == "" {
+		contentType = "text/plain"
+	}
 	to := int32(30)
 	if ff.Timeout != nil {
 		to = *ff.Timeout

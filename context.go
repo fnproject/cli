@@ -2,25 +2,28 @@ package main
 
 import (
 	"errors"
-	"regexp"
-	"strings"
-
-	"github.com/spf13/viper"
-	yaml "gopkg.in/yaml.v2"
-
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/fnproject/cli/config"
+	"github.com/spf13/viper"
 	"github.com/urfave/cli"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var contextsPath = config.GetContextsPath()
+var fileExtension = ".yaml"
+
+type ContextMap config.ContextMap
 
 func contextCmd() cli.Command {
+	ctxMap := ContextMap{}
 	return cli.Command{
 		Name:  "context",
 		Usage: "manage context",
@@ -30,7 +33,7 @@ func contextCmd() cli.Command {
 				Aliases:   []string{"c"},
 				Usage:     "create a new context",
 				ArgsUsage: "<context>",
-				Action:    create,
+				Action:    createCtx,
 				Flags: []cli.Flag{
 					cli.StringFlag{
 						Name:  "provider",
@@ -51,31 +54,37 @@ func contextCmd() cli.Command {
 				Aliases:   []string{"d"},
 				Usage:     "delete a context",
 				ArgsUsage: "<context>",
-				Action:    delete,
+				Action:    deleteCtx,
 			},
 			{
 				Name:    "list",
 				Aliases: []string{"l"},
 				Usage:   "list contexts",
-				Action:  list,
+				Action:  listCtx,
+			},
+			{
+				Name:      "update",
+				Usage:     "update context files",
+				ArgsUsage: "<key> <value>",
+				Action:    ctxMap.updateCtx,
 			},
 			{
 				Name:      "use",
 				Aliases:   []string{"u"},
 				Usage:     "use context for future invocations",
 				ArgsUsage: "<context>",
-				Action:    use,
+				Action:    useCtx,
 			},
 			{
 				Name:   "unset",
 				Usage:  "unset current-context",
-				Action: unset,
+				Action: unsetCtx,
 			},
 		},
 	}
 }
 
-func create(c *cli.Context) error {
+func createCtx(c *cli.Context) error {
 	context := c.Args().Get(0)
 
 	err := ValidateContextName(context)
@@ -88,9 +97,13 @@ func create(c *cli.Context) error {
 		provider = cProvider
 	}
 
-	apiUrl := ""
-	if cApiUrl := c.String("api-url"); cApiUrl != "" {
-		apiUrl = cApiUrl
+	apiURL := ""
+	if cApiURL := c.String("api-url"); cApiURL != "" {
+		err = ValidateAPIURL(cApiURL)
+		if err != nil {
+			return err
+		}
+		apiURL = cApiURL
 	}
 
 	registry := ""
@@ -103,20 +116,21 @@ func create(c *cli.Context) error {
 			return err
 		}
 		return errors.New("context already exists")
-
 	}
-	path, err := createFilePath(context)
+	path := createFilePath(context + fileExtension)
+	file, err := os.Create(path)
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
-	contextValues := map[string]string{
+	contextValues := &config.ContextMap{
 		config.ContextProvider: provider,
-		config.EnvFnAPIURL:     apiUrl,
+		config.EnvFnAPIURL:     apiURL,
 		config.EnvFnRegistry:   registry,
 	}
 
-	err = config.WriteYamlFile(path, contextValues)
+	err = config.WriteYamlFile(file.Name(), contextValues)
 	if err != nil {
 		return err
 	}
@@ -125,7 +139,7 @@ func create(c *cli.Context) error {
 	return nil
 }
 
-func delete(c *cli.Context) error {
+func deleteCtx(c *cli.Context) error {
 	context := c.Args().Get(0)
 
 	if check, err := checkContextFileExists(context); !check {
@@ -143,21 +157,17 @@ func delete(c *cli.Context) error {
 		return errors.New("can not delete default context")
 	}
 
-	path, err := createFilePath(context)
+	path := createFilePath(context + fileExtension)
+	err := os.Remove(path)
 	if err != nil {
 		return err
 	}
 
-	err = os.Remove(path)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Context %v deleted \n", context)
+	fmt.Printf("Successfully deleted context %v \n", context)
 	return nil
 }
 
-func use(c *cli.Context) error {
+func useCtx(c *cli.Context) error {
 	context := c.Args().Get(0)
 
 	if check, err := checkContextFileExists(context); !check {
@@ -177,11 +187,11 @@ func use(c *cli.Context) error {
 	}
 	viper.Set(config.CurrentContext, context)
 
-	fmt.Printf("Successfully using context: %v \n", context)
+	fmt.Printf("Now using context: %v \n", context)
 	return nil
 }
 
-func unset(c *cli.Context) error {
+func unsetCtx(c *cli.Context) error {
 	if currentContext := viper.GetString(config.CurrentContext); currentContext == "" {
 		return errors.New("no context currently in use")
 	}
@@ -195,7 +205,7 @@ func unset(c *cli.Context) error {
 	return nil
 }
 
-func list(c *cli.Context) error {
+func listCtx(c *cli.Context) error {
 	currentContext := viper.GetString(config.CurrentContext)
 	files, err := getAvailableContexts()
 	if err != nil {
@@ -220,7 +230,7 @@ func list(c *cli.Context) error {
 			return err
 		}
 
-		name := strings.Replace(f.Name(), ".yaml", "", 1)
+		name := strings.Replace(f.Name(), fileExtension, "", 1)
 		if currentContext == name {
 			current = "*"
 		}
@@ -229,18 +239,25 @@ func list(c *cli.Context) error {
 	return w.Flush()
 }
 
-func createFilePath(filename string) (string, error) {
-	contextFileName := filename + ".yaml"
+func (ctxMap *ContextMap) updateCtx(c *cli.Context) error {
+	key := c.Args().Get(0)
+	value := c.Args().Get(1)
+	err := ctxMap.Set(key, value)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("current context updated %v with %v\n", key, value)
+	return err
+}
+
+func createFilePath(filename string) string {
 	home := config.GetHomeDir()
-	path := filepath.Join(home, contextsPath, contextFileName)
-	return path, nil
+	return filepath.Join(home, contextsPath, filename)
 }
 
 func checkContextFileExists(filename string) (bool, error) {
-	path, err := createFilePath(filename)
-	if err != nil {
-		return false, err
-	}
+	path := createFilePath(filename + fileExtension)
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return false, err
@@ -251,11 +268,19 @@ func checkContextFileExists(filename string) (bool, error) {
 func getAvailableContexts() ([]os.FileInfo, error) {
 	home := config.GetHomeDir()
 	files, err := ioutil.ReadDir(filepath.Join(home, contextsPath))
-	if err != nil {
-		return nil, err
+	return files, err
+}
+
+func ValidateAPIURL(apiURL string) error {
+	if !strings.Contains(apiURL, "://") {
+		return errors.New("invalid Fn API URL: does not contain ://")
 	}
 
-	return files, nil
+	_, err := url.Parse(apiURL)
+	if err != nil {
+		return fmt.Errorf("invalid Fn API URL: %s", err)
+	}
+	return nil
 }
 
 func ValidateContextName(context string) error {
@@ -265,4 +290,28 @@ func ValidateContextName(context string) error {
 		return errors.New("please enter a context name with only Alphanumeric, _, or -")
 	}
 	return nil
+}
+
+func (ctxMap *ContextMap) Set(key, value string) error {
+	contextFilePath := createFilePath(viper.GetString(config.CurrentContext) + fileExtension)
+	f, err := os.OpenFile(contextFilePath, os.O_RDWR, config.ReadWritePerms)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	file, err := config.DecodeYAMLFile(f.Name())
+	if err != nil {
+		return err
+	}
+
+	if key == config.EnvFnAPIURL {
+		err := ValidateAPIURL(value)
+		if err != nil {
+			return err
+		}
+	}
+
+	(*file)[key] = value
+	return config.WriteYamlFile(f.Name(), file)
 }

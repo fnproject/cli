@@ -207,6 +207,12 @@
   revision = "d509235108fcf6ab4913d2dcb3a2260c0db2108e"
 
 [[projects]]
+  name = "github.com/go-yaml/yaml"
+  packages = ["."]
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  version = "v2.2.1"
+
+[[projects]]
   branch = "master"
   name = "github.com/hashicorp/hcl"
   packages = [
@@ -269,12 +275,6 @@
   version = "v0.0.3"
 
 [[projects]]
-  name = "github.com/mattn/go-runewidth"
-  packages = ["."]
-  revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
-  version = "v0.0.2"
-
-[[projects]]
   branch = "master"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
@@ -291,12 +291,6 @@
   packages = ["pkg/jsonmessage"]
   revision = "90d35abf7b3535c1c319c872900fbd76374e521c"
   version = "v17.05.0-ce-rc3"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/olekukonko/tablewriter"
-  packages = ["."]
-  revision = "d5dd8a50526aadb3d5f2c9b5233277bc2db90e88"
 
 [[projects]]
   name = "github.com/onsi/gomega"
@@ -448,6 +442,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "701d1abf3fcc45951b7223234e0cae3586feb0681e6684f3e864b8f7d720a383"
+  inputs-digest = "45e59942884c330ac0680379310c97d6ad2dbb8fa78e38850aff6f0bb0a0abeb"
   solver-name = "gps-cdcl"
   solver-version = 1

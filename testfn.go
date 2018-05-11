@@ -229,7 +229,7 @@ func runlocaltest(ff *funcfile, in *inputMap, expectedOut *outputMap, expectedEr
 
 	var stdout, stderr bytes.Buffer
 
-	if err := runff(ff, stdin, &stdout, &stderr, "", envVars, nil, "", 1); err != nil {
+	if err := runff(ff, stdin, &stdout, &stderr, "", envVars, nil, "", 1, "application/json"); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\nstderr:%s\n", err, stdout.String(), stderr.String())
 	}
 

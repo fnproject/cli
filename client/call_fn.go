@@ -48,11 +48,9 @@ func CallFN(u string, content io.Reader, output io.Writer, method string, env []
 	}
 
 	if contentType != "" {
-		fmt.Println("Setting Content-Type to:", contentType)
 		req.Header.Set("Content-Type", contentType)
 	} else {
-		fmt.Println("Defaulting Content-Type to: application/json")
-		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Content-Type", "text/plain")
 	}
 
 	if len(env) > 0 {
