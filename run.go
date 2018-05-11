@@ -66,6 +66,10 @@ func runflags() []cli.Flag {
 			Name:  "no-cache",
 			Usage: "Don't use Docker cache for the build",
 		},
+		cli.StringFlag{
+			Name:  "content-type",
+			Usage: "The payload Content-Type for the function invocation.",
+		},
 	}
 }
 

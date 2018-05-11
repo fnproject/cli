@@ -269,7 +269,7 @@ func (t *testcmd) runremotetest(ff *funcfile, in *inputMap, expectedOut *outputM
 	}
 	var stdout bytes.Buffer
 
-	if err := client.CallFN(target, stdin, &stdout, "", envVars, false); err != nil {
+	if err := client.CallFN(target, stdin, &stdout, "", envVars, "application/json", false); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\n", err, stdout.String())
 	}
 
