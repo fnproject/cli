@@ -56,6 +56,10 @@ var routeFlags = []cli.Flag{
 		Name:  "idle-timeout",
 		Usage: "route idle timeout (eg. 30)",
 	},
+	cli.StringSliceFlag{
+		Name:  "annotations",
+		Usage: "route annotations",
+	},
 }
 
 var updateRouteFlags = routeFlags
@@ -311,6 +315,26 @@ func routeWithFlags(c *cli.Context, rt *fnmodels.Route) {
 	if len(rt.Config) == 0 {
 		if len(c.StringSlice("config")) > 0 {
 			rt.Config = extractEnvConfig(c.StringSlice("config"))
+		}
+	}
+	if len(rt.Annotations) == 0 {
+		if len(c.StringSlice("annotations")) > 0 {
+			annotations := make(map[string]interface{})
+			for _, s := range c.StringSlice("annotations") {
+				parts := strings.Split(s, "=")
+				if len(parts) == 2 {
+					var v interface{}
+					err := json.Unmarshal([]byte(parts[1]), &v)
+					if err != nil {
+						fmt.Printf("Unable to parse annotation value '%v'. Annotations values must be valid JSON strings.\n", parts[1])
+					} else {
+						annotations[parts[0]] = v
+					}
+				} else {
+					fmt.Println("Annotations must be specified in the form key='value', where value is a valid JSON string")
+				}
+			}
+			rt.Annotations = annotations
 		}
 	}
 }
