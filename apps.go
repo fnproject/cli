@@ -44,6 +44,10 @@ func apps() cli.Command {
 						Name:  "config",
 						Usage: "application configuration",
 					},
+					cli.StringSliceFlag{
+						Name:  "annotation",
+						Usage: "application annotations",
+					},
 				},
 			},
 			{
@@ -170,10 +174,14 @@ func (a *appsCmd) list(c *cli.Context) error {
 }
 
 func (a *appsCmd) create(c *cli.Context) error {
-	body := &models.AppWrapper{App: &models.App{
-		Name:   c.Args().Get(0),
-		Config: extractEnvConfig(c.StringSlice("config")),
-	}}
+
+	app := &models.App{
+		Name: c.Args().Get(0),
+	}
+
+	appWithFlags(c, app)
+
+	body := &models.AppWrapper{App: app}
 
 	resp, err := a.client.Apps.PostApps(&apiapps.PostAppsParams{
 		Context: context.Background(),
@@ -195,12 +203,38 @@ func (a *appsCmd) create(c *cli.Context) error {
 	return nil
 }
 
+func appWithFlags(c *cli.Context, app *models.App) {
+	if len(app.Config) == 0 {
+		app.Config = extractEnvConfig(c.StringSlice("config"))
+	}
+	if len(app.Annotations) == 0 {
+		if len(c.StringSlice("annotation")) > 0 {
+			annotations := make(map[string]interface{})
+			for _, s := range c.StringSlice("annotation") {
+				parts := strings.Split(s, "=")
+				if len(parts) == 2 {
+					var v interface{}
+					err := json.Unmarshal([]byte(parts[1]), &v)
+					if err != nil {
+						fmt.Printf("Unable to parse annotation value '%v'. Annotations values must be valid JSON strings.\n", parts[1])
+					} else {
+						annotations[parts[0]] = v
+					}
+				} else {
+					fmt.Println("Annotations must be specified in the form key='value', where value is a valid JSON string")
+				}
+			}
+			app.Annotations = annotations
+		}
+	}
+}
+
 func (a *appsCmd) update(c *cli.Context) error {
 	appName := c.Args().First()
 
-	patchedApp := &models.App{
-		Config: extractEnvConfig(c.StringSlice("config")),
-	}
+	patchedApp := &models.App{}
+
+	appWithFlags(c, patchedApp)
 
 	err := a.patchApp(appName, patchedApp)
 	if err != nil {
