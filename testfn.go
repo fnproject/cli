@@ -229,7 +229,7 @@ func runlocaltest(ff *funcfile, in *inputMap, expectedOut *outputMap, expectedEr
 
 	var stdout, stderr bytes.Buffer
 
-	if err := runff(ff, stdin, &stdout, &stderr, "", envVars, nil, "", 1); err != nil {
+	if err := runff(ff, stdin, &stdout, &stderr, "", envVars, nil, "", 1, "application/json"); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\nstderr:%s\n", err, stdout.String(), stderr.String())
 	}
 
@@ -269,7 +269,7 @@ func (t *testcmd) runremotetest(ff *funcfile, in *inputMap, expectedOut *outputM
 	}
 	var stdout bytes.Buffer
 
-	if err := client.CallFN(target, stdin, &stdout, "", envVars, false); err != nil {
+	if err := client.CallFN(target, stdin, &stdout, "", envVars, "application/json", false); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\n", err, stdout.String())
 	}
 

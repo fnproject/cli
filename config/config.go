@@ -89,7 +89,6 @@ func ensureConfiguration() error {
 			return err
 		}
 	}
-
 	contextsPath := filepath.Join(rootConfigPath, contextsPathName)
 	if _, err := os.Stat(contextsPath); os.IsNotExist(err) {
 		if err = os.Mkdir(contextsPath, ReadWritePerms); err != nil {
@@ -99,12 +98,12 @@ func ensureConfiguration() error {
 
 	defaultContextPath := filepath.Join(contextsPath, defaultContextFileName)
 	if _, err := os.Stat(defaultContextPath); os.IsNotExist(err) {
-		file, err := os.Create(defaultContextPath)
+		_, err = os.Create(defaultContextPath)
 		if err != nil {
 			return fmt.Errorf("error creating default.yaml context file %v", err)
 		}
 
-		err = WriteYamlFile(file.Name(), defaultContextConfigContents)
+		err = WriteYamlFile(defaultContextPath, defaultContextConfigContents)
 		if err != nil {
 			return err
 		}

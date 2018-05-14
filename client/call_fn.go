@@ -33,7 +33,7 @@ type callID struct {
 	Error  apiErr `json:"error"`
 }
 
-func CallFN(u string, content io.Reader, output io.Writer, method string, env []string, includeCallID bool) error {
+func CallFN(u string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
 	if method == "" {
 		if content == nil {
 			method = "GET"
@@ -47,7 +47,11 @@ func CallFN(u string, content io.Reader, output io.Writer, method string, env []
 		return fmt.Errorf("error running route: %s", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	} else {
+		req.Header.Set("Content-Type", "text/plain")
+	}
 
 	if len(env) > 0 {
 		EnvAsHeader(req, env)
