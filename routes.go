@@ -57,8 +57,8 @@ var routeFlags = []cli.Flag{
 		Usage: "route idle timeout (eg. 30)",
 	},
 	cli.StringSliceFlag{
-		Name:  "annotations",
-		Usage: "route annotations",
+		Name:  "annotation",
+		Usage: "route annotation (can be specified multiple times)",
 	},
 }
 
@@ -318,9 +318,9 @@ func routeWithFlags(c *cli.Context, rt *fnmodels.Route) {
 		}
 	}
 	if len(rt.Annotations) == 0 {
-		if len(c.StringSlice("annotations")) > 0 {
+		if len(c.StringSlice("annotation")) > 0 {
 			annotations := make(map[string]interface{})
-			for _, s := range c.StringSlice("annotations") {
+			for _, s := range c.StringSlice("annotation") {
 				parts := strings.Split(s, "=")
 				if len(parts) == 2 {
 					var v interface{}
