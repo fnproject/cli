@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -347,4 +348,23 @@ func appNamePath(img string) (string, string) {
 		tag = len(img[sep:])
 	}
 	return img[:sep], img[sep : sep+tag]
+}
+
+func extractAnnotations(c *cli.Context) map[string]interface{} {
+	annotations := make(map[string]interface{})
+	for _, s := range c.StringSlice("annotation") {
+		parts := strings.Split(s, "=")
+		if len(parts) == 2 {
+			var v interface{}
+			err := json.Unmarshal([]byte(parts[1]), &v)
+			if err != nil {
+				fmt.Printf("Unable to parse annotation value '%v'. Annotations values must be valid JSON strings.\n", parts[1])
+			} else {
+				annotations[parts[0]] = v
+			}
+		} else {
+			fmt.Println("Annotations must be specified in the form key='value', where value is a valid JSON string")
+		}
+	}
+	return annotations
 }
