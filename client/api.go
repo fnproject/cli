@@ -64,6 +64,7 @@ func defaultProvider(transport *openapi.Runtime) {
 }
 
 func challengeForPKeyPassword() string {
+	fmt.Print("Private Key Phrase: ")
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		panic(fmt.Sprintf("%s", err))
@@ -84,32 +85,31 @@ func privateKey(pkeyFilePath string) (*rsa.PrivateKey, error) {
 	pKeyPword := viper.GetString(config.OraclePassPhrase)
 
 	if !viper.IsSet(config.OraclePassPhrase) {
-		if key = getPrivateKey(keyBytes, pKeyPword, pkeyFilePath); key == nil {
+		if key, err = getPrivateKey(keyBytes, pKeyPword, pkeyFilePath); key == nil {
 			pKeyPword = challengeForPKeyPassword()
 		}
 	}
-	key = getPrivateKey(keyBytes, pKeyPword, pkeyFilePath)
-	return key, nil
+	key, err = getPrivateKey(keyBytes, pKeyPword, pkeyFilePath)
+	return key, err
 }
 
-func getPrivateKey(keyBytes []byte, pKeyPword, pkeyFilePath string) *rsa.PrivateKey {
+func getPrivateKey(keyBytes []byte, pKeyPword, pkeyFilePath string) (*rsa.PrivateKey, error) {
 	key, err := oci.PrivateKeyFromBytes(keyBytes, oci.String(pKeyPword))
 	if err != nil {
 		if pKeyPword != "" {
-			fmt.Fprintf(os.Stderr, "Unable to load private key from file bytes: %s. Error: %s \n", pkeyFilePath, err)
-			os.Exit(1)
+			return nil, fmt.Errorf("Unable to load private key from file bytes: %s. Error: %s \n", pkeyFilePath, err)
 		}
 	}
 
-	return key
+	return key, nil
 }
 
-func oracleProvider(transport *openapi.Runtime) {
+func oracleProvider(transport *openapi.Runtime) error {
 	keyID, pKey, err := oracleConfigFile()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s \n", err)
-		os.Exit(1)
+		return err
 	}
+
 	compartmentID := viper.GetString(config.OracleCompartmentID)
 
 	if viper.GetBool(config.OracleDisableCerts) {
@@ -124,6 +124,7 @@ func oracleProvider(transport *openapi.Runtime) {
 				pKey,
 				transport.Transport))
 
+	return err
 }
 
 func oracleConfigFile() (string, *rsa.PrivateKey, error) {
@@ -162,7 +163,6 @@ func oracleConfigFile() (string, *rsa.PrivateKey, error) {
 	}
 
 	keyID := tenancyID + "/" + userID + "/" + fingerprint
-
 	var pKey *rsa.PrivateKey
 	if keyFile := viper.GetString(config.OracleKeyFile); keyFile != "" {
 		pKey, err = privateKey(keyFile)
@@ -181,22 +181,26 @@ func oracleConfigFile() (string, *rsa.PrivateKey, error) {
 	return keyID, pKey, nil
 }
 
-func GetTransportAndRegistry() (*openapi.Runtime, strfmt.Registry) {
+func GetTransportAndRegistry() (*openapi.Runtime, strfmt.Registry, error) {
 	hostURL := HostURL()
 	transport := openapi.New(hostURL.Host, hostURL.Path, []string{hostURL.Scheme})
-
+	var err error
 	switch viper.GetString(config.ContextProvider) {
 	case "default":
 		defaultProvider(transport)
 	case "oracle":
-		oracleProvider(transport)
+		err = oracleProvider(transport)
 	default:
 		defaultProvider(transport)
 	}
 
-	return transport, strfmt.Default
+	return transport, strfmt.Default, err
 }
 
-func APIClient() *fnclient.Fn {
-	return fnclient.New(GetTransportAndRegistry())
+func APIClient() (*fnclient.Fn, error) {
+	transport, registry, err := GetTransportAndRegistry()
+	if err != nil {
+		return nil, err
+	}
+	return fnclient.New(transport, registry), nil
 }

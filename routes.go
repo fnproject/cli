@@ -75,8 +75,9 @@ func routes() cli.Command {
 		Name:  "routes",
 		Usage: "manage routes",
 		Before: func(c *cli.Context) error {
-			r.client = client.APIClient()
-			return nil
+			var err error
+			r.client, err = client.APIClient()
+			return err
 		},
 		Subcommands: []cli.Command{
 			{
@@ -177,8 +178,9 @@ func call() cli.Command {
 
 	return cli.Command{
 		Before: func(c *cli.Context) error {
-			r.client = client.APIClient()
-			return nil
+			var err error
+			r.client, err = client.APIClient()
+			return err
 		},
 		Name:      "call",
 		Usage:     "call a remote function",

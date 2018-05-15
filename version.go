@@ -20,7 +20,10 @@ func version() cli.Command {
 }
 
 func versionCMD(c *cli.Context) error {
-	t, reg := client.GetTransportAndRegistry()
+	t, reg, err := client.GetTransportAndRegistry()
+	if err != nil {
+		return err
+	}
 	// dirty hack, swagger paths live under /v1
 	// version is also there, but it shouldn't
 	// dropping base path to get appropriate URL for request eventually

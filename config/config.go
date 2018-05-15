@@ -30,14 +30,13 @@ const (
 	EnvFnAPIURL   = "api-url"
 	EnvFnContext  = "context"
 
-	OracleSubnetID      = "oracle.subnet-id"
 	OracleTenancyID     = "oracle.tenancy-id"
 	OracleUserID        = "oracle.user-id"
 	OracleFingerprint   = "oracle.fingerprint"
 	OracleKeyFile       = "oracle.key-file"
 	OraclePassPhrase    = "oracle.pass-phrase"
 	OracleCompartmentID = "oracle.compartment-id"
-	OracleDisableCerts  = "disable-certs"
+	OracleDisableCerts  = "oracle.disable-certs"
 	OracleProfile       = "oracle.profile"
 )
 
