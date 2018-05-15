@@ -64,7 +64,6 @@ func defaultProvider(transport *openapi.Runtime) {
 }
 
 func challengeForPKeyPassword() string {
-	fmt.Print("Private Key Phrase: ")
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		panic(fmt.Sprintf("%s", err))
