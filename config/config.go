@@ -29,15 +29,6 @@ const (
 	EnvFnToken    = "token"
 	EnvFnAPIURL   = "api-url"
 	EnvFnContext  = "context"
-
-	OracleTenancyID     = "oracle.tenancy-id"
-	OracleUserID        = "oracle.user-id"
-	OracleFingerprint   = "oracle.fingerprint"
-	OracleKeyFile       = "oracle.key-file"
-	OraclePassPhrase    = "oracle.pass-phrase"
-	OracleCompartmentID = "oracle.compartment-id"
-	OracleDisableCerts  = "oracle.disable-certs"
-	OracleProfile       = "oracle.profile"
 )
 
 var defaultRootConfigContents = &ContextMap{CurrentContext: ""}

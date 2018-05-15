@@ -4,10 +4,28 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
+	"syscall"
 	"time"
 
+	"github.com/fnproject/cli/config"
 	"github.com/oracle/oci-go-sdk/common"
+	oci "github.com/oracle/oci-go-sdk/common"
+	"github.com/spf13/viper"
+	"golang.org/x/crypto/ssh/terminal"
+)
+
+const (
+	oracleTenancyID     = "oracle.tenancy-id"
+	oracleUserID        = "oracle.user-id"
+	oracleFingerprint   = "oracle.fingerprint"
+	oracleKeyFile       = "oracle.key-file"
+	oraclePassPhrase    = "oracle.pass-phrase"
+	oracleProfile       = "oracle.profile"
+	oracleCompartmentID = "oracle.compartment-id"
+	oracleDisableCerts  = "oracle.disable-certs"
 )
 
 type OCIKeyProvider struct {
@@ -106,4 +124,99 @@ func InsecureRoundTripper(roundTripper http.RoundTripper) http.RoundTripper {
 	}
 
 	return transport
+}
+
+func OracleConfigFile() (string, *rsa.PrivateKey, error) {
+	var oracleProfile string
+	if oracleProfile = viper.GetString(oracleProfile); oracleProfile == "" {
+		oracleProfile = "DEFAULT"
+	}
+
+	cf, err := oci.ConfigurationProviderFromFileWithProfile(filepath.Join(config.GetHomeDir(), ".oci", "config"), oracleProfile, "")
+	if err != nil {
+		return "", nil, err
+	}
+
+	var tenancyID string
+	if tenancyID = viper.GetString(oracleTenancyID); tenancyID == "" {
+		tenancyID, err = cf.TenancyOCID()
+		if err != nil {
+			return "", nil, err
+		}
+	}
+
+	var userID string
+	if userID = viper.GetString(oracleUserID); userID == "" {
+		userID, err = cf.UserOCID()
+		if err != nil {
+			return "", nil, err
+		}
+	}
+
+	var fingerprint string
+	if fingerprint = viper.GetString(oracleFingerprint); fingerprint == "" {
+		fingerprint, err = cf.KeyFingerprint()
+		if err != nil {
+			return "", nil, err
+		}
+	}
+
+	keyID := tenancyID + "/" + userID + "/" + fingerprint
+	var pKey *rsa.PrivateKey
+	if keyFile := viper.GetString(oracleKeyFile); keyFile != "" {
+		pKey, err = privateKey(keyFile)
+		if err != nil {
+			return "", nil, err
+		}
+		return keyID, pKey, nil
+	}
+
+	// Read private key for .oci file
+	pKey, err = cf.PrivateRSAKey()
+	if err != nil {
+		return "", nil, err
+	}
+
+	return keyID, pKey, nil
+}
+
+func challengeForPKeyPassword() string {
+	fmt.Print("Private Key Phrase: ")
+	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		panic(fmt.Sprintf("%s", err))
+	}
+	password := string(bytePassword)
+	fmt.Println()
+
+	return password
+}
+
+func privateKey(pkeyFilePath string) (*rsa.PrivateKey, error) {
+	keyBytes, err := ioutil.ReadFile(pkeyFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to load private key from file: %s. Error: %s \n", pkeyFilePath, err)
+	}
+
+	var key *rsa.PrivateKey
+	pKeyPword := viper.GetString(oraclePassPhrase)
+
+	if !viper.IsSet(oraclePassPhrase) {
+		if key, err = getPrivateKey(keyBytes, pKeyPword, pkeyFilePath); key == nil {
+			pKeyPword = challengeForPKeyPassword()
+		}
+	}
+	key, err = getPrivateKey(keyBytes, pKeyPword, pkeyFilePath)
+	return key, err
+}
+
+func getPrivateKey(keyBytes []byte, pKeyPword, pkeyFilePath string) (*rsa.PrivateKey, error) {
+	key, err := oci.PrivateKeyFromBytes(keyBytes, oci.String(pKeyPword))
+	if err != nil {
+		if pKeyPword != "" {
+			return nil, fmt.Errorf("Unable to load private key from file bytes: %s. Error: %s \n", pkeyFilePath, err)
+		}
+	}
+
+	return key, nil
 }
