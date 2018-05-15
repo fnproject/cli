@@ -1,8 +1,9 @@
 package test
 
 import (
-	"github.com/fnproject/cli/testharness"
 	"testing"
+
+	"github.com/fnproject/cli/testharness"
 )
 
 const dockerFile = `FROM golang:latest

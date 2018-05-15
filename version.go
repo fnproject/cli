@@ -15,7 +15,7 @@ import (
 // Version of Fn CLI
 var Version = "0.4.108"
 
-func version() cli.Command {
+func VersionCommand() cli.Command {
 	return cli.Command{
 		Name:   "version",
 		Usage:  "displays cli and server versions",
@@ -24,7 +24,7 @@ func version() cli.Command {
 }
 
 func versionCMD(c *cli.Context) error {
-	provider,err := client.CurrentProvider()
+	provider, err := client.CurrentProvider()
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func versionCMD(c *cli.Context) error {
 	return nil
 }
 
-func printLatestVersion() {
+func PrintLatestVersion() {
 	v := getLatestVersion()
 	if v != "" {
 		fmt.Fprintln(os.Stderr, v)

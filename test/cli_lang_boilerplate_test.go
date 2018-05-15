@@ -2,8 +2,9 @@ package test
 
 import (
 	"fmt"
-	"github.com/fnproject/cli/testharness"
 	"testing"
+
+	"github.com/fnproject/cli/testharness"
 )
 
 var runtimes = []struct {

@@ -96,38 +96,6 @@ func (cr *CmdResult) AssertStderrContains(match string) *CmdResult {
 	return cr
 }
 
-func (cr *CmdResult) AssertStdoutContainsJSON(query []string, value interface{}) {
-	routeObj := map[string]interface{}{}
-	err := json.Unmarshal([]byte(cr.Stdout), &routeObj)
-	if err != nil {
-		log.Fatalf("Failed to parse routes inspect as JSON %v, %v", err, cr)
-	}
-
-	q := jsonq.NewQuery(routeObj)
-	val, err := q.Interface(query...)
-	if err != nil {
-		log.Fatalf("Failed to find path %v in json body %v", query, cr.Stdout)
-	}
-
-	if val != value {
-		log.Fatalf("Expected %s to be %v but was %s, %v", strings.Join(query, "."), value, val, cr)
-	}
-}
-
-func (cr *CmdResult) AssertStdoutMissingJSONPath(query []string) {
-	routeObj := map[string]interface{}{}
-	err := json.Unmarshal([]byte(cr.Stdout), &routeObj)
-	if err != nil {
-		log.Fatalf("Failed to parse routes inspect as JSON %v, %v", err, cr)
-	}
-
-	q := jsonq.NewQuery(routeObj)
-	_, err = q.Interface(query...)
-	if err == nil {
-		log.Fatalf("Found path %v in json body %v when it was supposed to be missing", query, cr.Stdout)
-	}
-}
-
 // AssertFailed asserts that the command did not succeed
 func (cr *CmdResult) AssertFailed() *CmdResult {
 	if cr.Success {
@@ -491,4 +459,37 @@ func (h *CLIHarness) GetFile(s string) string {
 	}
 	return string(v)
 
+}
+
+func (cr *CmdResult) AssertStdoutContainsJSON(query []string, value interface{}) {
+	routeObj := map[string]interface{}{}
+	err := json.Unmarshal([]byte(cr.Stdout), &routeObj)
+	if err != nil {
+		log.Fatalf("Failed to parse routes inspect as JSON %v, %v", err, cr)
+	}
+
+	q := jsonq.NewQuery(routeObj)
+
+	val, err := q.Interface(query...)
+	if err != nil {
+		log.Fatalf("Failed to find path %v in json body %v", query, cr.Stdout)
+	}
+
+	if val != value {
+		log.Fatalf("Expected %s to be %v but was %s, %v", strings.Join(query, "."), value, val, cr)
+	}
+}
+
+func (cr *CmdResult) AssertStdoutMissingJSONPath(query []string) {
+	routeObj := map[string]interface{}{}
+	err := json.Unmarshal([]byte(cr.Stdout), &routeObj)
+	if err != nil {
+		log.Fatalf("Failed to parse routes inspect as JSON %v, %v", err, cr)
+	}
+
+	q := jsonq.NewQuery(routeObj)
+	_, err = q.Interface(query...)
+	if err == nil {
+		log.Fatalf("Found path %v in json body %v when it was supposed to be missing", query, cr.Stdout)
+	}
 }

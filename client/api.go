@@ -2,9 +2,9 @@ package client
 
 import (
 	"github.com/fnproject/cli/config"
-	"github.com/spf13/viper"
 	"github.com/fnproject/fn_go"
 	"github.com/fnproject/fn_go/provider"
+	"github.com/spf13/viper"
 )
 
 type viperConfigSource struct {
