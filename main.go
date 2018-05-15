@@ -40,6 +40,7 @@ func newFn() *cli.App {
 	app.Description = "Fn command line tool"
 	app.Before = func(c *cli.Context) error {
 		err := config.LoadConfiguration(c)
+		fmt.Println("Load config: ", viper.GetString(config.CurrentContext))
 		if err != nil {
 			return err
 		}
@@ -64,7 +65,7 @@ func newFn() *cli.App {
 		Name:  "version",
 		Usage: "print only the version",
 	}
-	cli.AppHelpTemplate = `{{.Name}} {{.Version}}{{if .Description}}
+	cli.AppHelpTemplate = `hello {{.Name}} {{.Version}}{{if .Description}}
 
 {{.Description}}{{end}}
 
@@ -88,20 +89,27 @@ LEARN MORE:
 		fmt.Fprintf(os.Stderr, "Command not found: \"%v\" -- see `fn --help` for more information.\n", cmd)
 	}
 	app.Commands = []cli.Command{
-		startCmd(),
-		updateCmd(),
-		initFn(),
-		apps(),
+		// startCmd(),
+		// updateCmd(),
+		// initFn(),
 		routes(),
-		images(),
-		lambda(),
-		version(),
-		calls(),
-		deploy(),
-		logs(),
-		testfn(),
-		buildServer(),
-		contextCmd(),
+		// images(),
+		// lambda(),
+		// version(),
+		// calls(),
+		// deploy(),
+		// logs(),
+		// testfn(),
+		// buildServer(),
+		// //contextCmd(),
+
+		// New Commands
+		createCommand(),
+		deleteCommand(),
+		listCommand(),
+		unsetCommand(),
+		updateCommand(),
+		useCommand(),
 	}
 	app.Commands = append(app.Commands, aliasesFn()...)
 

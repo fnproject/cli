@@ -20,48 +20,74 @@ import (
 var contextsPath = config.GetContextsPath()
 var fileExtension = ".yaml"
 
+const (
+	contextCreate = "create"
+	contextDelete = "delete"
+	contextList   = "list"
+	contextUnset  = "unset"
+	contextUse    = "use"
+	contextUpdate = "update"
+)
+
 type ContextMap config.ContextMap
 
-func contextCmd() cli.Command {
+func contextCmd(command string) cli.Command {
 	ctxMap := ContextMap{}
+
+	switch command {
+	case "create":
+		return getCreateContextCommand()
+	case "list":
+		return cli.Command{
+			Name:   "context",
+			Usage:  "list contexts",
+			Action: listContext,
+		}
+
+	case "delete":
+		return cli.Command{
+			Name:      "context",
+			Usage:     "delete a context",
+			ArgsUsage: "<context>",
+			Action:    deleteCtx,
+		}
+
+	case "use":
+
+	case "update":
+
+	case "unset":
+
+	default:
+
+	}
+
 	return cli.Command{
 		Name:  "context",
 		Usage: "manage context",
 		Subcommands: []cli.Command{
-			{
-				Name:      "create",
-				Aliases:   []string{"c"},
-				Usage:     "create a new context",
-				ArgsUsage: "<context>",
-				Action:    createCtx,
-				Flags: []cli.Flag{
-					cli.StringFlag{
-						Name:  "provider",
-						Usage: "context provider",
-					},
-					cli.StringFlag{
-						Name:  "api-url",
-						Usage: "context api url",
-					},
-					cli.StringFlag{
-						Name:  "registry",
-						Usage: "context registry",
-					},
-				},
-			},
-			{
-				Name:      "delete",
-				Aliases:   []string{"d"},
-				Usage:     "delete a context",
-				ArgsUsage: "<context>",
-				Action:    deleteCtx,
-			},
-			{
-				Name:    "list",
-				Aliases: []string{"l"},
-				Usage:   "list contexts",
-				Action:  listCtx,
-			},
+			// {
+			// 	Name:      "create",
+			// 	Aliases:   []string{"c"},
+			// 	Usage:     "create a new context",
+			// 	ArgsUsage: "<context>",
+			// 	Action:    createContext,
+			// 	Flags: []cli.Flag{
+			// 		cli.StringFlag{
+			// 			Name:  "provider",
+			// 			Usage: "context provider",
+			// 		},
+			// 		cli.StringFlag{
+			// 			Name:  "api-url",
+			// 			Usage: "context api url",
+			// 		},
+			// 		cli.StringFlag{
+			// 			Name:  "registry",
+			// 			Usage: "context registry",
+			// 		},
+			// 	},
+			// },
+
 			{
 				Name:      "update",
 				Usage:     "update context files",
@@ -84,7 +110,30 @@ func contextCmd() cli.Command {
 	}
 }
 
-func createCtx(c *cli.Context) error {
+func getCreateContextCommand() cli.Command {
+	return cli.Command{
+		Name:      "context",
+		Usage:     "create a new context",
+		ArgsUsage: "<context>",
+		Action:    createContext,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "provider",
+				Usage: "context provider",
+			},
+			cli.StringFlag{
+				Name:  "api-url",
+				Usage: "context api url",
+			},
+			cli.StringFlag{
+				Name:  "registry",
+				Usage: "context registry",
+			},
+		},
+	}
+}
+
+func createContext(c *cli.Context) error {
 	context := c.Args().Get(0)
 
 	err := ValidateContextName(context)
@@ -205,7 +254,7 @@ func unsetCtx(c *cli.Context) error {
 	return nil
 }
 
-func listCtx(c *cli.Context) error {
+func listContext(c *cli.Context) error {
 	currentContext := viper.GetString(config.CurrentContext)
 	files, err := getAvailableContexts()
 	if err != nil {
