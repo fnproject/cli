@@ -63,3 +63,7 @@
 [[constraint]]
   name = "github.com/go-yaml/yaml"
   version = "2.2.1"
+
+[[constraint]]
+  name = "github.com/oracle/oci-go-sdk"
+  version = "1.4.0"
