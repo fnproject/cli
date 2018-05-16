@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -57,27 +58,34 @@ func defaultProvider(transport *openapi.Runtime) {
 	}
 }
 
-func oracleProvider(transport *openapi.Runtime) error {
+func oracleProvider(transport *openapi.Runtime) (err error) {
+	t, err := oracleTransport(transport.Transport)
+	if err != nil {
+		return
+	}
+	transport.Transport = t
+	return
+}
+
+func oracleTransport(roundTripper http.RoundTripper) (http.RoundTripper, error) {
+
 	keyID, pKey, err := OracleConfigFile()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	compartmentID := viper.GetString(oracleCompartmentID)
 
 	if viper.GetBool(oracleDisableCerts) {
-		transport.Transport = InsecureRoundTripper(transport.Transport)
+		roundTripper = InsecureRoundTripper(roundTripper)
 	}
 
-	transport.Transport =
-		NewCompartmentIDRoundTripper(
-			compartmentID,
-			NewOCISigningRoundTripper(
-				keyID,
-				pKey,
-				transport.Transport))
-
-	return err
+	return NewCompartmentIDRoundTripper(
+		compartmentID,
+		NewOCISigningRoundTripper(
+			keyID,
+			pKey,
+			roundTripper)), nil
 }
 
 func GetTransportAndRegistry() (*openapi.Runtime, strfmt.Registry, error) {

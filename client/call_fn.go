@@ -1,15 +1,20 @@
 package client
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 )
 
-const FN_CALL_ID = "Fn_call_id"
+const (
+	FN_CALL_ID             = "Fn_call_id"
+	MaximumRequestBodySize = 5 * 1024 * 1024 // bytes
+)
 
 func EnvAsHeader(req *http.Request, selectedEnv []string) {
 	detectedEnv := os.Environ()
@@ -42,7 +47,10 @@ func CallFN(u string, content io.Reader, output io.Writer, method string, env []
 		}
 	}
 
-	req, err := http.NewRequest(method, u, content)
+	// Read the request body (up to the maximum size), as this is used in the
+	// authentication signature
+	b, err := ioutil.ReadAll(io.LimitReader(content, MaximumRequestBodySize))
+	req, err := http.NewRequest(method, u, bytes.NewBuffer(b))
 	if err != nil {
 		return fmt.Errorf("error running route: %s", err)
 	}
@@ -57,7 +65,13 @@ func CallFN(u string, content io.Reader, output io.Writer, method string, env []
 		EnvAsHeader(req, env)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	transport, err := oracleTransport(http.DefaultTransport)
+	if err != nil {
+		return err
+	}
+	httpClient := http.Client{Transport: transport}
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("error running route: %s", err)
 	}
