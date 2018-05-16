@@ -1,21 +1,16 @@
 package client
 
 import (
-	"crypto/rsa"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"strings"
-	"syscall"
 
 	"github.com/fnproject/cli/config"
 	fnclient "github.com/fnproject/fn_go/client"
 	openapi "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	"github.com/oracle/oci-go-sdk/common"
 	"github.com/spf13/viper"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 func Host() string {
@@ -62,38 +57,15 @@ func defaultProvider(transport *openapi.Runtime) {
 	}
 }
 
-func challengeForPKeyPassword() string {
-	fmt.Print("Private Key Phrase: ")
-	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+func oracleProvider(transport *openapi.Runtime) error {
+	keyID, pKey, err := OracleConfigFile()
 	if err != nil {
-		panic(fmt.Sprintf("%s", err))
-	}
-	password := string(bytePassword)
-	fmt.Println()
-
-	return password
-}
-
-func privateKey(pkeyFilePath string) *rsa.PrivateKey {
-	keyBytes, err := ioutil.ReadFile(pkeyFilePath)
-	if err != nil {
-		panic(fmt.Sprintf("Unable to load private key from file: %s. Error: %s", pkeyFilePath, err))
+		return err
 	}
 
-	pKeyPword := challengeForPKeyPassword()
-	key, err := common.PrivateKeyFromBytes(keyBytes, common.String(pKeyPword))
-	if err != nil {
-		panic(fmt.Sprintf("Unable to load private key from file bytes: %s. Error: %s", pkeyFilePath, err))
-	}
-	return key
-}
+	compartmentID := viper.GetString(oracleCompartmentID)
 
-func oracleProvider(transport *openapi.Runtime) {
-	keyID := viper.GetString(config.OracleKeyID)
-	pKey := privateKey(viper.GetString(config.OraclePrivateKey))
-	compartmentID := viper.GetString(config.OracleCompartmentID)
-
-	if viper.GetBool(config.OracleDisableCerts) {
+	if viper.GetBool(oracleDisableCerts) {
 		transport.Transport = InsecureRoundTripper(transport.Transport)
 	}
 
@@ -104,24 +76,30 @@ func oracleProvider(transport *openapi.Runtime) {
 				keyID,
 				pKey,
 				transport.Transport))
+
+	return err
 }
 
-func GetTransportAndRegistry() (*openapi.Runtime, strfmt.Registry) {
+func GetTransportAndRegistry() (*openapi.Runtime, strfmt.Registry, error) {
 	hostURL := HostURL()
 	transport := openapi.New(hostURL.Host, hostURL.Path, []string{hostURL.Scheme})
-
+	var err error
 	switch viper.GetString(config.ContextProvider) {
 	case "default":
 		defaultProvider(transport)
 	case "oracle":
-		oracleProvider(transport)
+		err = oracleProvider(transport)
 	default:
 		defaultProvider(transport)
 	}
 
-	return transport, strfmt.Default
+	return transport, strfmt.Default, err
 }
 
-func APIClient() *fnclient.Fn {
-	return fnclient.New(GetTransportAndRegistry())
+func APIClient() (*fnclient.Fn, error) {
+	transport, registry, err := GetTransportAndRegistry()
+	if err != nil {
+		return nil, err
+	}
+	return fnclient.New(transport, registry), nil
 }

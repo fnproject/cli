@@ -32,8 +32,9 @@ func testfn() cli.Command {
 		Flags:  cmd.flags(),
 		Action: cmd.test,
 		Before: func(cxt *cli.Context) error {
-			cmd.Fn = client.APIClient()
-			return nil
+			var err error
+			cmd.Fn, err = client.APIClient()
+			return err
 		},
 	}
 }

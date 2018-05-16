@@ -23,8 +23,9 @@ func logs() cli.Command {
 		Name:  "logs",
 		Usage: "manage function calls for apps",
 		Before: func(cxt *cli.Context) error {
-			c.client = client.APIClient()
-			return nil
+			var err error
+			c.client, err = client.APIClient()
+			return err
 		},
 		Subcommands: []cli.Command{
 			{

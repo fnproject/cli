@@ -25,8 +25,9 @@ func deploy() cli.Command {
 		Flags:  flags,
 		Action: cmd.deploy,
 		Before: func(cxt *cli.Context) error {
-			cmd.Fn = client.APIClient()
-			return nil
+			var err error
+			cmd.Fn, err = client.APIClient()
+			return err
 		},
 	}
 }
@@ -292,8 +293,11 @@ func setRootFuncInfo(ff *funcfile, appName string) {
 
 func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *funcfile) error {
 	fmt.Printf("Updating route %s using image %s...\n", ff.Path, ff.ImageName())
-
-	routesCmd := routesCmd{client: client.APIClient()}
+	client, err := client.APIClient()
+	if err != nil {
+		return err
+	}
+	routesCmd := routesCmd{client: client}
 	rt := &models.Route{}
 	if err := routeWithFuncFile(ff, rt); err != nil {
 		return fmt.Errorf("error getting route with funcfile: %s", err)

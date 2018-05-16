@@ -316,7 +316,7 @@
   packages = [
     ".",
     "common"
-  ]
+  ] 
   revision = "da236067a45ec155db5196363079c8db6fb7657e"
   version = "v1.4.0"
 
