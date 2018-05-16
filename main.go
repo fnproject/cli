@@ -7,9 +7,14 @@ import (
 	"strings"
 
 	"github.com/fnproject/cli/config"
+	fnclient "github.com/fnproject/fn_go/client"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
+
+type clientCmd struct {
+	client *fnclient.Fn
+}
 
 var aliases = map[string]cli.Command{
 	"build":  build(),
@@ -40,7 +45,6 @@ func newFn() *cli.App {
 	app.Description = "Fn command line tool"
 	app.Before = func(c *cli.Context) error {
 		err := config.LoadConfiguration(c)
-		fmt.Println("Load config: ", viper.GetString(config.CurrentContext))
 		if err != nil {
 			return err
 		}

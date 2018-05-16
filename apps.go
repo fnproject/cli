@@ -9,16 +9,12 @@ import (
 	"context"
 	"strings"
 
-	fnclient "github.com/fnproject/fn_go/client"
 	apiapps "github.com/fnproject/fn_go/client/apps"
 	"github.com/fnproject/fn_go/models"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
 )
 
-type appsCmd struct {
-	client *fnclient.Fn
-}
 type appsCommands struct {
 	create  string "create"
 	delete  string
@@ -35,7 +31,7 @@ const (
 	appsUpdate  = "update"
 )
 
-func (a *appsCmd) appsCommand(command string) cli.Command {
+func (a *clientCmd) appsCommand(command string) cli.Command {
 
 	switch command {
 	case appsCreate:
@@ -53,8 +49,7 @@ func (a *appsCmd) appsCommand(command string) cli.Command {
 	return cli.Command{}
 }
 
-func (a *appsCmd) list(c *cli.Context) error {
-	fmt.Println("List 2: ", a)
+func (a *clientCmd) list(c *cli.Context) error {
 	params := &apiapps.GetAppsParams{Context: context.Background()}
 	var resApps []*models.App
 	for {
@@ -95,7 +90,7 @@ func (a *appsCmd) list(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) create(c *cli.Context) error {
+func (a *clientCmd) create(c *cli.Context) error {
 	body := &models.AppWrapper{App: &models.App{
 		Name:   c.Args().Get(0),
 		Config: extractEnvConfig(c.StringSlice("config")),
@@ -121,7 +116,7 @@ func (a *appsCmd) create(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) update(c *cli.Context) error {
+func (a *clientCmd) update(c *cli.Context) error {
 	appName := c.Args().First()
 
 	patchedApp := &models.App{
@@ -137,7 +132,7 @@ func (a *appsCmd) update(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) configSet(c *cli.Context) error {
+func (a *clientCmd) configSet(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 	value := c.Args().Get(2)
@@ -156,7 +151,7 @@ func (a *appsCmd) configSet(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) configGet(c *cli.Context) error {
+func (a *clientCmd) configGet(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
@@ -179,7 +174,7 @@ func (a *appsCmd) configGet(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) configList(c *cli.Context) error {
+func (a *clientCmd) configList(c *cli.Context) error {
 	appName := c.Args().Get(0)
 
 	resp, err := a.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
@@ -198,7 +193,7 @@ func (a *appsCmd) configList(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) configUnset(c *cli.Context) error {
+func (a *clientCmd) configUnset(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
@@ -216,7 +211,7 @@ func (a *appsCmd) configUnset(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) patchApp(appName string, app *models.App) error {
+func (a *clientCmd) patchApp(appName string, app *models.App) error {
 	_, err := a.client.Apps.PatchAppsApp(&apiapps.PatchAppsAppParams{
 		Context: context.Background(),
 		App:     appName,
@@ -237,7 +232,7 @@ func (a *appsCmd) patchApp(appName string, app *models.App) error {
 	return nil
 }
 
-func (a *appsCmd) inspect(c *cli.Context) error {
+func (a *clientCmd) inspect(c *cli.Context) error {
 	if c.Args().Get(0) == "" {
 		return errors.New("missing app name after the inspect command")
 	}
@@ -289,7 +284,7 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) delete(c *cli.Context) error {
+func (a *clientCmd) delete(c *cli.Context) error {
 	appName := c.Args().First()
 	if appName == "" {
 		return errors.New("app name required to delete")
@@ -312,8 +307,7 @@ func (a *appsCmd) delete(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) getCreateAppsCommand() cli.Command {
-	fmt.Println("Get create apps: ", a)
+func (a *clientCmd) getCreateAppsCommand() cli.Command {
 	return cli.Command{
 		Name:      "apps",
 		Usage:     "create a new app",
@@ -328,8 +322,7 @@ func (a *appsCmd) getCreateAppsCommand() cli.Command {
 	}
 }
 
-func (a *appsCmd) getListAppsCommand() cli.Command {
-	fmt.Println("List 1: ", a)
+func (a *clientCmd) getListAppsCommand() cli.Command {
 	return cli.Command{
 		Name:   "apps",
 		Usage:  "list all apps",
@@ -348,7 +341,7 @@ func (a *appsCmd) getListAppsCommand() cli.Command {
 	}
 }
 
-func (a *appsCmd) getDeleteAppsCommand() cli.Command {
+func (a *clientCmd) getDeleteAppsCommand() cli.Command {
 	return cli.Command{
 		Name:    "delete",
 		Aliases: []string{"d"},
@@ -357,7 +350,7 @@ func (a *appsCmd) getDeleteAppsCommand() cli.Command {
 	}
 }
 
-func (a *appsCmd) getInspectAppsCommand() cli.Command {
+func (a *clientCmd) getInspectAppsCommand() cli.Command {
 	return cli.Command{
 		Name:      "inspect",
 		Usage:     "retrieve one or all apps properties",
@@ -366,7 +359,7 @@ func (a *appsCmd) getInspectAppsCommand() cli.Command {
 	}
 }
 
-func (a *appsCmd) getUpdateAppsCommand() cli.Command {
+func (a *clientCmd) getUpdateAppsCommand() cli.Command {
 	return cli.Command{
 		Name:      "update",
 		Aliases:   []string{"u"},

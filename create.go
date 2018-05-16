@@ -2,19 +2,15 @@ package main
 
 import (
 	"github.com/fnproject/cli/client"
-	fnclient "github.com/fnproject/fn_go/client"
 	"github.com/urfave/cli"
 )
 
-type createCmd struct {
-	client *fnclient.Fn
-}
-
 var createSubCommands []cli.Command
-var createAPIClient appsCmd
+var createAPIClient clientCmd
 
 func createCommand() cli.Command {
-	createAPIClient = appsCmd{}
+	createAPIClient = clientCmd{}
+
 	return cli.Command{
 		Name:    "create",
 		Aliases: []string{"c"},
@@ -31,7 +27,7 @@ func createCommand() cli.Command {
 	}
 }
 
-func (a appsCmd) getCreateSubCommands() []cli.Command {
+func (a *clientCmd) getCreateSubCommands() []cli.Command {
 	createSubCommands = append(createSubCommands, a.appsCommand(appsCreate))
 	createSubCommands = append(createSubCommands, contextCmd(contextCreate))
 
