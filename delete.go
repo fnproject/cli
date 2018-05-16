@@ -1,25 +1,22 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/fnproject/cli/client"
 	"github.com/urfave/cli"
 )
 
 var deleteSubCommands []cli.Command
-var deleteAPIClient appsCmd
+var deleteAPIClient createCmd
 
 func deleteCommand() cli.Command {
-	deleteAPIClient = appsCmd{}
-	var err error
-	deleteAPIClient.client, err = client.APIClient()
-	if err != nil {
-		fmt.Println("Error: ", err)
-	}
-
+	deleteAPIClient = createCmd{}
 	return cli.Command{
-		Name:        "delete",
+		Name: "delete",
+		Before: func(c *cli.Context) error {
+			var err error
+			deleteAPIClient.client, err = client.APIClient()
+			return err
+		},
 		Aliases:     []string{"d"},
 		Usage:       "delete command",
 		Category:    "MANAGEMENT COMMANDS",
@@ -29,7 +26,7 @@ func deleteCommand() cli.Command {
 	}
 }
 
-func (a *appsCmd) getDeleteSubCommands() []cli.Command {
+func (a *createCmd) getDeleteSubCommands() []cli.Command {
 
 	deleteSubCommands = append(deleteSubCommands, a.appsCommand(appsDelete))
 	deleteSubCommands = append(deleteSubCommands, contextCmd(contextDelete))

@@ -1,12 +1,7 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/spf13/viper"
-
 	"github.com/fnproject/cli/client"
-	"github.com/fnproject/cli/config"
 	"github.com/urfave/cli"
 )
 
@@ -16,19 +11,17 @@ type listCommands struct {
 }
 
 var subCommands []cli.Command
-var listAPIClient appsCmd
+var listAPIClient createCmd
 
 func listCommand() cli.Command {
-	listAPIClient = appsCmd{}
-	var err error
-	listAPIClient.client, err = client.APIClient()
-	fmt.Println("CONTEXT: ", viper.GetString(config.CurrentContext))
-	if err != nil {
-		fmt.Println("Error: ", err)
-	}
-
+	listAPIClient = createCmd{}
 	return cli.Command{
-		Name:        "list",
+		Name: "list",
+		Before: func(c *cli.Context) error {
+			var err error
+			listAPIClient.client, err = client.APIClient()
+			return err
+		},
 		Aliases:     []string{"l"},
 		Usage:       "list command",
 		Category:    "MANAGEMENT COMMANDS",
@@ -38,7 +31,7 @@ func listCommand() cli.Command {
 	}
 }
 
-func (a *appsCmd) getListSubCommands() []cli.Command {
+func (a *createCmd) getListSubCommands() []cli.Command {
 	subCommands = append(subCommands, a.appsCommand(appsList))
 
 	return subCommands

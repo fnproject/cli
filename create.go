@@ -11,10 +11,11 @@ type createCmd struct {
 }
 
 var createSubCommands []cli.Command
-var createAPIClient appsCmd
+var createAPIClient createCmd
 
 func createCommand() cli.Command {
-	createAPIClient = appsCmd{}
+	createAPIClient = createCmd{}
+
 	return cli.Command{
 		Name:    "create",
 		Aliases: []string{"c"},
@@ -31,7 +32,7 @@ func createCommand() cli.Command {
 	}
 }
 
-func (a appsCmd) getCreateSubCommands() []cli.Command {
+func (a *createCmd) getCreateSubCommands() []cli.Command {
 	createSubCommands = append(createSubCommands, a.appsCommand(appsCreate))
 	createSubCommands = append(createSubCommands, contextCmd(contextCreate))
 
