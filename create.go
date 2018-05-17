@@ -5,22 +5,13 @@ import (
 	"github.com/urfave/cli"
 )
 
-var createSubCommands []cli.Command
-
-var newClient NewCmd
-
-func newCreate() string {
-	newClient = NewCmd{}
-	return "Hello New World!"
-}
-
 func createCommand() cli.Command {
-	apiClient := clientCmd{}
+	apiClient := fnClient{}
 
 	return cli.Command{
 		Name:    "create",
 		Aliases: []string{"c"},
-		Usage:   "create command",
+		Usage:   "create",
 		Before: func(c *cli.Context) error {
 			var err error
 			apiClient.client, err = client.APIClient()
@@ -28,8 +19,7 @@ func createCommand() cli.Command {
 		},
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
-		ArgsUsage:   "<command>",
+		ArgsUsage:   "<object>",
 		Subcommands: apiClient.getSubCommands(CreateCmd),
-		//		Subcommands: createAPIClient.getCreateSubCommands(),
 	}
 }

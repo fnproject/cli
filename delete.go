@@ -5,16 +5,13 @@ import (
 	"github.com/urfave/cli"
 )
 
-var deleteSubCommands []cli.Command
-var deleteAPIClient clientCmd
-
 func deleteCommand() cli.Command {
-	deleteAPIClient = clientCmd{}
+	apiClient := fnClient{}
 	return cli.Command{
 		Name: "delete",
 		Before: func(c *cli.Context) error {
 			var err error
-			deleteAPIClient.client, err = client.APIClient()
+			apiClient.client, err = client.APIClient()
 			return err
 		},
 		Aliases:     []string{"d"},
@@ -22,6 +19,6 @@ func deleteCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<command>",
-		Subcommands: deleteAPIClient.getSubCommands(DeleteCmd),
+		Subcommands: apiClient.getSubCommands(DeleteCmd),
 	}
 }

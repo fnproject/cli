@@ -5,10 +5,8 @@ import (
 	"github.com/urfave/cli"
 )
 
-//var unsetSubCommands []cli.Command
-
 func unsetCommand() cli.Command {
-	apiClient := clientCmd{}
+	apiClient := fnClient{}
 
 	return cli.Command{
 		Name:    "unset",

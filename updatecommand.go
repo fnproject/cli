@@ -6,7 +6,7 @@ import (
 )
 
 func updateCommand() cli.Command {
-	apiClient := clientCmd{}
+	apiClient := fnClient{}
 
 	return cli.Command{
 		Name:    "update",

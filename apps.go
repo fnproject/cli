@@ -15,37 +15,33 @@ import (
 	"github.com/urfave/cli"
 )
 
-func (n *NewCmd) newStuff() string {
-	return "new hello"
-}
-
-func (a *clientCmd) apps(command string) cli.Command {
+func (client *fnClient) apps(command string) cli.Command {
 	var aCmd cli.Command
 
 	switch command {
 	case CreateCmd:
-		aCmd = a.getCreateAppsCommand()
+		aCmd = client.getCreateAppCommand()
 	case ListCmd:
-		aCmd = a.getListAppsCommand()
+		aCmd = client.getListAppsCommand()
 	case DeleteCmd:
-		aCmd = a.getDeleteAppsCommand()
+		aCmd = client.getDeleteAppCommand()
 	case InspectCmd:
-		aCmd = a.getInspectAppsCommand()
+		aCmd = client.getInspectAppsCommand()
 	case UpdateCmd:
-		aCmd = a.getUpdateAppsCommand()
+		aCmd = client.getUpdateAppCommand()
 	case ConfigCmd:
-		aCmd = a.getConfigAppsCommand()
+		aCmd = client.getConfigAppsCommand()
 	}
 
 	return aCmd
 }
 
-func (a *clientCmd) getCreateAppsCommand() cli.Command {
+func (client *fnClient) getCreateAppCommand() cli.Command {
 	return cli.Command{
-		Name:      "apps",
-		Usage:     "create a new app",
+		Name:      "app",
+		Usage:     "Create a new application",
 		ArgsUsage: "<app>",
-		Action:    a.createApp,
+		Action:    client.createApp,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
 				Name:  "config",
@@ -55,11 +51,11 @@ func (a *clientCmd) getCreateAppsCommand() cli.Command {
 	}
 }
 
-func (a *clientCmd) getListAppsCommand() cli.Command {
+func (client *fnClient) getListAppsCommand() cli.Command {
 	return cli.Command{
 		Name:   "apps",
-		Usage:  "list all apps",
-		Action: a.listApps,
+		Usage:  "List all applications ",
+		Action: client.listApps,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "cursor",
@@ -74,29 +70,29 @@ func (a *clientCmd) getListAppsCommand() cli.Command {
 	}
 }
 
-func (a *clientCmd) getDeleteAppsCommand() cli.Command {
+func (client *fnClient) getDeleteAppCommand() cli.Command {
 	return cli.Command{
-		Name:   "apps",
-		Usage:  "delete an app",
-		Action: a.deleteApps,
+		Name:   "app",
+		Usage:  "Delete an application",
+		Action: client.deleteApps,
 	}
 }
 
-func (a *clientCmd) getInspectAppsCommand() cli.Command {
+func (client *fnClient) getInspectAppsCommand() cli.Command {
 	return cli.Command{
 		Name:      "apps",
 		Usage:     "retrieve one or all apps properties",
 		ArgsUsage: "<app> [property.[key]]",
-		Action:    a.inspectApps,
+		Action:    client.inspectApps,
 	}
 }
 
-func (a *clientCmd) getUpdateAppsCommand() cli.Command {
+func (client *fnClient) getUpdateAppCommand() cli.Command {
 	return cli.Command{
-		Name:      "apps",
-		Usage:     "update an `app`",
+		Name:      "app",
+		Usage:     "update an application",
 		ArgsUsage: "<app>",
-		Action:    a.updateApps,
+		Action:    client.updateApps,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
 				Name:  "config,c",
@@ -106,7 +102,7 @@ func (a *clientCmd) getUpdateAppsCommand() cli.Command {
 	}
 }
 
-func (a *clientCmd) getConfigAppsCommand() cli.Command {
+func (client *fnClient) getConfigAppsCommand() cli.Command {
 	return cli.Command{
 		Name:  "apps",
 		Usage: "manage apps configs",
@@ -116,38 +112,38 @@ func (a *clientCmd) getConfigAppsCommand() cli.Command {
 				Aliases:   []string{"s"},
 				Usage:     "store a configuration key for this application",
 				ArgsUsage: "<app> <key> <value>",
-				Action:    a.configSetApps,
+				Action:    client.configSetApps,
 			},
 			{
 				Name:      "get",
 				Aliases:   []string{"g"},
 				Usage:     "inspect configuration key for this application",
 				ArgsUsage: "<app> <key>",
-				Action:    a.configGetApps,
+				Action:    client.configGetApps,
 			},
 			{
 				Name:      "list",
 				Aliases:   []string{"l"},
 				Usage:     "list configuration key/value pairs for this application",
 				ArgsUsage: "<app>",
-				Action:    a.configListApps,
+				Action:    client.configListApps,
 			},
 			{
 				Name:      "unset",
 				Aliases:   []string{"u"},
 				Usage:     "remove a configuration key for this application",
 				ArgsUsage: "<app> <key>",
-				Action:    a.configUnsetApps,
+				Action:    client.configUnsetApps,
 			},
 		},
 	}
 }
 
-func (a *clientCmd) listApps(c *cli.Context) error {
+func (client *fnClient) listApps(c *cli.Context) error {
 	params := &apiapps.GetAppsParams{Context: context.Background()}
 	var resApps []*models.App
 	for {
-		resp, err := a.client.Apps.GetApps(params)
+		resp, err := client.client.Apps.GetApps(params)
 		if err != nil {
 			switch e := err.(type) {
 			case *apiapps.GetAppsAppNotFound:
@@ -184,13 +180,13 @@ func (a *clientCmd) listApps(c *cli.Context) error {
 	return nil
 }
 
-func (a *clientCmd) createApp(c *cli.Context) error {
+func (client *fnClient) createApp(c *cli.Context) error {
 	body := &models.AppWrapper{App: &models.App{
 		Name:   c.Args().Get(0),
 		Config: extractEnvConfig(c.StringSlice("config")),
 	}}
 
-	resp, err := a.client.Apps.PostApps(&apiapps.PostAppsParams{
+	resp, err := client.client.Apps.PostApps(&apiapps.PostAppsParams{
 		Context: context.Background(),
 		Body:    body,
 	})
@@ -210,14 +206,14 @@ func (a *clientCmd) createApp(c *cli.Context) error {
 	return nil
 }
 
-func (a *clientCmd) updateApps(c *cli.Context) error {
+func (client *fnClient) updateApps(c *cli.Context) error {
 	appName := c.Args().First()
 
 	patchedApp := &models.App{
 		Config: extractEnvConfig(c.StringSlice("config")),
 	}
 
-	err := a.patchApp(appName, patchedApp)
+	err := client.patchApp(appName, patchedApp)
 	if err != nil {
 		return err
 	}
@@ -226,7 +222,7 @@ func (a *clientCmd) updateApps(c *cli.Context) error {
 	return nil
 }
 
-func (a *clientCmd) configSetApps(c *cli.Context) error {
+func (client *fnClient) configSetApps(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 	value := c.Args().Get(2)
@@ -237,7 +233,7 @@ func (a *clientCmd) configSetApps(c *cli.Context) error {
 
 	app.Config[key] = value
 
-	if err := a.patchApp(appName, app); err != nil {
+	if err := client.patchApp(appName, app); err != nil {
 		return fmt.Errorf("error updating app configuration: %v", err)
 	}
 
@@ -245,11 +241,11 @@ func (a *clientCmd) configSetApps(c *cli.Context) error {
 	return nil
 }
 
-func (a *clientCmd) configGetApps(c *cli.Context) error {
+func (client *fnClient) configGetApps(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
-	resp, err := a.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
+	resp, err := client.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
 		App:     appName,
 		Context: context.Background(),
 	})
@@ -268,10 +264,10 @@ func (a *clientCmd) configGetApps(c *cli.Context) error {
 	return nil
 }
 
-func (a *clientCmd) configListApps(c *cli.Context) error {
+func (client *fnClient) configListApps(c *cli.Context) error {
 	appName := c.Args().Get(0)
 
-	resp, err := a.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
+	resp, err := client.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
 		App:     appName,
 		Context: context.Background(),
 	})
@@ -287,7 +283,7 @@ func (a *clientCmd) configListApps(c *cli.Context) error {
 	return nil
 }
 
-func (a *clientCmd) configUnsetApps(c *cli.Context) error {
+func (client *fnClient) configUnsetApps(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
@@ -297,7 +293,7 @@ func (a *clientCmd) configUnsetApps(c *cli.Context) error {
 
 	app.Config[key] = ""
 
-	if err := a.patchApp(appName, app); err != nil {
+	if err := client.patchApp(appName, app); err != nil {
 		return fmt.Errorf("error updating app configuration: %v", err)
 	}
 
@@ -305,8 +301,8 @@ func (a *clientCmd) configUnsetApps(c *cli.Context) error {
 	return nil
 }
 
-func (a *clientCmd) patchApp(appName string, app *models.App) error {
-	_, err := a.client.Apps.PatchAppsApp(&apiapps.PatchAppsAppParams{
+func (client *fnClient) patchApp(appName string, app *models.App) error {
+	_, err := client.client.Apps.PatchAppsApp(&apiapps.PatchAppsAppParams{
 		Context: context.Background(),
 		App:     appName,
 		Body:    &models.AppWrapper{App: app},
@@ -326,7 +322,7 @@ func (a *clientCmd) patchApp(appName string, app *models.App) error {
 	return nil
 }
 
-func (a *clientCmd) inspectApps(c *cli.Context) error {
+func (client *fnClient) inspectApps(c *cli.Context) error {
 	if c.Args().Get(0) == "" {
 		return errors.New("missing app name after the inspect command")
 	}
@@ -334,7 +330,7 @@ func (a *clientCmd) inspectApps(c *cli.Context) error {
 	appName := c.Args().First()
 	prop := c.Args().Get(1)
 
-	resp, err := a.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
+	resp, err := client.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
 		Context: context.Background(),
 		App:     appName,
 	})
@@ -378,13 +374,13 @@ func (a *clientCmd) inspectApps(c *cli.Context) error {
 	return nil
 }
 
-func (a *clientCmd) deleteApps(c *cli.Context) error {
+func (client *fnClient) deleteApps(c *cli.Context) error {
 	appName := c.Args().First()
 	if appName == "" {
 		return errors.New("app name required to delete")
 	}
 
-	_, err := a.client.Apps.DeleteAppsApp(&apiapps.DeleteAppsAppParams{
+	_, err := client.client.Apps.DeleteAppsApp(&apiapps.DeleteAppsAppParams{
 		Context: context.Background(),
 		App:     appName,
 	})

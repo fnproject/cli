@@ -5,10 +5,8 @@ import (
 	"github.com/urfave/cli"
 )
 
-var configSubCommands []cli.Command
-
 func configCommand() cli.Command {
-	apiClient := clientCmd{}
+	apiClient := fnClient{}
 
 	return cli.Command{
 		Name:    "config",

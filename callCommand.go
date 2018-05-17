@@ -5,11 +5,8 @@ import (
 	"github.com/urfave/cli"
 )
 
-var callSubCommands []cli.Command
-var callAPIClient clientCmd
-
 func callCommand() cli.Command {
-	callAPIClient = clientCmd{}
+	apiClient := fnClient{}
 
 	return cli.Command{
 		Name:    "call",
@@ -17,18 +14,12 @@ func callCommand() cli.Command {
 		Usage:   "call command",
 		Before: func(c *cli.Context) error {
 			var err error
-			callAPIClient.client, err = client.APIClient()
+			apiClient.client, err = client.APIClient()
 			return err
 		},
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<command>",
-		Subcommands: callAPIClient.getCallSubCommands(),
+		Subcommands: apiClient.getSubCommands(CallCmd),
 	}
-}
-
-func (a *clientCmd) getCallSubCommands() []cli.Command {
-	callSubCommands = append(callSubCommands, a.routes(CallCmd))
-
-	return callSubCommands
 }

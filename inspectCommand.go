@@ -5,11 +5,8 @@ import (
 	"github.com/urfave/cli"
 )
 
-var inspectSubCommands []cli.Command
-var inspectAPIClient clientCmd
-
 func inspectCommand() cli.Command {
-	inspectAPIClient = clientCmd{}
+	apiClient := fnClient{}
 
 	return cli.Command{
 		Name:    "inspect",
@@ -17,19 +14,12 @@ func inspectCommand() cli.Command {
 		Usage:   "inspect command",
 		Before: func(c *cli.Context) error {
 			var err error
-			inspectAPIClient.client, err = client.APIClient()
+			apiClient.client, err = client.APIClient()
 			return err
 		},
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<command>",
-		Subcommands: inspectAPIClient.getInspectSubCommands(),
+		Subcommands: apiClient.getSubCommands(InspectCmd),
 	}
-}
-
-func (a *clientCmd) getInspectSubCommands() []cli.Command {
-	inspectSubCommands = append(inspectSubCommands, a.apps(InspectCmd))
-	inspectSubCommands = append(inspectSubCommands, a.routes(InspectCmd))
-
-	return inspectSubCommands
 }

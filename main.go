@@ -12,15 +12,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-type clientCmd struct {
-	client *fnclient.Fn
-}
-
 type fnClient struct {
-	client *fnclient.Fn
-}
-
-type NewCmd struct {
 	client *fnclient.Fn
 }
 
@@ -61,9 +53,6 @@ func aliasesFn() []cli.Command {
 }
 
 func newFn() *cli.App {
-
-	msg := newCreate()
-	fmt.Println(msg)
 
 	app := cli.NewApp()
 	app.Name = "fn"

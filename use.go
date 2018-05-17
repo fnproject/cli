@@ -5,10 +5,8 @@ import (
 	"github.com/urfave/cli"
 )
 
-var useSubCommands []cli.Command
-
 func useCommand() cli.Command {
-	apiClient := clientCmd{}
+	apiClient := fnClient{}
 
 	return cli.Command{
 		Name:    "use",
