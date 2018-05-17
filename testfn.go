@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -250,11 +248,6 @@ func (t *testcmd) runremotetest(ff *funcfile, in *inputMap, expectedOut *outputM
 	if ff.Path == "" {
 		return errors.New("execution of tests on remote server demand that this function has a `path`")
 	}
-	baseURL := client.HostURL()
-
-	u, err := url.Parse("../")
-	u.Path = path.Join(u.Path, "r", t.remote, ff.Path)
-	target := baseURL.ResolveReference(u).String()
 
 	inBytes, err := json.Marshal(in)
 	if err != nil {
@@ -270,7 +263,7 @@ func (t *testcmd) runremotetest(ff *funcfile, in *inputMap, expectedOut *outputM
 	}
 	var stdout bytes.Buffer
 
-	if err := client.CallFN(target, stdin, &stdout, "", envVars, "application/json", false); err != nil {
+	if err := client.CallFN(t.remote, ff.Path, stdin, &stdout, "", envVars, "application/json", false); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\n", err, stdout.String())
 	}
 

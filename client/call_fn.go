@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -38,7 +39,11 @@ type callID struct {
 	Error  apiErr `json:"error"`
 }
 
-func CallFN(u string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
+func CallFN(appName string, route string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
+
+	u := HostURL()
+	u.Path = path.Join("r", appName, route)
+
 	if method == "" {
 		if content == nil {
 			method = "GET"
@@ -49,10 +54,20 @@ func CallFN(u string, content io.Reader, output io.Writer, method string, env []
 
 	// Read the request body (up to the maximum size), as this is used in the
 	// authentication signature
-	b, err := ioutil.ReadAll(io.LimitReader(content, MaximumRequestBodySize))
-	req, err := http.NewRequest(method, u, bytes.NewBuffer(b))
-	if err != nil {
-		return fmt.Errorf("error running route: %s", err)
+	var req *http.Request
+	if content != nil {
+		b, err := ioutil.ReadAll(io.LimitReader(content, MaximumRequestBodySize))
+		buffer := bytes.NewBuffer(b)
+		req, err = http.NewRequest(method, u.String(), buffer)
+		if err != nil {
+			return fmt.Errorf("Error creating request to service: %s", err)
+		}
+	} else {
+		var err error
+		req, err = http.NewRequest(method, u.String(), nil)
+		if err != nil {
+			return fmt.Errorf("Error creating request to service: %s", err)
+		}
 	}
 
 	if contentType != "" {
