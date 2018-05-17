@@ -16,6 +16,27 @@ type clientCmd struct {
 	client *fnclient.Fn
 }
 
+type fnClient struct {
+	client *fnclient.Fn
+}
+
+type NewCmd struct {
+	client *fnclient.Fn
+}
+
+// Command Names
+const (
+	CallCmd    = "call"
+	ConfigCmd  = "config"
+	CreateCmd  = "create"
+	DeleteCmd  = "delete"
+	InspectCmd = "inspect"
+	ListCmd    = "list"
+	UnsetCmd   = "unset"
+	UpdateCmd  = "update"
+	UseCmd     = "use"
+)
+
 var aliases = map[string]cli.Command{
 	"build":  build(),
 	"bump":   bump(),
@@ -38,6 +59,10 @@ func aliasesFn() []cli.Command {
 }
 
 func newFn() *cli.App {
+
+	msg := newCreate()
+	fmt.Println(msg)
+
 	app := cli.NewApp()
 	app.Name = "fn"
 	app.Version = Version
@@ -93,13 +118,13 @@ LEARN MORE:
 		fmt.Fprintf(os.Stderr, "Command not found: \"%v\" -- see `fn --help` for more information.\n", cmd)
 	}
 	app.Commands = []cli.Command{
-		// startCmd(),
+		startCmd(),
 		// updateCmd(),
 		// initFn(),
 		//routes(),
 		// images(),
 		// lambda(),
-		// version(),
+		version(),
 		// calls(),
 		// deploy(),
 		// logs(),

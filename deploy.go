@@ -297,7 +297,7 @@ func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *funcfile) er
 	if err != nil {
 		return err
 	}
-	routesCmd := routesCmd{client: client}
+	routesCmd := clientCmd{client: client}
 	rt := &models.Route{}
 	if err := routeWithFuncFile(ff, rt); err != nil {
 		return fmt.Errorf("error getting route with funcfile: %s", err)

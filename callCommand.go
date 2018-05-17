@@ -28,7 +28,7 @@ func callCommand() cli.Command {
 }
 
 func (a *clientCmd) getCallSubCommands() []cli.Command {
-	callSubCommands = append(callSubCommands, a.routes(routesCall))
+	callSubCommands = append(callSubCommands, a.routes(CallCmd))
 
 	return callSubCommands
 }

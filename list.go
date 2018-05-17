@@ -32,9 +32,9 @@ func listCommand() cli.Command {
 }
 
 func (a *clientCmd) getListSubCommands() []cli.Command {
-	listSubCommands = append(listSubCommands, a.apps(appsList))
-	listSubCommands = append(listSubCommands, a.routes(routesList))
-	listSubCommands = append(listSubCommands, contextCommand(contextList))
+	listSubCommands = append(listSubCommands, a.apps(ListCmd))
+	listSubCommands = append(listSubCommands, a.routes(ListCmd))
+	listSubCommands = append(listSubCommands, contextCommand(ListCmd))
 
 	return listSubCommands
 }

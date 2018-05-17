@@ -20,14 +20,14 @@ import (
 var contextsPath = config.GetContextsPath()
 var fileExtension = ".yaml"
 
-const (
-	contextCreate = "create"
-	contextDelete = "delete"
-	contextList   = "list"
-	contextUnset  = "unset"
-	contextUse    = "use"
-	contextUpdate = "update"
-)
+// const (
+// 	contextCreate = "create"
+// 	contextDelete = "delete"
+// 	contextList   = "list"
+// 	contextUnset  = "unset"
+// 	contextUse    = "use"
+// 	contextUpdate = "update"
+// )
 
 type ContextMap config.ContextMap
 
@@ -36,17 +36,17 @@ func contextCommand(command string) cli.Command {
 	var cCmd cli.Command
 
 	switch command {
-	case contextCreate:
+	case CreateCmd:
 		cCmd = getCreateContextCommand()
-	case contextList:
+	case ListCmd:
 		cCmd = getListContextCommand()
-	case contextDelete:
+	case DeleteCmd:
 		cCmd = getDeleteContextCommand()
-	case contextUse:
+	case UseCmd:
 		cCmd = getUseContextCommand()
-	case contextUpdate:
+	case UpdateCmd:
 		cCmd = ctxMap.getUpdateContextCommand()
-	case contextUnset:
+	case UnsetCmd:
 		cCmd = getUnsetContextCommand()
 	}
 

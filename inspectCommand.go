@@ -28,8 +28,8 @@ func inspectCommand() cli.Command {
 }
 
 func (a *clientCmd) getInspectSubCommands() []cli.Command {
-	inspectSubCommands = append(inspectSubCommands, a.apps(appsInspect))
-	inspectSubCommands = append(inspectSubCommands, a.routes(routesInspect))
+	inspectSubCommands = append(inspectSubCommands, a.apps(InspectCmd))
+	inspectSubCommands = append(inspectSubCommands, a.routes(InspectCmd))
 
 	return inspectSubCommands
 }

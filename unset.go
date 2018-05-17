@@ -5,11 +5,10 @@ import (
 	"github.com/urfave/cli"
 )
 
-var unsetSubCommands []cli.Command
-var unsetAPIClient clientCmd
+//var unsetSubCommands []cli.Command
 
 func unsetCommand() cli.Command {
-	unsetAPIClient = clientCmd{}
+	apiClient := clientCmd{}
 
 	return cli.Command{
 		Name:    "unset",
@@ -17,18 +16,21 @@ func unsetCommand() cli.Command {
 		Usage:   "unset command",
 		Before: func(c *cli.Context) error {
 			var err error
-			unsetAPIClient.client, err = client.APIClient()
+			apiClient.client, err = client.APIClient()
 			return err
 		},
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<command>",
-		Subcommands: createAPIClient.getUnsetSubCommands(),
+		Subcommands: apiClient.getSubCommands(UnsetCmd),
 	}
 }
 
-func (a *clientCmd) getUnsetSubCommands() []cli.Command {
-	unsetSubCommands = append(unsetSubCommands, contextCommand(contextUnset))
+// func (a *clientCmd) getUnsetSubCommands() []cli.Command {
+// 	var unsetSubCommands []cli.Command
+// 	unsetSubCommands := append(unsetSubCommands, contextCommand(UnsetCmd))
 
-	return unsetSubCommands
-}
+// 	return unsetSubCommands
+// }
+
+// //

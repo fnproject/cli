@@ -5,11 +5,8 @@ import (
 	"github.com/urfave/cli"
 )
 
-var updateSubCommands []cli.Command
-var updateAPIClient clientCmd
-
 func updateCommand() cli.Command {
-	updateAPIClient = clientCmd{}
+	apiClient := clientCmd{}
 
 	return cli.Command{
 		Name:    "update",
@@ -17,20 +14,12 @@ func updateCommand() cli.Command {
 		Usage:   "update command",
 		Before: func(c *cli.Context) error {
 			var err error
-			updateAPIClient.client, err = client.APIClient()
+			apiClient.client, err = client.APIClient()
 			return err
 		},
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<command>",
-		Subcommands: updateAPIClient.getUpdateSubCommands(),
+		Subcommands: apiClient.getSubCommands(UpdateCmd),
 	}
-}
-
-func (a *clientCmd) getUpdateSubCommands() []cli.Command {
-	updateSubCommands = append(updateSubCommands, a.apps(appsUpdate))
-	updateSubCommands = append(updateSubCommands, a.routes(routesDelete))
-	updateSubCommands = append(updateSubCommands, contextCommand(contextUpdate))
-
-	return updateSubCommands
 }

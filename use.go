@@ -28,7 +28,7 @@ func useCommand() cli.Command {
 }
 
 func (a *clientCmd) getUseSubCommands() []cli.Command {
-	useSubCommands = append(useSubCommands, contextCommand(contextUse))
+	useSubCommands = append(useSubCommands, contextCommand(UseCmd))
 
 	return useSubCommands
 }

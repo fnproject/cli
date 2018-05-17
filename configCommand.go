@@ -28,8 +28,8 @@ func configCommand() cli.Command {
 }
 
 func (a *clientCmd) getConfigSubCommands() []cli.Command {
-	configSubCommands = append(configSubCommands, a.apps(appsConfig))
-	configSubCommands = append(configSubCommands, a.routes(routesConfig))
+	configSubCommands = append(configSubCommands, a.apps(ConfigCmd))
+	configSubCommands = append(configSubCommands, a.routes(ConfigCmd))
 
 	return configSubCommands
 }

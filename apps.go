@@ -15,45 +15,49 @@ import (
 	"github.com/urfave/cli"
 )
 
-type appsCommands struct {
-	create  string "create"
-	delete  string
-	list    string
-	inspect string
-	update  string
-}
+// type appsCommands struct {
+// 	create  string "create"
+// 	delete  string
+// 	list    string
+// 	inspect string
+// 	update  string
+// }
 
-const (
-	appsCreate  = "create"
-	appsDelete  = "delete"
-	appsList    = "list"
-	appsInspect = "inspect"
-	appsUpdate  = "update"
-	appsConfig  = "config"
-)
+// const (
+// 	appsCreate  = "create"
+// 	appsDelete  = "delete"
+// 	appsList    = "list"
+// 	appsInspect = "inspect"
+// 	appsUpdate  = "update"
+// 	appsConfig  = "config"
+// )
+
+func (n *NewCmd) newStuff() string {
+	return "new hello"
+}
 
 func (a *clientCmd) apps(command string) cli.Command {
 	var aCmd cli.Command
 
 	switch command {
-	case appsCreate:
+	case CreateCmd:
 		aCmd = a.getCreateAppsCommand()
-	case appsList:
+	case ListCmd:
 		aCmd = a.getListAppsCommand()
-	case appsDelete:
+	case DeleteCmd:
 		aCmd = a.getDeleteAppsCommand()
-	case appsInspect:
+	case InspectCmd:
 		aCmd = a.getInspectAppsCommand()
-	case appsUpdate:
+	case UpdateCmd:
 		aCmd = a.getUpdateAppsCommand()
-	case appsConfig:
+	case ConfigCmd:
 		aCmd = a.getConfigAppsCommand()
 	}
 
 	return aCmd
 }
 
-func (a *clientCmd) list(c *cli.Context) error {
+func (a *clientCmd) listApps(c *cli.Context) error {
 	params := &apiapps.GetAppsParams{Context: context.Background()}
 	var resApps []*models.App
 	for {
@@ -94,7 +98,7 @@ func (a *clientCmd) list(c *cli.Context) error {
 	return nil
 }
 
-func (a *clientCmd) create(c *cli.Context) error {
+func (a *clientCmd) createApp(c *cli.Context) error {
 	body := &models.AppWrapper{App: &models.App{
 		Name:   c.Args().Get(0),
 		Config: extractEnvConfig(c.StringSlice("config")),
@@ -316,7 +320,7 @@ func (a *clientCmd) getCreateAppsCommand() cli.Command {
 		Name:      "apps",
 		Usage:     "create a new app",
 		ArgsUsage: "<app>",
-		Action:    a.create,
+		Action:    a.createApp,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
 				Name:  "config",
@@ -330,7 +334,7 @@ func (a *clientCmd) getListAppsCommand() cli.Command {
 	return cli.Command{
 		Name:   "apps",
 		Usage:  "list all apps",
-		Action: a.list,
+		Action: a.listApps,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "cursor",

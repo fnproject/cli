@@ -6,10 +6,16 @@ import (
 )
 
 var createSubCommands []cli.Command
-var createAPIClient clientCmd
+
+var newClient NewCmd
+
+func newCreate() string {
+	newClient = NewCmd{}
+	return "Hello New World!"
+}
 
 func createCommand() cli.Command {
-	createAPIClient = clientCmd{}
+	apiClient := clientCmd{}
 
 	return cli.Command{
 		Name:    "create",
@@ -17,20 +23,21 @@ func createCommand() cli.Command {
 		Usage:   "create command",
 		Before: func(c *cli.Context) error {
 			var err error
-			createAPIClient.client, err = client.APIClient()
+			apiClient.client, err = client.APIClient()
 			return err
 		},
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<command>",
-		Subcommands: createAPIClient.getCreateSubCommands(),
+		Subcommands: apiClient.getSubCommands(CreateCmd),
+		//		Subcommands: createAPIClient.getCreateSubCommands(),
 	}
 }
 
 func (a *clientCmd) getCreateSubCommands() []cli.Command {
-	createSubCommands = append(createSubCommands, a.apps(appsCreate))
-	createSubCommands = append(createSubCommands, a.routes(routesCreate))
-	createSubCommands = append(createSubCommands, contextCommand(contextCreate))
+	createSubCommands = append(createSubCommands, a.apps(CreateCmd))
+	createSubCommands = append(createSubCommands, a.routes(CreateCmd))
+	createSubCommands = append(createSubCommands, contextCommand(CreateCmd))
 
 	return createSubCommands
 }
