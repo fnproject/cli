@@ -67,109 +67,142 @@ var callFnFlags = append(runflags(),
 	},
 )
 
-func routes() cli.Command {
+const (
+	routesCreate  = "create"
+	routesList    = "list"
+	routesDelete  = "delete"
+	routesCall    = "call"
+	routesUpdate  = "update"
+	routesConfig  = "config"
+	routesInspect = "inspect"
+)
 
-	r := routesCmd{}
+func (r *clientCmd) routes(command string) cli.Command {
+	var rCmd cli.Command
 
+	switch command {
+	case routesCreate:
+		rCmd = r.getCreateRoutesCommand()
+	case routesCall:
+		rCmd = getCallRoutesCommand()
+	case routesList:
+		rCmd = r.getListRoutesCommand()
+	case routesDelete:
+		rCmd = r.getDeleteRoutesCommand()
+	case routesUpdate:
+		rCmd = r.getUpdateRoutesCommand()
+	case routesConfig:
+		rCmd = r.getConfigRoutesCommand()
+	case routesInspect:
+		rCmd = r.getInspectRoutesCommand()
+	}
+
+	return rCmd
+}
+
+func getCallRoutesCommand() cli.Command {
+	return cli.Command{
+		Name:      "routes",
+		Usage:     "call a route",
+		ArgsUsage: "<app> </path> [image]",
+		Action:    call,
+		Flags:     callFnFlags,
+	}
+}
+
+func (r *clientCmd) getCreateRoutesCommand() cli.Command {
+	return cli.Command{
+		Name:      "routes",
+		Usage:     "create a route in an `app`",
+		ArgsUsage: "<app> </path>",
+		Action:    r.create,
+		Flags:     routeFlags,
+	}
+}
+
+func (r *clientCmd) getListRoutesCommand() cli.Command {
+	return cli.Command{
+		Name:      "routes",
+		Usage:     "list routes for `app`",
+		ArgsUsage: "<app>",
+		Action:    r.list,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "cursor",
+				Usage: "pagination cursor",
+			},
+			cli.Int64Flag{
+				Name:  "n",
+				Usage: "number of routes to return",
+				Value: int64(100),
+			},
+		},
+	}
+}
+
+func (r *clientCmd) getDeleteRoutesCommand() cli.Command {
+	return cli.Command{
+		Name:      "routes",
+		Usage:     "delete a route from `app`",
+		ArgsUsage: "<app> </path>",
+		Action:    r.delete,
+	}
+}
+
+func (r *clientCmd) getInspectRoutesCommand() cli.Command {
+	return cli.Command{
+		Name:      "routes",
+		Usage:     "retrieve one or all routes properties",
+		ArgsUsage: "<app> </path> [property.[key]]",
+		Action:    r.inspect,
+	}
+}
+
+func (r *clientCmd) getConfigRoutesCommand() cli.Command {
 	return cli.Command{
 		Name:  "routes",
-		Usage: "manage routes",
-		Before: func(c *cli.Context) error {
-			var err error
-			r.client, err = client.APIClient()
-			return err
-		},
+		Usage: "operate a route configuration set",
 		Subcommands: []cli.Command{
 			{
-				Name:      "call",
-				Usage:     "call a route",
-				ArgsUsage: "<app> </path> [image]",
-				Action:    r.call,
-				Flags:     callFnFlags,
+				Name:      "set",
+				Aliases:   []string{"s"},
+				Usage:     "store a configuration key for this route",
+				ArgsUsage: "<app> </path> <key> <value>",
+				Action:    r.configSet,
+			},
+			{
+				Name:      "get",
+				Aliases:   []string{"g"},
+				Usage:     "inspect configuration key for this route",
+				ArgsUsage: "<app> </path> <key>",
+				Action:    r.configGet,
 			},
 			{
 				Name:      "list",
 				Aliases:   []string{"l"},
-				Usage:     "list routes for `app`",
-				ArgsUsage: "<app>",
-				Action:    r.list,
-				Flags: []cli.Flag{
-					cli.StringFlag{
-						Name:  "cursor",
-						Usage: "pagination cursor",
-					},
-					cli.Int64Flag{
-						Name:  "n",
-						Usage: "number of routes to return",
-						Value: int64(100),
-					},
-				},
-			},
-			{
-				Name:      "create",
-				Aliases:   []string{"c"},
-				Usage:     "create a route in an `app`",
+				Usage:     "list configuration key/value pairs for this route",
 				ArgsUsage: "<app> </path>",
-				Action:    r.create,
-				Flags:     routeFlags,
+				Action:    r.configList,
 			},
 			{
-				Name:      "update",
+				Name:      "unset",
 				Aliases:   []string{"u"},
-				Usage:     "update a route in an `app`",
-				ArgsUsage: "<app> </path>",
-				Action:    r.update,
-				Flags:     updateRouteFlags,
-			},
-			{
-				Name:  "config",
-				Usage: "operate a route configuration set",
-				Subcommands: []cli.Command{
-					{
-						Name:      "set",
-						Aliases:   []string{"s"},
-						Usage:     "store a configuration key for this route",
-						ArgsUsage: "<app> </path> <key> <value>",
-						Action:    r.configSet,
-					},
-					{
-						Name:      "get",
-						Aliases:   []string{"g"},
-						Usage:     "inspect configuration key for this route",
-						ArgsUsage: "<app> </path> <key>",
-						Action:    r.configGet,
-					},
-					{
-						Name:      "list",
-						Aliases:   []string{"l"},
-						Usage:     "list configuration key/value pairs for this route",
-						ArgsUsage: "<app> </path>",
-						Action:    r.configList,
-					},
-					{
-						Name:      "unset",
-						Aliases:   []string{"u"},
-						Usage:     "remove a configuration key for this route",
-						ArgsUsage: "<app> </path> <key>",
-						Action:    r.configUnset,
-					},
-				},
-			},
-			{
-				Name:      "delete",
-				Aliases:   []string{"d"},
-				Usage:     "delete a route from `app`",
-				ArgsUsage: "<app> </path>",
-				Action:    r.delete,
-			},
-			{
-				Name:      "inspect",
-				Aliases:   []string{"i"},
-				Usage:     "retrieve one or all routes properties",
-				ArgsUsage: "<app> </path> [property.[key]]",
-				Action:    r.inspect,
+				Usage:     "remove a configuration key for this route",
+				ArgsUsage: "<app> </path> <key>",
+				Action:    r.configUnset,
 			},
 		},
+	}
+}
+
+func (r *clientCmd) getUpdateRoutesCommand() cli.Command {
+	return cli.Command{
+		Name:      "routes",
+		Aliases:   []string{"u"},
+		Usage:     "update a route in an `app`",
+		ArgsUsage: "<app> </path>",
+		Action:    r.update,
+		Flags:     updateRouteFlags,
 	}
 }
 

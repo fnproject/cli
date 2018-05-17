@@ -10,7 +10,7 @@ type listCommands struct {
 	context string
 }
 
-var subCommands []cli.Command
+var listSubCommands []cli.Command
 var listAPIClient clientCmd
 
 func listCommand() cli.Command {
@@ -32,7 +32,9 @@ func listCommand() cli.Command {
 }
 
 func (a *clientCmd) getListSubCommands() []cli.Command {
-	subCommands = append(subCommands, a.appsCommand(appsList))
+	listSubCommands = append(listSubCommands, a.apps(appsList))
+	listSubCommands = append(listSubCommands, a.routes(routesList))
+	listSubCommands = append(listSubCommands, contextCommand(contextList))
 
-	return subCommands
+	return listSubCommands
 }

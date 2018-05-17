@@ -96,7 +96,7 @@ LEARN MORE:
 		// startCmd(),
 		// updateCmd(),
 		// initFn(),
-		routes(),
+		//routes(),
 		// images(),
 		// lambda(),
 		// version(),
@@ -114,6 +114,9 @@ LEARN MORE:
 		unsetCommand(),
 		updateCommand(),
 		useCommand(),
+		inspectCommand(),
+		callCommand(),
+		configCommand(),
 	}
 	app.Commands = append(app.Commands, aliasesFn()...)
 

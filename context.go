@@ -31,83 +31,26 @@ const (
 
 type ContextMap config.ContextMap
 
-func contextCmd(command string) cli.Command {
+func contextCommand(command string) cli.Command {
 	ctxMap := ContextMap{}
+	var cCmd cli.Command
 
 	switch command {
-	case "create":
-		return getCreateContextCommand()
-	case "list":
-		return cli.Command{
-			Name:   "context",
-			Usage:  "list contexts",
-			Action: listContext,
-		}
-
-	case "delete":
-		return cli.Command{
-			Name:      "context",
-			Usage:     "delete a context",
-			ArgsUsage: "<context>",
-			Action:    deleteCtx,
-		}
-
-	case "use":
-
-	case "update":
-
-	case "unset":
-
-	default:
-
+	case contextCreate:
+		cCmd = getCreateContextCommand()
+	case contextList:
+		cCmd = getListContextCommand()
+	case contextDelete:
+		cCmd = getDeleteContextCommand()
+	case contextUse:
+		cCmd = getUseContextCommand()
+	case contextUpdate:
+		cCmd = ctxMap.getUpdateContextCommand()
+	case contextUnset:
+		cCmd = getUnsetContextCommand()
 	}
 
-	return cli.Command{
-		Name:  "context",
-		Usage: "manage context",
-		Subcommands: []cli.Command{
-			// {
-			// 	Name:      "create",
-			// 	Aliases:   []string{"c"},
-			// 	Usage:     "create a new context",
-			// 	ArgsUsage: "<context>",
-			// 	Action:    createContext,
-			// 	Flags: []cli.Flag{
-			// 		cli.StringFlag{
-			// 			Name:  "provider",
-			// 			Usage: "context provider",
-			// 		},
-			// 		cli.StringFlag{
-			// 			Name:  "api-url",
-			// 			Usage: "context api url",
-			// 		},
-			// 		cli.StringFlag{
-			// 			Name:  "registry",
-			// 			Usage: "context registry",
-			// 		},
-			// 	},
-			// },
-
-			{
-				Name:      "update",
-				Usage:     "update context files",
-				ArgsUsage: "<key> <value>",
-				Action:    ctxMap.updateCtx,
-			},
-			{
-				Name:      "use",
-				Aliases:   []string{"u"},
-				Usage:     "use context for future invocations",
-				ArgsUsage: "<context>",
-				Action:    useCtx,
-			},
-			{
-				Name:   "unset",
-				Usage:  "unset current-context",
-				Action: unsetCtx,
-			},
-		},
-	}
+	return cCmd
 }
 
 func getCreateContextCommand() cli.Command {
@@ -130,6 +73,49 @@ func getCreateContextCommand() cli.Command {
 				Usage: "context registry",
 			},
 		},
+	}
+}
+
+func getListContextCommand() cli.Command {
+	return cli.Command{
+		Name:   "context",
+		Usage:  "list contexts",
+		Action: listContext,
+	}
+}
+
+func getDeleteContextCommand() cli.Command {
+	return cli.Command{
+		Name:      "context",
+		Usage:     "delete a context",
+		ArgsUsage: "<context>",
+		Action:    deleteCtx,
+	}
+}
+
+func (ctxMap ContextMap) getUpdateContextCommand() cli.Command {
+	return cli.Command{
+		Name:      "context",
+		Usage:     "update context files",
+		ArgsUsage: "<key> <value>",
+		Action:    ctxMap.updateCtx,
+	}
+}
+
+func getUseContextCommand() cli.Command {
+	return cli.Command{
+		Name:      "context",
+		Usage:     "use context for future invocations",
+		ArgsUsage: "<context>",
+		Action:    useCtx,
+	}
+}
+
+func getUnsetContextCommand() cli.Command {
+	return cli.Command{
+		Name:   "context",
+		Usage:  "unset current-context",
+		Action: unsetCtx,
 	}
 }
 

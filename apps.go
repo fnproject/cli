@@ -29,24 +29,28 @@ const (
 	appsList    = "list"
 	appsInspect = "inspect"
 	appsUpdate  = "update"
+	appsConfig  = "config"
 )
 
-func (a *clientCmd) appsCommand(command string) cli.Command {
+func (a *clientCmd) apps(command string) cli.Command {
+	var aCmd cli.Command
 
 	switch command {
 	case appsCreate:
-		return a.getCreateAppsCommand()
+		aCmd = a.getCreateAppsCommand()
 	case appsList:
-		return a.getListAppsCommand()
+		aCmd = a.getListAppsCommand()
 	case appsDelete:
-		return a.getDeleteAppsCommand()
+		aCmd = a.getDeleteAppsCommand()
 	case appsInspect:
-		return a.getInspectAppsCommand()
+		aCmd = a.getInspectAppsCommand()
 	case appsUpdate:
-		return a.getUpdateAppsCommand()
+		aCmd = a.getUpdateAppsCommand()
+	case appsConfig:
+		aCmd = a.getConfigAppsCommand()
 	}
 
-	return cli.Command{}
+	return aCmd
 }
 
 func (a *clientCmd) list(c *cli.Context) error {
@@ -343,16 +347,15 @@ func (a *clientCmd) getListAppsCommand() cli.Command {
 
 func (a *clientCmd) getDeleteAppsCommand() cli.Command {
 	return cli.Command{
-		Name:    "delete",
-		Aliases: []string{"d"},
-		Usage:   "delete an app",
-		Action:  a.delete,
+		Name:   "apps",
+		Usage:  "delete an app",
+		Action: a.delete,
 	}
 }
 
 func (a *clientCmd) getInspectAppsCommand() cli.Command {
 	return cli.Command{
-		Name:      "inspect",
+		Name:      "apps",
 		Usage:     "retrieve one or all apps properties",
 		ArgsUsage: "<app> [property.[key]]",
 		Action:    a.inspect,
@@ -361,8 +364,7 @@ func (a *clientCmd) getInspectAppsCommand() cli.Command {
 
 func (a *clientCmd) getUpdateAppsCommand() cli.Command {
 	return cli.Command{
-		Name:      "update",
-		Aliases:   []string{"u"},
+		Name:      "apps",
 		Usage:     "update an `app`",
 		ArgsUsage: "<app>",
 		Action:    a.update,
@@ -370,6 +372,43 @@ func (a *clientCmd) getUpdateAppsCommand() cli.Command {
 			cli.StringSliceFlag{
 				Name:  "config,c",
 				Usage: "route configuration",
+			},
+		},
+	}
+}
+
+func (a *clientCmd) getConfigAppsCommand() cli.Command {
+	return cli.Command{
+		Name:  "apps",
+		Usage: "manage apps configs",
+		Subcommands: []cli.Command{
+			{
+				Name:      "set",
+				Aliases:   []string{"s"},
+				Usage:     "store a configuration key for this application",
+				ArgsUsage: "<app> <key> <value>",
+				Action:    a.configSet,
+			},
+			{
+				Name:      "get",
+				Aliases:   []string{"g"},
+				Usage:     "inspect configuration key for this application",
+				ArgsUsage: "<app> <key>",
+				Action:    a.configGet,
+			},
+			{
+				Name:      "list",
+				Aliases:   []string{"l"},
+				Usage:     "list configuration key/value pairs for this application",
+				ArgsUsage: "<app>",
+				Action:    a.configList,
+			},
+			{
+				Name:      "unset",
+				Aliases:   []string{"u"},
+				Usage:     "remove a configuration key for this application",
+				ArgsUsage: "<app> <key>",
+				Action:    a.configUnset,
 			},
 		},
 	}

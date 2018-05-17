@@ -28,8 +28,9 @@ func createCommand() cli.Command {
 }
 
 func (a *clientCmd) getCreateSubCommands() []cli.Command {
-	createSubCommands = append(createSubCommands, a.appsCommand(appsCreate))
-	createSubCommands = append(createSubCommands, contextCmd(contextCreate))
+	createSubCommands = append(createSubCommands, a.apps(appsCreate))
+	createSubCommands = append(createSubCommands, a.routes(routesCreate))
+	createSubCommands = append(createSubCommands, contextCommand(contextCreate))
 
 	return createSubCommands
 }
