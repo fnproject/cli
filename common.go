@@ -28,6 +28,14 @@ const (
 	minRequiredDockerVersion = "17.5.0"
 )
 
+func (a *clientCmd) getSubCommands(signature string) []cli.Command {
+	createSubCommands = append(createSubCommands, a.apps(signature))
+	createSubCommands = append(createSubCommands, a.routes(signature))
+	createSubCommands = append(createSubCommands, contextCommand(signature))
+
+	return createSubCommands
+}
+
 func getWd() string {
 	wd, err := os.Getwd()
 	if err != nil {

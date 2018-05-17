@@ -33,11 +33,3 @@ func createCommand() cli.Command {
 		//		Subcommands: createAPIClient.getCreateSubCommands(),
 	}
 }
-
-func (a *clientCmd) getCreateSubCommands() []cli.Command {
-	createSubCommands = append(createSubCommands, a.apps(CreateCmd))
-	createSubCommands = append(createSubCommands, a.routes(CreateCmd))
-	createSubCommands = append(createSubCommands, contextCommand(CreateCmd))
-
-	return createSubCommands
-}

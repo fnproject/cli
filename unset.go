@@ -25,12 +25,3 @@ func unsetCommand() cli.Command {
 		Subcommands: apiClient.getSubCommands(UnsetCmd),
 	}
 }
-
-// func (a *clientCmd) getUnsetSubCommands() []cli.Command {
-// 	var unsetSubCommands []cli.Command
-// 	unsetSubCommands := append(unsetSubCommands, contextCommand(UnsetCmd))
-
-// 	return unsetSubCommands
-// }
-
-// //

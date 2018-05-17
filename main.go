@@ -35,6 +35,8 @@ const (
 	UnsetCmd   = "unset"
 	UpdateCmd  = "update"
 	UseCmd     = "use"
+	SetCmd     = "set"
+	GetCmd     = "get"
 )
 
 var aliases = map[string]cli.Command{

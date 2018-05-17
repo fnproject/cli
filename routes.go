@@ -115,7 +115,7 @@ func (cmd *clientCmd) getCreateRoutesCommand() cli.Command {
 		Name:      "routes",
 		Usage:     "create a route in an `app`",
 		ArgsUsage: "<app> </path>",
-		Action:    cmd.createRoute,
+		Action:    cmd.createRoutes,
 		Flags:     routeFlags,
 	}
 }
@@ -145,7 +145,7 @@ func (cmd *clientCmd) getDeleteRoutesCommand() cli.Command {
 		Name:      "routes",
 		Usage:     "delete a route from `app`",
 		ArgsUsage: "<app> </path>",
-		Action:    cmd.deleteRoute,
+		Action:    cmd.deleteRoutes,
 	}
 }
 
@@ -154,7 +154,7 @@ func (cmd *clientCmd) getInspectRoutesCommand() cli.Command {
 		Name:      "routes",
 		Usage:     "retrieve one or all routes properties",
 		ArgsUsage: "<app> </path> [property.[key]]",
-		Action:    cmd.inspect,
+		Action:    cmd.inspectRoutes,
 	}
 }
 
@@ -168,28 +168,28 @@ func (cmd *clientCmd) getConfigRoutesCommand() cli.Command {
 				Aliases:   []string{"s"},
 				Usage:     "store a configuration key for this route",
 				ArgsUsage: "<app> </path> <key> <value>",
-				Action:    cmd.configSet,
+				Action:    cmd.configSetRoutes,
 			},
 			{
 				Name:      "get",
 				Aliases:   []string{"g"},
 				Usage:     "inspect configuration key for this route",
 				ArgsUsage: "<app> </path> <key>",
-				Action:    cmd.configGet,
+				Action:    cmd.configGetRoutes,
 			},
 			{
 				Name:      "list",
 				Aliases:   []string{"l"},
 				Usage:     "list configuration key/value pairs for this route",
 				ArgsUsage: "<app> </path>",
-				Action:    cmd.configList,
+				Action:    cmd.configListRoutes,
 			},
 			{
 				Name:      "unset",
 				Aliases:   []string{"u"},
 				Usage:     "remove a configuration key for this route",
 				ArgsUsage: "<app> </path> <key>",
-				Action:    cmd.configUnset,
+				Action:    cmd.configUnsetRoutes,
 			},
 		},
 	}
@@ -201,7 +201,7 @@ func (cmd *clientCmd) getUpdateRoutesCommand() cli.Command {
 		Aliases:   []string{"u"},
 		Usage:     "update a route in an `app`",
 		ArgsUsage: "<app> </path>",
-		Action:    cmd.updateRoute,
+		Action:    cmd.updateRoutes,
 		Flags:     updateRouteFlags,
 	}
 }
@@ -390,7 +390,7 @@ func routeWithFuncFile(ff *funcfile, rt *fnmodels.Route) error {
 	return nil
 }
 
-func (cmd *clientCmd) createRoute(c *cli.Context) error {
+func (cmd *clientCmd) createRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 
@@ -489,7 +489,7 @@ func (cmd *clientCmd) putRoute(c *cli.Context, appName, routePath string, r *fnm
 	return nil
 }
 
-func (cmd *clientCmd) updateRoute(c *cli.Context) error {
+func (cmd *clientCmd) updateRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 
@@ -506,7 +506,7 @@ func (cmd *clientCmd) updateRoute(c *cli.Context) error {
 	return nil
 }
 
-func (cmd *clientCmd) configSetRoute(c *cli.Context) error {
+func (cmd *clientCmd) configSetRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 	key := c.Args().Get(2)
@@ -527,7 +527,7 @@ func (cmd *clientCmd) configSetRoute(c *cli.Context) error {
 	return nil
 }
 
-func (cmd *clientCmd) configGetRoute(c *cli.Context) error {
+func (cmd *clientCmd) configGetRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 	key := c.Args().Get(2)
@@ -552,7 +552,7 @@ func (cmd *clientCmd) configGetRoute(c *cli.Context) error {
 	return nil
 }
 
-func (cmd *clientCmd) configListRoute(c *cli.Context) error {
+func (cmd *clientCmd) configListRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 
@@ -573,7 +573,7 @@ func (cmd *clientCmd) configListRoute(c *cli.Context) error {
 	return nil
 }
 
-func (cmd *clientCmd) configUnsetRoute(c *cli.Context) error {
+func (cmd *clientCmd) configUnsetRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 	key := c.Args().Get(2)
@@ -593,7 +593,7 @@ func (cmd *clientCmd) configUnsetRoute(c *cli.Context) error {
 	return nil
 }
 
-func (cmd *clientCmd) inspectRoute(c *cli.Context) error {
+func (cmd *clientCmd) inspectRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 	prop := c.Args().Get(2)
@@ -641,7 +641,7 @@ func (cmd *clientCmd) inspectRoute(c *cli.Context) error {
 	return nil
 }
 
-func (cmd *clientCmd) deleteRoute(c *cli.Context) error {
+func (cmd *clientCmd) deleteRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 

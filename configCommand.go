@@ -6,10 +6,9 @@ import (
 )
 
 var configSubCommands []cli.Command
-var configAPIClient clientCmd
 
 func configCommand() cli.Command {
-	configAPIClient = clientCmd{}
+	apiClient := clientCmd{}
 
 	return cli.Command{
 		Name:    "config",
@@ -17,19 +16,12 @@ func configCommand() cli.Command {
 		Usage:   "config command",
 		Before: func(c *cli.Context) error {
 			var err error
-			configAPIClient.client, err = client.APIClient()
+			apiClient.client, err = client.APIClient()
 			return err
 		},
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<command>",
-		Subcommands: configAPIClient.getConfigSubCommands(),
+		Subcommands: apiClient.getSubCommands(ConfigCmd),
 	}
-}
-
-func (a *clientCmd) getConfigSubCommands() []cli.Command {
-	configSubCommands = append(configSubCommands, a.apps(ConfigCmd))
-	configSubCommands = append(configSubCommands, a.routes(ConfigCmd))
-
-	return configSubCommands
 }

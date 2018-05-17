@@ -22,14 +22,6 @@ func deleteCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<command>",
-		Subcommands: deleteAPIClient.getDeleteSubCommands(),
+		Subcommands: deleteAPIClient.getSubCommands(DeleteCmd),
 	}
-}
-
-func (a *clientCmd) getDeleteSubCommands() []cli.Command {
-	deleteSubCommands = append(deleteSubCommands, a.apps(DeleteCmd))
-	deleteSubCommands = append(deleteSubCommands, a.routes(DeleteCmd))
-	deleteSubCommands = append(deleteSubCommands, contextCommand(DeleteCmd))
-
-	return deleteSubCommands
 }
