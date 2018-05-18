@@ -2,11 +2,13 @@ package main
 
 import (
 	"github.com/fnproject/cli/client"
+	"github.com/fnproject/cli/common"
+	"github.com/fnproject/cli/objects"
 	"github.com/urfave/cli"
 )
 
 func callCommand() cli.Command {
-	apiClient := fnClient{}
+	apiClient := common.FnClient{}
 
 	return cli.Command{
 		Name:    "call",
@@ -20,6 +22,6 @@ func callCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<command>",
-		Subcommands: apiClient.getSubCommands(CallCmd),
+		Subcommands: objects.GetSubCommands(common.CallCmd, &apiClient),
 	}
 }

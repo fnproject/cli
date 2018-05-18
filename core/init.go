@@ -1,4 +1,4 @@
-package main
+package core
 
 /*
  usage: fn init --help
@@ -28,6 +28,7 @@ import (
 
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/langs"
+	"github.com/fnproject/cli/objects/route"
 	"github.com/fnproject/fn_go/models"
 	"github.com/urfave/cli"
 )
@@ -72,7 +73,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 		},
 	}
 
-	return append(fgs, routeFlags...)
+	return append(fgs, route.RouteFlags...)
 }
 
 func langsList() string {
@@ -84,7 +85,7 @@ func langsList() string {
 }
 
 func initFn() cli.Command {
-	a := &initFnCmd{ff: &funcfile{}}
+	a := &initFnCmd{ff: &common.FuncFile{}}
 
 	return cli.Command{
 		Name:        "init",
@@ -97,7 +98,7 @@ func initFn() cli.Command {
 }
 
 func (a *initFnCmd) init(c *cli.Context) error {
-	wd := getWd()
+	wd := common.GetWd()
 
 	var rt models.Route
 	routeWithFlags(c, &rt)
@@ -135,7 +136,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	}
 
 	if !a.force {
-		_, ff, err := loadFuncfile()
+		_, ff, err := common.LoadFuncfile()
 		if _, ok := err.(*notFoundError); !ok && err != nil {
 			return err
 		}
@@ -144,7 +145,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 	}
 
-	err = a.buildFuncFile(c) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
+	err = a.BuildFuncFile(c) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
 	if err != nil {
 		return err
 	}
@@ -213,8 +214,8 @@ func validateFuncName(name string) error {
 	return nil
 }
 
-func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
-	wd := getWd()
+func (a *initFnCmd) BuildFuncFile(c *cli.Context) error {
+	wd := common.GetWd()
 	var err error
 
 	if a.ff.Name == "" {

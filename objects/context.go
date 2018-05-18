@@ -11,7 +11,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"cmd github.com/fnproject/cli/commands"
+	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/config"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
@@ -28,17 +28,17 @@ func contextCommand(command string) cli.Command {
 	var cCmd cli.Command
 
 	switch command {
-	case cmd.CreateCmd:
+	case common.CreateCmd:
 		cCmd = getCreateContextCommand()
-	case cmd.ListCmd:
+	case common.ListCmd:
 		cCmd = getListContextCommand()
-	case cmd.DeleteCmd:
+	case common.DeleteCmd:
 		cCmd = getDeleteContextCommand()
-	case cmd.UseCmd:
+	case common.UseCmd:
 		cCmd = getUseContextCommand()
-	case cmd.UpdateCmd:
+	case common.UpdateCmd:
 		cCmd = ctxMap.getUpdateContextCommand()
-	case cmd.UnsetCmd:
+	case common.UnsetCmd:
 		cCmd = getUnsetContextCommand()
 	}
 

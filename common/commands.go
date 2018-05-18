@@ -1,4 +1,4 @@
-package commands
+package common
 
 // Command Names
 const (

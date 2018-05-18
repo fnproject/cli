@@ -1,4 +1,4 @@
-package main
+package run
 
 import (
 	"bufio"
@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fnproject/cli/common"
 	"github.com/urfave/cli"
 )
 
@@ -29,61 +30,63 @@ func run() cli.Command {
 	return cli.Command{
 		Name:   "run",
 		Usage:  "run a function locally",
-		Flags:  append(runflags(), []cli.Flag{}...),
-		Action: r.run,
+		Flags:  append(GetRunFlags(), []cli.Flag{}...),
+		Action: r.Run,
 	}
 }
 
 type runCmd struct{}
 
-func runflags() []cli.Flag {
-	return []cli.Flag{
-		cli.StringSliceFlag{
-			Name:  "env, e",
-			Usage: "select environment variables to be sent to function",
-		},
-		cli.StringSliceFlag{
-			Name:  "link",
-			Usage: "select container links for the function",
-		},
-		cli.StringFlag{
-			Name:  "method",
-			Usage: "http method for function",
-		},
-		cli.StringFlag{
-			Name:  "format",
-			Usage: "format to use. `default` and `http` (hot) formats currently supported.",
-		},
-		cli.IntFlag{
-			Name:  "runs",
-			Usage: "for hot functions only, will call the function `runs` times in a row.",
-		},
-		cli.Uint64Flag{
-			Name:  "memory",
-			Usage: "RAM to allocate for function, Units: MB",
-		},
-		cli.BoolFlag{
-			Name:  "no-cache",
-			Usage: "Don't use Docker cache for the build",
-		},
-		cli.StringFlag{
-			Name:  "content-type",
-			Usage: "The payload Content-Type for the function invocation.",
-		},
-		cli.StringSliceFlag{
-			Name:  "build-arg",
-			Usage: "set build time variables",
-		},
-	}
+var RunFlags = []cli.Flag{
+	cli.StringSliceFlag{
+		Name:  "env, e",
+		Usage: "select environment variables to be sent to function",
+	},
+	cli.StringSliceFlag{
+		Name:  "link",
+		Usage: "select container links for the function",
+	},
+	cli.StringFlag{
+		Name:  "method",
+		Usage: "http method for function",
+	},
+	cli.StringFlag{
+		Name:  "format",
+		Usage: "format to use. `default` and `http` (hot) formats currently supported.",
+	},
+	cli.IntFlag{
+		Name:  "runs",
+		Usage: "for hot functions only, will call the function `runs` times in a row.",
+	},
+	cli.Uint64Flag{
+		Name:  "memory",
+		Usage: "RAM to allocate for function, Units: MB",
+	},
+	cli.BoolFlag{
+		Name:  "no-cache",
+		Usage: "Don't use Docker cache for the build",
+	},
+	cli.StringFlag{
+		Name:  "content-type",
+		Usage: "The payload Content-Type for the function invocation.",
+	},
+	cli.StringSliceFlag{
+		Name:  "build-arg",
+		Usage: "set build time variables",
+	},
+}
+
+func GetRunFlags() []cli.Flag {
+	return RunFlags
 }
 
 // preRun parses func.yaml, checks expected env vars and builds the function image.
-func preRun(c *cli.Context) (string, *funcfile, []string, error) {
-	wd := getWd()
+func preRun(c *cli.Context) (string, *common.FuncFile, []string, error) {
+	wd := common.GetWd()
 	// if image name is passed in, it will run that image
 	path := c.Args().First() // TODO: should we ditch this?
 	var err error
-	var ff *funcfile
+	var ff *common.FuncFile
 	var fpath string
 
 	if path != "" {
@@ -97,7 +100,7 @@ func preRun(c *cli.Context) (string, *funcfile, []string, error) {
 		wd = dir
 	}
 
-	fpath, ff, err = findAndParseFuncfile(wd)
+	fpath, ff, err = common.FindAndParseFuncfile(wd)
 	if err != nil {
 		return fpath, nil, nil, err
 	}
@@ -127,7 +130,7 @@ func preRun(c *cli.Context) (string, *funcfile, []string, error) {
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	_, err = buildfunc(c, fpath, ff, buildArgs, c.Bool("no-cache"))
+	_, err = common.BuildFunc(c, fpath, ff, buildArgs, c.Bool("no-cache"))
 	if err != nil {
 		return fpath, nil, nil, err
 	}
@@ -145,7 +148,7 @@ func getEnvValue(n string, envVars []string) string {
 	return ""
 }
 
-func (r *runCmd) run(c *cli.Context) error {
+func (r *runCmd) Run(c *cli.Context) error {
 	_, ff, envVars, err := preRun(c)
 	if err != nil {
 		return err
@@ -155,11 +158,11 @@ func (r *runCmd) run(c *cli.Context) error {
 	if c.Uint64("memory") != 0 {
 		ff.Memory = c.Uint64("memory")
 	}
-	return runff(ff, stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"), c.String("content-type"))
+	return runff(ff, Stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"), c.String("content-type"))
 }
 
 // TODO: share all this stuff with the Docker driver in server or better yet, actually use the Docker driver
-func runff(ff *funcfile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int, contentType string) error {
+func runff(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int, contentType string) error {
 	sh := []string{"docker", "run", "--rm", "-i", fmt.Sprintf("--memory=%dm", ff.Memory)}
 
 	var env []string    // env for the shelled out docker run command

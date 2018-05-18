@@ -22,17 +22,17 @@ var (
 	}
 )
 
-type inputMap struct {
+type InputMap struct {
 	Body interface{}
 }
-type outputMap struct {
+type OutputMap struct {
 	Body interface{}
 }
 
-type fftest struct {
+type FFTest struct {
 	Name   string     `yaml:"name,omitempty" json:"name,omitempty"`
-	Input  *inputMap  `yaml:"input,omitempty" json:"input,omitempty"`
-	Output *outputMap `yaml:"outoutput,omitempty" json:"output,omitempty"`
+	Input  *InputMap  `yaml:"input,omitempty" json:"input,omitempty"`
+	Output *OutputMap `yaml:"outoutput,omitempty" json:"output,omitempty"`
 	Err    *string    `yaml:"err,omitempty" json:"err,omitempty"`
 	// Env    map[string]string `yaml:"env,omitempty" json:"env,omitempty"`
 }
@@ -54,7 +54,7 @@ type FuncFile struct {
 	Entrypoint string   `yaml:"entrypoint,omitempty" json:"entrypoint,omitempty"`
 	Cmd        string   `yaml:"cmd,omitempty" json:"cmd,omitempty"`
 	Build      []string `yaml:"build,omitempty" json:"build,omitempty"`
-	Tests      []fftest `yaml:"tests,omitempty" json:"tests,omitempty"`
+	Tests      []FFTest `yaml:"tests,omitempty" json:"tests,omitempty"`
 	BuildImage string   `yaml:"build_image,omitempty" json:"build_image,omitempty"` // Image to use as base for building
 	RunImage   string   `yaml:"run_image,omitempty" json:"run_image,omitempty"`     // Image to use for running
 
@@ -116,23 +116,23 @@ func findFuncfile(path string) (string, error) {
 	}
 	return "", newNotFoundError("could not find function file")
 }
-func findAndParseFuncfile(path string) (fpath string, ff *FuncFile, err error) {
+func FindAndParseFuncfile(path string) (fpath string, ff *FuncFile, err error) {
 	fpath, err = findFuncfile(path)
 	if err != nil {
 		return "", nil, err
 	}
-	ff, err = parseFuncfile(fpath)
+	ff, err = ParseFuncfile(fpath)
 	if err != nil {
 		return "", nil, err
 	}
 	return fpath, ff, err
 }
 
-func loadFuncfile() (string, *FuncFile, error) {
-	return findAndParseFuncfile(".")
+func LoadFuncfile() (string, *FuncFile, error) {
+	return FindAndParseFuncfile(".")
 }
 
-func parseFuncfile(path string) (*FuncFile, error) {
+func ParseFuncfile(path string) (*FuncFile, error) {
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json":

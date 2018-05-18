@@ -33,7 +33,7 @@ type FnClient struct {
 	Client *fnclient.Fn
 }
 
-func getWd() string {
+func GetWd() string {
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatalln("Couldn't get working directory:", err)
@@ -41,7 +41,7 @@ func getWd() string {
 	return wd
 }
 
-func buildfunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
+func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
 	var err error
 	if funcfile.Version == "" {
 		funcfile, err = bumpIt(fpath, Patch)
@@ -103,7 +103,7 @@ func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string,
 			}
 		}
 	}
-	err = runBuild(c, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
+	err = RunBuild(c, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string,
 	return nil
 }
 
-func runBuild(c *cli.Context, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
+func RunBuild(c *cli.Context, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -302,7 +302,7 @@ func stringToSlice(in string) string {
 	return buffer.String()
 }
 
-func extractEnvConfig(configs []string) map[string]string {
+func ExtractEnvConfig(configs []string) map[string]string {
 	c := make(map[string]string)
 	for _, v := range configs {
 		kv := strings.SplitN(v, "=", 2)
@@ -314,7 +314,7 @@ func extractEnvConfig(configs []string) map[string]string {
 }
 
 func dockerPush(ff *FuncFile) error {
-	err := validateImageName(ff.ImageName())
+	err := ValidateImageName(ff.ImageName())
 	if err != nil {
 		return err
 	}
@@ -328,9 +328,9 @@ func dockerPush(ff *FuncFile) error {
 	return nil
 }
 
-// validateImageName validates that the full image name (REGISTRY/name:tag) is allowed for push
+// ValidateImageName validates that the full image name (REGISTRY/name:tag) is allowed for push
 // remember that private registries must be supported here
-func validateImageName(n string) error {
+func ValidateImageName(n string) error {
 	parts := strings.Split(n, "/")
 	if len(parts) < 2 {
 		return errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var, pass in --registry or configure your context file")

@@ -15,13 +15,14 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/fnproject/cli/client"
+	"github.com/fnproject/cli/common"
 	functions "github.com/fnproject/fn_go/client"
 	"github.com/onsi/gomega"
 	"github.com/urfave/cli"
 )
 
 type testStruct struct {
-	Tests []fftest `yaml:"tests,omitempty" json:"tests,omitempty"`
+	Tests []common.FFTest `yaml:"tests,omitempty" json:"tests,omitempty"`
 }
 
 func testfn() cli.Command {
@@ -208,7 +209,7 @@ func (t *testcmd) testSingle(c *cli.Context, wd string) (totalTests, errorCount 
 	return len(tests), errorCount, nil
 }
 
-func runlocaltest(ff *funcfile, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
+func runlocaltest(ff *common.FuncFile, in *common.InputMap, expectedOut *common.OutputMap, expectedErr *string, envVars []string) error {
 	inBytes, err := json.Marshal(in.Body)
 	if err != nil {
 		return err
@@ -246,7 +247,7 @@ func runlocaltest(ff *funcfile, in *inputMap, expectedOut *outputMap, expectedEr
 	return fmt.Errorf("mismatched output found.\nexpected:\n%s\ngot:\n%s\nlogs:\n%s\n", expectedString, out, stderr.String())
 }
 
-func (t *testcmd) runremotetest(ff *funcfile, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
+func (t *testcmd) runremotetest(ff *common.FuncFile, in *common.InputMap, expectedOut *common.OutputMap, expectedErr *string, envVars []string) error {
 	if ff.Path == "" {
 		return errors.New("execution of tests on remote server demand that this function has a `path`")
 	}

@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/fnproject/cli/common"
 	"github.com/urfave/cli"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -99,7 +100,7 @@ func (b *buildServerCmd) buildServer(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	err = runBuild(c, dir, c.String("tag"), "Dockerfile", nil, b.noCache)
+	err = common.RunBuild(c, dir, c.String("tag"), "Dockerfile", nil, b.noCache)
 	if err != nil {
 		return err
 	}

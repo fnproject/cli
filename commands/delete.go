@@ -2,7 +2,6 @@ package commands
 
 import (
 	"github.com/fnproject/cli/client"
-	"github.com/fnproject/cli/commands"
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/objects"
 	"github.com/urfave/cli"
@@ -22,6 +21,6 @@ func DeleteCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<command>",
-		Subcommands: objects.getSubCommands(commands.DeleteCmd, apiClient),
+		Subcommands: objects.GetSubCommands(common.DeleteCmd, &apiClient),
 	}
 }

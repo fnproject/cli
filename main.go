@@ -6,32 +6,19 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fnproject/cli/commands"
 	"github.com/fnproject/cli/config"
+	"github.com/fnproject/cli/run"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
-
-// // Command Names
-// const (
-// 	CallCmd    = "call"
-// 	ConfigCmd  = "config"
-// 	CreateCmd  = "create"
-// 	DeleteCmd  = "delete"
-// 	InspectCmd = "inspect"
-// 	ListCmd    = "list"
-// 	UnsetCmd   = "unset"
-// 	UpdateCmd  = "update"
-// 	UseCmd     = "use"
-// 	SetCmd     = "set"
-// 	GetCmd     = "get"
-// )
 
 var aliases = map[string]cli.Command{
 	"build":  build(),
 	"bump":   bump(),
 	"deploy": deploy(),
 	"push":   push(),
-	"run":    run(),
+	"run":    run.Run(),
 	"call":   call(),
 	"calls":  calls(),
 	"logs":   logs(),
@@ -119,15 +106,15 @@ LEARN MORE:
 		// //contextCmd(),
 
 		// New Commands
-		createCommand(),
-		deleteCommand(),
-		listCommand(),
-		unsetCommand(),
-		updateCommand(),
-		useCommand(),
-		inspectCommand(),
-		callCommand(),
-		configCommand(),
+		commands.CreateCommand(),
+		commands.DeleteCommand(),
+		commands.ListCommand(),
+		commands.UnsetCommand(),
+		commands.UpdateCommand(),
+		commands.UseCommand(),
+		commands.InspectCommand(),
+		commands.CallCommand(),
+		commands.ConfigCommand(),
 	}
 	app.Commands = append(app.Commands, aliasesFn()...)
 
