@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/fnproject/cli/common"
+	"cmd github.com/fnproject/cli/commands"
 	"github.com/urfave/cli"
 )
 
@@ -12,7 +13,7 @@ func GetCommand(command string, client *appCmd) cli.Command {
 	var aCmd cli.Command
 
 	switch command {
-	case common.CreateCmd:
+	case cmd.CreateCmd:
 		aCmd = client.getCreateAppCommand()
 	case common.ListCmd:
 		aCmd = client.getListAppsCommand()

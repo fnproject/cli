@@ -78,7 +78,7 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 	_, err = bumpItWd(wd, t)
 	return err
 }
-func bumpItWd(wd string, vtype VType) (*funcfile, error) {
+func bumpItWd(wd string, vtype VType) (*FuncFile, error) {
 	fn, err := findFuncfile(wd)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func bumpItWd(wd string, vtype VType) (*funcfile, error) {
 }
 
 // returns updated funcfile
-func bumpIt(fpath string, vtype VType) (*funcfile, error) {
+func bumpIt(fpath string, vtype VType) (*FuncFile, error) {
 	// fmt.Println("Bumping version in func file at: ", fpath)
 	funcfile, err := parseFuncfile(fpath)
 	if err != nil {
@@ -106,7 +106,7 @@ func bumpIt(fpath string, vtype VType) (*funcfile, error) {
 	return funcfile, nil
 }
 
-func bumpVersion(funcfile *funcfile, t VType) (*funcfile, error) {
+func bumpVersion(funcfile *FuncFile, t VType) (*FuncFile, error) {
 	funcfile.Name = cleanImageName(funcfile.Name)
 	if funcfile.Version == "" {
 		funcfile.Version = initialVersion

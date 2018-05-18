@@ -41,7 +41,7 @@ func getWd() string {
 	return wd
 }
 
-func buildfunc(c *cli.Context, fpath string, funcfile *funcfile, buildArg []string, noCache bool) (*funcfile, error) {
+func buildfunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
 	var err error
 	if funcfile.Version == "" {
 		funcfile, err = bumpIt(fpath, Patch)
@@ -73,7 +73,7 @@ func localBuild(path string, steps []string) error {
 	return nil
 }
 
-func dockerBuild(c *cli.Context, fpath string, ff *funcfile, buildArgs []string, noCache bool) error {
+func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
@@ -222,7 +222,7 @@ func exists(name string) bool {
 	return true
 }
 
-func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *funcfile) (string, error) {
+func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (string, error) {
 	if ff.Entrypoint == "" && ff.Cmd == "" {
 		return "", errors.New("entrypoint and cmd are missing, you must provide one or the other")
 	}
@@ -313,7 +313,7 @@ func extractEnvConfig(configs []string) map[string]string {
 	return c
 }
 
-func dockerPush(ff *funcfile) error {
+func dockerPush(ff *FuncFile) error {
 	err := validateImageName(ff.ImageName())
 	if err != nil {
 		return err

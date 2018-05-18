@@ -9,6 +9,7 @@ import (
 	"time"
 
 	client "github.com/fnproject/cli/client"
+	common "github.com/fnproject/cli/common"
 	fnclient "github.com/fnproject/fn_go/client"
 	clientApps "github.com/fnproject/fn_go/client/apps"
 	"github.com/fnproject/fn_go/models"
@@ -132,7 +133,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 
 // deploySingle deploys a single function, either the current directory or if in the context
 // of an app and user provides relative path as the first arg, it will deploy that function.
-func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *appfile) error {
+func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.AppFile) error {
 	wd := getWd()
 
 	dir := wd
@@ -174,7 +175,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *appfile) 
 }
 
 // deployAll deploys all functions in an app.
-func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) error {
+func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFile) error {
 	if appf != nil {
 		err := p.updateAppConfig(appf)
 		if err != nil {
@@ -236,7 +237,7 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *appfile) err
 // Parse func.yaml file, bump version, build image, push to registry, and
 // finally it will update function's route. Optionally,
 // the route can be overriden inside the func.yaml file.
-func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *funcfile) error {
+func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *common.FuncFile) error {
 	if appName == "" {
 		return errors.New("app name must be provided, try `--app APP_NAME`.")
 	}
@@ -280,7 +281,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	return p.updateRoute(c, appName, funcfile)
 }
 
-func setRootFuncInfo(ff *funcfile, appName string) {
+func setRootFuncInfo(ff *common.FuncFile, appName string) {
 	if ff.Name == "" {
 		fmt.Println("setting name")
 		ff.Name = fmt.Sprintf("%s-root", appName)
@@ -291,7 +292,7 @@ func setRootFuncInfo(ff *funcfile, appName string) {
 	}
 }
 
-func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *funcfile) error {
+func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *common.FuncFile) error {
 	fmt.Printf("Updating route %s using image %s...\n", ff.Path, ff.ImageName())
 	client, err := client.APIClient()
 	if err != nil {
@@ -341,7 +342,7 @@ func isstale(path string) bool {
 	return err != nil
 }
 
-func (p *deploycmd) updateAppConfig(appf *appfile) error {
+func (p *deploycmd) updateAppConfig(appf *common.AppFile) error {
 	param := clientApps.NewPatchAppsAppParams()
 	param.App = appf.Name
 	param.Body = &models.AppWrapper{

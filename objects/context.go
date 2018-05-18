@@ -1,4 +1,4 @@
-package main
+package objects
 
 import (
 	"errors"
@@ -11,6 +11,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"cmd github.com/fnproject/cli/commands"
 	"github.com/fnproject/cli/config"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
@@ -20,15 +21,6 @@ import (
 var contextsPath = config.GetContextsPath()
 var fileExtension = ".yaml"
 
-// const (
-// 	contextCreate = "create"
-// 	contextDelete = "delete"
-// 	contextList   = "list"
-// 	contextUnset  = "unset"
-// 	contextUse    = "use"
-// 	contextUpdate = "update"
-// )
-
 type ContextMap config.ContextMap
 
 func contextCommand(command string) cli.Command {
@@ -36,17 +28,17 @@ func contextCommand(command string) cli.Command {
 	var cCmd cli.Command
 
 	switch command {
-	case CreateCmd:
+	case cmd.CreateCmd:
 		cCmd = getCreateContextCommand()
-	case ListCmd:
+	case cmd.ListCmd:
 		cCmd = getListContextCommand()
-	case DeleteCmd:
+	case cmd.DeleteCmd:
 		cCmd = getDeleteContextCommand()
-	case UseCmd:
+	case cmd.UseCmd:
 		cCmd = getUseContextCommand()
-	case UpdateCmd:
+	case cmd.UpdateCmd:
 		cCmd = ctxMap.getUpdateContextCommand()
-	case UnsetCmd:
+	case cmd.UnsetCmd:
 		cCmd = getUnsetContextCommand()
 	}
 

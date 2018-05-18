@@ -34,7 +34,7 @@ import (
 
 type initFnCmd struct {
 	force bool
-	ff    *common.funcfile
+	ff    *common.FuncFile
 }
 
 func initFlags(a *initFnCmd) []cli.Flag {

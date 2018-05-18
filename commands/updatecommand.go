@@ -1,11 +1,11 @@
-package main
+package commands
 
 import (
 	"github.com/fnproject/cli/client"
 	"github.com/urfave/cli"
 )
 
-func updateCommand() cli.Command {
+func UpdateCommand() cli.Command {
 	apiClient := fnClient{}
 
 	return cli.Command{

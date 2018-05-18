@@ -1,17 +1,17 @@
-package main
+package commands
 
 import (
 	"github.com/fnproject/cli/client"
 	"github.com/urfave/cli"
 )
 
-func unsetCommand() cli.Command {
-	apiClient := fnClient{}
+func UseCommand() cli.Command {
+	apiClient := FnClient{}
 
 	return cli.Command{
-		Name:    "unset",
-		Aliases: []string{"un"},
-		Usage:   "unset command",
+		Name:    "use",
+		Aliases: []string{"u"},
+		Usage:   "use command",
 		Before: func(c *cli.Context) error {
 			var err error
 			apiClient.client, err = client.APIClient()
@@ -20,6 +20,6 @@ func unsetCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<command>",
-		Subcommands: apiClient.getSubCommands(UnsetCmd),
+		Subcommands: apiClient.getSubCommands(UseCmd),
 	}
 }
