@@ -15,13 +15,15 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/fnproject/cli/client"
+	"github.com/fnproject/cli/common"
+	"github.com/fnproject/cli/run"
 	functions "github.com/fnproject/fn_go/client"
 	"github.com/onsi/gomega"
 	"github.com/urfave/cli"
 )
 
 type testStruct struct {
-	Tests []fftest `yaml:"tests,omitempty" json:"tests,omitempty"`
+	Tests []common.FFTest `yaml:"tests,omitempty" json:"tests,omitempty"`
 }
 
 func testfn() cli.Command {
@@ -65,7 +67,7 @@ func (t *testcmd) test(c *cli.Context) error {
 		fmt.Println("In gomega FailHandler:", message)
 	})
 
-	wd := getWd()
+	wd := common.GetWd()
 
 	if c.Bool("all") {
 		fmt.Println("Testing all functions in this directory and all sub directories.")
@@ -79,7 +81,7 @@ func (t *testcmd) test(c *cli.Context) error {
 func (t *testcmd) testAll(c *cli.Context, wd string) error {
 	testCount := 0
 	errorCount := 0
-	err := walkFuncs(wd, func(path string, ff *funcfile, err error) error {
+	err := walkFuncs(wd, func(path string, ff *common.FuncFile, err error) error {
 		if err != nil { // probably some issue with funcfile parsing, can decide to handle this differently if we'd like
 			return err
 		}
@@ -134,7 +136,7 @@ func (t *testcmd) testAll(c *cli.Context, wd string) error {
 
 func (t *testcmd) testSingle(c *cli.Context, wd string) (totalTests, errorCount int, err error) {
 	// TODO: prerun should take a wd
-	fpath, ff, envVars, err := preRun(c)
+	fpath, ff, envVars, err := run.PreRun(c)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -144,11 +146,11 @@ func (t *testcmd) testSingle(c *cli.Context, wd string) (totalTests, errorCount 
 		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
 	}
 
-	var tests []fftest
+	var tests []common.FFTest
 
 	// Look for test.json file too
 	tfile := "test.json"
-	if exists(tfile) {
+	if common.Exists(tfile) {
 		f, err := os.Open(tfile)
 		if err != nil {
 			return 0, 0, fmt.Errorf("could not open %s for parsing. %v", tfile, err)
@@ -208,7 +210,7 @@ func (t *testcmd) testSingle(c *cli.Context, wd string) (totalTests, errorCount 
 	return len(tests), errorCount, nil
 }
 
-func runlocaltest(ff *funcfile, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
+func runlocaltest(ff *common.FuncFile, in *common.InputMap, expectedOut *common.OutputMap, expectedErr *string, envVars []string) error {
 	inBytes, err := json.Marshal(in.Body)
 	if err != nil {
 		return err
@@ -230,7 +232,7 @@ func runlocaltest(ff *funcfile, in *inputMap, expectedOut *outputMap, expectedEr
 
 	var stdout, stderr bytes.Buffer
 
-	if err := runff(ff, stdin, &stdout, &stderr, "", envVars, nil, "", 1, "application/json"); err != nil {
+	if err := run.RunFF(ff, stdin, &stdout, &stderr, "", envVars, nil, "", 1, "application/json"); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\nstderr:%s\n", err, stdout.String(), stderr.String())
 	}
 
@@ -246,7 +248,7 @@ func runlocaltest(ff *funcfile, in *inputMap, expectedOut *outputMap, expectedEr
 	return fmt.Errorf("mismatched output found.\nexpected:\n%s\ngot:\n%s\nlogs:\n%s\n", expectedString, out, stderr.String())
 }
 
-func (t *testcmd) runremotetest(ff *funcfile, in *inputMap, expectedOut *outputMap, expectedErr *string, envVars []string) error {
+func (t *testcmd) runremotetest(ff *common.FuncFile, in *common.InputMap, expectedOut *common.OutputMap, expectedErr *string, envVars []string) error {
 	if ff.Path == "" {
 		return errors.New("execution of tests on remote server demand that this function has a `path`")
 	}

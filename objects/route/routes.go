@@ -1,4 +1,4 @@
-package main
+package route
 
 import (
 	"context"
@@ -12,18 +12,15 @@ import (
 	"text/tabwriter"
 
 	client "github.com/fnproject/cli/client"
-	fnclient "github.com/fnproject/fn_go/client"
+	common "github.com/fnproject/cli/common"
+	run "github.com/fnproject/cli/run"
 	apiroutes "github.com/fnproject/fn_go/client/routes"
 	fnmodels "github.com/fnproject/fn_go/models"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
 )
 
-type routesCmd struct {
-	client *fnclient.Fn
-}
-
-var routeFlags = []cli.Flag{
+var RouteFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:  "image,i",
 		Usage: "image name",
@@ -57,136 +54,167 @@ var routeFlags = []cli.Flag{
 		Usage: "route idle timeout (eg. 30)",
 	},
 }
+var updateRouteFlags = RouteFlags
 
-var updateRouteFlags = routeFlags
-
-var callFnFlags = append(runflags(),
+var callFnFlags = append(run.RunFlags,
 	cli.BoolFlag{
 		Name:  "display-call-id",
 		Usage: "whether display call ID or not",
 	},
 )
 
-func routes() cli.Command {
+type route common.FnClient
 
-	r := routesCmd{}
+func CreateRouteCmd(client *common.FnClient) (routeCmd route) {
+	routeCmd = route{Client: client.Client}
+	return
+}
 
+func GetCommand(command string, apiClient *common.FnClient) cli.Command {
+	var rCmd cli.Command
+
+	routeCmd := CreateRouteCmd(apiClient)
+
+	switch command {
+	case common.CreateCmd:
+		rCmd = routeCmd.getCreateRouteCommand()
+	case common.CallCmd:
+		rCmd = getCallRoutesCommand()
+	case common.ListCmd:
+		rCmd = routeCmd.getListRoutesCommand()
+	case common.DeleteCmd:
+		rCmd = routeCmd.getDeleteRouteCommand()
+	case common.UpdateCmd:
+		rCmd = routeCmd.getUpdateRouteCommand()
+	case common.ConfigCmd:
+		rCmd = routeCmd.getConfigRoutesCommand()
+	case common.InspectCmd:
+		rCmd = routeCmd.getInspectRoutesCommand()
+	}
+
+	return rCmd
+}
+
+func getCallRoutesCommand() cli.Command {
 	return cli.Command{
-		Name:  "routes",
-		Usage: "manage routes",
-		Before: func(c *cli.Context) error {
-			var err error
-			r.client, err = client.APIClient()
-			return err
-		},
-		Subcommands: []cli.Command{
-			{
-				Name:      "call",
-				Usage:     "call a route",
-				ArgsUsage: "<app> </path> [image]",
-				Action:    r.call,
-				Flags:     callFnFlags,
+		Name:      "routes",
+		Usage:     "call a route",
+		ArgsUsage: "<app> </path> [image]",
+		Action:    Call,
+		Flags:     callFnFlags,
+	}
+}
+
+func (apiClient *route) getCreateRouteCommand() cli.Command {
+	return cli.Command{
+		Name:      "route",
+		Usage:     "Create a route in an application",
+		ArgsUsage: "<app> </path>",
+		Action:    apiClient.createRoute,
+		Flags:     RouteFlags,
+	}
+}
+
+func (client *route) getListRoutesCommand() cli.Command {
+	return cli.Command{
+		Name:      "routes",
+		Usage:     "list routes for `app`",
+		ArgsUsage: "<app>",
+		Action:    client.listRoutes,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "cursor",
+				Usage: "pagination cursor",
 			},
-			{
-				Name:      "list",
-				Aliases:   []string{"l"},
-				Usage:     "list routes for `app`",
-				ArgsUsage: "<app>",
-				Action:    r.list,
-				Flags: []cli.Flag{
-					cli.StringFlag{
-						Name:  "cursor",
-						Usage: "pagination cursor",
-					},
-					cli.Int64Flag{
-						Name:  "n",
-						Usage: "number of routes to return",
-						Value: int64(100),
-					},
-				},
-			},
-			{
-				Name:      "create",
-				Aliases:   []string{"c"},
-				Usage:     "create a route in an `app`",
-				ArgsUsage: "<app> </path>",
-				Action:    r.create,
-				Flags:     routeFlags,
-			},
-			{
-				Name:      "update",
-				Aliases:   []string{"u"},
-				Usage:     "update a route in an `app`",
-				ArgsUsage: "<app> </path>",
-				Action:    r.update,
-				Flags:     updateRouteFlags,
-			},
-			{
-				Name:  "config",
-				Usage: "operate a route configuration set",
-				Subcommands: []cli.Command{
-					{
-						Name:      "set",
-						Aliases:   []string{"s"},
-						Usage:     "store a configuration key for this route",
-						ArgsUsage: "<app> </path> <key> <value>",
-						Action:    r.configSet,
-					},
-					{
-						Name:      "get",
-						Aliases:   []string{"g"},
-						Usage:     "inspect configuration key for this route",
-						ArgsUsage: "<app> </path> <key>",
-						Action:    r.configGet,
-					},
-					{
-						Name:      "list",
-						Aliases:   []string{"l"},
-						Usage:     "list configuration key/value pairs for this route",
-						ArgsUsage: "<app> </path>",
-						Action:    r.configList,
-					},
-					{
-						Name:      "unset",
-						Aliases:   []string{"u"},
-						Usage:     "remove a configuration key for this route",
-						ArgsUsage: "<app> </path> <key>",
-						Action:    r.configUnset,
-					},
-				},
-			},
-			{
-				Name:      "delete",
-				Aliases:   []string{"d"},
-				Usage:     "delete a route from `app`",
-				ArgsUsage: "<app> </path>",
-				Action:    r.delete,
-			},
-			{
-				Name:      "inspect",
-				Aliases:   []string{"i"},
-				Usage:     "retrieve one or all routes properties",
-				ArgsUsage: "<app> </path> [property.[key]]",
-				Action:    r.inspect,
+			cli.Int64Flag{
+				Name:  "n",
+				Usage: "number of routes to return",
+				Value: int64(100),
 			},
 		},
 	}
 }
 
-func call() cli.Command {
-	r := routesCmd{}
+func (apiClient *route) getDeleteRouteCommand() cli.Command {
+	return cli.Command{
+		Name:      "route",
+		Usage:     "Delete a route from an application `app`",
+		ArgsUsage: "<app> </path>",
+		Action:    apiClient.deleteRoutes,
+	}
+}
+
+func (apiClient *route) getInspectRoutesCommand() cli.Command {
+	return cli.Command{
+		Name:      "routes",
+		Usage:     "retrieve one or all routes properties",
+		ArgsUsage: "<app> </path> [property.[key]]",
+		Action:    apiClient.inspectRoutes,
+	}
+}
+
+func (apiClient *route) getConfigRoutesCommand() cli.Command {
+	return cli.Command{
+		Name:  "routes",
+		Usage: "operate a route configuration set",
+		Subcommands: []cli.Command{
+			{
+				Name:      "set",
+				Aliases:   []string{"s"},
+				Usage:     "store a configuration key for this route",
+				ArgsUsage: "<app> </path> <key> <value>",
+				Action:    apiClient.configSetRoutes,
+			},
+			{
+				Name:      "get",
+				Aliases:   []string{"g"},
+				Usage:     "inspect configuration key for this route",
+				ArgsUsage: "<app> </path> <key>",
+				Action:    apiClient.configGetRoutes,
+			},
+			{
+				Name:      "list",
+				Aliases:   []string{"l"},
+				Usage:     "list configuration key/value pairs for this route",
+				ArgsUsage: "<app> </path>",
+				Action:    apiClient.configListRoutes,
+			},
+			{
+				Name:      "unset",
+				Aliases:   []string{"u"},
+				Usage:     "remove a configuration key for this route",
+				ArgsUsage: "<app> </path> <key>",
+				Action:    apiClient.configUnsetRoutes,
+			},
+		},
+	}
+}
+
+func (apiClient *route) getUpdateRouteCommand() cli.Command {
+	return cli.Command{
+		Name:      "route",
+		Aliases:   []string{"u"},
+		Usage:     "Update a Route in an `app`",
+		ArgsUsage: "<app> </path>",
+		Action:    apiClient.updateRoutes,
+		Flags:     updateRouteFlags,
+	}
+}
+
+func Call() cli.Command {
+	apiClient := route{}
 
 	return cli.Command{
 		Before: func(c *cli.Context) error {
 			var err error
-			r.client, err = client.APIClient()
+			apiClient.Client, err = client.APIClient()
 			return err
 		},
 		Name:      "call",
 		Usage:     "call a remote function",
 		ArgsUsage: "<app> </path>",
 		Flags:     callFnFlags,
-		Action:    r.call,
+		Action:    apiClient.call,
 	}
 }
 
@@ -208,7 +236,7 @@ func printRoutes(appName string, routes []*fnmodels.Route) {
 	w.Flush()
 }
 
-func (a *routesCmd) list(c *cli.Context) error {
+func (apiClient *route) listRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 
 	params := &apiroutes.GetAppsAppRoutesParams{
@@ -218,7 +246,7 @@ func (a *routesCmd) list(c *cli.Context) error {
 
 	var resRoutes []*fnmodels.Route
 	for {
-		resp, err := a.client.Routes.GetAppsAppRoutes(params)
+		resp, err := apiClient.Client.Routes.GetAppsAppRoutes(params)
 
 		if err != nil {
 			switch e := err.(type) {
@@ -246,7 +274,7 @@ func (a *routesCmd) list(c *cli.Context) error {
 	return nil
 }
 
-func (a *routesCmd) call(c *cli.Context) error {
+func (apiClient *route) call(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 
@@ -255,7 +283,7 @@ func (a *routesCmd) call(c *cli.Context) error {
 		Host:   client.Host(),
 	}
 	u.Path = path.Join(u.Path, "r", appName, route)
-	content := stdin()
+	content := run.Stdin()
 
 	return client.CallFN(u.String(), content, os.Stdout, c.String("method"), c.StringSlice("e"), c.String("content-type"), c.Bool("display-call-id"))
 }
@@ -310,15 +338,15 @@ func routeWithFlags(c *cli.Context, rt *fnmodels.Route) {
 	}
 	if len(rt.Config) == 0 {
 		if len(c.StringSlice("config")) > 0 {
-			rt.Config = extractEnvConfig(c.StringSlice("config"))
+			rt.Config = common.ExtractEnvConfig(c.StringSlice("config"))
 		}
 	}
 }
 
-func routeWithFuncFile(ff *funcfile, rt *fnmodels.Route) error {
+func RouteWithFuncFile(ff *common.FuncFile, rt *fnmodels.Route) error {
 	var err error
 	if ff == nil {
-		_, ff, err = loadFuncfile()
+		_, ff, err = common.LoadFuncfile()
 		if err != nil {
 			return err
 		}
@@ -357,7 +385,7 @@ func routeWithFuncFile(ff *funcfile, rt *fnmodels.Route) error {
 	return nil
 }
 
-func (a *routesCmd) create(c *cli.Context) error {
+func (apiClient *route) createRoute(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 
@@ -374,12 +402,12 @@ func (a *routesCmd) create(c *cli.Context) error {
 		return errors.New("no image specified")
 	}
 
-	return a.postRoute(c, appName, rt)
+	return apiClient.postRoute(c, appName, rt)
 }
 
-func (a *routesCmd) postRoute(c *cli.Context, appName string, rt *fnmodels.Route) error {
+func (apiClient *route) postRoute(c *cli.Context, appName string, rt *fnmodels.Route) error {
 
-	err := validateImageName(rt.Image)
+	err := common.ValidateImageName(rt.Image)
 	if err != nil {
 		return err
 	}
@@ -388,7 +416,7 @@ func (a *routesCmd) postRoute(c *cli.Context, appName string, rt *fnmodels.Route
 		Route: rt,
 	}
 
-	resp, err := a.client.Routes.PostAppsAppRoutes(&apiroutes.PostAppsAppRoutesParams{
+	resp, err := apiClient.Client.Routes.PostAppsAppRoutes(&apiroutes.PostAppsAppRoutesParams{
 		Context: context.Background(),
 		App:     appName,
 		Body:    body,
@@ -409,15 +437,15 @@ func (a *routesCmd) postRoute(c *cli.Context, appName string, rt *fnmodels.Route
 	return nil
 }
 
-func (a *routesCmd) patchRoute(c *cli.Context, appName, routePath string, r *fnmodels.Route) error {
+func (apiClient *route) patchRoute(c *cli.Context, appName, routePath string, r *fnmodels.Route) error {
 	if r.Image != "" {
-		err := validateImageName(r.Image)
+		err := common.ValidateImageName(r.Image)
 		if err != nil {
 			return err
 		}
 	}
 
-	_, err := a.client.Routes.PatchAppsAppRoutesRoute(&apiroutes.PatchAppsAppRoutesRouteParams{
+	_, err := apiClient.Client.Routes.PatchAppsAppRoutesRoute(&apiroutes.PatchAppsAppRoutesRouteParams{
 		Context: context.Background(),
 		App:     appName,
 		Route:   routePath,
@@ -438,8 +466,8 @@ func (a *routesCmd) patchRoute(c *cli.Context, appName, routePath string, r *fnm
 	return nil
 }
 
-func (a *routesCmd) putRoute(c *cli.Context, appName, routePath string, r *fnmodels.Route) error {
-	_, err := a.client.Routes.PutAppsAppRoutesRoute(&apiroutes.PutAppsAppRoutesRouteParams{
+func (routeCmd *route) PutRoute(c *cli.Context, appName, routePath string, r *fnmodels.Route) error {
+	_, err := routeCmd.Client.Routes.PutAppsAppRoutesRoute(&apiroutes.PutAppsAppRoutesRouteParams{
 		Context: context.Background(),
 		App:     appName,
 		Route:   routePath,
@@ -456,7 +484,7 @@ func (a *routesCmd) putRoute(c *cli.Context, appName, routePath string, r *fnmod
 	return nil
 }
 
-func (a *routesCmd) update(c *cli.Context) error {
+func (apiClient *route) updateRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 
@@ -464,7 +492,7 @@ func (a *routesCmd) update(c *cli.Context) error {
 
 	routeWithFlags(c, rt)
 
-	err := a.patchRoute(c, appName, route, rt)
+	err := apiClient.patchRoute(c, appName, route, rt)
 	if err != nil {
 		return err
 	}
@@ -473,7 +501,7 @@ func (a *routesCmd) update(c *cli.Context) error {
 	return nil
 }
 
-func (a *routesCmd) configSet(c *cli.Context) error {
+func (apiClient *route) configSetRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 	key := c.Args().Get(2)
@@ -485,7 +513,7 @@ func (a *routesCmd) configSet(c *cli.Context) error {
 
 	patchRoute.Config[key] = value
 
-	err := a.patchRoute(c, appName, route, &patchRoute)
+	err := apiClient.patchRoute(c, appName, route, &patchRoute)
 	if err != nil {
 		return err
 	}
@@ -494,12 +522,12 @@ func (a *routesCmd) configSet(c *cli.Context) error {
 	return nil
 }
 
-func (a *routesCmd) configGet(c *cli.Context) error {
+func (apiClient *route) configGetRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 	key := c.Args().Get(2)
 
-	resp, err := a.client.Routes.GetAppsAppRoutesRoute(&apiroutes.GetAppsAppRoutesRouteParams{
+	resp, err := apiClient.Client.Routes.GetAppsAppRoutesRoute(&apiroutes.GetAppsAppRoutesRouteParams{
 		Context: context.Background(),
 		App:     appName,
 		Route:   route,
@@ -519,11 +547,11 @@ func (a *routesCmd) configGet(c *cli.Context) error {
 	return nil
 }
 
-func (a *routesCmd) configList(c *cli.Context) error {
+func (apiClient *route) configListRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 
-	resp, err := a.client.Routes.GetAppsAppRoutesRoute(&apiroutes.GetAppsAppRoutesRouteParams{
+	resp, err := apiClient.Client.Routes.GetAppsAppRoutesRoute(&apiroutes.GetAppsAppRoutesRouteParams{
 		Context: context.Background(),
 		App:     appName,
 		Route:   route,
@@ -540,7 +568,7 @@ func (a *routesCmd) configList(c *cli.Context) error {
 	return nil
 }
 
-func (a *routesCmd) configUnset(c *cli.Context) error {
+func (apiClient *route) configUnsetRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 	key := c.Args().Get(2)
@@ -551,7 +579,7 @@ func (a *routesCmd) configUnset(c *cli.Context) error {
 
 	patchRoute.Config[key] = ""
 
-	err := a.patchRoute(c, appName, route, &patchRoute)
+	err := apiClient.patchRoute(c, appName, route, &patchRoute)
 	if err != nil {
 		return err
 	}
@@ -560,12 +588,12 @@ func (a *routesCmd) configUnset(c *cli.Context) error {
 	return nil
 }
 
-func (a *routesCmd) inspect(c *cli.Context) error {
+func (apiClient *route) inspectRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 	prop := c.Args().Get(2)
 
-	resp, err := a.client.Routes.GetAppsAppRoutesRoute(&apiroutes.GetAppsAppRoutesRouteParams{
+	resp, err := apiClient.Client.Routes.GetAppsAppRoutesRoute(&apiroutes.GetAppsAppRoutesRouteParams{
 		Context: context.Background(),
 		App:     appName,
 		Route:   route,
@@ -608,11 +636,11 @@ func (a *routesCmd) inspect(c *cli.Context) error {
 	return nil
 }
 
-func (a *routesCmd) delete(c *cli.Context) error {
+func (apiClient *route) deleteRoutes(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
 
-	_, err := a.client.Routes.DeleteAppsAppRoutesRoute(&apiroutes.DeleteAppsAppRoutesRouteParams{
+	_, err := apiClient.Client.Routes.DeleteAppsAppRoutesRoute(&apiroutes.DeleteAppsAppRoutesRouteParams{
 		Context: context.Background(),
 		App:     appName,
 		Route:   route,

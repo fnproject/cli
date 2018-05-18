@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/fnproject/cli/common"
 )
 
 // WalkFuncsFunc good name huh?
-type walkFuncsFunc func(path string, ff *funcfile, err error) error
+type walkFuncsFunc func(path string, ff *common.FuncFile, err error) error
 
 // walkFuncs is similar to filepath.Walk except only returns func.yaml's (so on per function)
 func walkFuncs(root string, walkFn walkFuncsFunc) error {
@@ -22,7 +24,7 @@ func walkFuncs(root string, walkFn walkFuncsFunc) error {
 			return nil
 		}
 
-		if !isFuncfile(path, info) {
+		if !common.IsFuncFile(path, info) {
 			return nil
 		}
 
@@ -31,7 +33,7 @@ func walkFuncs(root string, walkFn walkFuncsFunc) error {
 			return nil
 		}
 		// Then we found a func file, so let's deploy it:
-		ff, err := parseFuncfile(path)
+		ff, err := common.ParseFuncfile(path)
 		// if err != nil {
 		// return err
 		// }

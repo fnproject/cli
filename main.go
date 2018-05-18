@@ -6,18 +6,22 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fnproject/cli/commands"
+	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/config"
+	"github.com/fnproject/cli/objects/route"
+	"github.com/fnproject/cli/run"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
 
 var aliases = map[string]cli.Command{
 	"build":  build(),
-	"bump":   bump(),
+	"bump":   common.Bump(),
 	"deploy": deploy(),
 	"push":   push(),
-	"run":    run(),
-	"call":   call(),
+	"run":    run.Run(),
+	"call":   route.Call(),
 	"calls":  calls(),
 	"logs":   logs(),
 }
@@ -33,6 +37,7 @@ func aliasesFn() []cli.Command {
 }
 
 func newFn() *cli.App {
+
 	app := cli.NewApp()
 	app.Name = "fn"
 	app.Version = Version
@@ -64,7 +69,7 @@ func newFn() *cli.App {
 		Name:  "version",
 		Usage: "print only the version",
 	}
-	cli.AppHelpTemplate = `{{.Name}} {{.Version}}{{if .Description}}
+	cli.AppHelpTemplate = `hello {{.Name}} {{.Version}}{{if .Description}}
 
 {{.Description}}{{end}}
 
@@ -89,19 +94,29 @@ LEARN MORE:
 	}
 	app.Commands = []cli.Command{
 		startCmd(),
-		updateCmd(),
-		initFn(),
-		apps(),
-		routes(),
-		images(),
-		lambda(),
+		// updateCmd(),
+		// initFn(),
+		//routes(),
+		// images(),
+		// lambda(),
 		version(),
-		calls(),
-		deploy(),
-		logs(),
-		testfn(),
-		buildServer(),
-		contextCmd(),
+		// calls(),
+		// deploy(),
+		// logs(),
+		// testfn(),
+		// buildServer(),
+		// //contextCmd(),
+
+		// New Commands
+		commands.CreateCommand(),
+		commands.DeleteCommand(),
+		commands.ListCommand(),
+		commands.UnsetCommand(),
+		commands.UpdateCommand(),
+		commands.UseCommand(),
+		commands.InspectCommand(),
+		commands.CallCommand(),
+		commands.ConfigCommand(),
 	}
 	app.Commands = append(app.Commands, aliasesFn()...)
 

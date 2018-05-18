@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/fnproject/cli/common"
 	"github.com/urfave/cli"
 )
 
@@ -20,7 +21,7 @@ func updateCmd() cli.Command {
 
 func update(c *cli.Context) error {
 	args := []string{"pull",
-		functionsDockerImage,
+		common.FunctionsDockerImage,
 	}
 	cmd := exec.Command("docker", args...)
 	cmd.Stdout = os.Stdout

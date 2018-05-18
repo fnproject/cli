@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ var (
 	initialVersion = "0.0.1"
 )
 
-func bump() cli.Command {
+func Bump() cli.Command {
 	cmd := bumpcmd{}
 	flags := append([]cli.Flag{}, cmd.flags()...)
 	return cli.Command{
@@ -78,18 +78,18 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 	_, err = bumpItWd(wd, t)
 	return err
 }
-func bumpItWd(wd string, vtype VType) (*funcfile, error) {
+func bumpItWd(wd string, vtype VType) (*FuncFile, error) {
 	fn, err := findFuncfile(wd)
 	if err != nil {
 		return nil, err
 	}
-	return bumpIt(fn, vtype)
+	return BumpIt(fn, vtype)
 }
 
 // returns updated funcfile
-func bumpIt(fpath string, vtype VType) (*funcfile, error) {
+func BumpIt(fpath string, vtype VType) (*FuncFile, error) {
 	// fmt.Println("Bumping version in func file at: ", fpath)
-	funcfile, err := parseFuncfile(fpath)
+	funcfile, err := ParseFuncfile(fpath)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func bumpIt(fpath string, vtype VType) (*funcfile, error) {
 	return funcfile, nil
 }
 
-func bumpVersion(funcfile *funcfile, t VType) (*funcfile, error) {
+func bumpVersion(funcfile *FuncFile, t VType) (*FuncFile, error) {
 	funcfile.Name = cleanImageName(funcfile.Name)
 	if funcfile.Version == "" {
 		funcfile.Version = initialVersion

@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/fnproject/cli/common"
 	"github.com/urfave/cli"
 )
 
@@ -60,7 +61,7 @@ func start(c *cli.Context) error {
 	if c.Bool("detach") {
 		args = append(args, "-d")
 	}
-	args = append(args, functionsDockerImage)
+	args = append(args, common.FunctionsDockerImage)
 	cmd := exec.Command("docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

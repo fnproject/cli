@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"bufio"
@@ -19,16 +19,21 @@ import (
 	"github.com/coreos/go-semver/semver"
 	"github.com/fatih/color"
 	"github.com/fnproject/cli/langs"
+	fnclient "github.com/fnproject/fn_go/client"
 	"github.com/urfave/cli"
 )
 
 const (
-	functionsDockerImage     = "fnproject/fnserver"
-	funcfileDockerRuntime    = "docker"
-	minRequiredDockerVersion = "17.5.0"
+	FunctionsDockerImage     = "fnproject/fnserver"
+	FuncfileDockerRuntime    = "docker"
+	MinRequiredDockerVersion = "17.5.0"
 )
 
-func getWd() string {
+type FnClient struct {
+	Client *fnclient.Fn
+}
+
+func GetWd() string {
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatalln("Couldn't get working directory:", err)
@@ -36,10 +41,10 @@ func getWd() string {
 	return wd
 }
 
-func buildfunc(c *cli.Context, fpath string, funcfile *funcfile, buildArg []string, noCache bool) (*funcfile, error) {
+func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
 	var err error
 	if funcfile.Version == "" {
-		funcfile, err = bumpIt(fpath, Patch)
+		funcfile, err = BumpIt(fpath, Patch)
 		if err != nil {
 			return nil, err
 		}
@@ -68,7 +73,7 @@ func localBuild(path string, steps []string) error {
 	return nil
 }
 
-func dockerBuild(c *cli.Context, fpath string, ff *funcfile, buildArgs []string, noCache bool) error {
+func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
@@ -78,8 +83,8 @@ func dockerBuild(c *cli.Context, fpath string, ff *funcfile, buildArgs []string,
 
 	var helper langs.LangHelper
 	dockerfile := filepath.Join(dir, "Dockerfile")
-	if !exists(dockerfile) {
-		if ff.Runtime == funcfileDockerRuntime {
+	if !Exists(dockerfile) {
+		if ff.Runtime == FuncfileDockerRuntime {
 			return fmt.Errorf("Dockerfile does not exist for 'docker' runtime")
 		}
 		helper = langs.GetLangHelper(ff.Runtime)
@@ -98,7 +103,7 @@ func dockerBuild(c *cli.Context, fpath string, ff *funcfile, buildArgs []string,
 			}
 		}
 	}
-	err = runBuild(c, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
+	err = RunBuild(c, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
 	}
@@ -112,7 +117,7 @@ func dockerBuild(c *cli.Context, fpath string, ff *funcfile, buildArgs []string,
 	return nil
 }
 
-func runBuild(c *cli.Context, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
+func RunBuild(c *cli.Context, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -198,17 +203,17 @@ func dockerVersionCheck() error {
 	if err != nil {
 		return fmt.Errorf("could not check Docker version: %v", err)
 	}
-	vMin, err := semver.NewVersion(minRequiredDockerVersion)
+	vMin, err := semver.NewVersion(MinRequiredDockerVersion)
 	if err != nil {
 		return fmt.Errorf("our bad, sorry... please make an issue, detailed error: %v", err)
 	}
 	if v.LessThan(*vMin) {
-		return fmt.Errorf("please upgrade your version of Docker to %s or greater", minRequiredDockerVersion)
+		return fmt.Errorf("please upgrade your version of Docker to %s or greater", MinRequiredDockerVersion)
 	}
 	return nil
 }
 
-func exists(name string) bool {
+func Exists(name string) bool {
 	if _, err := os.Stat(name); err != nil {
 		if os.IsNotExist(err) {
 			return false
@@ -217,7 +222,7 @@ func exists(name string) bool {
 	return true
 }
 
-func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *funcfile) (string, error) {
+func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (string, error) {
 	if ff.Entrypoint == "" && ff.Cmd == "" {
 		return "", errors.New("entrypoint and cmd are missing, you must provide one or the other")
 	}
@@ -297,7 +302,7 @@ func stringToSlice(in string) string {
 	return buffer.String()
 }
 
-func extractEnvConfig(configs []string) map[string]string {
+func ExtractEnvConfig(configs []string) map[string]string {
 	c := make(map[string]string)
 	for _, v := range configs {
 		kv := strings.SplitN(v, "=", 2)
@@ -308,8 +313,8 @@ func extractEnvConfig(configs []string) map[string]string {
 	return c
 }
 
-func dockerPush(ff *funcfile) error {
-	err := validateImageName(ff.ImageName())
+func DockerPush(ff *FuncFile) error {
+	err := ValidateImageName(ff.ImageName())
 	if err != nil {
 		return err
 	}
@@ -323,9 +328,9 @@ func dockerPush(ff *funcfile) error {
 	return nil
 }
 
-// validateImageName validates that the full image name (REGISTRY/name:tag) is allowed for push
+// ValidateImageName validates that the full image name (REGISTRY/name:tag) is allowed for push
 // remember that private registries must be supported here
-func validateImageName(n string) error {
+func ValidateImageName(n string) error {
 	parts := strings.Split(n, "/")
 	if len(parts) < 2 {
 		return errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var, pass in --registry or configure your context file")

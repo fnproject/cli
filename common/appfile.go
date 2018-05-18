@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"encoding/json"
@@ -21,7 +21,7 @@ var (
 	errUnexpectedFileFormat = errors.New("unexpected file format for function file")
 )
 
-type appfile struct {
+type AppFile struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 	// TODO: Config here is not yet used
 	Config map[string]string `yaml:"config,omitempty" json:"config,omitempty"`
@@ -30,14 +30,14 @@ type appfile struct {
 func findAppfile(path string) (string, error) {
 	for _, fn := range validAppfileNames {
 		fullfn := filepath.Join(path, fn)
-		if exists(fullfn) {
+		if Exists(fullfn) {
 			return fullfn, nil
 		}
 	}
-	return "", newNotFoundError("could not find app file")
+	return "", NewNotFoundError("could not find app file")
 }
 
-func loadAppfile() (*appfile, error) {
+func LoadAppfile() (*AppFile, error) {
 	fn, err := findAppfile(".")
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func loadAppfile() (*appfile, error) {
 	return parseAppfile(fn)
 }
 
-func parseAppfile(path string) (*appfile, error) {
+func parseAppfile(path string) (*AppFile, error) {
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json":
@@ -56,22 +56,22 @@ func parseAppfile(path string) (*appfile, error) {
 	return nil, errUnexpectedFileFormat
 }
 
-func decodeAppfileJSON(path string) (*appfile, error) {
+func decodeAppfileJSON(path string) (*AppFile, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", path, err)
 	}
-	ff := &appfile{}
+	ff := &AppFile{}
 	err = json.NewDecoder(f).Decode(ff)
 	return ff, err
 }
 
-func decodeAppfileYAML(path string) (*appfile, error) {
+func decodeAppfileYAML(path string) (*AppFile, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", path, err)
 	}
-	ff := &appfile{}
+	ff := &AppFile{}
 	err = yaml.Unmarshal(b, ff)
 	return ff, err
 }

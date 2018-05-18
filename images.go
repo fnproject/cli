@@ -1,6 +1,9 @@
 package main
 
 import (
+	"github.com/fnproject/cli/common"
+	"github.com/fnproject/cli/objects/route"
+	"github.com/fnproject/cli/run"
 	"github.com/urfave/cli"
 )
 
@@ -11,10 +14,10 @@ func images() cli.Command {
 		Subcommands: []cli.Command{
 			build(),
 			deploy(),
-			bump(),
-			call(),
+			common.Bump(),
+			route.Call(),
 			push(),
-			run(),
+			run.Run(),
 			testfn(),
 		},
 	}

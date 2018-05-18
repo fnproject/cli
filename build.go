@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/fnproject/cli/common"
 	"github.com/urfave/cli"
 )
 
@@ -48,13 +49,13 @@ func (b *buildcmd) build(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	fpath, ff, err := findAndParseFuncfile(path)
+	fpath, ff, err := common.FindAndParseFuncfile(path)
 	if err != nil {
 		return err
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	ff, err = buildfunc(c, fpath, ff, buildArgs, b.noCache)
+	ff, err = common.BuildFunc(c, fpath, ff, buildArgs, b.noCache)
 	if err != nil {
 		return err
 	}

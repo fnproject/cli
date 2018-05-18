@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	aws_lambda "github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/fnproject/cli/common"
 	"github.com/moby/moby/pkg/jsonmessage"
 	"github.com/urfave/cli"
 	yaml "gopkg.in/yaml.v2"
@@ -178,7 +179,7 @@ func createFunctionYaml(opts createImageOptions, functionName string) error {
 	strs := strings.Split(opts.Name, "/")
 	path := fmt.Sprintf("/%s", strs[1])
 
-	funcDesc := &funcfile{
+	funcDesc := &common.FuncFile{
 		Name:    opts.Name,
 		Version: "0.0.1",
 		Runtime: opts.Base,
