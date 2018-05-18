@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"bufio"
@@ -19,6 +19,7 @@ import (
 	"github.com/coreos/go-semver/semver"
 	"github.com/fatih/color"
 	"github.com/fnproject/cli/langs"
+	fnclient "github.com/fnproject/fn_go/client"
 	"github.com/urfave/cli"
 )
 
@@ -28,13 +29,8 @@ const (
 	minRequiredDockerVersion = "17.5.0"
 )
 
-func (client *fnClient) getSubCommands(signature string) []cli.Command {
-	var subCommands []cli.Command
-	subCommands = append(subCommands, client.apps(signature))
-	subCommands = append(subCommands, client.routes(signature))
-	subCommands = append(subCommands, contextCommand(signature))
-
-	return subCommands
+type FnClient struct {
+	Client *fnclient.Fn
 }
 
 func getWd() string {

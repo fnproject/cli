@@ -26,6 +26,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/langs"
 	"github.com/fnproject/fn_go/models"
 	"github.com/urfave/cli"
@@ -33,7 +34,7 @@ import (
 
 type initFnCmd struct {
 	force bool
-	ff    *funcfile
+	ff    *common.funcfile
 }
 
 func initFlags(a *initFnCmd) []cli.Flag {

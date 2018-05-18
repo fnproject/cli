@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"encoding/json"
@@ -45,7 +45,7 @@ type Expects struct {
 	Config []InputVar `yaml:"config" json:"config"`
 }
 
-type funcfile struct {
+type Funcfile struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 
 	// Build params

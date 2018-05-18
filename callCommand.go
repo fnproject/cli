@@ -14,7 +14,7 @@ func callCommand() cli.Command {
 		Usage:   "call command",
 		Before: func(c *cli.Context) error {
 			var err error
-			apiClient.client, err = client.APIClient()
+			apiClient.Client, err = client.APIClient()
 			return err
 		},
 		Category:    "MANAGEMENT COMMANDS",

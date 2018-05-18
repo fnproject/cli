@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"encoding/json"
@@ -9,141 +9,18 @@ import (
 	"context"
 	"strings"
 
+	"github.com/fnproject/cli/common"
 	apiapps "github.com/fnproject/fn_go/client/apps"
 	"github.com/fnproject/fn_go/models"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
 )
 
-func (client *fnClient) apps(command string) cli.Command {
-	var aCmd cli.Command
-
-	switch command {
-	case CreateCmd:
-		aCmd = client.getCreateAppCommand()
-	case ListCmd:
-		aCmd = client.getListAppsCommand()
-	case DeleteCmd:
-		aCmd = client.getDeleteAppCommand()
-	case InspectCmd:
-		aCmd = client.getInspectAppsCommand()
-	case UpdateCmd:
-		aCmd = client.getUpdateAppCommand()
-	case ConfigCmd:
-		aCmd = client.getConfigAppsCommand()
-	}
-
-	return aCmd
-}
-
-func (client *fnClient) getCreateAppCommand() cli.Command {
-	return cli.Command{
-		Name:      "app",
-		Usage:     "Create a new application",
-		ArgsUsage: "<app>",
-		Action:    client.createApp,
-		Flags: []cli.Flag{
-			cli.StringSliceFlag{
-				Name:  "config",
-				Usage: "application configuration",
-			},
-		},
-	}
-}
-
-func (client *fnClient) getListAppsCommand() cli.Command {
-	return cli.Command{
-		Name:   "apps",
-		Usage:  "List all applications ",
-		Action: client.listApps,
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "cursor",
-				Usage: "pagination cursor",
-			},
-			cli.Int64Flag{
-				Name:  "n",
-				Usage: "number of apps to return",
-				Value: int64(100),
-			},
-		},
-	}
-}
-
-func (client *fnClient) getDeleteAppCommand() cli.Command {
-	return cli.Command{
-		Name:   "app",
-		Usage:  "Delete an application",
-		Action: client.deleteApps,
-	}
-}
-
-func (client *fnClient) getInspectAppsCommand() cli.Command {
-	return cli.Command{
-		Name:      "apps",
-		Usage:     "retrieve one or all apps properties",
-		ArgsUsage: "<app> [property.[key]]",
-		Action:    client.inspectApps,
-	}
-}
-
-func (client *fnClient) getUpdateAppCommand() cli.Command {
-	return cli.Command{
-		Name:      "app",
-		Usage:     "update an application",
-		ArgsUsage: "<app>",
-		Action:    client.updateApps,
-		Flags: []cli.Flag{
-			cli.StringSliceFlag{
-				Name:  "config,c",
-				Usage: "route configuration",
-			},
-		},
-	}
-}
-
-func (client *fnClient) getConfigAppsCommand() cli.Command {
-	return cli.Command{
-		Name:  "apps",
-		Usage: "manage apps configs",
-		Subcommands: []cli.Command{
-			{
-				Name:      "set",
-				Aliases:   []string{"s"},
-				Usage:     "store a configuration key for this application",
-				ArgsUsage: "<app> <key> <value>",
-				Action:    client.configSetApps,
-			},
-			{
-				Name:      "get",
-				Aliases:   []string{"g"},
-				Usage:     "inspect configuration key for this application",
-				ArgsUsage: "<app> <key>",
-				Action:    client.configGetApps,
-			},
-			{
-				Name:      "list",
-				Aliases:   []string{"l"},
-				Usage:     "list configuration key/value pairs for this application",
-				ArgsUsage: "<app>",
-				Action:    client.configListApps,
-			},
-			{
-				Name:      "unset",
-				Aliases:   []string{"u"},
-				Usage:     "remove a configuration key for this application",
-				ArgsUsage: "<app> <key>",
-				Action:    client.configUnsetApps,
-			},
-		},
-	}
-}
-
-func (client *fnClient) listApps(c *cli.Context) error {
+func (apiClient *appCmd) listApps(c *cli.Context) error {
 	params := &apiapps.GetAppsParams{Context: context.Background()}
 	var resApps []*models.App
 	for {
-		resp, err := client.client.Apps.GetApps(params)
+		resp, err := apiClient.Client.Apps.GetApps(params)
 		if err != nil {
 			switch e := err.(type) {
 			case *apiapps.GetAppsAppNotFound:
@@ -180,13 +57,13 @@ func (client *fnClient) listApps(c *cli.Context) error {
 	return nil
 }
 
-func (client *fnClient) createApp(c *cli.Context) error {
+func (client *appCmd) createApp(c *cli.Context) error {
 	body := &models.AppWrapper{App: &models.App{
 		Name:   c.Args().Get(0),
-		Config: extractEnvConfig(c.StringSlice("config")),
+		Config: common.extractEnvConfig(c.StringSlice("config")),
 	}}
 
-	resp, err := client.client.Apps.PostApps(&apiapps.PostAppsParams{
+	resp, err := client.Client.Apps.PostApps(&apiapps.PostAppsParams{
 		Context: context.Background(),
 		Body:    body,
 	})
@@ -206,11 +83,11 @@ func (client *fnClient) createApp(c *cli.Context) error {
 	return nil
 }
 
-func (client *fnClient) updateApps(c *cli.Context) error {
+func (client *appCmd) updateApps(c *cli.Context) error {
 	appName := c.Args().First()
 
 	patchedApp := &models.App{
-		Config: extractEnvConfig(c.StringSlice("config")),
+		Config: common.extractEnvConfig(c.StringSlice("config")),
 	}
 
 	err := client.patchApp(appName, patchedApp)
@@ -222,7 +99,7 @@ func (client *fnClient) updateApps(c *cli.Context) error {
 	return nil
 }
 
-func (client *fnClient) configSetApps(c *cli.Context) error {
+func (client *appCmd) configSetApps(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 	value := c.Args().Get(2)
@@ -241,11 +118,11 @@ func (client *fnClient) configSetApps(c *cli.Context) error {
 	return nil
 }
 
-func (client *fnClient) configGetApps(c *cli.Context) error {
+func (client *appCmd) configGetApps(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
-	resp, err := client.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
+	resp, err := client.Client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
 		App:     appName,
 		Context: context.Background(),
 	})
@@ -264,10 +141,10 @@ func (client *fnClient) configGetApps(c *cli.Context) error {
 	return nil
 }
 
-func (client *fnClient) configListApps(c *cli.Context) error {
+func (apiClient *appCmd) configListApps(c *cli.Context) error {
 	appName := c.Args().Get(0)
 
-	resp, err := client.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
+	resp, err := apiClient.Client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
 		App:     appName,
 		Context: context.Background(),
 	})
@@ -283,7 +160,7 @@ func (client *fnClient) configListApps(c *cli.Context) error {
 	return nil
 }
 
-func (client *fnClient) configUnsetApps(c *cli.Context) error {
+func (apiClient *appCmd) configUnsetApps(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
@@ -293,7 +170,7 @@ func (client *fnClient) configUnsetApps(c *cli.Context) error {
 
 	app.Config[key] = ""
 
-	if err := client.patchApp(appName, app); err != nil {
+	if err := apiClient.patchApp(appName, app); err != nil {
 		return fmt.Errorf("error updating app configuration: %v", err)
 	}
 
@@ -301,8 +178,8 @@ func (client *fnClient) configUnsetApps(c *cli.Context) error {
 	return nil
 }
 
-func (client *fnClient) patchApp(appName string, app *models.App) error {
-	_, err := client.client.Apps.PatchAppsApp(&apiapps.PatchAppsAppParams{
+func (apiClient *appCmd) patchApp(appName string, app *models.App) error {
+	_, err := apiClient.Client.Apps.PatchAppsApp(&apiapps.PatchAppsAppParams{
 		Context: context.Background(),
 		App:     appName,
 		Body:    &models.AppWrapper{App: app},
@@ -322,7 +199,7 @@ func (client *fnClient) patchApp(appName string, app *models.App) error {
 	return nil
 }
 
-func (client *fnClient) inspectApps(c *cli.Context) error {
+func (apiClient *appCmd) inspectApps(c *cli.Context) error {
 	if c.Args().Get(0) == "" {
 		return errors.New("missing app name after the inspect command")
 	}
@@ -330,7 +207,7 @@ func (client *fnClient) inspectApps(c *cli.Context) error {
 	appName := c.Args().First()
 	prop := c.Args().Get(1)
 
-	resp, err := client.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
+	resp, err := apiClient.Client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
 		Context: context.Background(),
 		App:     appName,
 	})
@@ -374,13 +251,13 @@ func (client *fnClient) inspectApps(c *cli.Context) error {
 	return nil
 }
 
-func (client *fnClient) deleteApps(c *cli.Context) error {
+func (apiClient *appCmd) deleteApps(c *cli.Context) error {
 	appName := c.Args().First()
 	if appName == "" {
 		return errors.New("app name required to delete")
 	}
 
-	_, err := client.client.Apps.DeleteAppsApp(&apiapps.DeleteAppsAppParams{
+	_, err := apiClient.Client.Apps.DeleteAppsApp(&apiapps.DeleteAppsAppParams{
 		Context: context.Background(),
 		App:     appName,
 	})

@@ -7,29 +7,24 @@ import (
 	"strings"
 
 	"github.com/fnproject/cli/config"
-	fnclient "github.com/fnproject/fn_go/client"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
 
-type fnClient struct {
-	client *fnclient.Fn
-}
-
-// Command Names
-const (
-	CallCmd    = "call"
-	ConfigCmd  = "config"
-	CreateCmd  = "create"
-	DeleteCmd  = "delete"
-	InspectCmd = "inspect"
-	ListCmd    = "list"
-	UnsetCmd   = "unset"
-	UpdateCmd  = "update"
-	UseCmd     = "use"
-	SetCmd     = "set"
-	GetCmd     = "get"
-)
+// // Command Names
+// const (
+// 	CallCmd    = "call"
+// 	ConfigCmd  = "config"
+// 	CreateCmd  = "create"
+// 	DeleteCmd  = "delete"
+// 	InspectCmd = "inspect"
+// 	ListCmd    = "list"
+// 	UnsetCmd   = "unset"
+// 	UpdateCmd  = "update"
+// 	UseCmd     = "use"
+// 	SetCmd     = "set"
+// 	GetCmd     = "get"
+// )
 
 var aliases = map[string]cli.Command{
 	"build":  build(),
