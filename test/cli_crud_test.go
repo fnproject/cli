@@ -57,6 +57,18 @@ func TestRemovingRouteAnnotation(t *testing.T) {
 	h.Fn("routes", "inspect", appName1, "myroute").AssertSuccess().AssertStdoutMissingJSONPath([]string{"annotations", "test"})
 }
 
+func TestInvalidAnnotationValue(t *testing.T) {
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+	appName1 := h.NewAppName()
+
+	// The route should still be created, but without the invalid annotation
+	h.Fn("routes", "create", appName1, "myroute", "--image", "foo/duffimage:0.0.1", "--annotation", "test=value").AssertSuccess().AssertStderrContains("Unable to parse annotation value 'value'. Annotations values must be valid JSON strings.")
+	h.Fn("routes", "inspect", appName1, "myroute").AssertSuccess().AssertStdoutMissingJSONPath([]string{"annotations", "test"})
+}
+
 func TestRouteUpdateValues(t *testing.T) {
 	t.Parallel()
 
