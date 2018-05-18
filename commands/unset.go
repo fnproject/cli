@@ -7,7 +7,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-func unsetCommand() cli.Command {
+func UnsetCommand() cli.Command {
 	apiClient := common.FnClient{}
 
 	return cli.Command{

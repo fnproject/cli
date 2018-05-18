@@ -24,9 +24,9 @@ import (
 )
 
 const (
-	functionsDockerImage     = "fnproject/fnserver"
-	funcfileDockerRuntime    = "docker"
-	minRequiredDockerVersion = "17.5.0"
+	FunctionsDockerImage     = "fnproject/fnserver"
+	FuncfileDockerRuntime    = "docker"
+	MinRequiredDockerVersion = "17.5.0"
 )
 
 type FnClient struct {
@@ -44,7 +44,7 @@ func GetWd() string {
 func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
 	var err error
 	if funcfile.Version == "" {
-		funcfile, err = bumpIt(fpath, Patch)
+		funcfile, err = BumpIt(fpath, Patch)
 		if err != nil {
 			return nil, err
 		}
@@ -83,8 +83,8 @@ func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string,
 
 	var helper langs.LangHelper
 	dockerfile := filepath.Join(dir, "Dockerfile")
-	if !exists(dockerfile) {
-		if ff.Runtime == funcfileDockerRuntime {
+	if !Exists(dockerfile) {
+		if ff.Runtime == FuncfileDockerRuntime {
 			return fmt.Errorf("Dockerfile does not exist for 'docker' runtime")
 		}
 		helper = langs.GetLangHelper(ff.Runtime)
@@ -203,17 +203,17 @@ func dockerVersionCheck() error {
 	if err != nil {
 		return fmt.Errorf("could not check Docker version: %v", err)
 	}
-	vMin, err := semver.NewVersion(minRequiredDockerVersion)
+	vMin, err := semver.NewVersion(MinRequiredDockerVersion)
 	if err != nil {
 		return fmt.Errorf("our bad, sorry... please make an issue, detailed error: %v", err)
 	}
 	if v.LessThan(*vMin) {
-		return fmt.Errorf("please upgrade your version of Docker to %s or greater", minRequiredDockerVersion)
+		return fmt.Errorf("please upgrade your version of Docker to %s or greater", MinRequiredDockerVersion)
 	}
 	return nil
 }
 
-func exists(name string) bool {
+func Exists(name string) bool {
 	if _, err := os.Stat(name); err != nil {
 		if os.IsNotExist(err) {
 			return false
@@ -313,7 +313,7 @@ func ExtractEnvConfig(configs []string) map[string]string {
 	return c
 }
 
-func dockerPush(ff *FuncFile) error {
+func DockerPush(ff *FuncFile) error {
 	err := ValidateImageName(ff.ImageName())
 	if err != nil {
 		return err

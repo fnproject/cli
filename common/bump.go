@@ -23,7 +23,7 @@ var (
 	initialVersion = "0.0.1"
 )
 
-func bump() cli.Command {
+func Bump() cli.Command {
 	cmd := bumpcmd{}
 	flags := append([]cli.Flag{}, cmd.flags()...)
 	return cli.Command{
@@ -83,11 +83,11 @@ func bumpItWd(wd string, vtype VType) (*FuncFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	return bumpIt(fn, vtype)
+	return BumpIt(fn, vtype)
 }
 
 // returns updated funcfile
-func bumpIt(fpath string, vtype VType) (*FuncFile, error) {
+func BumpIt(fpath string, vtype VType) (*FuncFile, error) {
 	// fmt.Println("Bumping version in func file at: ", fpath)
 	funcfile, err := ParseFuncfile(fpath)
 	if err != nil {

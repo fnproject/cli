@@ -30,14 +30,14 @@ type AppFile struct {
 func findAppfile(path string) (string, error) {
 	for _, fn := range validAppfileNames {
 		fullfn := filepath.Join(path, fn)
-		if exists(fullfn) {
+		if Exists(fullfn) {
 			return fullfn, nil
 		}
 	}
-	return "", newNotFoundError("could not find app file")
+	return "", NewNotFoundError("could not find app file")
 }
 
-func loadAppfile() (*AppFile, error) {
+func LoadAppfile() (*AppFile, error) {
 	fn, err := findAppfile(".")
 	if err != nil {
 		return nil, err

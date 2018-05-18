@@ -1,17 +1,19 @@
-package main
+package commands
 
 import (
 	"github.com/fnproject/cli/client"
+	"github.com/fnproject/cli/common"
+	"github.com/fnproject/cli/objects"
 	"github.com/urfave/cli"
 )
 
-func listCommand() cli.Command {
-	apiClient := fnClient{}
+func ListCommand() cli.Command {
+	apiClient := common.FnClient{}
 	return cli.Command{
 		Name: "list",
 		Before: func(c *cli.Context) error {
 			var err error
-			apiClient.client, err = client.APIClient()
+			apiClient.Client, err = client.APIClient()
 			return err
 		},
 		Aliases:     []string{"l"},
@@ -19,6 +21,6 @@ func listCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<command>",
-		Subcommands: apiClient.getSubCommands(ListCmd),
+		Subcommands: objects.GetSubCommands(common.ListCmd, &apiClient),
 	}
 }

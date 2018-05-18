@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"github.com/fnproject/cli/client"
@@ -7,13 +7,13 @@ import (
 	"github.com/urfave/cli"
 )
 
-func configCommand() cli.Command {
+func CallCommand() cli.Command {
 	apiClient := common.FnClient{}
 
 	return cli.Command{
-		Name:    "config",
-		Aliases: []string{"con"},
-		Usage:   "config command",
+		Name:    "call",
+		Aliases: []string{"cl"},
+		Usage:   "call command",
 		Before: func(c *cli.Context) error {
 			var err error
 			apiClient.Client, err = client.APIClient()
@@ -22,6 +22,6 @@ func configCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<command>",
-		Subcommands: objects.GetSubCommands(common.ConfigCmd, &apiClient),
+		Subcommands: objects.GetSubCommands(common.CallCmd, &apiClient),
 	}
 }

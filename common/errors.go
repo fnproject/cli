@@ -1,13 +1,13 @@
 package common
 
-type notFoundError struct {
+type NotFoundError struct {
 	S string
 }
 
-func (e *notFoundError) Error() string {
+func (e *NotFoundError) Error() string {
 	return e.S
 }
 
-func newNotFoundError(s string) *notFoundError {
-	return &notFoundError{S: s}
+func NewNotFoundError(s string) *NotFoundError {
+	return &NotFoundError{S: s}
 }

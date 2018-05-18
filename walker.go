@@ -24,7 +24,7 @@ func walkFuncs(root string, walkFn walkFuncsFunc) error {
 			return nil
 		}
 
-		if !isFuncfile(path, info) {
+		if !common.IsFuncFile(path, info) {
 			return nil
 		}
 
@@ -33,7 +33,7 @@ func walkFuncs(root string, walkFn walkFuncsFunc) error {
 			return nil
 		}
 		// Then we found a func file, so let's deploy it:
-		ff, err := parseFuncfile(path)
+		ff, err := common.ParseFuncfile(path)
 		// if err != nil {
 		// return err
 		// }

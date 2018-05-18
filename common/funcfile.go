@@ -110,11 +110,11 @@ func (ff *FuncFile) RuntimeTag() (runtime, tag string) {
 func findFuncfile(path string) (string, error) {
 	for _, fn := range validFuncfileNames {
 		fullfn := filepath.Join(path, fn)
-		if exists(fullfn) {
+		if Exists(fullfn) {
 			return fullfn, nil
 		}
 	}
-	return "", newNotFoundError("could not find function file")
+	return "", NewNotFoundError("could not find function file")
 }
 func FindAndParseFuncfile(path string) (fpath string, ff *FuncFile, err error) {
 	fpath, err = findFuncfile(path)
@@ -193,7 +193,7 @@ func encodeFuncfileYAML(path string, ff *FuncFile) error {
 	return ioutil.WriteFile(path, b, os.FileMode(0644))
 }
 
-func isFuncfile(path string, info os.FileInfo) bool {
+func IsFuncFile(path string, info os.FileInfo) bool {
 	if info.IsDir() {
 		return false
 	}

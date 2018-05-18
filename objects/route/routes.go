@@ -65,12 +65,15 @@ var callFnFlags = append(run.RunFlags,
 
 type route common.FnClient
 
-func GetCommand(command string, apiClient *common.FnClient) cli.Command {
+func CreateRouteCmd(client *common.FnClient) (routeCmd route) {
+	routeCmd = route{Client: client.Client}
+	return
+}
 
+func GetCommand(command string, apiClient *common.FnClient) cli.Command {
 	var rCmd cli.Command
 
-	var routeCmd route
-	routeCmd.Client = apiClient.Client
+	routeCmd := CreateRouteCmd(apiClient)
 
 	switch command {
 	case common.CreateCmd:
@@ -97,7 +100,7 @@ func getCallRoutesCommand() cli.Command {
 		Name:      "routes",
 		Usage:     "call a route",
 		ArgsUsage: "<app> </path> [image]",
-		Action:    call,
+		Action:    Call,
 		Flags:     callFnFlags,
 	}
 }
@@ -198,7 +201,7 @@ func (apiClient *route) getUpdateRouteCommand() cli.Command {
 	}
 }
 
-func call() cli.Command {
+func Call() cli.Command {
 	apiClient := route{}
 
 	return cli.Command{
@@ -340,7 +343,7 @@ func routeWithFlags(c *cli.Context, rt *fnmodels.Route) {
 	}
 }
 
-func routeWithFuncFile(ff *common.FuncFile, rt *fnmodels.Route) error {
+func RouteWithFuncFile(ff *common.FuncFile, rt *fnmodels.Route) error {
 	var err error
 	if ff == nil {
 		_, ff, err = common.LoadFuncfile()
@@ -463,8 +466,8 @@ func (apiClient *route) patchRoute(c *cli.Context, appName, routePath string, r 
 	return nil
 }
 
-func (apiClient *route) putRoute(c *cli.Context, appName, routePath string, r *fnmodels.Route) error {
-	_, err := apiClient.Client.Routes.PutAppsAppRoutesRoute(&apiroutes.PutAppsAppRoutesRouteParams{
+func (routeCmd *route) PutRoute(c *cli.Context, appName, routePath string, r *fnmodels.Route) error {
+	_, err := routeCmd.Client.Routes.PutAppsAppRoutesRoute(&apiroutes.PutAppsAppRoutesRouteParams{
 		Context: context.Background(),
 		App:     appName,
 		Route:   routePath,

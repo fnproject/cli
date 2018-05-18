@@ -8,14 +8,16 @@ import (
 type app common.FnClient
 
 func createAppCmd(client *common.FnClient) (appCmd app) {
-	appCmd.Client = client.Client
+	appCmd = app{Client: client.Client}
 	return
 }
 
 // GetCommand returns the correct application subcommand for the specified command.
 func GetCommand(command string, client *common.FnClient) cli.Command {
 	var aCmd cli.Command
+
 	appCmd := createAppCmd(client)
+
 	switch command {
 	case common.CreateCmd:
 		aCmd = appCmd.getCreateAppCommand()

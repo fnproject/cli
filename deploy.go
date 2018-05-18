@@ -10,6 +10,7 @@ import (
 
 	client "github.com/fnproject/cli/client"
 	common "github.com/fnproject/cli/common"
+	route "github.com/fnproject/cli/objects/route"
 	fnclient "github.com/fnproject/fn_go/client"
 	clientApps "github.com/fnproject/fn_go/client/apps"
 	"github.com/fnproject/fn_go/models"
@@ -102,9 +103,9 @@ func (p *deploycmd) flags() []cli.Flag {
 func (p *deploycmd) deploy(c *cli.Context) error {
 	appName := ""
 
-	appf, err := loadAppfile()
+	appf, err := common.LoadAppfile()
 	if err != nil {
-		if _, ok := err.(*notFoundError); ok {
+		if _, ok := err.(*common.NotFoundError); ok {
 			if p.all {
 				return err
 			}
@@ -134,7 +135,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 // deploySingle deploys a single function, either the current directory or if in the context
 // of an app and user provides relative path as the first arg, it will deploy that function.
 func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.AppFile) error {
-	wd := getWd()
+	wd := common.GetWd()
 
 	dir := wd
 	// if we're in the context of an app, first arg is path to the function
@@ -149,7 +150,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 		defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
 	}
 
-	fpath, ff, err := findAndParseFuncfile(dir)
+	fpath, ff, err := common.FindAndParseFuncfile(dir)
 	if err != nil {
 		return err
 	}
@@ -183,10 +184,10 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFi
 		}
 	}
 
-	wd := getWd()
+	wd := common.GetWd()
 
 	var funcFound bool
-	err := walkFuncs(wd, func(path string, ff *funcfile, err error) error {
+	err := walkFuncs(wd, func(path string, ff *common.FuncFile, err error) error {
 		if err != nil { // probably some issue with funcfile parsing, can decide to handle this differently if we'd like
 			return err
 		}
@@ -258,7 +259,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 
 	var err error
 	if !p.noBump {
-		funcfile2, err := bumpIt(funcfilePath, Patch)
+		funcfile2, err := common.BumpIt(funcfilePath, common.Patch)
 		if err != nil {
 			return err
 		}
@@ -267,13 +268,13 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	_, err = buildfunc(c, funcfilePath, funcfile, buildArgs, p.noCache)
+	_, err = common.BuildFunc(c, funcfilePath, funcfile, buildArgs, p.noCache)
 	if err != nil {
 		return err
 	}
 
 	if !p.local {
-		if err := dockerPush(funcfile); err != nil {
+		if err := common.DockerPush(funcfile); err != nil {
 			return err
 		}
 	}
@@ -294,16 +295,17 @@ func setRootFuncInfo(ff *common.FuncFile, appName string) {
 
 func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *common.FuncFile) error {
 	fmt.Printf("Updating route %s using image %s...\n", ff.Path, ff.ImageName())
-	client, err := client.APIClient()
+	apiClient, err := client.APIClient()
 	if err != nil {
 		return err
 	}
-	routesCmd := fnClient{client: client}
+	fnClient := common.FnClient{Client: apiClient}
+	routesCmd := route.CreateRouteCmd(&fnClient)
 	rt := &models.Route{}
-	if err := routeWithFuncFile(ff, rt); err != nil {
+	if err := route.RouteWithFuncFile(ff, rt); err != nil {
 		return fmt.Errorf("error getting route with funcfile: %s", err)
 	}
-	return routesCmd.putRoute(c, appName, ff.Path, rt)
+	return routesCmd.PutRoute(c, appName, ff.Path, rt)
 }
 
 func expandEnvConfig(configs map[string]string) map[string]string {

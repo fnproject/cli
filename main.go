@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/fnproject/cli/commands"
+	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/config"
+	"github.com/fnproject/cli/objects/route"
 	"github.com/fnproject/cli/run"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
@@ -15,11 +17,11 @@ import (
 
 var aliases = map[string]cli.Command{
 	"build":  build(),
-	"bump":   bump(),
+	"bump":   common.Bump(),
 	"deploy": deploy(),
 	"push":   push(),
 	"run":    run.Run(),
-	"call":   call(),
+	"call":   route.Call(),
 	"calls":  calls(),
 	"logs":   logs(),
 }

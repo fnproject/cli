@@ -24,14 +24,14 @@ const (
 	LocalTestURL     = "http://localhost:8080/myapp/hello"
 )
 
-func run() cli.Command {
+func Run() cli.Command {
 	r := runCmd{}
 
 	return cli.Command{
 		Name:   "run",
 		Usage:  "run a function locally",
 		Flags:  append(GetRunFlags(), []cli.Flag{}...),
-		Action: r.Run,
+		Action: r.run,
 	}
 }
 
@@ -80,8 +80,8 @@ func GetRunFlags() []cli.Flag {
 	return RunFlags
 }
 
-// preRun parses func.yaml, checks expected env vars and builds the function image.
-func preRun(c *cli.Context) (string, *common.FuncFile, []string, error) {
+// PreRun parses func.yaml, checks expected env vars and builds the function image.
+func PreRun(c *cli.Context) (string, *common.FuncFile, []string, error) {
 	wd := common.GetWd()
 	// if image name is passed in, it will run that image
 	path := c.Args().First() // TODO: should we ditch this?
@@ -148,8 +148,8 @@ func getEnvValue(n string, envVars []string) string {
 	return ""
 }
 
-func (r *runCmd) Run(c *cli.Context) error {
-	_, ff, envVars, err := preRun(c)
+func (r *runCmd) run(c *cli.Context) error {
+	_, ff, envVars, err := PreRun(c)
 	if err != nil {
 		return err
 	}
@@ -158,11 +158,11 @@ func (r *runCmd) Run(c *cli.Context) error {
 	if c.Uint64("memory") != 0 {
 		ff.Memory = c.Uint64("memory")
 	}
-	return runff(ff, Stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"), c.String("content-type"))
+	return RunFF(ff, Stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"), c.String("content-type"))
 }
 
 // TODO: share all this stuff with the Docker driver in server or better yet, actually use the Docker driver
-func runff(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int, contentType string) error {
+func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int, contentType string) error {
 	sh := []string{"docker", "run", "--rm", "-i", fmt.Sprintf("--memory=%dm", ff.Memory)}
 
 	var env []string    // env for the shelled out docker run command
