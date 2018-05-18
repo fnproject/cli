@@ -45,6 +45,18 @@ func TestSimpleFnRouteUpdateCycle(t *testing.T) {
 	h.Fn("routes", "config", "get", appName1, "myroute", "confA").AssertFailed()
 }
 
+func TestRemovingRouteAnnotation(t *testing.T) {
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+	appName1 := h.NewAppName()
+	h.Fn("routes", "create", appName1, "myroute", "--image", "foo/duffimage:0.0.1", "--annotation", "test=1").AssertSuccess()
+	h.Fn("routes", "inspect", appName1, "myroute").AssertSuccess().AssertStdoutContainsJSON([]string{"annotations", "test"}, 1.0)
+	h.Fn("routes", "update", appName1, "myroute", "--image", "foo/duffimage:0.0.1", "--annotation", `test=""`).AssertSuccess()
+	h.Fn("routes", "inspect", appName1, "myroute").AssertSuccess().AssertStdoutMissingJSONPath([]string{"annotations", "test"})
+}
+
 func TestRouteUpdateValues(t *testing.T) {
 	t.Parallel()
 
@@ -60,6 +72,7 @@ func TestRouteUpdateValues(t *testing.T) {
 		{[]string{"--format", "default"}, []string{"format"}, "default"},
 		{[]string{"--timeout", "111"}, []string{"timeout"}, 111.0},
 		{[]string{"--idle-timeout", "128"}, []string{"idle_timeout"}, 128.0},
+		{[]string{"--annotation", "test=1"}, []string{"annotations", "test"}, 1.0},
 	}
 
 	for i, tcI := range validCases {
