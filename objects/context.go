@@ -70,7 +70,7 @@ func getCreateContextCommand() cli.Command {
 
 func getListContextCommand() cli.Command {
 	return cli.Command{
-		Name:   "context",
+		Name:   "contexts",
 		Usage:  "list contexts",
 		Action: listContext,
 	}
