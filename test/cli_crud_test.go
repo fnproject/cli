@@ -1,11 +1,8 @@
 package test
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/fnproject/cli/testharness"
-	"github.com/jmoiron/jsonq"
-	"strings"
 	"testing"
 )
 
@@ -75,24 +72,7 @@ func TestRouteUpdateValues(t *testing.T) {
 			h.Fn("routes", "create", appName1, "myroute", "--image", "foo/someimage:0.0.1").AssertSuccess()
 
 			h.Fn(append([]string{"routes", "update", appName1, "myroute"}, tc.args...)...).AssertSuccess()
-			resJson := h.Fn("routes", "inspect", appName1, "myroute").AssertSuccess()
-
-			routeObj := map[string]interface{}{}
-			err := json.Unmarshal([]byte(resJson.Stdout), &routeObj)
-			if err != nil {
-				t.Fatalf("Failed to parse routes inspect as JSON %v, %v", err, resJson)
-			}
-
-			q := jsonq.NewQuery(routeObj)
-			val, err := q.Interface(tc.query...)
-			if err != nil {
-				t.Fatalf("Failed to find path %v in json body %v", tc.query, resJson.Stdout)
-			}
-
-			if val != tc.result {
-				t.Fatalf("Expected %s to be %s  after running %s but was %s, %v", strings.Join(tc.query, "."), tc.result, strings.Join(tc.args, " "), val, resJson)
-			}
-
+			h.Fn("routes", "inspect", appName1, "myroute").AssertSuccess().AssertStdoutContainsJSON(tc.query, tc.result)
 		})
 	}
 
