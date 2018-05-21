@@ -10,6 +10,10 @@ import (
 	"os"
 	"path"
 	"strings"
+
+	"github.com/spf13/viper"
+
+	"github.com/fnproject/cli/config"
 )
 
 const (
@@ -80,7 +84,7 @@ func CallFN(appName string, route string, content io.Reader, output io.Writer, m
 		EnvAsHeader(req, env)
 	}
 
-	transport, err := oracleTransport(http.DefaultTransport)
+	transport, err := getTransport()
 	if err != nil {
 		return err
 	}
@@ -121,4 +125,15 @@ func CallFN(appName string, route string, content io.Reader, output io.Writer, m
 	}
 
 	return nil
+}
+
+func getTransport() (http.RoundTripper, error) {
+	switch viper.GetString(config.ContextProvider) {
+	case "default":
+		return http.DefaultTransport, nil
+	case "oracle":
+		return oracleTransport(http.DefaultTransport)
+	default:
+		return http.DefaultTransport, nil
+	}
 }
