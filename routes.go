@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -253,15 +252,8 @@ func (a *routesCmd) list(c *cli.Context) error {
 func (a *routesCmd) call(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	route := cleanRoutePath(c.Args().Get(1))
-
-	u := url.URL{
-		Scheme: "http",
-		Host:   client.Host(),
-	}
-	u.Path = path.Join(u.Path, "r", appName, route)
 	content := stdin()
-
-	return client.CallFN(u.String(), content, os.Stdout, c.String("method"), c.StringSlice("e"), c.String("content-type"), c.Bool("display-call-id"))
+	return client.CallFN(appName, route, content, os.Stdout, c.String("method"), c.StringSlice("e"), c.String("content-type"), c.Bool("display-call-id"))
 }
 
 func routeWithFlags(c *cli.Context, rt *fnmodels.Route) {

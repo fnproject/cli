@@ -1,15 +1,25 @@
 package client
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"strings"
+
+	"github.com/spf13/viper"
+
+	"github.com/fnproject/cli/config"
 )
 
-const FN_CALL_ID = "Fn_call_id"
+const (
+	FN_CALL_ID             = "Fn_call_id"
+	MaximumRequestBodySize = 5 * 1024 * 1024 // bytes
+)
 
 func EnvAsHeader(req *http.Request, selectedEnv []string) {
 	detectedEnv := os.Environ()
@@ -33,7 +43,11 @@ type callID struct {
 	Error  apiErr `json:"error"`
 }
 
-func CallFN(u string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
+func CallFN(appName string, route string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
+
+	u := HostURL()
+	u.Path = path.Join("r", appName, route)
+
 	if method == "" {
 		if content == nil {
 			method = "GET"
@@ -42,9 +56,22 @@ func CallFN(u string, content io.Reader, output io.Writer, method string, env []
 		}
 	}
 
-	req, err := http.NewRequest(method, u, content)
-	if err != nil {
-		return fmt.Errorf("error running route: %s", err)
+	// Read the request body (up to the maximum size), as this is used in the
+	// authentication signature
+	var req *http.Request
+	if content != nil {
+		b, err := ioutil.ReadAll(io.LimitReader(content, MaximumRequestBodySize))
+		buffer := bytes.NewBuffer(b)
+		req, err = http.NewRequest(method, u.String(), buffer)
+		if err != nil {
+			return fmt.Errorf("Error creating request to service: %s", err)
+		}
+	} else {
+		var err error
+		req, err = http.NewRequest(method, u.String(), nil)
+		if err != nil {
+			return fmt.Errorf("Error creating request to service: %s", err)
+		}
 	}
 
 	if contentType != "" {
@@ -57,7 +84,13 @@ func CallFN(u string, content io.Reader, output io.Writer, method string, env []
 		EnvAsHeader(req, env)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	transport, err := getTransport()
+	if err != nil {
+		return err
+	}
+	httpClient := http.Client{Transport: transport}
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("error running route: %s", err)
 	}
@@ -92,4 +125,15 @@ func CallFN(u string, content io.Reader, output io.Writer, method string, env []
 	}
 
 	return nil
+}
+
+func getTransport() (http.RoundTripper, error) {
+	switch viper.GetString(config.ContextProvider) {
+	case "default":
+		return http.DefaultTransport, nil
+	case "oracle":
+		return oracleTransport(http.DefaultTransport)
+	default:
+		return http.DefaultTransport, nil
+	}
 }
