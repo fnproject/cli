@@ -74,7 +74,7 @@ func initializeClient(keyID string, key *rsa.PrivateKey) common.HTTPRequestSigne
 		ID:  keyID,
 		key: key,
 	}
-	return common.RequestSigner(provider, []string{"date", "(request-target)"}, []string{"content-length", "content-type", "x-content-sha256"})
+	return common.RequestSigner(provider, []string{"host", "date", "(request-target)"}, []string{"content-length", "content-type", "x-content-sha256"})
 }
 
 // Add the necessary headers and sign the request
