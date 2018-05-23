@@ -28,6 +28,7 @@ const (
 	EnvFnRegistry = "registry"
 	EnvFnToken    = "token"
 	EnvFnAPIURL   = "api-url"
+	EnvFnCallURL  = "call-url"
 	EnvFnContext  = "context"
 )
 

@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -43,9 +44,17 @@ type callID struct {
 	Error  apiErr `json:"error"`
 }
 
+func CallHostURL() *url.URL {
+	url := viper.GetString(config.EnvFnCallURL)
+	if url == "" {
+		url = viper.GetString(config.EnvFnAPIURL)
+	}
+	return hostURL(url)
+}
+
 func CallFN(appName string, route string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
 
-	u := HostURL()
+	u := CallHostURL()
 	u.Path = path.Join("r", appName, route)
 
 	if method == "" {
