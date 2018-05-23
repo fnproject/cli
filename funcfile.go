@@ -60,15 +60,16 @@ type funcfile struct {
 
 	// Route params
 	// TODO embed models.Route
-	Type        string              `yaml:"type,omitempty" json:"type,omitempty"`
-	Memory      uint64              `yaml:"memory,omitempty" json:"memory,omitempty"`
-	Cpus        string              `yaml:"cpus,omitempty" json:"cpus,omitempty"`
-	Format      string              `yaml:"format,omitempty" json:"format,omitempty"`
-	Timeout     *int32              `yaml:"timeout,omitempty" json:"timeout,omitempty"`
-	Path        string              `yaml:"path,omitempty" json:"path,omitempty"`
-	Config      map[string]string   `yaml:"config,omitempty" json:"config,omitempty"`
-	Headers     map[string][]string `yaml:"headers,omitempty" json:"headers,omitempty"`
-	IDLETimeout *int32              `yaml:"idle_timeout,omitempty" json:"idle_timeout,omitempty"`
+	Type             string                 `yaml:"type,omitempty" json:"type,omitempty"`
+	Memory           uint64                 `yaml:"memory,omitempty" json:"memory,omitempty"`
+	Cpus             string                 `yaml:"cpus,omitempty" json:"cpus,omitempty"`
+	Format           string                 `yaml:"format,omitempty" json:"format,omitempty"`
+	Timeout          *int32                 `yaml:"timeout,omitempty" json:"timeout,omitempty"`
+	Path             string                 `yaml:"path,omitempty" json:"path,omitempty"`
+	Config           map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
+	Headers          map[string][]string    `yaml:"headers,omitempty" json:"headers,omitempty"`
+	IDLETimeout      *int32                 `yaml:"idle_timeout,omitempty" json:"idle_timeout,omitempty"`
+	RouteAnnotations map[string]interface{} `yaml:"route_annotations,omitempty" json:"type:omitempty"`
 
 	// Run/test
 	Expects Expects `yaml:"expects,omitempty" json:"expects,omitempty"`

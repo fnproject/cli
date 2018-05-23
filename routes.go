@@ -354,7 +354,9 @@ func routeWithFuncFile(ff *funcfile, rt *fnmodels.Route) error {
 	if len(ff.Config) != 0 {
 		rt.Config = ff.Config
 	}
-
+	if len(ff.RouteAnnotations) != 0 {
+		rt.Annotations = ff.RouteAnnotations
+	}
 	return nil
 }
 
