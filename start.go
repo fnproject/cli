@@ -6,8 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
+	"github.com/fnproject/cli/config"
 	"github.com/urfave/cli"
 )
 
@@ -39,14 +41,11 @@ func startCmd() cli.Command {
 }
 
 func start(c *cli.Context) error {
-	wd, err := os.Getwd()
-	name := "fnserver"
-	if err != nil {
-		log.Fatalln("Getwd failed:", err)
-	}
+	home := config.GetHomeDir()
+	fnDir := filepath.Join(home, ".fn", "localdata")
 	args := []string{"run", "--rm", "-i",
-		"--name", name,
-		"-v", fmt.Sprintf("%s/data:/app/data", wd),
+		"--name", "fnserver",
+		"-v", fmt.Sprintf("%s/data:/app/data", fnDir),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"--privileged",
 		"-p", fmt.Sprintf("%d:8080", c.Int("port")),
@@ -65,7 +64,7 @@ func start(c *cli.Context) error {
 	cmd := exec.Command("docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err = cmd.Start()
+	err := cmd.Start()
 	if err != nil {
 		log.Fatalln("starting command failed:", err)
 	}
