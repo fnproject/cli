@@ -258,6 +258,7 @@ func createFilePath(filename string) string {
 
 func checkContextFileExists(filename string) (bool, error) {
 	path := createFilePath(filename + fileExtension)
+
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return false, err
 	}

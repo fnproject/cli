@@ -148,7 +148,7 @@ func OracleConfigFile() (string, *rsa.PrivateKey, error) {
 	var tenancyID string
 	if tenancyID = viper.GetString(oracleTenancyID); tenancyID == "" {
 		if cf == nil {
-			return "", nil, errors.New("oracle.tenancy-id is missing from current-context file")
+			return "", nil, errors.New("unable to find tenancyID in configuration: oracle.tenancy-id is missing from current-context file and tenancy-id wasn't found in ~/.oci/config.")
 		}
 		tenancyID, err = cf.TenancyOCID()
 		if err != nil {
@@ -160,7 +160,7 @@ func OracleConfigFile() (string, *rsa.PrivateKey, error) {
 	var userID string
 	if userID = viper.GetString(oracleUserID); userID == "" {
 		if cf == nil {
-			return "", nil, errors.New("oracle.user-id is missing from current-context file")
+			return "", nil, errors.New("unable to find userID in configuration: oracle.tenancy-id is missing from current-context file and tenancy-id wasn't found in ~/.oci/config.")
 		}
 		userID, err = cf.UserOCID()
 		if err != nil {
@@ -171,7 +171,7 @@ func OracleConfigFile() (string, *rsa.PrivateKey, error) {
 	var fingerprint string
 	if fingerprint = viper.GetString(oracleFingerprint); fingerprint == "" {
 		if cf == nil {
-			return "", nil, errors.New("oracle.fingerprint is missing from current-context file")
+			return "", nil, errors.New("unable to find fingerprint in configuration: oracle.tenancy-id is missing from current-context file and tenancy-id wasn't found in ~/.oci/config.")
 		}
 		fingerprint, err = cf.KeyFingerprint()
 		if err != nil {
@@ -190,7 +190,7 @@ func OracleConfigFile() (string, *rsa.PrivateKey, error) {
 	}
 
 	if cf == nil {
-		return "", nil, errors.New("oracle.key-file is missing from current-context file")
+		return "", nil, errors.New("unable to find private key in configuration: oracle.tenancy-id is missing from current-context file and tenancy-id wasn't found in ~/.oci/config.")
 	}
 	// Read private key for .oci file
 	pKey, err = cf.PrivateRSAKey()
