@@ -138,7 +138,7 @@ func OracleConfigFile() (string, *rsa.PrivateKey, error) {
 	}
 
 	path := filepath.Join(config.GetHomeDir(), ".oci", "config")
-	if _, err := os.Stat(path); os.IsExist(err) {
+	if _, err := os.Stat(path); err == nil {
 		cf, err = oci.ConfigurationProviderFromFileWithProfile(path, oracleProfile, "")
 		if err != nil {
 			return "", nil, err
@@ -147,36 +147,36 @@ func OracleConfigFile() (string, *rsa.PrivateKey, error) {
 
 	var tenancyID string
 	if tenancyID = viper.GetString(oracleTenancyID); tenancyID == "" {
-		if cf != nil {
-			tenancyID, err = cf.TenancyOCID()
-			if err != nil {
-				return "", nil, err
-			}
+		if cf == nil {
+			return "", nil, errors.New("oracle.tenancy-id is missing from current-context file")
 		}
-		return "", nil, errors.New("oracle.tenancy-id is missing from current-context file")
+		tenancyID, err = cf.TenancyOCID()
+		if err != nil {
+			return "", nil, err
+		}
+
 	}
 
 	var userID string
 	if userID = viper.GetString(oracleUserID); userID == "" {
-		if cf != nil {
-			userID, err = cf.UserOCID()
-			if err != nil {
-				return "", nil, err
-			}
+		if cf == nil {
+			return "", nil, errors.New("oracle.user-id is missing from current-context file")
 		}
-		return "", nil, errors.New("oracle.user-id is missing from current-context file")
+		userID, err = cf.UserOCID()
+		if err != nil {
+			return "", nil, err
+		}
 	}
 
 	var fingerprint string
 	if fingerprint = viper.GetString(oracleFingerprint); fingerprint == "" {
-		if cf != nil {
-
-			fingerprint, err = cf.KeyFingerprint()
-			if err != nil {
-				return "", nil, err
-			}
+		if cf == nil {
+			return "", nil, errors.New("oracle.fingerprint is missing from current-context file")
 		}
-		return "", nil, errors.New("oracle.fingerprint is missing from current-context file")
+		fingerprint, err = cf.KeyFingerprint()
+		if err != nil {
+			return "", nil, err
+		}
 	}
 
 	keyID := tenancyID + "/" + userID + "/" + fingerprint
@@ -189,17 +189,17 @@ func OracleConfigFile() (string, *rsa.PrivateKey, error) {
 		return keyID, pKey, nil
 	}
 
-	if cf != nil {
-		// Read private key for .oci file
-		pKey, err = cf.PrivateRSAKey()
-		if err != nil {
-			return "", nil, err
-		}
-
-		return keyID, pKey, nil
+	if cf == nil {
+		return "", nil, errors.New("oracle.key-file is missing from current-context file")
+	}
+	// Read private key for .oci file
+	pKey, err = cf.PrivateRSAKey()
+	if err != nil {
+		return "", nil, err
 	}
 
-	return "", nil, errors.New("oracle.fingerprint is missing from current-context file")
+	return keyID, pKey, nil
+
 }
 
 func challengeForPKeyPassword() string {
