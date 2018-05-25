@@ -3,9 +3,11 @@ package client
 import (
 	"crypto/rsa"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -128,25 +130,38 @@ func InsecureRoundTripper(roundTripper http.RoundTripper) http.RoundTripper {
 
 func OracleConfigFile() (string, *rsa.PrivateKey, error) {
 	var oracleProfile string
+	var err error
+	var cf oci.ConfigurationProvider
+
 	if oracleProfile = viper.GetString(oracleProfile); oracleProfile == "" {
 		oracleProfile = "DEFAULT"
 	}
 
-	cf, err := oci.ConfigurationProviderFromFileWithProfile(filepath.Join(config.GetHomeDir(), ".oci", "config"), oracleProfile, "")
-	if err != nil {
-		return "", nil, err
-	}
-
-	var tenancyID string
-	if tenancyID = viper.GetString(oracleTenancyID); tenancyID == "" {
-		tenancyID, err = cf.TenancyOCID()
+	path := filepath.Join(config.GetHomeDir(), ".oci", "config")
+	if _, err := os.Stat(path); err == nil {
+		cf, err = oci.ConfigurationProviderFromFileWithProfile(path, oracleProfile, "")
 		if err != nil {
 			return "", nil, err
 		}
 	}
 
+	var tenancyID string
+	if tenancyID = viper.GetString(oracleTenancyID); tenancyID == "" {
+		if cf == nil {
+			return "", nil, errors.New("unable to find tenancyID in configuration: oracle.tenancy-id is missing from current-context file and tenancy-id wasn't found in ~/.oci/config.")
+		}
+		tenancyID, err = cf.TenancyOCID()
+		if err != nil {
+			return "", nil, err
+		}
+
+	}
+
 	var userID string
 	if userID = viper.GetString(oracleUserID); userID == "" {
+		if cf == nil {
+			return "", nil, errors.New("unable to find userID in configuration: oracle.tenancy-id is missing from current-context file and tenancy-id wasn't found in ~/.oci/config.")
+		}
 		userID, err = cf.UserOCID()
 		if err != nil {
 			return "", nil, err
@@ -155,6 +170,9 @@ func OracleConfigFile() (string, *rsa.PrivateKey, error) {
 
 	var fingerprint string
 	if fingerprint = viper.GetString(oracleFingerprint); fingerprint == "" {
+		if cf == nil {
+			return "", nil, errors.New("unable to find fingerprint in configuration: oracle.tenancy-id is missing from current-context file and tenancy-id wasn't found in ~/.oci/config.")
+		}
 		fingerprint, err = cf.KeyFingerprint()
 		if err != nil {
 			return "", nil, err
@@ -171,6 +189,9 @@ func OracleConfigFile() (string, *rsa.PrivateKey, error) {
 		return keyID, pKey, nil
 	}
 
+	if cf == nil {
+		return "", nil, errors.New("unable to find private key in configuration: oracle.tenancy-id is missing from current-context file and tenancy-id wasn't found in ~/.oci/config.")
+	}
 	// Read private key for .oci file
 	pKey, err = cf.PrivateRSAKey()
 	if err != nil {
@@ -178,6 +199,7 @@ func OracleConfigFile() (string, *rsa.PrivateKey, error) {
 	}
 
 	return keyID, pKey, nil
+
 }
 
 func challengeForPKeyPassword() string {
