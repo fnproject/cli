@@ -40,11 +40,12 @@ func startCmd() cli.Command {
 
 func start(c *cli.Context) error {
 	wd, err := os.Getwd()
+	name := "fnserver"
 	if err != nil {
 		log.Fatalln("Getwd failed:", err)
 	}
 	args := []string{"run", "--rm", "-i",
-		"--name", "fnserver",
+		"--name", name,
 		"-v", fmt.Sprintf("%s/data:/app/data", wd),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"--privileged",

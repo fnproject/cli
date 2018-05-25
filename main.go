@@ -90,6 +90,7 @@ LEARN MORE:
 	}
 	app.Commands = []cli.Command{
 		startCmd(),
+		stopCmd(),
 		updateCmd(),
 		initFn(),
 		apps(),
