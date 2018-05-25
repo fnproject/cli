@@ -313,12 +313,9 @@
 
 [[projects]]
   name = "github.com/oracle/oci-go-sdk"
-  packages = [
-    ".",
-    "common"
-  ] 
-  revision = "da236067a45ec155db5196363079c8db6fb7657e"
-  version = "v1.4.0"
+  packages = ["common"]
+  revision = "bc848a8a59b995b3b81790ece9e6c61b6ac6aba8"
+  version = "v1.5.0"
 
 [[projects]]
   name = "github.com/pelletier/go-toml"
@@ -445,6 +442,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4636dc75bd93dc8837fa60dcc9c3ff25d40fab3f3eaba6bab340f8bd81cb6bca"
+  inputs-digest = "39cb2027f0a7e5408e457ea50609677adfd5dc629f4fcc2ceb6817a53b89ac92"
   solver-name = "gps-cdcl"
   solver-version = 1
