@@ -3,8 +3,11 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 	"os"
+	"path"
 	"strings"
+	"time"
 
 	"github.com/fnproject/cli/config"
 	"github.com/spf13/viper"
@@ -169,6 +172,33 @@ func main() {
 	if err != nil {
 		// TODO: this doesn't seem to get called even when an error returns from a command, but maybe urfave is doing a non zero exit anyways? nope: https://github.com/urfave/cli/issues/610
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+		v := getLatestVersion()
+		if v != "" {
+			fmt.Fprintln(os.Stderr, v)
+		}
 		os.Exit(1)
 	}
+}
+
+func getLatestVersion() string {
+	base := "https://github.com/fnproject/cli/releases"
+	url := ""
+	c := http.Client{}
+	c.Timeout = time.Second * 3
+	c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		url = req.URL.String()
+		return nil
+	}
+	r, err := c.Get(fmt.Sprintf("%s/latest", base))
+	if err != nil {
+		return ""
+	}
+	defer r.Body.Close()
+	if !strings.Contains(url, base) {
+		return ""
+	}
+	if path.Base(url) != Version {
+		return fmt.Sprintf("Client version: %s is not latest: %s", Version, path.Base(url))
+	}
+	return "Client version is latest version: " + path.Base(url)
 }

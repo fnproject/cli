@@ -28,7 +28,12 @@ func versionCMD(c *cli.Context) error {
 	// version is also there, but it shouldn't
 	// dropping base path to get appropriate URL for request eventually
 	t.BasePath = ""
-	fmt.Println("Client version: ", Version)
+
+	ver := getLatestVersion()
+	if ver == "" {
+		ver = "Client version: " + Version
+	}
+	fmt.Println(ver)
 	versionClient := fnclient.New(t, reg)
 	v, err := versionClient.GetVersion(nil)
 	if err != nil {
