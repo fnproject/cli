@@ -584,7 +584,6 @@ func (a *routesCmd) inspect(c *cli.Context) error {
 	route := routeWithoutSlash(c.Args().Get(1))
 	prop := c.Args().Get(2)
 
-	log.Printf("inspecting route %s",route)
 	resp, err := a.client.Routes.GetAppsAppRoutesRoute(&apiroutes.GetAppsAppRoutesRouteParams{
 		Context: context.Background(),
 		App:     appName,
