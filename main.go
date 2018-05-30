@@ -38,6 +38,7 @@ func newFn() *cli.App {
 	app.Version = Version
 	app.Authors = []cli.Author{{Name: "Fn Project"}}
 	app.Description = "Fn command line tool"
+	app.EnableBashCompletion = true
 	app.Before = func(c *cli.Context) error {
 		err := config.LoadConfiguration(c)
 		if err != nil {
