@@ -28,9 +28,12 @@ func apps() cli.Command {
 		Name:  "apps",
 		Usage: "manage applications",
 		Before: func(c *cli.Context) error {
-			var err error
-			a.client, err = client.APIClient()
-			return err
+			provider,err := client.CurrentProvider()
+			if err !=nil {
+				return err
+			}
+			a.client = provider.APIClient()
+			return nil
 		},
 		Subcommands: []cli.Command{
 			{

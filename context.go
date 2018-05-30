@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 	yaml "gopkg.in/yaml.v2"
+	"github.com/fnproject/fn_go/provider"
 )
 
 var contextsPath = config.GetContextsPath()
@@ -92,9 +93,9 @@ func createCtx(c *cli.Context) error {
 		return err
 	}
 
-	provider := config.DefaultProvider
-	if cProvider := c.String("provider"); cProvider != "" {
-		provider = cProvider
+	providerId := config.DefaultProvider
+	if cProvider := c.String("providerId"); cProvider != "" {
+		providerId = cProvider
 	}
 
 	apiURL := ""
@@ -125,8 +126,8 @@ func createCtx(c *cli.Context) error {
 	defer file.Close()
 
 	contextValues := &config.ContextMap{
-		config.ContextProvider: provider,
-		config.EnvFnAPIURL:     apiURL,
+		config.ContextProvider: providerId,
+		provider.CfgFnAPIURL: apiURL,
 		config.EnvFnRegistry:   registry,
 	}
 
@@ -305,7 +306,7 @@ func (ctxMap *ContextMap) Set(key, value string) error {
 		return err
 	}
 
-	if key == config.EnvFnAPIURL {
+	if key == provider.CfgFnAPIURL {
 		err := ValidateAPIURL(value)
 		if err != nil {
 			return err

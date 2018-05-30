@@ -24,9 +24,12 @@ func calls() cli.Command {
 		Name:  "calls",
 		Usage: "manage function calls for apps",
 		Before: func(cxt *cli.Context) error {
-			var err error
-			c.client, err = client.APIClient()
-			return err
+			provider,err := client.CurrentProvider()
+			if err !=nil {
+				return err
+			}
+			c.client = provider.APIClient()
+			return nil
 		},
 		Subcommands: []cli.Command{
 			{

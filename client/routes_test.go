@@ -1,11 +1,9 @@
-package main
+package client
 
 import (
 	"net/http"
 	"os"
 	"testing"
-
-	"github.com/fnproject/cli/client"
 )
 
 func TestEnvAsHeader(t *testing.T) {
@@ -19,7 +17,7 @@ func TestEnvAsHeader(t *testing.T) {
 	}
 	for _, selectedEnv := range cases {
 		req, _ := http.NewRequest("GET", "http://www.example.com", nil)
-		client.EnvAsHeader(req, selectedEnv)
+		EnvAsHeader(req, selectedEnv)
 		if found := req.Header.Get("k"); found != expectedValue {
 			t.Errorf("not found expected header: %v", found)
 		}

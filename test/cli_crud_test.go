@@ -128,3 +128,16 @@ func TestRouteUpdateValues(t *testing.T) {
 	}
 
 }
+
+
+func TestRoutesInspectWithPrefix (t *testing.T){
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+	appName := h.NewAppName()
+	h.Fn("routes", "create", appName, "myroute", "--image", "foo/someimage:0.0.1").AssertSuccess()
+	h.Fn("routes", "inspect", appName, "myroute").AssertSuccess()
+	h.Fn("routes", "inspect", appName, "/myroute").AssertSuccess()
+
+}

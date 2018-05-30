@@ -13,9 +13,9 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/fnproject/cli/client"
-	functions "github.com/fnproject/fn_go/client"
 	"github.com/onsi/gomega"
 	"github.com/urfave/cli"
+	"github.com/fnproject/fn_go/provider"
 )
 
 type testStruct struct {
@@ -30,16 +30,19 @@ func testfn() cli.Command {
 		Flags:  cmd.flags(),
 		Action: cmd.test,
 		Before: func(cxt *cli.Context) error {
-			var err error
-			cmd.Fn, err = client.APIClient()
-			return err
+			prov,err := client.CurrentProvider()
+			if err !=nil {
+				return err
+			}
+			cmd.provider = prov
+			return nil
+
 		},
 	}
 }
 
 type testcmd struct {
-	*functions.Fn
-
+	provider provider.Provider
 	build  bool
 	remote string
 }
@@ -263,7 +266,7 @@ func (t *testcmd) runremotetest(ff *funcfile, in *inputMap, expectedOut *outputM
 	}
 	var stdout bytes.Buffer
 
-	if err := client.CallFN(t.remote, ff.Path, stdin, &stdout, "", envVars, "application/json", false); err != nil {
+	if err := client.CallFN(t.provider,t.remote, ff.Path, stdin, &stdout, "", envVars, "application/json", false); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\n", err, stdout.String())
 	}
 

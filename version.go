@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/fnproject/cli/client"
-	fnclient "github.com/fnproject/fn_go/client/version"
 	"github.com/urfave/cli"
 )
 
@@ -25,21 +24,18 @@ func version() cli.Command {
 }
 
 func versionCMD(c *cli.Context) error {
-	t, reg, err := client.GetTransportAndRegistry()
+	provider,err := client.CurrentProvider()
 	if err != nil {
 		return err
 	}
-	// dirty hack, swagger paths live under /v1
-	// version is also there, but it shouldn't
-	// dropping base path to get appropriate URL for request eventually
-	t.BasePath = ""
 
 	ver := getLatestVersion()
 	if ver == "" {
 		ver = "Client version: " + Version
 	}
 	fmt.Println(ver)
-	versionClient := fnclient.New(t, reg)
+
+	versionClient := provider.VersionClient()
 	v, err := versionClient.GetVersion(nil)
 	if err != nil {
 		fmt.Println("Server version: ", "?")
