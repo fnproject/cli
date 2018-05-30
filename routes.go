@@ -17,7 +17,6 @@ import (
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
 	"github.com/fnproject/fn_go/provider"
-	"log"
 )
 
 type routesCmd struct {
