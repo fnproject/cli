@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
+	"github.com/fnproject/fn_go/provider"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
@@ -26,16 +26,13 @@ const (
 	ContextProvider = "provider"
 
 	EnvFnRegistry = "registry"
-	EnvFnToken    = "token"
-	EnvFnAPIURL   = "api-url"
-	EnvFnCallURL  = "call-url"
 	EnvFnContext  = "context"
 )
 
 var defaultRootConfigContents = &ContextMap{CurrentContext: ""}
 var defaultContextConfigContents = &ContextMap{
 	ContextProvider: DefaultProvider,
-	EnvFnAPIURL:     defaultLocalAPIURL,
+	provider.CfgFnAPIURL:     defaultLocalAPIURL,
 	EnvFnRegistry:   "",
 }
 
@@ -56,7 +53,7 @@ func Init() error {
 	replacer := strings.NewReplacer("-", "_")
 	viper.SetEnvKeyReplacer(replacer)
 
-	viper.SetDefault(EnvFnAPIURL, defaultLocalAPIURL)
+	viper.SetDefault(provider.CfgFnAPIURL, defaultLocalAPIURL)
 
 	return ensureConfiguration()
 }

@@ -105,16 +105,20 @@
 [[projects]]
   name = "github.com/fnproject/fn_go"
   packages = [
+    ".",
     "client",
     "client/apps",
     "client/call",
     "client/operations",
     "client/routes",
     "client/version",
-    "models"
+    "models",
+    "provider",
+    "provider/defaultprovider",
+    "provider/oracle"
   ]
-  revision = "e2f92e36625a4b93c596ac3b912a4994ae574f64"
-  version = "0.2.6"
+  revision = "ba119f998930f50ffb458ee509253811461fe150"
+  version = "0.2.7"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -442,6 +446,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "39cb2027f0a7e5408e457ea50609677adfd5dc629f4fcc2ceb6817a53b89ac92"
+  inputs-digest = "9fb59c4f1c50d687685ce680db95a15284084f91e2f9fb0bd99cf8c6dc97a430"
   solver-name = "gps-cdcl"
   solver-version = 1

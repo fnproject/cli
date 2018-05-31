@@ -7,14 +7,10 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
-	"path"
 	"strings"
 
-	"github.com/spf13/viper"
-
-	"github.com/fnproject/cli/config"
+	"github.com/fnproject/fn_go/provider"
 )
 
 const (
@@ -44,18 +40,9 @@ type callID struct {
 	Error  apiErr `json:"error"`
 }
 
-func CallHostURL() *url.URL {
-	url := viper.GetString(config.EnvFnCallURL)
-	if url == "" {
-		url = viper.GetString(config.EnvFnAPIURL)
-	}
-	return hostURL(url)
-}
-
-func CallFN(appName string, route string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
-
-	u := CallHostURL()
-	u.Path = path.Join("r", appName, route)
+func CallFN(provider provider.Provider, appName string, route string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
+	u := *provider.CallURL()
+	u.Path = strings.Join([]string{"r", appName, route},"/")
 
 	if method == "" {
 		if content == nil {
@@ -93,10 +80,7 @@ func CallFN(appName string, route string, content io.Reader, output io.Writer, m
 		EnvAsHeader(req, env)
 	}
 
-	transport, err := getTransport()
-	if err != nil {
-		return err
-	}
+	transport := provider.WrapCallTransport(http.DefaultTransport)
 	httpClient := http.Client{Transport: transport}
 
 	resp, err := httpClient.Do(req)
@@ -134,15 +118,4 @@ func CallFN(appName string, route string, content io.Reader, output io.Writer, m
 	}
 
 	return nil
-}
-
-func getTransport() (http.RoundTripper, error) {
-	switch viper.GetString(config.ContextProvider) {
-	case "default":
-		return http.DefaultTransport, nil
-	case "oracle":
-		return oracleTransport(http.DefaultTransport)
-	default:
-		return http.DefaultTransport, nil
-	}
 }
