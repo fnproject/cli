@@ -103,7 +103,6 @@
   revision = "5df930a27be2502f99b292b7cc09ebad4d0891f4"
 
 [[projects]]
-  branch = "add_providers"
   name = "github.com/fnproject/fn_go"
   packages = [
     ".",
@@ -118,7 +117,8 @@
     "provider/defaultprovider",
     "provider/oracle"
   ]
-  revision = "1525e625ea433d7e3750589bb4078f8aa3f94014"
+  revision = "ba119f998930f50ffb458ee509253811461fe150"
+  version = "0.2.7"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -446,6 +446,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0cdebd66b82fec3bf270f99514980cb8d7a5a0afaed899ac955e8ee5127bdfaa"
+  inputs-digest = "9fb59c4f1c50d687685ce680db95a15284084f91e2f9fb0bd99cf8c6dc97a430"
   solver-name = "gps-cdcl"
   solver-version = 1
