@@ -36,13 +36,24 @@ func startCmd() cli.Command {
 				Value: 8080,
 				Usage: "Specify port number to bind to on the host.",
 			},
+			cli.StringFlag{
+				Name:  "data-dir",
+				Usage: "--data-dir path to local Fn database",
+			},
 		},
 	}
 }
 
 func start(c *cli.Context) error {
+	var fnDir string
 	home := config.GetHomeDir()
-	fnDir := filepath.Join(home, ".fn", "localdata")
+
+	if c.String("data-dir") != "" {
+		fnDir = filepath.Join(c.String("data-dir"))
+	} else {
+		fnDir = filepath.Join(home, ".fn", "jade")
+	}
+
 	args := []string{"run", "--rm", "-i",
 		"--name", "fnserver",
 		"-v", fmt.Sprintf("%s/data:/app/data", fnDir),
