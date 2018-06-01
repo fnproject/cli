@@ -6,8 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
+	"github.com/fnproject/cli/config"
 	"github.com/urfave/cli"
 )
 
@@ -34,19 +36,27 @@ func startCmd() cli.Command {
 				Value: 8080,
 				Usage: "Specify port number to bind to on the host.",
 			},
+			cli.StringFlag{
+				Name:  "data-dir",
+				Usage: "--data-dir path to local Fn database",
+			},
 		},
 	}
 }
 
 func start(c *cli.Context) error {
-	wd, err := os.Getwd()
-	name := "fnserver"
-	if err != nil {
-		log.Fatalln("Getwd failed:", err)
+	var fnDir string
+	home := config.GetHomeDir()
+
+	if c.String("data-dir") != "" {
+		fnDir = c.String("data-dir")
+	} else {
+		fnDir = filepath.Join(home, ".fn", "jade")
 	}
+
 	args := []string{"run", "--rm", "-i",
-		"--name", name,
-		"-v", fmt.Sprintf("%s/data:/app/data", wd),
+		"--name", "fnserver",
+		"-v", fmt.Sprintf("%s/data:/app/data", fnDir),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"--privileged",
 		"-p", fmt.Sprintf("%d:8080", c.Int("port")),
@@ -65,7 +75,7 @@ func start(c *cli.Context) error {
 	cmd := exec.Command("docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err = cmd.Start()
+	err := cmd.Start()
 	if err != nil {
 		log.Fatalln("starting command failed:", err)
 	}
