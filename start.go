@@ -49,7 +49,7 @@ func start(c *cli.Context) error {
 	home := config.GetHomeDir()
 
 	if c.String("data-dir") != "" {
-		fnDir = filepath.Join(c.String("data-dir"))
+		fnDir = c.String("data-dir")
 	} else {
 		fnDir = filepath.Join(home, ".fn", "jade")
 	}
