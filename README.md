@@ -4,6 +4,11 @@
 ## Install
 
 ```sh
+brew install fn
+```
+or
+
+```sh
 curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
 ```
 
