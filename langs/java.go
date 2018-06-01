@@ -18,6 +18,7 @@ type JavaLangHelper struct {
 	BaseHelper
 	version          string
 	latestFdkVersion string
+	functionName     string
 }
 
 func (h *JavaLangHelper) Handles(lang string) bool {
@@ -84,7 +85,10 @@ func (lh *JavaLangHelper) DefaultFormat() string { return "http" }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime. The default boilerplate is for a Maven
 // project.
-func (lh *JavaLangHelper) GenerateBoilerplate() error {
+func (lh *JavaLangHelper) GenerateBoilerplate(properties ...string) error {
+
+	lh.functionName = properties[0] // will be used as the pom artifactId
+
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -100,7 +104,7 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, lh.version)), os.FileMode(0644)); err != nil {
+	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, lh.functionName, lh.version)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -114,17 +118,21 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 		return ioutil.WriteFile(fullFilePath, []byte(content), os.FileMode(0644))
 	}
 
-	err = mkDirAndWriteFile("src/main/java/com/example/fn", "HelloFunction.java", helloJavaSrcBoilerplate)
+	var className = strings.Title(lh.functionName) + "Function"
+	var testClassName = className + "Test"
+
+	err = mkDirAndWriteFile("src/main/java/com/example/fn", className+".java", string([]byte(updateSrcClass(JavaSrcBoilerplate, className))))
 	if err != nil {
 		return err
 	}
 
-	return mkDirAndWriteFile("src/test/java/com/example/fn", "HelloFunctionTest.java", helloJavaTestBoilerplate)
+	return mkDirAndWriteFile("src/test/java/com/example/fn", testClassName+".java", string([]byte(updateTestClass(JavaTestBoilerplate, testClassName, className))))
 }
 
 // Cmd returns the Java runtime Docker entrypoint that will be executed when the function is executed.
-func (lh *JavaLangHelper) Cmd() (string, error) {
-	return "com.example.fn.HelloFunction::handleRequest", nil
+func (lh *JavaLangHelper) Cmd(params ...string) (string, error) {
+	var className = params[0]
+	return "com.example.fn." + strings.Title(className) + "Function::handleRequest", nil
 }
 
 // DockerfileCopyCmds returns the Docker COPY command to copy the compiled Java function jar and dependencies.
@@ -187,8 +195,17 @@ func mavenOpts() string {
 /*    TODO temporarily generate maven project boilerplate from hardcoded values.
 Will eventually move to using a maven archetype.
 */
-func pomFileContent(APIversion, javaVersion string) string {
-	return fmt.Sprintf(pomFile, APIversion, javaVersion, javaVersion)
+
+func pomFileContent(APIversion, functionName, javaVersion string) string {
+	return fmt.Sprintf(pomFile, APIversion, functionName, javaVersion, javaVersion)
+}
+
+func updateSrcClass(classBoilerPlate, className string) string {
+	return fmt.Sprintf(classBoilerPlate, className)
+}
+
+func updateTestClass(classBoilerPlate, testClassName, className string) string {
+	return fmt.Sprintf(classBoilerPlate, testClassName, className)
 }
 
 func (lh *JavaLangHelper) getFDKAPIVersion() (string, error) {
@@ -245,7 +262,7 @@ const (
         <fdk.version>%s</fdk.version>
     </properties>
     <groupId>com.example.fn</groupId>
-    <artifactId>hello</artifactId>
+    <artifactId>%s</artifactId>
     <version>1.0.0</version>
 
     <repositories>
@@ -297,9 +314,9 @@ const (
 </project>
 `
 
-	helloJavaSrcBoilerplate = `package com.example.fn;
+	JavaSrcBoilerplate = `package com.example.fn;
 
-public class HelloFunction {
+public class %s {
 
     public String handleRequest(String input) {
         String name = (input == null || input.isEmpty()) ? "world"  : input;
@@ -309,14 +326,14 @@ public class HelloFunction {
 
 }`
 
-	helloJavaTestBoilerplate = `package com.example.fn;
+	JavaTestBoilerplate = `package com.example.fn;
 
 import com.fnproject.fn.testing.*;
 import org.junit.*;
 
 import static org.junit.Assert.*;
 
-public class HelloFunctionTest {
+public class %s {
 
     @Rule
     public final FnTestingRule testing = FnTestingRule.createDefault();
@@ -324,7 +341,7 @@ public class HelloFunctionTest {
     @Test
     public void shouldReturnGreeting() {
         testing.givenEvent().enqueue();
-        testing.thenRun(HelloFunction.class, "handleRequest");
+        testing.thenRun(%s.class, "handleRequest");
 
         FnResult result = testing.getOnlyResult();
         assertEquals("Hello, world!", result.getBodyAsString());

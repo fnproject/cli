@@ -44,7 +44,7 @@ func (lh *KotlinLangHelper) DefaultFormat() string { return "http" }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime.
 // project.
-func (lh *KotlinLangHelper) GenerateBoilerplate() error {
+func (lh *KotlinLangHelper) GenerateBoilerplate(...string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (lh *KotlinLangHelper) GenerateBoilerplate() error {
 }
 
 // Cmd returns the Java runtime Docker entrypoint that will be executed when the Kotlin function is executed.
-func (lh *KotlinLangHelper) Cmd() (string, error) {
+func (lh *KotlinLangHelper) Cmd(...string) (string, error) {
 	return "HelloKt::hello", nil
 }
 

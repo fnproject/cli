@@ -167,7 +167,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 func (a *initFnCmd) generateBoilerplate() error {
 	helper := langs.GetLangHelper(a.ff.Runtime)
 	if helper != nil && helper.HasBoilerplate() {
-		if err := helper.GenerateBoilerplate(); err != nil {
+		if err := helper.GenerateBoilerplate(a.ff.Name); err != nil {
 			if err == langs.ErrBoilerplateExists {
 				return nil
 			}
@@ -269,7 +269,7 @@ func (a *initFnCmd) buildFuncFile(c *cli.Context) error {
 		}
 
 		if a.ff.Cmd == "" {
-			cmd, err := helper.Cmd()
+			cmd, err := helper.Cmd(a.ff.Name)
 			if err != nil {
 				return err
 			}

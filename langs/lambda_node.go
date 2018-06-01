@@ -32,7 +32,7 @@ func (lh *LambdaNodeHelper) IsMultiStage() bool {
 	return false
 }
 
-func (lh *LambdaNodeHelper) Cmd() (string, error) {
+func (lh *LambdaNodeHelper) Cmd(...string) (string, error) {
 	return "func.handler", nil
 }
 

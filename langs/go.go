@@ -75,7 +75,7 @@ func (lh *GoLangHelper) Entrypoint() (string, error) {
 
 func (lh *GoLangHelper) HasBoilerplate() bool { return true }
 
-func (lh *GoLangHelper) GenerateBoilerplate() error {
+func (lh *GoLangHelper) GenerateBoilerplate(properties ...string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
