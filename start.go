@@ -51,7 +51,7 @@ func start(c *cli.Context) error {
 	if c.String("data-dir") != "" {
 		fnDir = c.String("data-dir")
 	} else {
-		fnDir = filepath.Join(home, ".fn", "jade")
+		fnDir = filepath.Join(home, ".fn", "localdata")
 	}
 
 	args := []string{"run", "--rm", "-i",
