@@ -77,6 +77,7 @@ type FuncFile struct {
 	Headers     map[string][]string    `yaml:"headers,omitempty" json:"headers,omitempty"`
 	IDLETimeout *int32                 `yaml:"idle_timeout,omitempty" json:"idle_timeout,omitempty"`
 	Annotations map[string]interface{} `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	TmpFsSize   uint32                 `yaml:"tmpfs_size,omitempty" json:"tmpfs_size,omitempty"`
 
 	// Run/test
 	Expects Expects `yaml:"expects,omitempty" json:"expects,omitempty"`

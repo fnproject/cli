@@ -195,6 +195,14 @@ func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, metho
 		}
 	}
 
+	sh = append(sh, "--read-only")
+
+	if ff.TmpFsSize != 0 {
+		sh = append(sh, "--tmpfs", fmt.Sprintf("/tmp:rw,size=%dm", ff.TmpFsSize))
+	} else {
+		sh = append(sh, "--tmpfs", "/tmp:rw")
+	}
+
 	// Add expected env vars that service will add
 	// Full set here: https://github.com/fnproject/fn/pull/660#issuecomment-356157279
 	runEnv = append(runEnv, kvEq("FN_TYPE", "sync"))
