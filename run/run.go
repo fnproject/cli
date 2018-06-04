@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/fnproject/cli/common"
+	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
 
@@ -21,7 +22,9 @@ const (
 	HttpFormat       = "http"
 	JSONFormat       = "json"
 	CloudEventFormat = "cloudevent"
-	LocalTestURL     = "http://localhost:8080/myapp/hello"
+	TestApp          = "myapp"
+	TestRoute        = "/hello"
+	LocalTestURL     = "http://localhost:8080"
 )
 
 func RunCommand() cli.Command {
@@ -199,15 +202,21 @@ func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, metho
 	// Full set here: https://github.com/fnproject/fn/pull/660#issuecomment-356157279
 	runEnv = append(runEnv, kvEq("FN_TYPE", "sync"))
 	runEnv = append(runEnv, kvEq("FN_FORMAT", format))
-	runEnv = append(runEnv, kvEq("FN_PATH", "/hello"))
+	runEnv = append(runEnv, kvEq("FN_PATH", TestRoute))
 	runEnv = append(runEnv, kvEq("FN_MEMORY", fmt.Sprintf("%d", ff.Memory)))
-	runEnv = append(runEnv, kvEq("FN_APP_NAME", "myapp"))
+	runEnv = append(runEnv, kvEq("FN_APP_NAME", TestApp))
 
 	// add user defined envs
 	runEnv = append(runEnv, envVars...)
 
+	var requestURL string
+	if requestURL = viper.GetString("api-url"); requestURL == "" {
+		requestURL = LocalTestURL
+	}
+	requestURL = requestURL + "/" + TestApp + TestRoute
+
 	if format == DefaultFormat {
-		runEnv = append(runEnv, kvEq("FN_REQUEST_URL", LocalTestURL))
+		runEnv = append(runEnv, kvEq("FN_REQUEST_URL", requestURL))
 		runEnv = append(runEnv, kvEq("FN_CALL_ID", callID))
 		runEnv = append(runEnv, kvEq("FN_METHOD", method))
 		runEnv = append(runEnv, kvEq("FN_DEADLINE", deadlineS))
@@ -227,7 +236,7 @@ func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, metho
 	stdin, stdout, err := handler(runConfig{
 		runs:        runs,
 		method:      method,
-		url:         LocalTestURL,
+		url:         requestURL,
 		contentType: contentType,
 		callID:      callID,
 		deadline:    deadlineS,
