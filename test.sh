@@ -18,7 +18,7 @@ export fn="${CUR_DIR}/fn"
 
 
 #on CI these can take a while
-go test -v $(go list ./... |  grep -pv "^github.com/fnproject/cli/test$")
+go test -v $(go list ./... |  grep -v "^github.com/fnproject/cli/test$")
 
 # Our test directory
 OS=$(uname -s)
@@ -39,21 +39,26 @@ CONTAINER_ID=$($fn start -d)
 FN_API_URL="localhost:8080"
 
 TRIES=15
-while [ ${TRIES} -gt 0 ]; do
+while [ true ]; do
 
 	set +e
 	curl -sS --max-time 1 ${FN_API_URL} > /dev/null
 	RESULT=$?
 	set -e
 
-	if [ ${RESULT} -ne 0 ]; then
-		sleep 1
-		TRIES=$((${TRIES}-1))
+	if [ ${RESULT} -eq 0 ]; then
+		break
+	else
+		echo "Going to try ${FN_API_URL} one more time..."
 	fi
-	break
+
+	TRIES=$((${TRIES}-1))
+	if [ ${TRIES} -le 0 ]; then
+		echo "Max retries reached, cannot connect to ${FN_API_URL}"
+		exit 1
+	fi
+	sleep 1
 done
-# exhausted all tries?
-test ${TRIES} -gt 0
 
 # be safe, check the fn container too.
 docker inspect -f {{.State.Running}} $CONTAINER_ID | grep '^true$'

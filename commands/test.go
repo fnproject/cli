@@ -236,7 +236,7 @@ func runlocaltest(ff *common.FuncFile, in *common.InputMap, expectedOut *common.
 
 	var stdout, stderr bytes.Buffer
 
-	if err := run.RunFF(ff, stdin, &stdout, &stderr, "", envVars, nil, "", 1, "application/json"); err != nil {
+	if err := run.RunFF(ff, stdin, &stdout, &stderr, "", envVars, nil, "", 1, "application/json", false); err != nil {
 		return fmt.Errorf("%v\nstdout:%s\nstderr:%s", err, stdout.String(), stderr.String())
 	}
 

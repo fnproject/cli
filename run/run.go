@@ -68,6 +68,10 @@ var RunFlags = []cli.Flag{
 		Name:  "no-cache",
 		Usage: "Don't use Docker cache for the build",
 	},
+	cli.BoolFlag{
+		Name:  "disable-read-only",
+		Usage: "Enable writable root filesystem, which is read-only by default.",
+	},
 	cli.StringFlag{
 		Name:  "content-type",
 		Usage: "The payload Content-Type for the function invocation.",
@@ -160,11 +164,11 @@ func (r *runCmd) run(c *cli.Context) error {
 	if c.Uint64("memory") != 0 {
 		ff.Memory = c.Uint64("memory")
 	}
-	return RunFF(ff, Stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"), c.String("content-type"))
+	return RunFF(ff, Stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"), c.String("content-type"), c.Bool("disable-read-only"))
 }
 
 // TODO: share all this stuff with the Docker driver in server or better yet, actually use the Docker driver
-func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int, contentType string) error {
+func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int, contentType string, rwRoot bool) error {
 	sh := []string{"docker", "run", "--rm", "-i", fmt.Sprintf("--memory=%dm", ff.Memory)}
 
 	var env []string    // env for the shelled out docker run command
@@ -195,8 +199,11 @@ func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, metho
 		}
 	}
 
-	sh = append(sh, "--read-only")
+	if !rwRoot {
+		sh = append(sh, "--read-only")
+	}
 
+	// Let's always try to add rw tmpfs here. This is also the default behavior in agent.
 	if ff.TmpFsSize != 0 {
 		sh = append(sh, "--tmpfs", fmt.Sprintf("/tmp:rw,size=%dm", ff.TmpFsSize))
 	} else {
