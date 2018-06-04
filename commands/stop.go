@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// StopCommand returns stop server cli.command
 func StopCommand() cli.Command {
 	return cli.Command{
 		Name:     "stop",

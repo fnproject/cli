@@ -84,6 +84,7 @@ func langsList() string {
 	return strings.Join(allLangs, ", ")
 }
 
+// InitCommand returns init cli.command
 func InitCommand() cli.Command {
 	a := &initFnCmd{ff: &common.FuncFile{}}
 
@@ -103,14 +104,14 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	wd := common.GetWd()
 
 	var rt models.Route
-	route.RouteWithFlags(c, &rt)
+	route.WithFlags(c, &rt)
 	a.bindRoute(&rt)
 
 	runtimeSpecified := a.ff.Runtime != ""
 	if runtimeSpecified {
 		// go no further if the specified runtime is not supported
 		if a.ff.Runtime != common.FuncfileDockerRuntime && langs.GetLangHelper(a.ff.Runtime) == nil {
-			return fmt.Errorf("Init does not support the '%s' runtime.", a.ff.Runtime)
+			return fmt.Errorf("init does not support the '%s' runtime", a.ff.Runtime)
 		}
 	}
 
@@ -143,7 +144,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			return err
 		}
 		if ff != nil {
-			return errors.New("Function file already exists, aborting.")
+			return errors.New("function file already exists, aborting")
 		}
 	}
 

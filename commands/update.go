@@ -4,6 +4,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// UpdateCommand returns update cli.command
 func UpdateCommand() cli.Command {
 	return cli.Command{
 		Name:        "update",

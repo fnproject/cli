@@ -24,6 +24,7 @@ type testStruct struct {
 	Tests []common.FFTest `yaml:"tests,omitempty" json:"tests,omitempty"`
 }
 
+// TestCommand returns test cli.command
 func TestCommand() cli.Command {
 	cmd := testcmd{}
 	return cli.Command{
@@ -236,7 +237,7 @@ func runlocaltest(ff *common.FuncFile, in *common.InputMap, expectedOut *common.
 	var stdout, stderr bytes.Buffer
 
 	if err := run.RunFF(ff, stdin, &stdout, &stderr, "", envVars, nil, "", 1, "application/json"); err != nil {
-		return fmt.Errorf("%v\nstdout:%s\nstderr:%s\n", err, stdout.String(), stderr.String())
+		return fmt.Errorf("%v\nstdout:%s\nstderr:%s", err, stdout.String(), stderr.String())
 	}
 
 	out := stdout.String()
@@ -248,7 +249,7 @@ func runlocaltest(ff *common.FuncFile, in *common.InputMap, expectedOut *common.
 		return nil
 	}
 
-	return fmt.Errorf("mismatched output found.\nexpected:\n%s\ngot:\n%s\nlogs:\n%s\n", expectedString, out, stderr.String())
+	return fmt.Errorf("mismatched output found.\nexpected:\n%s\ngot:\n%s\nlogs:\n%s", expectedString, out, stderr.String())
 }
 
 func (t *testcmd) runremotetest(ff *common.FuncFile, in *common.InputMap, expectedOut *common.OutputMap, expectedErr *string, envVars []string) error {
@@ -271,7 +272,7 @@ func (t *testcmd) runremotetest(ff *common.FuncFile, in *common.InputMap, expect
 	var stdout bytes.Buffer
 
 	if err := client.CallFN(t.provider, t.remote, ff.Path, stdin, &stdout, "", envVars, "application/json", false); err != nil {
-		return fmt.Errorf("%v\nstdout:%s\n", err, stdout.String())
+		return fmt.Errorf("%v\nstdout:%s", err, stdout.String())
 	}
 
 	out := stdout.String()

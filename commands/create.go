@@ -4,6 +4,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// CreateCommand returns create cli.command
 func CreateCommand() cli.Command {
 	return cli.Command{
 		Name:        "create",

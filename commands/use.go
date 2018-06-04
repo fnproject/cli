@@ -4,6 +4,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// UseCommand returns use cli.command
 func UseCommand() cli.Command {
 	return cli.Command{
 		Name:        "use",

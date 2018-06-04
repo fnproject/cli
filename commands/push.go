@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// PushCommand returns push cli.command
 func PushCommand() cli.Command {
 	cmd := pushcmd{}
 	var flags []cli.Flag

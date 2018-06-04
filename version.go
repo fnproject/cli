@@ -15,6 +15,7 @@ import (
 // Version of Fn CLI
 var Version = "0.4.108"
 
+// VersionCommand
 func VersionCommand() cli.Command {
 	return cli.Command{
 		Name:   "version",
@@ -45,6 +46,7 @@ func versionCMD(c *cli.Context) error {
 	return nil
 }
 
+// PrintLatestVersion to terminal
 func PrintLatestVersion() {
 	v := getLatestVersion()
 	if v != "" {

@@ -16,6 +16,7 @@ type callCmd struct {
 	client   *fnclient.Fn
 }
 
+// CallCommand returns call cli.command
 func CallCommand() cli.Command {
 	cl := callCmd{}
 	return cli.Command{
@@ -40,7 +41,7 @@ func CallCommand() cli.Command {
 
 func (cl *callCmd) Call(c *cli.Context) error {
 	appName := c.Args().Get(0)
-	route := route.RouteWithoutSlash(c.Args().Get(1))
+	route := route.WithoutSlash(c.Args().Get(1))
 	content := run.Stdin()
 	return client.CallFN(cl.provider, appName, route, content, os.Stdout, c.String("method"), c.StringSlice("e"), c.String("content-type"), c.Bool("display-call-id"))
 }

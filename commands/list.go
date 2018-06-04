@@ -4,6 +4,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// ListCommand returns list cli.command
 func ListCommand() cli.Command {
 	return cli.Command{
 		Name:        "list",

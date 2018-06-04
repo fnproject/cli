@@ -21,7 +21,7 @@ var (
 	errUnexpectedFileFormat = errors.New("unexpected file format for function file")
 )
 
-// AppFile represents the contents of an app.yaml/json/yml
+// AppFile defines the internal structure of a app.yaml/json/yml
 type AppFile struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 	// TODO: Config here is not yet used

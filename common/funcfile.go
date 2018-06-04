@@ -51,7 +51,7 @@ type Expects struct {
 	Config []inputVar `yaml:"config" json:"config"`
 }
 
-// FuncFile represents the contents of a func.yaml/json/yml
+// FuncFile defines the internal structure of a func.yaml/json/yml
 type FuncFile struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 

@@ -4,6 +4,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// UnsetCommand returns unset cli.command
 func UnsetCommand() cli.Command {
 	return cli.Command{
 		Name:        "unset",

@@ -25,6 +25,7 @@ var runtimes = map[string]string{
 	"nodejs4.3": "lambda-nodejs4.3",
 }
 
+// LambdaCommand returns lambda cli.command
 func LambdaCommand() cli.Command {
 	var flags []cli.Flag
 

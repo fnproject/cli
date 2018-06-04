@@ -4,6 +4,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// DeleteCommand returns delete cli.command
 func DeleteCommand() cli.Command {
 	return cli.Command{
 		Name:        "delete",

@@ -17,6 +17,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// DeployCommand returns deploy cli.command
 func DeployCommand() cli.Command {
 	cmd := deploycmd{}
 	var flags []cli.Flag
@@ -128,7 +129,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	}
 
 	if appName == "" {
-		return errors.New("app name must be provided, try `--app APP_NAME`.")
+		return errors.New("app name must be provided, try `--app APP_NAME`")
 	}
 
 	if p.all {
@@ -245,7 +246,7 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFi
 // the route can be overriden inside the func.yaml file.
 func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *common.FuncFile) error {
 	if appName == "" {
-		return errors.New("app name must be provided, try `--app APP_NAME`.")
+		return errors.New("app name must be provided, try `--app APP_NAME`")
 	}
 	dir := filepath.Dir(funcfilePath)
 	// get name from directory if it's not defined
@@ -301,7 +302,7 @@ func setRootFuncInfo(ff *common.FuncFile, appName string) {
 func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *common.FuncFile) error {
 	fmt.Printf("Updating route %s using image %s...\n", ff.Path, ff.ImageName())
 	rt := &models.Route{}
-	if err := route.RouteWithFuncFile(ff, rt); err != nil {
+	if err := route.WithFuncFile(ff, rt); err != nil {
 		return fmt.Errorf("error getting route with funcfile: %s", err)
 	}
 	return route.PutRoute(p.client, appName, ff.Path, rt)

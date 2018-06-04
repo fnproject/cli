@@ -4,6 +4,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// InspectCommand returns inspect cli.command
 func InspectCommand() cli.Command {
 	return cli.Command{
 		Name:        "inspect",

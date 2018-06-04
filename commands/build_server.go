@@ -12,11 +12,13 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// BuildServerCmd represents
 type BuildServerCmd struct {
 	verbose bool
 	noCache bool
 }
 
+// BuildServerCommand returns build server cli.command
 func BuildServerCommand() cli.Command {
 	cmd := BuildServerCmd{}
 	flags := append([]cli.Flag{}, cmd.flags()...)
@@ -122,10 +124,7 @@ func generateMain(ef *extFile) error {
 }
 
 func generateDockerfile() error {
-	if err := ioutil.WriteFile("Dockerfile", []byte(dockerFileTmpl), os.FileMode(0644)); err != nil {
-		return err
-	}
-	return nil
+	return ioutil.WriteFile("Dockerfile", []byte(dockerFileTmpl), os.FileMode(0644))
 }
 
 type extFile struct {

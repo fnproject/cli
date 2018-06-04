@@ -5,6 +5,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Create route command
 func Create() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
@@ -27,6 +28,7 @@ func Create() cli.Command {
 	}
 }
 
+// List routes command
 func List() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
@@ -59,6 +61,7 @@ func List() cli.Command {
 	}
 }
 
+// Delete route command
 func Delete() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
@@ -80,6 +83,7 @@ func Delete() cli.Command {
 	}
 }
 
+// Inspect route command
 func Inspect() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
@@ -101,6 +105,7 @@ func Inspect() cli.Command {
 	}
 }
 
+// Update route command
 func Update() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
@@ -123,6 +128,7 @@ func Update() cli.Command {
 	}
 }
 
+// GetConfig for route command
 func GetConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
@@ -143,6 +149,8 @@ func GetConfig() cli.Command {
 		Action:    r.getConfig,
 	}
 }
+
+// SetConfig for route command
 func SetConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
@@ -163,6 +171,8 @@ func SetConfig() cli.Command {
 		Action:    r.setConfig,
 	}
 }
+
+// ListConfig for route command
 func ListConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
@@ -183,6 +193,8 @@ func ListConfig() cli.Command {
 		Action:    r.listConfig,
 	}
 }
+
+// UnsetConfig for route command
 func UnsetConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{

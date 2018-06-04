@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// BuildCommand returns build cli.command
 func BuildCommand() cli.Command {
 	cmd := buildcmd{}
 	flags := append([]cli.Flag{}, cmd.flags()...)

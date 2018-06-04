@@ -25,6 +25,7 @@ type routesCmd struct {
 	client   *fnclient.Fn
 }
 
+// RouteFlags use to create/update routes
 var RouteFlags = []cli.Flag{
 	cli.Uint64Flag{
 		Name:  "memory,m",
@@ -61,6 +62,7 @@ var RouteFlags = []cli.Flag{
 }
 var updateRouteFlags = RouteFlags
 
+// CallFnFlags used to call a route
 var CallFnFlags = append(run.RunFlags,
 	cli.BoolFlag{
 		Name:  "display-call-id",
@@ -68,7 +70,8 @@ var CallFnFlags = append(run.RunFlags,
 	},
 )
 
-func RouteWithSlash(p string) string {
+// WithSlash appends "/" to route path
+func WithSlash(p string) string {
 	p = path.Clean(p)
 
 	if !strings.HasPrefix(p, "/") {
@@ -77,7 +80,8 @@ func RouteWithSlash(p string) string {
 	return p
 }
 
-func RouteWithoutSlash(p string) string {
+// WithoutSlash removes "/" from route path
+func WithoutSlash(p string) string {
 	p = path.Clean(p)
 	p = strings.TrimPrefix(p, "/")
 	return p
@@ -117,19 +121,20 @@ func (r *routesCmd) list(c *cli.Context) error {
 		params.Cursor = &resp.Payload.NextCursor
 	}
 
-	callUrl := r.provider.CallURL()
+	callURL := r.provider.CallURL()
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprint(w, "path", "\t", "image", "\t", "endpoint", "\n")
 	for _, route := range resRoutes {
-		endpoint := path.Join(callUrl.Host, "r", appName, route.Path)
+		endpoint := path.Join(callURL.Host, "r", appName, route.Path)
 		fmt.Fprint(w, route.Path, "\t", route.Image, "\t", endpoint, "\n")
 	}
 	w.Flush()
 	return nil
 }
 
-func RouteWithFlags(c *cli.Context, rt *fnmodels.Route) {
+// WithFlags returns a route with specified flags
+func WithFlags(c *cli.Context, rt *fnmodels.Route) {
 	if rt.Image == "" {
 		if i := c.String("image"); i != "" {
 			rt.Image = i
@@ -189,7 +194,8 @@ func RouteWithFlags(c *cli.Context, rt *fnmodels.Route) {
 	}
 }
 
-func RouteWithFuncFile(ff *common.FuncFile, rt *fnmodels.Route) error {
+// WithFuncFile used when creating a route from a funcfile
+func WithFuncFile(ff *common.FuncFile, rt *fnmodels.Route) error {
 	var err error
 	if ff == nil {
 		_, ff, err = common.LoadFuncfile()
@@ -236,13 +242,13 @@ func RouteWithFuncFile(ff *common.FuncFile, rt *fnmodels.Route) error {
 
 func (r *routesCmd) create(c *cli.Context) error {
 	appName := c.Args().Get(0)
-	route := RouteWithSlash(c.Args().Get(1))
+	route := WithSlash(c.Args().Get(1))
 
 	rt := &fnmodels.Route{}
 	rt.Path = route
 	rt.Image = c.Args().Get(2)
 
-	RouteWithFlags(c, rt)
+	WithFlags(c, rt)
 
 	if rt.Path == "" {
 		return errors.New("route path is missing")
@@ -254,6 +260,7 @@ func (r *routesCmd) create(c *cli.Context) error {
 	return PostRoute(r.client, appName, rt)
 }
 
+// PostRoute request
 func PostRoute(r *fnclient.Fn, appName string, rt *fnmodels.Route) error {
 	err := common.ValidateImageName(rt.Image)
 	if err != nil {
@@ -285,6 +292,7 @@ func PostRoute(r *fnclient.Fn, appName string, rt *fnmodels.Route) error {
 	return nil
 }
 
+// PatchRoute request
 func PatchRoute(r *fnclient.Fn, appName, routePath string, rt *fnmodels.Route) error {
 	if rt.Image != "" {
 		err := common.ValidateImageName(rt.Image)
@@ -296,7 +304,7 @@ func PatchRoute(r *fnclient.Fn, appName, routePath string, rt *fnmodels.Route) e
 	_, err := r.Routes.PatchAppsAppRoutesRoute(&apiroutes.PatchAppsAppRoutesRouteParams{
 		Context: context.Background(),
 		App:     appName,
-		Route:   RouteWithoutSlash(routePath),
+		Route:   WithoutSlash(routePath),
 		Body:    &fnmodels.RouteWrapper{Route: rt},
 	})
 
@@ -314,11 +322,12 @@ func PatchRoute(r *fnclient.Fn, appName, routePath string, rt *fnmodels.Route) e
 	return nil
 }
 
+// PutRoute request
 func PutRoute(r *fnclient.Fn, appName, routePath string, rt *fnmodels.Route) error {
 	_, err := r.Routes.PutAppsAppRoutesRoute(&apiroutes.PutAppsAppRoutesRouteParams{
 		Context: context.Background(),
 		App:     appName,
-		Route:   RouteWithoutSlash(routePath),
+		Route:   WithoutSlash(routePath),
 		Body:    &fnmodels.RouteWrapper{Route: rt},
 	})
 	if err != nil {
@@ -334,11 +343,11 @@ func PutRoute(r *fnclient.Fn, appName, routePath string, rt *fnmodels.Route) err
 
 func (r *routesCmd) update(c *cli.Context) error {
 	appName := c.Args().Get(0)
-	route := RouteWithoutSlash(c.Args().Get(1))
+	route := WithoutSlash(c.Args().Get(1))
 
 	rt := &fnmodels.Route{}
 
-	RouteWithFlags(c, rt)
+	WithFlags(c, rt)
 
 	err := PatchRoute(r.client, appName, route, rt)
 	if err != nil {
@@ -351,7 +360,7 @@ func (r *routesCmd) update(c *cli.Context) error {
 
 func (r *routesCmd) setConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
-	route := RouteWithoutSlash(c.Args().Get(1))
+	route := WithoutSlash(c.Args().Get(1))
 	key := c.Args().Get(2)
 	value := c.Args().Get(3)
 
@@ -372,7 +381,7 @@ func (r *routesCmd) setConfig(c *cli.Context) error {
 
 func (r *routesCmd) getConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
-	route := RouteWithoutSlash(c.Args().Get(1))
+	route := WithoutSlash(c.Args().Get(1))
 	key := c.Args().Get(2)
 
 	resp, err := r.client.Routes.GetAppsAppRoutesRoute(&apiroutes.GetAppsAppRoutesRouteParams{
@@ -397,7 +406,7 @@ func (r *routesCmd) getConfig(c *cli.Context) error {
 
 func (r *routesCmd) listConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
-	route := RouteWithoutSlash(c.Args().Get(1))
+	route := WithoutSlash(c.Args().Get(1))
 
 	resp, err := r.client.Routes.GetAppsAppRoutesRoute(&apiroutes.GetAppsAppRoutesRouteParams{
 		Context: context.Background(),
@@ -418,7 +427,7 @@ func (r *routesCmd) listConfig(c *cli.Context) error {
 
 func (r *routesCmd) unsetConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
-	route := RouteWithoutSlash(c.Args().Get(1))
+	route := WithoutSlash(c.Args().Get(1))
 	key := c.Args().Get(2)
 
 	rt := fnmodels.Route{
@@ -438,7 +447,7 @@ func (r *routesCmd) unsetConfig(c *cli.Context) error {
 
 func (r *routesCmd) inspect(c *cli.Context) error {
 	appName := c.Args().Get(0)
-	route := RouteWithoutSlash(c.Args().Get(1))
+	route := WithoutSlash(c.Args().Get(1))
 	prop := c.Args().Get(2)
 
 	resp, err := r.client.Routes.GetAppsAppRoutesRoute(&apiroutes.GetAppsAppRoutesRouteParams{
@@ -486,7 +495,7 @@ func (r *routesCmd) inspect(c *cli.Context) error {
 
 func (r *routesCmd) delete(c *cli.Context) error {
 	appName := c.Args().Get(0)
-	route := RouteWithoutSlash(c.Args().Get(1))
+	route := WithoutSlash(c.Args().Get(1))
 
 	_, err := r.client.Routes.DeleteAppsAppRoutesRoute(&apiroutes.DeleteAppsAppRoutesRouteParams{
 		Context: context.Background(),

@@ -4,6 +4,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// ConfigCommand returns config cli.command dependant on command parameter
 func ConfigCommand(command string) cli.Command {
 	var cmds []cli.Command
 	switch command {

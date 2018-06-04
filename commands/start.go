@@ -14,6 +14,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// StartCommand returns start server cli.command
 func StartCommand() cli.Command {
 	return cli.Command{
 		Name:     "start",
