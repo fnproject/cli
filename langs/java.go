@@ -84,13 +84,8 @@ func (lh *JavaLangHelper) DefaultFormat() string { return "http" }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime. The default boilerplate is for a Maven
 // project.
-func (lh *JavaLangHelper) GenerateBoilerplate() error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	pathToPomFile := filepath.Join(wd, "pom.xml")
+func (lh *JavaLangHelper) GenerateBoilerplate(path string) error {
+	pathToPomFile := filepath.Join(path, "pom.xml")
 	if exists(pathToPomFile) {
 		return ErrBoilerplateExists
 	}
@@ -105,7 +100,7 @@ func (lh *JavaLangHelper) GenerateBoilerplate() error {
 	}
 
 	mkDirAndWriteFile := func(dir, filename, content string) error {
-		fullPath := filepath.Join(wd, dir)
+		fullPath := filepath.Join(path, dir)
 		if err = os.MkdirAll(fullPath, os.FileMode(0755)); err != nil {
 			return err
 		}
