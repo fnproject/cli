@@ -10,7 +10,7 @@ import (
 // WalkFuncsFunc good name huh?
 type walkFuncsFunc func(path string, ff *FuncFile, err error) error
 
-// walkFuncs is similar to filepath.Walk except only returns func.yaml's (so on per function)
+// WalkFuncs is similar to filepath.Walk except only returns func.yaml's (so on per function)
 func WalkFuncs(root string, walkFn walkFuncsFunc) error {
 	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {

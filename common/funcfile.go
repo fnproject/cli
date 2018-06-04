@@ -22,13 +22,17 @@ var (
 	}
 )
 
+// InputMap to be used within FFTest.
 type InputMap struct {
 	Body interface{}
 }
+
+// OutputMap to be used within FFTest.
 type OutputMap struct {
 	Body interface{}
 }
 
+// FFTest represents a test for a funcfile.
 type FFTest struct {
 	Name   string     `yaml:"name,omitempty" json:"name,omitempty"`
 	Input  *InputMap  `yaml:"input,omitempty" json:"input,omitempty"`
@@ -37,14 +41,17 @@ type FFTest struct {
 	// Env    map[string]string `yaml:"env,omitempty" json:"env,omitempty"`
 }
 
-type InputVar struct {
+type inputVar struct {
 	Name     string `yaml:"name" json:"name"`
 	Required bool   `yaml:"required" json:"required"`
 }
+
+// Expects represents expected env vars in funcfile.
 type Expects struct {
-	Config []InputVar `yaml:"config" json:"config"`
+	Config []inputVar `yaml:"config" json:"config"`
 }
 
+// FuncFile represents the contents of a func.yaml/json/yml
 type FuncFile struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 
@@ -75,6 +82,7 @@ type FuncFile struct {
 	Expects Expects `yaml:"expects,omitempty" json:"expects,omitempty"`
 }
 
+// ImageName returns the name of a funcfile image
 func (ff *FuncFile) ImageName() string {
 	fname := ff.Name
 	if !strings.Contains(fname, "/") {
@@ -93,6 +101,7 @@ func (ff *FuncFile) ImageName() string {
 	return fname
 }
 
+// RuntimeTag returns the runtime and tag.
 func (ff *FuncFile) RuntimeTag() (runtime, tag string) {
 	if ff.Runtime == "" {
 		return "", ""
@@ -117,6 +126,8 @@ func findFuncfile(path string) (string, error) {
 	}
 	return "", NewNotFoundError("could not find function file")
 }
+
+// FindAndParseFuncfile for a func.yaml/json/yml file.
 func FindAndParseFuncfile(path string) (fpath string, ff *FuncFile, err error) {
 	fpath, err = findFuncfile(path)
 	if err != nil {
@@ -129,10 +140,12 @@ func FindAndParseFuncfile(path string) (fpath string, ff *FuncFile, err error) {
 	return fpath, ff, err
 }
 
+// LoadFuncfile returns a parsed funcfile.
 func LoadFuncfile() (string, *FuncFile, error) {
 	return FindAndParseFuncfile(".")
 }
 
+// ParseFuncfile check file type to decode and parse.
 func ParseFuncfile(path string) (*FuncFile, error) {
 	ext := filepath.Ext(path)
 	switch ext {
@@ -186,6 +199,7 @@ func encodeFuncfileJSON(path string, ff *FuncFile) error {
 	return json.NewEncoder(f).Encode(ff)
 }
 
+// EncodeFuncfileYAML encodes function file.
 func EncodeFuncfileYAML(path string, ff *FuncFile) error {
 	b, err := yaml.Marshal(ff)
 	if err != nil {
@@ -194,6 +208,7 @@ func EncodeFuncfileYAML(path string, ff *FuncFile) error {
 	return ioutil.WriteFile(path, b, os.FileMode(0644))
 }
 
+// IsFuncFile check vaid funcfile.
 func IsFuncFile(path string, info os.FileInfo) bool {
 	if info.IsDir() {
 		return false

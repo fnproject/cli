@@ -23,12 +23,14 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Global docker variables.
 const (
 	FunctionsDockerImage     = "fnproject/fnserver"
 	FuncfileDockerRuntime    = "docker"
 	MinRequiredDockerVersion = "17.5.0"
 )
 
+// GetWd returns working directory.
 func GetWd() string {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -37,6 +39,7 @@ func GetWd() string {
 	return wd
 }
 
+// BuildFunc bumps version and builds function.
 func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
 	var err error
 	if funcfile.Version == "" {
@@ -113,6 +116,7 @@ func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string,
 	return nil
 }
 
+// RunBuild runs function from func.yaml/json/yml.
 func RunBuild(c *cli.Context, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
@@ -209,6 +213,7 @@ func dockerVersionCheck() error {
 	return nil
 }
 
+// Exists check file exists.
 func Exists(name string) bool {
 	if _, err := os.Stat(name); err != nil {
 		if os.IsNotExist(err) {
@@ -298,6 +303,7 @@ func stringToSlice(in string) string {
 	return buffer.String()
 }
 
+// ExtractEnvConfig extract env vars from configuration.
 func ExtractEnvConfig(configs []string) map[string]string {
 	c := make(map[string]string)
 	for _, v := range configs {
@@ -309,6 +315,7 @@ func ExtractEnvConfig(configs []string) map[string]string {
 	return c
 }
 
+// DockerPush pushes to docker registry.
 func DockerPush(ff *FuncFile) error {
 	err := ValidateImageName(ff.ImageName())
 	if err != nil {
@@ -350,6 +357,7 @@ func appNamePath(img string) (string, string) {
 	return img[:sep], img[sep : sep+tag]
 }
 
+// ExtractAnnotations extract annotations from command flags.
 func ExtractAnnotations(c *cli.Context) map[string]interface{} {
 	annotations := make(map[string]interface{})
 	for _, s := range c.StringSlice("annotation") {

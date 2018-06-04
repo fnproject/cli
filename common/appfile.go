@@ -21,6 +21,7 @@ var (
 	errUnexpectedFileFormat = errors.New("unexpected file format for function file")
 )
 
+// AppFile represents the contents of an app.yaml/json/yml
 type AppFile struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 	// TODO: Config here is not yet used
@@ -37,6 +38,7 @@ func findAppfile(path string) (string, error) {
 	return "", NewNotFoundError("could not find app file")
 }
 
+// LoadAppfile returns a parsed appfile.
 func LoadAppfile() (*AppFile, error) {
 	fn, err := findAppfile(".")
 	if err != nil {

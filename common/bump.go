@@ -11,8 +11,10 @@ import (
 	"github.com/urfave/cli"
 )
 
+// VType represents the version type
 type VType int
 
+//
 const (
 	Patch VType = iota
 	Minor
@@ -20,9 +22,11 @@ const (
 )
 
 var (
+	// InitialVersion - inital fn version.
 	InitialVersion = "0.0.1"
 )
 
+// BumpCommand command to build function version.
 func BumpCommand() cli.Command {
 	cmd := bumpcmd{}
 	flags := append([]cli.Flag{}, cmd.flags()...)
