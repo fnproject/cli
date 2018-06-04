@@ -1,9 +1,7 @@
-package test
+package context
 
 import (
 	"testing"
-
-	"github.com/fnproject/cli/objects/context"
 )
 
 func TestValidateContextName(t *testing.T) {
@@ -24,7 +22,7 @@ func TestValidateContextName(t *testing.T) {
 	for _, tc := range testsCases {
 		t.Run(tc.name, func(t *testing.T) {
 			errString := ""
-			if err := context.ValidateContextName(tc.name); err != nil {
+			if err := ValidateContextName(tc.name); err != nil {
 				errString = err.Error()
 			}
 			if tc.expectedErr != errString {
@@ -48,7 +46,7 @@ func TestValidateAPIURL(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.apiURL, func(t *testing.T) {
 			errString := ""
-			if err := context.ValidateAPIURL(tc.apiURL); err != nil {
+			if err := ValidateAPIURL(tc.apiURL); err != nil {
 				errString = err.Error()
 			}
 			if tc.expectedErr != errString {

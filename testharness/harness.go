@@ -163,7 +163,7 @@ func (h *CLIHarness) Cleanup() {
 
 	h.Cd("")
 	for _, app := range h.appNames {
-		h.Fn("apps", "delete", app)
+		h.Fn("delete", "apps", app)
 	}
 
 	os.RemoveAll(h.testDir)

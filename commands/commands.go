@@ -19,6 +19,7 @@ var Commands = cmd{
 	"build-server": BuildServerCommand(),
 	"bump":         common.BumpCommand(),
 	"call":         CallCommand(),
+	"configure":    ConfigureCommand(),
 	"create":       CreateCommand(),
 	"delete":       DeleteCommand(),
 	"deploy":       DeployCommand(),
@@ -29,7 +30,6 @@ var Commands = cmd{
 	"list":         ListCommand(),
 	"push":         PushCommand(),
 	"run":          run.RunCommand(),
-	"set":          SetCommand(),
 	"start":        StartCommand(),
 	"stop":         StopCommand(),
 	"test":         TestCommand(),
@@ -42,6 +42,11 @@ var CreateCmds = cmd{
 	"apps":    app.Create(),
 	"routes":  route.Create(),
 	"context": context.Create(),
+}
+
+var ConfigCmds = cmd{
+	"apps":   app.SetConfig(),
+	"routes": route.SetConfig(),
 }
 
 var ConfigListCmds = cmd{
@@ -87,10 +92,6 @@ var ListCmds = cmd{
 	"routes":  route.List(),
 	"calls":   call.List(),
 	"context": context.List(),
-}
-
-var SetCmds = cmd{
-	"config": ConfigCommand("set"),
 }
 
 var UnsetCmds = cmd{

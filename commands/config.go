@@ -11,8 +11,8 @@ func ConfigCommand(command string) cli.Command {
 		cmds = GetCommands(ConfigListCmds)
 	case "get":
 		cmds = GetCommands(ConfigGetCmds)
-	case "set":
-		cmds = GetCommands(ConfigSetCmds)
+	case "configure":
+		cmds = GetCommands(ConfigCmds)
 	case "unset":
 		cmds = GetCommands(ConfigUnsetCmds)
 	}

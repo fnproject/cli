@@ -21,12 +21,13 @@ func TestFnAppUpdateCycle(t *testing.T) {
 	h.Fn("create", "app", appName).AssertFailed()
 	h.Fn("list", "apps", appName).AssertSuccess().AssertStdoutContains(appName)
 	h.Fn("inspect", "app", appName).AssertSuccess().AssertStdoutContains(fmt.Sprintf(`"name": "%s"`, appName))
-	h.Fn("set", "config", "app", appName, "fooConfig", "barval").AssertSuccess()
+	h.Fn("config", "app", appName, "fooConfig", "barval").AssertSuccess()
 	h.Fn("get", "config", "app", appName, "fooConfig").AssertSuccess().AssertStdoutContains("barval")
 	h.Fn("list", "config", "app", appName).AssertSuccess().AssertStdoutContains("fooConfig=barval")
 	h.Fn("unset", "config", "app", appName, "fooConfig").AssertSuccess()
 	h.Fn("get", "config", "app", appName, "fooConfig").AssertFailed()
 	h.Fn("list", "config", "app", appName).AssertSuccess().AssertStdoutEmpty()
+	h.Fn("delete", "app", appName).AssertSuccess()
 }
 
 func TestSimpleFnRouteUpdateCycle(t *testing.T) {
@@ -39,7 +40,7 @@ func TestSimpleFnRouteUpdateCycle(t *testing.T) {
 	h.Fn("create", "route", appName1, "myroute", "foo/duffimage:0.0.1").AssertFailed()
 	h.Fn("inspect", "route", appName1, "myroute").AssertSuccess().AssertStdoutContains(`"path": "/myroute"`)
 	h.Fn("update", "route", appName1, "myroute", "bar/duffbeer:0.1.2").AssertSuccess()
-	h.Fn("set", "config", "route", appName1, "myroute", "confA", "valB").AssertSuccess()
+	h.Fn("config", "route", appName1, "myroute", "confA", "valB").AssertSuccess()
 	h.Fn("get", "config", "route", appName1, "myroute", "confA").AssertSuccess().AssertStdoutContains("valB")
 	h.Fn("list", "config", "route", appName1, "myroute").AssertSuccess().AssertStdoutContains("confA=valB")
 	h.Fn("unset", "config", "route", appName1, "myroute", "confA").AssertSuccess()
@@ -129,8 +130,7 @@ func TestRouteUpdateValues(t *testing.T) {
 
 }
 
-
-func TestRoutesInspectWithPrefix (t *testing.T){
+func TestRoutesInspectWithPrefix(t *testing.T) {
 	t.Parallel()
 
 	h := testharness.Create(t)

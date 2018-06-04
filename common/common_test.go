@@ -1,9 +1,7 @@
-package test
+package common
 
 import (
 	"testing"
-
-	"github.com/fnproject/cli/common"
 )
 
 func TestValidateImageName(t *testing.T) {
@@ -19,7 +17,7 @@ func TestValidateImageName(t *testing.T) {
 	for _, c := range testCases {
 		t.Run(c.name, func(t *testing.T) {
 			errString := ""
-			if err := common.ValidateImageName(c.name); err != nil {
+			if err := ValidateImageName(c.name); err != nil {
 				errString = err.Error()
 			}
 			if c.expectedErr != errString {
