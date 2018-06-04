@@ -39,6 +39,18 @@ func GetWd() string {
 	return wd
 }
 
+// GetDir returns the dir if defined as a flag in cli.Context
+func GetDir(c *cli.Context) string {
+	var dir string
+	if c.String("working-dir") != "" {
+		dir = c.String("working-dir")
+	} else {
+		dir = GetWd()
+	}
+
+	return dir
+}
+
 // BuildFunc bumps version and builds function.
 func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
 	var err error

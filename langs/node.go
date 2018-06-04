@@ -58,21 +58,16 @@ const packageJsonContent = `{
 }
 `
 
-func (lh *NodeLangHelper) GenerateBoilerplate() error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	pathToPackageJsonFile := filepath.Join(wd, "package.json")
-	pathToFuncJs := filepath.Join(wd, "func.js")
-	testFile := filepath.Join(wd, "test.json")
+func (lh *NodeLangHelper) GenerateBoilerplate(path string) error {
+	pathToPackageJsonFile := filepath.Join(path, "package.json")
+	pathToFuncJs := filepath.Join(path, "func.js")
+	testFile := filepath.Join(path, "test.json")
 
 	if exists(pathToPackageJsonFile) || exists(pathToFuncJs) {
 		return ErrBoilerplateExists
 	}
 
-	err = ioutil.WriteFile(pathToPackageJsonFile, []byte(packageJsonContent), os.FileMode(0644))
+	err := ioutil.WriteFile(pathToPackageJsonFile, []byte(packageJsonContent), os.FileMode(0644))
 	if err != nil {
 		return err
 	}

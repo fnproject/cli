@@ -59,21 +59,17 @@ func (h *RubyLangHelper) Entrypoint() (string, error) {
 
 func (h *RubyLangHelper) HasBoilerplate() bool { return true }
 
-func (h *RubyLangHelper) GenerateBoilerplate() error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
+func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
 	msg := "%s already exists, can't generate boilerplate"
-	codeFile := filepath.Join(wd, "func.rb")
+	codeFile := filepath.Join(path, "func.rb")
 	if exists(codeFile) {
 		return fmt.Errorf(msg, "func.rb")
 	}
-	gemFile := filepath.Join(wd, "Gemfile")
+	gemFile := filepath.Join(path, "Gemfile")
 	if exists(gemFile) {
 		return fmt.Errorf(msg, "Gemfile")
 	}
-	testFile := filepath.Join(wd, "test.json")
+	testFile := filepath.Join(path, "test.json")
 	if exists(testFile) {
 		return fmt.Errorf(msg, "test.json")
 	}
