@@ -46,7 +46,7 @@ func newFn() *cli.App {
 		Name:  "version",
 		Usage: "print only the version",
 	}
-	cli.AppHelpTemplate = `hello {{.Name}} {{.Version}}{{if .Description}}
+	cli.AppHelpTemplate = `{{.Name}} {{.Version}}{{if .Description}}
 
 {{.Description}}{{end}}
 
