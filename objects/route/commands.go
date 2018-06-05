@@ -11,7 +11,7 @@ func Create() cli.Command {
 	return cli.Command{
 		Name:      "routes",
 		ShortName: "route",
-		Usage:     "Create a route in an application",
+		Usage:     "create a route in an application",
 		Aliases:   []string{"r"},
 		Before: func(c *cli.Context) error {
 			var err error
@@ -67,7 +67,7 @@ func Delete() cli.Command {
 	return cli.Command{
 		Name:      "routes",
 		ShortName: "route",
-		Usage:     "Delete a route from an application `app`",
+		Usage:     "delete a route from an application `app`",
 		Aliases:   []string{"r"},
 		Before: func(c *cli.Context) error {
 			var err error
@@ -111,7 +111,7 @@ func Update() cli.Command {
 	return cli.Command{
 		Name:      "routes",
 		ShortName: "route",
-		Usage:     "Update a Route in an `app`",
+		Usage:     "update a route in an `app`",
 		Aliases:   []string{"r"},
 		Before: func(c *cli.Context) error {
 			var err error
