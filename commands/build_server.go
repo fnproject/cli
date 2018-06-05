@@ -24,7 +24,7 @@ func BuildServerCommand() cli.Command {
 	return cli.Command{
 		Name:     "build-server",
 		Usage:    "build custom fn server",
-		Category: "DEVELOPMENT COMMANDS",
+		Category: "SERVER COMMANDS",
 		Flags:    flags,
 		Action:   cmd.buildServer,
 	}
