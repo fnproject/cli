@@ -10,7 +10,7 @@ func ConfigureCommand() cli.Command {
 		Name:        "config",
 		Aliases:     []string{"cf"},
 		Usage:       "set configuration for an object",
-		Category:    "DEVELOPMENT COMMANDS",
+		Category:    "MANAGEMENT COMMANDS",
 		ArgsUsage:   "<command>",
 		Subcommands: GetCommands(ConfigCmds),
 	}
