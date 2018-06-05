@@ -12,7 +12,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// BuildServerCmd represents
 type BuildServerCmd struct {
 	verbose bool
 	noCache bool
