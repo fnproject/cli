@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/fnproject/cli/commands"
+	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/langs"
 	"github.com/urfave/cli"
 	yaml "gopkg.in/yaml.v2"
@@ -39,7 +41,7 @@ func TestInit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not open %s for parsing. Error: %v", ffname, err)
 	}
-	ff := &funcfile{}
+	ff := &common.FuncFile{}
 	err = yaml.Unmarshal(b, ff)
 	if err != nil {
 		t.Fatalf("could not parse %s. Error: %v", ffname, err)
@@ -57,7 +59,7 @@ func TestInit(t *testing.T) {
 }
 
 func funcNameValidation(name string, t *testing.T) {
-	err := validateFuncName("fooFunc")
+	err := commands.ValidateFuncName("fooFunc")
 	if err == nil {
 		t.Error("Expected validation error for function name")
 	}

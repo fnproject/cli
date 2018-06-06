@@ -4,33 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
+	"github.com/fnproject/cli/commands"
 	"github.com/fnproject/cli/config"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
-
-var aliases = map[string]cli.Command{
-	"build":  build(),
-	"bump":   bump(),
-	"deploy": deploy(),
-	"push":   push(),
-	"run":    run(),
-	"call":   call(),
-	"calls":  calls(),
-	"logs":   logs(),
-}
-
-func aliasesFn() []cli.Command {
-	cmds := []cli.Command{}
-	for alias, cmd := range aliases {
-		cmd.Name = alias
-		cmd.Hidden = true
-		cmds = append(cmds, cmd)
-	}
-	return cmds
-}
 
 func newFn() *cli.App {
 	app := cli.NewApp()
@@ -88,24 +69,14 @@ LEARN MORE:
 	app.CommandNotFound = func(c *cli.Context, cmd string) {
 		fmt.Fprintf(os.Stderr, "Command not found: \"%v\" -- see `fn --help` for more information.\n", cmd)
 	}
-	app.Commands = []cli.Command{
-		startCmd(),
-		stopCmd(),
-		updateCmd(),
-		initFn(),
-		apps(),
-		routes(),
-		images(),
-		lambda(),
-		version(),
-		calls(),
-		deploy(),
-		logs(),
-		testfn(),
-		buildServer(),
-		contextCmd(),
+
+	app.Commands = append(app.Commands, commands.GetCommands(commands.Commands)...)
+	app.Commands = append(app.Commands, VersionCommand())
+	app.Action = func(c *cli.Context) {
+		cli.ShowSubcommandHelp(c)
 	}
-	app.Commands = append(app.Commands, aliasesFn()...)
+	sort.Sort(cli.FlagsByName(app.Flags))
+	sort.Sort(cli.CommandsByName(app.Commands))
 
 	prepareCmdArgsValidation(app.Commands)
 
@@ -165,12 +136,12 @@ func commandArgOverrides(c *cli.Context) {
 
 func main() {
 	app := newFn()
-	
+
 	err := app.Run(os.Args)
 	if err != nil {
 		// TODO: this doesn't seem to get called even when an error returns from a command, but maybe urfave is doing a non zero exit anyways? nope: https://github.com/urfave/cli/issues/610
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-		fmt.Fprintf(os.Stderr,"Client version: %s\n" , Version)
+		fmt.Fprintf(os.Stderr, "Client version: %s\n", Version)
 		os.Exit(1)
 	}
 }
