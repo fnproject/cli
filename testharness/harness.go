@@ -268,6 +268,8 @@ func (h *CLIHarness) FnWithInput(input string, args ...string) *CmdResult {
 
 	stdOut := bytes.Buffer{}
 	stdErr := bytes.Buffer{}
+
+	args = append([]string{"--verbose"}, args...)
 	cmd := exec.Command(h.cliPath, args...)
 	cmd.Stderr = &stdErr
 	cmd.Stdout = &stdOut
