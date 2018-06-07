@@ -213,6 +213,7 @@ func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, metho
 	if requestURL = viper.GetString("api-url"); requestURL == "" {
 		requestURL = LocalTestURL
 	}
+
 	requestURL = requestURL + "/" + TestApp + TestRoute
 
 	if format == DefaultFormat {
