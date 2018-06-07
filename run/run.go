@@ -181,7 +181,6 @@ func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, metho
 		}
 	}
 
-	fmt.Println("Content type: ", contentType)
 	to := int32(30)
 	if ff.Timeout != nil {
 		to = *ff.Timeout
