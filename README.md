@@ -25,7 +25,7 @@ See the Fn [Quickstart](https://github.com/fnproject/fn/blob/master/README.md) f
 
 The Fn CLI command structure has changed as of version 0.4.109
 
-Please refer to the [Fn CLI Wiki](https://github.com/fnproject/cli/wiki) page for information on why we chose this structure and a more detail look at the structure.
+Please refer to the [Fn CLI Wiki](https://github.com/fnproject/cli/wiki) page for information on why we chose this structure and for more details.
 
 ### Commands that have not changed:
 ```
