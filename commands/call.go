@@ -52,10 +52,8 @@ func (cl *callCmd) Call(c *cli.Context) error {
 		contentType = c.String("content-type")
 	} else {
 		_, ff, err := common.FindAndParseFuncfile(wd)
-		if err == nil {
-			if ff.ContentType != "" {
-				contentType = ff.ContentType
-			}
+		if err == nil && ff.ContentType != "" {
+			contentType = ff.ContentType
 		}
 	}
 
