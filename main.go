@@ -68,13 +68,12 @@ LEARN MORE:
 
 	app.CommandNotFound = func(c *cli.Context, cmd string) {
 		fmt.Fprintf(os.Stderr, "Command not found: \"%v\" -- see `fn --help` for more information.\n", cmd)
+		fmt.Fprintf(os.Stderr, "Note: the fn CLI command structure has changed, change your command to use the new structure.\n")
 	}
 
 	app.Commands = append(app.Commands, commands.GetCommands(commands.Commands)...)
 	app.Commands = append(app.Commands, VersionCommand())
-	app.Action = func(c *cli.Context) {
-		cli.ShowSubcommandHelp(c)
-	}
+
 	sort.Sort(cli.FlagsByName(app.Flags))
 	sort.Sort(cli.CommandsByName(app.Commands))
 
