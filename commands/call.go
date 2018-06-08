@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/fnproject/cli/client"
+	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/objects/route"
 	"github.com/fnproject/cli/run"
 	fnclient "github.com/fnproject/fn_go/client"
@@ -40,8 +41,21 @@ func CallCommand() cli.Command {
 }
 
 func (cl *callCmd) Call(c *cli.Context) error {
+	var contentType string
+
 	appName := c.Args().Get(0)
 	route := route.WithoutSlash(c.Args().Get(1))
 	content := run.Stdin()
-	return client.CallFN(cl.provider, appName, route, content, os.Stdout, c.String("method"), c.StringSlice("e"), c.String("content-type"), c.Bool("display-call-id"))
+	wd := common.GetWd()
+
+	if c.String("content-type") != "" {
+		contentType = c.String("content-type")
+	} else {
+		_, ff, err := common.FindAndParseFuncfile(wd)
+		if err == nil && ff.ContentType != "" {
+			contentType = ff.ContentType
+		}
+	}
+
+	return client.CallFN(cl.provider, appName, route, content, os.Stdout, c.String("method"), c.StringSlice("e"), contentType, c.Bool("display-call-id"))
 }

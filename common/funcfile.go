@@ -56,14 +56,15 @@ type FuncFile struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 
 	// Build params
-	Version    string   `yaml:"version,omitempty" json:"version,omitempty"`
-	Runtime    string   `yaml:"runtime,omitempty" json:"runtime,omitempty"`
-	Entrypoint string   `yaml:"entrypoint,omitempty" json:"entrypoint,omitempty"`
-	Cmd        string   `yaml:"cmd,omitempty" json:"cmd,omitempty"`
-	Build      []string `yaml:"build,omitempty" json:"build,omitempty"`
-	Tests      []FFTest `yaml:"tests,omitempty" json:"tests,omitempty"`
-	BuildImage string   `yaml:"build_image,omitempty" json:"build_image,omitempty"` // Image to use as base for building
-	RunImage   string   `yaml:"run_image,omitempty" json:"run_image,omitempty"`     // Image to use for running
+	Version     string   `yaml:"version,omitempty" json:"version,omitempty"`
+	Runtime     string   `yaml:"runtime,omitempty" json:"runtime,omitempty"`
+	Entrypoint  string   `yaml:"entrypoint,omitempty" json:"entrypoint,omitempty"`
+	Cmd         string   `yaml:"cmd,omitempty" json:"cmd,omitempty"`
+	Build       []string `yaml:"build,omitempty" json:"build,omitempty"`
+	Tests       []FFTest `yaml:"tests,omitempty" json:"tests,omitempty"`
+	BuildImage  string   `yaml:"build_image,omitempty" json:"build_image,omitempty"` // Image to use as base for building
+	RunImage    string   `yaml:"run_image,omitempty" json:"run_image,omitempty"`     // Image to use for running
+	ContentType string   `yaml:"content_type,omitempty" json:"content_type,omitempty"`
 
 	// Route params
 	// TODO embed models.Route
