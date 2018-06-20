@@ -45,6 +45,22 @@ func (h *GoLangHelper) DockerfileBuildCmds() []string {
 	vendor := exists("vendor/")
 	// skip dep tool install if vendor is there
 	if !vendor && exists("Gopkg.toml") {
+		// Add the proxy if required
+		if proxy, ok := os.LookupEnv("http_proxy"); ok {
+			r = append(r, "ARG http_proxy=" + proxy)
+		} else if proxy, ok := os.LookupEnv("HTTP_PROXY"); ok {
+			r = append(r, "ARG http_proxy=" + proxy)
+		}
+		if proxy, ok := os.LookupEnv("https_proxy"); ok {
+			r = append(r, "ARG https_proxy=" + proxy)
+		} else if proxy, ok := os.LookupEnv("HTTPS_PROXY"); ok {
+			r = append(r, "ARG https_proxy=" + proxy)
+		}
+		if proxy, ok := os.LookupEnv("no_proxy"); ok {
+			r = append(r, "ARG no_proxy=" + proxy)
+		} else if proxy, ok := os.LookupEnv("NO_PROXY"); ok {
+			r = append(r, "ARG no_proxy=" + proxy)
+		}
 		r = append(r, "RUN go get -u github.com/golang/dep/cmd/dep")
 		if exists("Gopkg.lock") {
 			r = append(r, "ADD Gopkg.* /go/src/func/")
