@@ -39,22 +39,22 @@ func TestInit(t *testing.T) {
 	ffname := "func.yaml"
 	b, err := ioutil.ReadFile(ffname)
 	if err != nil {
-		t.Fatalf("could not open %s for parsing. Error: %v", ffname, err)
+		t.Fatalf("Could not open %s for parsing. Error: %v", ffname, err)
 	}
 	ff := &common.FuncFile{}
 	err = yaml.Unmarshal(b, ff)
 	if err != nil {
-		t.Fatalf("could not parse %s. Error: %v", ffname, err)
+		t.Fatalf("Could not parse %s. Error: %v", ffname, err)
 	}
 	// should have version, runtime and entrypoint
 	if ff.Version == "" {
-		t.Errorf("no version found in generated %s", ffname)
+		t.Errorf("No version found in generated %s", ffname)
 	}
 	if ff.Runtime == "" {
-		t.Errorf("no runtime found in generated %s", ffname)
+		t.Errorf("No runtime found in generated %s", ffname)
 	}
 	if ff.Entrypoint == "" {
-		t.Errorf("no entrypoint found in generated %s", ffname)
+		t.Errorf("No entrypoint found in generated %s", ffname)
 	}
 }
 

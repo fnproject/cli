@@ -29,7 +29,7 @@ func createCloudEventInput(callID, contentType, deadline string, method string, 
 	if stdin != nil {
 		input, err = ioutil.ReadAll(stdin)
 		if err != nil {
-			return "", fmt.Errorf("error reading from stdin: %v", err)
+			return "", fmt.Errorf("Error reading from stdin: %v", err)
 		}
 	}
 
@@ -65,7 +65,7 @@ func createCloudEventInput(callID, contentType, deadline string, method string, 
 	}
 	err = enc.Encode(in)
 	if err != nil {
-		return "", fmt.Errorf("error encoding json: %v", err)
+		return "", fmt.Errorf("Error encoding json: %v", err)
 	}
 	body := b.String()
 	return body, nil
@@ -84,7 +84,7 @@ func stdoutCloudEvent(stdout io.Writer) io.Writer {
 			jsout := &CloudEvent{}
 			err = dec.Decode(jsout)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, "error decoding", err)
+				fmt.Fprintln(os.Stderr, "Error decoding", err)
 				return
 			}
 			if jsout.ContentType == "application/json" {

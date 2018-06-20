@@ -91,7 +91,7 @@ func (c *callsCmd) list(ctx *cli.Context) error {
 
 	n := ctx.Int64("n")
 	if n < 0 {
-		return errors.New("number of calls: negative value not allowed")
+		return errors.New("Number of calls: negative value not allowed")
 	}
 
 	var resCalls []*models.Call

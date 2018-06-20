@@ -17,10 +17,11 @@ import (
 // StartCommand returns start server cli.command
 func StartCommand() cli.Command {
 	return cli.Command{
-		Name:     "start",
-		Usage:    "starts a local server",
-		Category: "SERVER COMMANDS",
-		Action:   start,
+		Name:        "start",
+		Usage:       "Start a local Fn server by downloading its docker image",
+		Category:    "SERVER COMMANDS",
+		Description: "This is the description",
+		Action:      start,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "log-level",
@@ -76,7 +77,7 @@ func start(c *cli.Context) error {
 	cmd.Stderr = os.Stderr
 	err := cmd.Start()
 	if err != nil {
-		log.Fatalln("starting command failed:", err)
+		log.Fatalln("Starting command failed:", err)
 	}
 
 	done := make(chan error, 1)
@@ -90,15 +91,15 @@ func start(c *cli.Context) error {
 	for {
 		select {
 		case <-sigC:
-			log.Println("interrupt caught, exiting")
+			log.Println("Interrupt caught, exiting")
 			err = cmd.Process.Signal(syscall.SIGTERM)
 			if err != nil {
-				log.Println("error: could not kill process:", err)
+				log.Println("Error: could not kill process:", err)
 				return err
 			}
 		case err := <-done:
 			if err != nil {
-				log.Println("error: processed finished with error", err)
+				log.Println("Error: processed finished with error", err)
 			}
 		}
 		return err

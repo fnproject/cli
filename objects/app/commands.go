@@ -10,8 +10,10 @@ func Create() cli.Command {
 	return cli.Command{
 		Name:      "apps",
 		ShortName: "app",
-		Usage:     "create a new application",
-		Aliases:   []string{"a"},
+		Usage:     "Create a new application",
+		Category:  "MANAGEMENT COMMAND",
+		Description: "This command creates a new application.\n		Fn supports grouping functions into a set that defines an application (or API), making it easy to organize and deploy.\n 		Applications define a namespace to organize functions and can contain configuration values that are shared across all functions in that application.",
+		Aliases: []string{"a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -20,16 +22,16 @@ func Create() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app>",
+		ArgsUsage: "<app_name>",
 		Action:    a.create,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
 				Name:  "config",
-				Usage: "application configuration",
+				Usage: "Application configuration",
 			},
 			cli.StringSliceFlag{
 				Name:  "annotation",
-				Usage: "application annotations",
+				Usage: "Application annotations",
 			},
 		},
 	}
@@ -40,7 +42,8 @@ func List() cli.Command {
 	return cli.Command{
 		Name:      "apps",
 		ShortName: "app",
-		Usage:     "list all applications",
+		Usage:     "List all created applications",
+		Category:  "MANAGEMENT COMMANDS",
 		Aliases:   []string{"a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
@@ -54,11 +57,11 @@ func List() cli.Command {
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "cursor",
-				Usage: "pagination cursor",
+				Usage: "Pagination cursor",
 			},
 			cli.Int64Flag{
 				Name:  "n",
-				Usage: "number of apps to return",
+				Usage: "Number of apps to return",
 				Value: int64(100),
 			},
 		},
@@ -68,10 +71,12 @@ func List() cli.Command {
 func Delete() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:      "apps",
-		ShortName: "app",
-		Usage:     "delete an application",
-		Aliases:   []string{"a"},
+		Name:        "apps",
+		ShortName:   "app",
+		Usage:       "Delete an application",
+		Category:    "MANAGEMENT COMMANDS",
+		Description: "This command deletes a created application.",
+		Aliases:     []string{"a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -89,7 +94,8 @@ func Inspect() cli.Command {
 	return cli.Command{
 		Name:      "apps",
 		ShortName: "app",
-		Usage:     "retrieve one or all apps properties",
+		Usage:     "Retrieve one or all apps properties",
+		Category:  "MANAGEMENT COMMANDS",
 		Aliases:   []string{"a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
@@ -99,7 +105,7 @@ func Inspect() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app> [property.[key]]",
+		ArgsUsage: "<app_name> [property.[key]]",
 		Action:    a.inspect,
 	}
 }
@@ -109,7 +115,8 @@ func Update() cli.Command {
 	return cli.Command{
 		Name:      "apps",
 		ShortName: "app",
-		Usage:     "update an application",
+		Usage:     "Update an application",
+		Category:  "MANAGEMENT COMMANDS",
 		Aliases:   []string{"a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
@@ -119,16 +126,16 @@ func Update() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app>",
+		ArgsUsage: "<app_name>",
 		Action:    a.update,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
 				Name:  "config,c",
-				Usage: "route configuration",
+				Usage: "Route configuration",
 			},
 			cli.StringSliceFlag{
 				Name:  "annotation",
-				Usage: "application annotations",
+				Usage: "Application annotations",
 			},
 		},
 	}
@@ -139,7 +146,7 @@ func SetConfig() cli.Command {
 	return cli.Command{
 		Name:      "apps",
 		ShortName: "app",
-		Usage:     "store a configuration key for this application",
+		Usage:     "Store a configuration key for this application",
 		Aliases:   []string{"a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
@@ -149,7 +156,7 @@ func SetConfig() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app> <key> <value>",
+		ArgsUsage: "<app_name> <key> <value>",
 		Action:    a.setConfig,
 	}
 }
@@ -159,7 +166,7 @@ func ListConfig() cli.Command {
 	return cli.Command{
 		Name:      "apps",
 		ShortName: "app",
-		Usage:     "list configuration key/value pairs for this application",
+		Usage:     "List configuration key/value pairs for this application",
 		Aliases:   []string{"a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
@@ -169,7 +176,7 @@ func ListConfig() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app>",
+		ArgsUsage: "<app_name>",
 		Action:    a.listConfig,
 	}
 }
@@ -179,7 +186,7 @@ func GetConfig() cli.Command {
 	return cli.Command{
 		Name:      "apps",
 		ShortName: "app",
-		Usage:     "inspect configuration key for this application",
+		Usage:     "Inspect configuration key for this application",
 		Aliases:   []string{"a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
@@ -189,7 +196,7 @@ func GetConfig() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app> <key>",
+		ArgsUsage: "<app_name> <key>",
 		Action:    a.getConfig,
 	}
 }
@@ -199,7 +206,7 @@ func UnsetConfig() cli.Command {
 	return cli.Command{
 		Name:      "apps",
 		ShortName: "app",
-		Usage:     "remove a configuration key for this application",
+		Usage:     "Remove a configuration key for this application",
 		Aliases:   []string{"a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
@@ -209,7 +216,7 @@ func UnsetConfig() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app> <key>",
+		ArgsUsage: "<app_name> <key>",
 		Action:    a.unsetConfig,
 	}
 }

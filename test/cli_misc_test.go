@@ -34,7 +34,7 @@ func fnApiUrlVariations(t *testing.T) []string {
 	parsed, err := url.Parse(srcUrl)
 
 	if err != nil {
-		t.Fatalf("invalid/unparsable TEST_API_URL %s: %s", srcUrl, err)
+		t.Fatalf("Invalid/unparsable TEST_API_URL %s: %s", srcUrl, err)
 	}
 
 	var cases []string
@@ -49,7 +49,7 @@ func fnApiUrlVariations(t *testing.T) []string {
 		cases = append(cases, "https://"+parsed.Host+"/v1")
 		cases = append(cases, "https://"+parsed.Host)
 	} else {
-		log.Fatalf("unsupported url scheme for testing %s: %s", srcUrl, parsed.Scheme)
+		log.Fatalf("Unsupported url scheme for testing %s: %s", srcUrl, parsed.Scheme)
 	}
 
 	return cases
@@ -134,7 +134,7 @@ func TestAllMainCommandsExist(t *testing.T) {
 	for _, cmd := range testCommands {
 		res := h.Fn(cmd)
 		if strings.Contains(res.Stderr, "command not found") {
-			t.Errorf("expected command %s to exist", cmd)
+			t.Errorf("Expected command %s to exist", cmd)
 		}
 	}
 }
@@ -168,7 +168,7 @@ func TestBump(t *testing.T) {
 	expectFuncYamlVersion := func(v string) {
 		funcYaml := h.GetFile("func.yaml")
 		if !strings.Contains(funcYaml, fmt.Sprintf("version: %s", v)) {
-			t.Fatalf("exepected version to be %s but got %s", v, funcYaml)
+			t.Fatalf("Exepected version to be %s but got %s", v, funcYaml)
 		}
 
 	}

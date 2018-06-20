@@ -18,7 +18,7 @@ var (
 		"app.json",
 	}
 
-	errUnexpectedFileFormat = errors.New("unexpected file format for function file")
+	errUnexpectedFileFormat = errors.New("Unexpected file format for function file")
 )
 
 // AppFile defines the internal structure of a app.yaml/json/yml
@@ -35,7 +35,7 @@ func findAppfile(path string) (string, error) {
 			return fullfn, nil
 		}
 	}
-	return "", NewNotFoundError("could not find app file")
+	return "", NewNotFoundError("Could not find app file")
 }
 
 // LoadAppfile returns a parsed appfile.
@@ -61,7 +61,7 @@ func parseAppfile(path string) (*AppFile, error) {
 func decodeAppfileJSON(path string) (*AppFile, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", path, err)
+		return nil, fmt.Errorf("Could not open %s for parsing. Error: %v", path, err)
 	}
 	ff := &AppFile{}
 	err = json.NewDecoder(f).Decode(ff)
@@ -71,7 +71,7 @@ func decodeAppfileJSON(path string) (*AppFile, error) {
 func decodeAppfileYAML(path string) (*AppFile, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", path, err)
+		return nil, fmt.Errorf("Could not open %s for parsing. Error: %v", path, err)
 	}
 	ff := &AppFile{}
 	err = yaml.Unmarshal(b, ff)

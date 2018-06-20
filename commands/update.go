@@ -9,10 +9,11 @@ func UpdateCommand() cli.Command {
 	return cli.Command{
 		Name:        "update",
 		Aliases:     []string{"up"},
-		Usage:       "update command",
+		Usage:       "Update elements of created object",
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
-		ArgsUsage:   "<command>",
+		ArgsUsage:   "<subcommand>",
+		Description: "This is the description",
 		Subcommands: GetCommands(UpdateCmds),
 	}
 }

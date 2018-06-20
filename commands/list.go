@@ -9,10 +9,11 @@ func ListCommand() cli.Command {
 	return cli.Command{
 		Name:        "list",
 		Aliases:     []string{"ls"},
-		Usage:       "list command",
-		Category:    "MANAGEMENT COMMANDS",
+		Usage:       "Return a list of created objects",
+		Category:    "MANAGEMENT COMMAND",
 		Hidden:      false,
-		ArgsUsage:   "<command>",
+		ArgsUsage:   "<subcommand>",
+		Description: "This is the description",
 		Subcommands: GetCommands(ListCmds),
 	}
 }

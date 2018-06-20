@@ -8,10 +8,12 @@ import (
 func Get() cli.Command {
 	l := logsCmd{}
 	return cli.Command{
-		Name:      "logs",
-		ShortName: "log",
-		Usage:     "get logs for a call. Must provide call_id or last (l) to retrieve the most recent calls logs.",
-		Aliases:   []string{"lg"},
+		Name:        "logs",
+		ShortName:   "log",
+		Usage:       "Get logs for a call. Must provide call_id or last (l) to retrieve the most recent calls logs.",
+		Aliases:     []string{"lg"},
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This is the description",
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -20,7 +22,7 @@ func Get() cli.Command {
 			l.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app> <call-id>",
+		ArgsUsage: "<app_name> <call-id>",
 		Action:    l.get,
 	}
 }

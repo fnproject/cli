@@ -75,7 +75,7 @@ EXITSTATE: %s
 //AssertSuccess checks the command was success
 func (cr *CmdResult) AssertSuccess() *CmdResult {
 	if !cr.Success {
-		cr.t.Fatalf("command failed but should have succeeded: \n%s", cr.String())
+		cr.t.Fatalf("Command failed but should have succeeded: \n%s", cr.String())
 	}
 	return cr
 }
@@ -99,7 +99,7 @@ func (cr *CmdResult) AssertStderrContains(match string) *CmdResult {
 // AssertFailed asserts that the command did not succeed
 func (cr *CmdResult) AssertFailed() *CmdResult {
 	if cr.Success {
-		cr.t.Fatalf("command succeeded but should have failed: \n%s", cr.String())
+		cr.t.Fatalf("Command succeeded but should have failed: \n%s", cr.String())
 	}
 	return cr
 }
@@ -139,7 +139,7 @@ func Create(t *testing.T) *CLIHarness {
 	if cliPath == "" {
 		wd, err := os.Getwd()
 		if err != nil {
-			t.Fatalf("failed to get CWD, %v", err)
+			t.Fatalf("Failed to get CWD, %v", err)
 		}
 
 		cliPath = path.Join(wd, "../fn")
@@ -194,13 +194,13 @@ func copyAll(src, dest string) error {
 		os.MkdirAll(dest, srcinfo.Mode())
 		directory, err := os.Open(src)
 		if err != nil {
-			return fmt.Errorf("failed to open directory %s: %v ", src, err)
+			return fmt.Errorf("Failed to open directory %s: %v ", src, err)
 
 		}
 
 		objects, err := directory.Readdir(-1)
 		if err != nil {
-			return fmt.Errorf("failed to read directory %s: %v ", src, err)
+			return fmt.Errorf("Failed to read directory %s: %v ", src, err)
 		}
 
 		for _, obj := range objects {
@@ -225,12 +225,12 @@ func copyAll(src, dest string) error {
 
 		b, err := ioutil.ReadFile(src)
 		if err != nil {
-			return fmt.Errorf("failed to read src file %s: %v ", src, err)
+			return fmt.Errorf("Failed to read src file %s: %v ", src, err)
 		}
 
 		err = ioutil.WriteFile(dest, b, srcinfo.Mode())
 		if err != nil {
-			return fmt.Errorf("failed to read dst file %s: %v ", dest, err)
+			return fmt.Errorf("Failed to read dst file %s: %v ", dest, err)
 		}
 	}
 	return nil
@@ -243,7 +243,7 @@ func (h *CLIHarness) CopyFiles(files map[string]string) {
 		h.pushHistoryf("cp -r %s %s", src, dest)
 		err := copyAll(src, path.Join(h.testDir, dest))
 		if err != nil {
-			h.t.Fatalf("failed to copy %s -> %s : %v", src, dest, err)
+			h.t.Fatalf("Failed to copy %s -> %s : %v", src, dest, err)
 		}
 	}
 
@@ -256,7 +256,7 @@ func (h *CLIHarness) WithFile(rPath string, content string, perm os.FileMode) {
 
 	err := ioutil.WriteFile(fullPath, []byte(content), perm)
 	if err != nil {
-		h.t.Fatalf("failed to create file %s", fullPath)
+		h.t.Fatalf("Failed to create file %s", fullPath)
 	}
 	h.pushHistoryf("echo `%s` > %s", content, fullPath)
 
@@ -284,7 +284,7 @@ func (h *CLIHarness) FnWithInput(input string, args ...string) *CmdResult {
 	for _, e := range os.Environ() {
 		m := envRegex.FindStringSubmatch(e)
 		if len(m) != 3 {
-			panic("invalid env entry")
+			panic("Invalid env entry")
 		}
 		mergedEnv[m[1]] = m[2]
 	}
@@ -440,13 +440,13 @@ func (h *CLIHarness) FileAppend(file string, val string) {
 	fileV, err := ioutil.ReadFile(filePath)
 
 	if err != nil {
-		h.t.Fatalf("failed to read file %s: %v", file, err)
+		h.t.Fatalf("Failed to read file %s: %v", file, err)
 	}
 
 	newV := string(fileV) + val
 	err = ioutil.WriteFile(filePath, []byte(newV), 0555)
 	if err != nil {
-		h.t.Fatalf("failed to write appended file %s", err)
+		h.t.Fatalf("Failed to write appended file %s", err)
 	}
 
 	h.pushHistoryf("echo '%s' >> %s", val, filePath)

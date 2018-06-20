@@ -9,10 +9,11 @@ func DeleteCommand() cli.Command {
 	return cli.Command{
 		Name:        "delete",
 		Aliases:     []string{"d"},
-		Usage:       "delete command",
+		Usage:       "Delete an object",
 		Category:    "MANAGEMENT COMMANDS",
+		Description: "This is the description",
 		Hidden:      false,
-		ArgsUsage:   "<command>",
+		ArgsUsage:   "<subcommand>",
 		Subcommands: GetCommands(DeleteCmds),
 	}
 }

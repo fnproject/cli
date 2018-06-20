@@ -28,12 +28,13 @@ type testStruct struct {
 func TestCommand() cli.Command {
 	cmd := testcmd{}
 	return cli.Command{
-		Name:     "test",
-		Usage:    "run functions test if present",
-		Aliases:  []string{"t"},
-		Category: "DEVELOPMENT COMMANDS",
-		Flags:    cmd.flags(),
-		Action:   cmd.test,
+		Name:        "test",
+		Usage:       "Run functions test if present",
+		Aliases:     []string{"t"},
+		Category:    "DEVELOPMENT COMMANDS",
+		Description: "This is the description",
+		Flags:       cmd.flags(),
+		Action:      cmd.test,
 		Before: func(cxt *cli.Context) error {
 			prov, err := client.CurrentProvider()
 			if err != nil {
@@ -56,12 +57,12 @@ func (t *testcmd) flags() []cli.Flag {
 	return []cli.Flag{
 		cli.StringFlag{
 			Name:        "remote",
-			Usage:       "run tests against a remote fn server",
+			Usage:       "Run tests against a remote fn server",
 			Destination: &t.remote,
 		},
 		cli.BoolFlag{
 			Name:  "all",
-			Usage: "if in root directory containing `app.yaml`, this will deploy all functions",
+			Usage: "If in root directory containing `app.yaml`, this will deploy all functions",
 		},
 	}
 }
@@ -113,7 +114,7 @@ func (t *testcmd) testAll(c *cli.Context, wd string) error {
 		}
 		tc, ec, err := t.testSingle(c, dir)
 		if err != nil {
-			fmt.Printf("test error on %s: %v\n", path, err)
+			fmt.Printf("Test error on %s: %v\n", path, err)
 			// TOOD: store these logs and print them at the end?
 		}
 		testCount += tc
@@ -157,7 +158,7 @@ func (t *testcmd) testSingle(c *cli.Context, wd string) (totalTests, errorCount 
 	if common.Exists(tfile) {
 		f, err := os.Open(tfile)
 		if err != nil {
-			return 0, 0, fmt.Errorf("could not open %s for parsing. %v", tfile, err)
+			return 0, 0, fmt.Errorf("Could not open %s for parsing. %v", tfile, err)
 		}
 		ts := &testStruct{}
 		err = json.NewDecoder(f).Decode(ts)
@@ -170,7 +171,7 @@ func (t *testcmd) testSingle(c *cli.Context, wd string) (totalTests, errorCount 
 		tests = ff.Tests
 	}
 	if len(tests) == 0 {
-		return 0, 0, errors.New("no tests found for this function")
+		return 0, 0, errors.New("No tests found for this function")
 	}
 
 	runtest := runlocaltest
@@ -193,7 +194,7 @@ func (t *testcmd) testSingle(c *cli.Context, wd string) (totalTests, errorCount 
 				fmt.Println("\t\t", scanner.Text())
 			}
 			if err := scanner.Err(); err != nil {
-				fmt.Fprintln(os.Stderr, "reading test result:", err)
+				fmt.Fprintln(os.Stderr, "Reading test result:", err)
 				break
 			}
 		} else {
@@ -242,19 +243,19 @@ func runlocaltest(ff *common.FuncFile, in *common.InputMap, expectedOut *common.
 
 	out := stdout.String()
 	if expectedOut == nil && out != "" {
-		return fmt.Errorf("unexpected output found: %s", out)
+		return fmt.Errorf("Unexpected output found: %s", out)
 	}
 	if gomega.Expect(out).To(gomega.MatchJSON(expectedString)) {
 		// PASS!
 		return nil
 	}
 
-	return fmt.Errorf("mismatched output found.\nexpected:\n%s\ngot:\n%s\nlogs:\n%s", expectedString, out, stderr.String())
+	return fmt.Errorf("Mismatched output found.\nexpected:\n%s\ngot:\n%s\nlogs:\n%s", expectedString, out, stderr.String())
 }
 
 func (t *testcmd) runremotetest(ff *common.FuncFile, in *common.InputMap, expectedOut *common.OutputMap, expectedErr *string, envVars []string) error {
 	if ff.Path == "" {
-		return errors.New("execution of tests on remote server demand that this function has a `path`")
+		return errors.New("Execution of tests on remote server demand that this function has a `path`")
 	}
 
 	inBytes, err := json.Marshal(in)
@@ -277,7 +278,7 @@ func (t *testcmd) runremotetest(ff *common.FuncFile, in *common.InputMap, expect
 
 	out := stdout.String()
 	if expectedOut == nil && out != "" {
-		return fmt.Errorf("unexpected output found: %s", out)
+		return fmt.Errorf("Unexpected output found: %s", out)
 	}
 	if gomega.Expect(out).To(gomega.MatchJSON(expectedString)) {
 		// PASS!

@@ -88,7 +88,7 @@ func CallFN(provider provider.Provider, appName string, route string, content io
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("error running route: %s", err)
+		return fmt.Errorf("Error running route: %s", err)
 	}
 	// for sync calls
 	if call_id, found := resp.Header[FN_CALL_ID]; found {
@@ -117,7 +117,7 @@ func CallFN(provider provider.Provider, appName string, route string, content io
 
 	if resp.StatusCode >= 400 {
 		// TODO: parse out error message
-		return fmt.Errorf("error calling function: status %v", resp.StatusCode)
+		return fmt.Errorf("Error calling function: status %v", resp.StatusCode)
 	}
 
 	return nil
