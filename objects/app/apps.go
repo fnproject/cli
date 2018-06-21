@@ -228,10 +228,14 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 	appName := c.Args().First()
 	prop := c.Args().Get(1)
 
-	resp, err := a.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
+	params := &apiapps.GetAppsAppParams{
 		Context: context.Background(),
 		App:     appName,
-	})
+	}
+
+	resp, err := a.client.Apps.GetAppsApp(params)
+
+	fmt.Println("Resp: ", resp)
 
 	if err != nil {
 		switch e := err.(type) {
