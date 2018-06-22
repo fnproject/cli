@@ -9,8 +9,9 @@ import (
 	"context"
 	"strings"
 
+	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
-	fnclient "github.com/fnproject/fn_go/client"
+	fnlcient "github.com/fnproject/fn_go/client"
 	apiapps "github.com/fnproject/fn_go/client/apps"
 	"github.com/fnproject/fn_go/models"
 	"github.com/fnproject/fn_go/provider"
@@ -20,7 +21,7 @@ import (
 
 type appsCmd struct {
 	provider provider.Provider
-	client   *fnclient.Fn
+	client   *fnlcient.Fn
 }
 
 func (a *appsCmd) list(c *cli.Context) error {
@@ -53,7 +54,7 @@ func (a *appsCmd) list(c *cli.Context) error {
 	}
 
 	if len(resApps) == 0 {
-		fmt.Println("No apps found")
+		fmt.Fprint(os.Stderr, "No apps found\n")
 		return nil
 	}
 
@@ -293,4 +294,40 @@ func (a *appsCmd) delete(c *cli.Context) error {
 
 	fmt.Println("App", appName, "deleted")
 	return nil
+}
+
+func GetAppByName(name string) (*models.App, error) {
+	provider, err := client.CurrentProvider()
+	if err != nil {
+		return nil, err
+	}
+	client := provider.APIClient()
+	appsResp, err := client.Apps.GetApps(&apiapps.GetAppsParams{
+		Context: context.Background(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var app *models.App
+	for i := 0; i < len(appsResp.Payload.Apps); i++ {
+		if appsResp.Payload.Apps[i].Name == name {
+			app = appsResp.Payload.Apps[i]
+		}
+	}
+	if app == nil {
+		return nil, fmt.Errorf("app %s not found", name)
+	}
+
+	appResp, err := client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
+		App:     app.Name,
+		Context: context.Background(),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return appResp.Payload.App, nil
+
 }
