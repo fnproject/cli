@@ -10,17 +10,17 @@ import (
 	"strings"
 
 	"github.com/fnproject/cli/common"
-	fnclient "github.com/fnproject/fn_go/client"
-	apiapps "github.com/fnproject/fn_go/client/apps"
-	"github.com/fnproject/fn_go/models"
+	apiapps "github.com/fnproject/fn_go/clientv2/apps"
+	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
+	"github.com/fnproject/fn_go/clientv2"
 )
 
 type appsCmd struct {
 	provider provider.Provider
-	client   *fnclient.Fn
+	client   *clientv2.Fn
 }
 
 func (a *appsCmd) list(c *cli.Context) error {
@@ -29,22 +29,19 @@ func (a *appsCmd) list(c *cli.Context) error {
 	for {
 		resp, err := a.client.Apps.GetApps(params)
 		if err != nil {
-			switch e := err.(type) {
-			case *apiapps.GetAppsAppNotFound:
-				return fmt.Errorf("%v", e.Payload.Error.Message)
-			default:
-				return err
-			}
+			return err
 		}
 
-		resApps = append(resApps, resp.Payload.Apps...)
+		if len(resp.Payload.Items) == 0 {
+			return errors.New("no apps found")
+		}
 
 		n := c.Int64("n")
 		if n < 0 {
 			return errors.New("Number of calls: negative value not allowed")
 		}
 
-		howManyMore := n - int64(len(resApps)+len(resp.Payload.Apps))
+		howManyMore := n - int64(len(resApps)+len(resp.Payload.Items))
 		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
 		}
@@ -53,7 +50,7 @@ func (a *appsCmd) list(c *cli.Context) error {
 	}
 
 	if len(resApps) == 0 {
-		fmt.Println("No apps found")
+		fmt.Fprint(os.Stderr, "No apps found\n")
 		return nil
 	}
 
@@ -82,11 +79,9 @@ func (a *appsCmd) create(c *cli.Context) error {
 
 	appWithFlags(c, app)
 
-	body := &models.AppWrapper{App: app}
-
 	resp, err := a.client.Apps.PostApps(&apiapps.PostAppsParams{
 		Context: context.Background(),
-		Body:    body,
+		Body:    app,
 	})
 
 	if err != nil {
@@ -100,18 +95,21 @@ func (a *appsCmd) create(c *cli.Context) error {
 		}
 	}
 
-	fmt.Println("Successfully created app: ", resp.Payload.App.Name)
+	fmt.Println("Successfully created app: ", resp.Payload.Name)
 	return nil
 }
 
 func (a *appsCmd) update(c *cli.Context) error {
 	appName := c.Args().First()
 
-	patchedApp := &models.App{}
+	app, err := a.mustGetApp(appName)
+	if err != nil {
+		return err
+	}
 
-	appWithFlags(c, patchedApp)
+	appWithFlags(c, app)
 
-	err := a.patchApp(appName, patchedApp)
+	err = a.putApp(app)
 	if err != nil {
 		return err
 	}
@@ -125,13 +123,14 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	key := c.Args().Get(1)
 	value := c.Args().Get(2)
 
-	app := &models.App{
-		Config: make(map[string]string),
+	app, err := a.mustGetApp(appName)
+	if err != nil {
+		return err
 	}
 
 	app.Config[key] = value
 
-	if err := a.patchApp(appName, app); err != nil {
+	if err := a.putApp(app); err != nil {
 		return fmt.Errorf("Error updating app configuration: %v", err)
 	}
 
@@ -139,20 +138,35 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) getConfig(c *cli.Context) error {
-	appName := c.Args().Get(0)
-	key := c.Args().Get(1)
+func (a *appsCmd) mustGetApp(name string) (*models.App, error) {
 
-	resp, err := a.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
-		App:     appName,
+	resp, err := a.client.Apps.GetApps(&apiapps.GetAppsParams{
+		Name:    &name,
 		Context: context.Background(),
 	})
 
 	if err != nil {
+		return nil, err
+	}
+
+	if len(resp.Payload.Items) == 0 {
+		return nil, fmt.Errorf("app %s not found", name)
+	}
+
+	return resp.Payload.Items[0], nil
+}
+
+func (a *appsCmd) getConfig(c *cli.Context) error {
+	appName := c.Args().Get(0)
+	key := c.Args().Get(1)
+
+	app, err := a.mustGetApp(appName)
+	if err != nil {
 		return err
 	}
 
-	val, ok := resp.Payload.App.Config[key]
+	val, ok := app.Config[key]
+
 	if !ok {
 		return fmt.Errorf("Config key does not exist")
 	}
@@ -164,17 +178,13 @@ func (a *appsCmd) getConfig(c *cli.Context) error {
 
 func (a *appsCmd) listConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
-
-	resp, err := a.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
-		App:     appName,
-		Context: context.Background(),
-	})
+	app, err := a.mustGetApp(appName)
 
 	if err != nil {
 		return err
 	}
 
-	for key, val := range resp.Payload.App.Config {
+	for key, val := range app.Config {
 		fmt.Printf("%s=%s\n", key, val)
 	}
 
@@ -185,13 +195,17 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
-	app := &models.App{
-		Config: make(map[string]string),
+	app, err := a.mustGetApp(appName)
+	if err != nil {
+		return err
 	}
 
+	if app.Config[key] == "" {
+		return nil
+	}
 	app.Config[key] = ""
 
-	if err := a.patchApp(appName, app); err != nil {
+	if err := a.putApp(app); err != nil {
 		return fmt.Errorf("Error updating app configuration: %v", err)
 	}
 
@@ -199,18 +213,18 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) patchApp(appName string, app *models.App) error {
-	_, err := a.client.Apps.PatchAppsApp(&apiapps.PatchAppsAppParams{
+func (a *appsCmd) putApp(app *models.App) error {
+	_, err := a.client.Apps.PutAppsAppID(&apiapps.PutAppsAppIDParams{
 		Context: context.Background(),
-		App:     appName,
-		Body:    &models.AppWrapper{App: app},
+		AppID:   app.ID,
+		Body:    app,
 	})
 
 	if err != nil {
 		switch e := err.(type) {
-		case *apiapps.PatchAppsAppBadRequest:
+		case *apiapps.PutAppsAppIDBadRequest:
 			return errors.New(e.Payload.Error.Message)
-		case *apiapps.PatchAppsAppNotFound:
+		case *apiapps.PutAppsAppIDNotFound:
 			return errors.New(e.Payload.Error.Message)
 		default:
 			return err
@@ -228,31 +242,22 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 	appName := c.Args().First()
 	prop := c.Args().Get(1)
 
-	resp, err := a.client.Apps.GetAppsApp(&apiapps.GetAppsAppParams{
-		Context: context.Background(),
-		App:     appName,
-	})
-
+	app, err := a.mustGetApp(appName)
 	if err != nil {
-		switch e := err.(type) {
-		case *apiapps.GetAppsAppNotFound:
-			return fmt.Errorf("%v", e.Payload.Error.Message)
-		default:
-			return err
-		}
+		return err
 	}
 
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "\t")
 
 	if prop == "" {
-		enc.Encode(resp.Payload.App)
+		enc.Encode(app)
 		return nil
 	}
 
 	// TODO: we really need to marshal it here just to
 	// unmarshal as map[string]interface{}?
-	data, err := json.Marshal(resp.Payload.App)
+	data, err := json.Marshal(app)
 	if err != nil {
 		return fmt.Errorf("Could not marshal app: %v", err)
 	}
@@ -278,14 +283,19 @@ func (a *appsCmd) delete(c *cli.Context) error {
 		return errors.New("App name required to delete")
 	}
 
-	_, err := a.client.Apps.DeleteAppsApp(&apiapps.DeleteAppsAppParams{
+	app, err := a.mustGetApp(appName)
+	if err != nil {
+		return err
+	}
+
+	_, err = a.client.Apps.DeleteAppsAppID(&apiapps.DeleteAppsAppIDParams{
 		Context: context.Background(),
-		App:     appName,
+		AppID:   app.ID,
 	})
 
 	if err != nil {
 		switch e := err.(type) {
-		case *apiapps.DeleteAppsAppNotFound:
+		case *apiapps.DeleteAppsAppIDNotFound:
 			return errors.New(e.Payload.Error.Message)
 		}
 		return err

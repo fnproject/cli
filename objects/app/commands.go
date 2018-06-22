@@ -18,7 +18,7 @@ func Create() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app_name>",
@@ -48,7 +48,7 @@ func List() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		Action: a.list,
@@ -79,7 +79,7 @@ func Delete() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		Action: a.delete,
@@ -98,7 +98,7 @@ func Inspect() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app_name> [property.[key]]",
@@ -118,7 +118,7 @@ func Update() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app_name>",
@@ -147,7 +147,7 @@ func SetConfig() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app_name> <key> <value>",
@@ -166,7 +166,7 @@ func ListConfig() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app_name>",
@@ -185,7 +185,7 @@ func GetConfig() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app_name> <key>",
@@ -204,7 +204,7 @@ func UnsetConfig() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app_name> <key>",
