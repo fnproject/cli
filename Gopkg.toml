@@ -19,10 +19,7 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
-
-[[constraint]]
-  name = "github.com/aws/aws-sdk-go"
-  version = "1.12.28"
+ignored = ["github.com/Azure/go-ansiterm*"]
 
 [[constraint]]
   name = "github.com/coreos/go-semver"
@@ -44,9 +41,6 @@
   branch = "master"
   name = "github.com/jmoiron/jsonq"
 
-[[constraint]]
-  name = "github.com/moby/moby"
-  version = "17.5.0-ce-rc3"
 
 [[constraint]]
   name = "github.com/onsi/gomega"

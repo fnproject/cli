@@ -10,6 +10,7 @@ import (
 	"github.com/fnproject/cli/objects/server"
 	"github.com/fnproject/cli/run"
 	"github.com/urfave/cli"
+	"github.com/fnproject/cli/objects/fn"
 )
 
 type cmd map[string]cli.Command
@@ -27,7 +28,6 @@ var Commands = cmd{
 	"get":          GetCommand(),
 	"init":         InitCommand(),
 	"inspect":      InspectCommand(),
-	"lamba":        LambdaCommand(),
 	"list":         ListCommand(),
 	"push":         PushCommand(),
 	"run":          run.RunCommand(),
@@ -40,40 +40,47 @@ var Commands = cmd{
 }
 
 var CreateCmds = cmd{
-	"apps":    app.Create(),
-	"routes":  route.Create(),
-	"context": context.Create(),
+	"apps":      app.Create(),
+	"routes":    route.Create(),
+	"functions": fn.Create(),
+	"context":   context.Create(),
 }
 
 var ConfigCmds = cmd{
-	"apps":   app.SetConfig(),
-	"routes": route.SetConfig(),
+	"apps":      app.SetConfig(),
+	"functions": fn.SetConfig(),
+	"routes":    route.SetConfig(),
 }
 
 var ConfigListCmds = cmd{
-	"apps":   app.ListConfig(),
-	"routes": route.ListConfig(),
+	"apps":      app.ListConfig(),
+	"functions": fn.ListConfig(),
+	"routes":    route.ListConfig(),
 }
 
 var ConfigGetCmds = cmd{
-	"apps":   app.GetConfig(),
-	"routes": route.GetConfig(),
+	"apps":      app.GetConfig(),
+	"functions": fn.GetConfig(),
+	"routes":    route.GetConfig(),
 }
 
 var ConfigSetCmds = cmd{
-	"apps":   app.SetConfig(),
-	"routes": route.SetConfig(),
+	"apps":      app.SetConfig(),
+	"functions": fn.SetConfig(),
+	"routes":    route.SetConfig(),
 }
 
 var ConfigUnsetCmds = cmd{
-	"apps":   app.UnsetConfig(),
-	"routes": route.UnsetConfig(),
+	"apps":      app.UnsetConfig(),
+	"functions": fn.UnsetConfig(),
+	"routes":    route.UnsetConfig(),
 }
 
 var DeleteCmds = cmd{
-	"apps":    app.Delete(),
-	"routes":  route.Delete(),
-	"context": context.Delete(),
+	"apps":      app.Delete(),
+	"routes":    route.Delete(),
+	"functions": fn.Delete(),
+	"context":   context.Delete(),
 }
 
 var GetCmds = cmd{
@@ -83,16 +90,18 @@ var GetCmds = cmd{
 }
 
 var InspectCmds = cmd{
-	"apps":   app.Inspect(),
-	"routes": route.Inspect(),
+	"apps":      app.Inspect(),
+	"functions": fn.Inspect(),
+	"routes":    route.Inspect(),
 }
 
 var ListCmds = cmd{
-	"config":  ConfigCommand("list"),
-	"apps":    app.List(),
-	"routes":  route.List(),
-	"calls":   call.List(),
-	"context": context.List(),
+	"config":    ConfigCommand("list"),
+	"apps":      app.List(),
+	"functions": fn.List(),
+	"routes":    route.List(),
+	"calls":     call.List(),
+	"context":   context.List(),
 }
 
 var UnsetCmds = cmd{
@@ -101,10 +110,11 @@ var UnsetCmds = cmd{
 }
 
 var UpdateCmds = cmd{
-	"apps":    app.Update(),
-	"routes":  route.Update(),
-	"context": context.Update(),
-	"server":  server.Update(),
+	"apps":      app.Update(),
+	"routes":    route.Update(),
+	"functions": fn.Update(),
+	"context":   context.Update(),
+	"server":    server.Update(),
 }
 
 var UseCmds = cmd{

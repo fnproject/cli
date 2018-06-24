@@ -24,16 +24,16 @@ type appsCmd struct {
 }
 
 func (a *appsCmd) list(c *cli.Context) error {
-	params := &apiapps.GetAppsParams{Context: context.Background()}
+	params := &apiapps.ListAppsParams{Context: context.Background()}
 	var resApps []*models.App
 	for {
-		resp, err := a.client.Apps.GetApps(params)
+		resp, err := a.client.Apps.ListApps(params)
 		if err != nil {
 			return err
 		}
 
 		if len(resp.Payload.Items) == 0 {
-			return errors.New("no apps found")
+			break
 		}
 
 		n := c.Int64("n")
@@ -41,6 +41,7 @@ func (a *appsCmd) list(c *cli.Context) error {
 			return errors.New("Number of calls: negative value not allowed")
 		}
 
+		resApps = append(resApps, resp.Payload.Items...)
 		howManyMore := n - int64(len(resApps)+len(resp.Payload.Items))
 		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
@@ -79,17 +80,16 @@ func (a *appsCmd) create(c *cli.Context) error {
 
 	appWithFlags(c, app)
 
-	resp, err := a.client.Apps.PostApps(&apiapps.PostAppsParams{
+	resp, err := a.client.Apps.CreateApp(&apiapps.CreateAppParams{
 		Context: context.Background(),
 		Body:    app,
 	})
 
 	if err != nil {
 		switch e := err.(type) {
-		case *apiapps.PostAppsBadRequest:
+		case *apiapps.CreateAppBadRequest:
 			return fmt.Errorf("%v", e.Payload.Error.Message)
-		case *apiapps.PostAppsConflict:
-			return fmt.Errorf("%v", e.Payload.Error.Message)
+
 		default:
 			return err
 		}
@@ -102,7 +102,7 @@ func (a *appsCmd) create(c *cli.Context) error {
 func (a *appsCmd) update(c *cli.Context) error {
 	appName := c.Args().First()
 
-	app, err := a.mustGetApp(appName)
+	app, err := GetAppByName(a.client,appName)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	key := c.Args().Get(1)
 	value := c.Args().Get(2)
 
-	app, err := a.mustGetApp(appName)
+	app, err := GetAppByName(a.client,appName)
 	if err != nil {
 		return err
 	}
@@ -138,9 +138,9 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) mustGetApp(name string) (*models.App, error) {
+func  GetAppByName(client *clientv2.Fn, name string) (*models.App, error) {
 
-	resp, err := a.client.Apps.GetApps(&apiapps.GetAppsParams{
+	resp, err := client.Apps.ListApps(&apiapps.ListAppsParams{
 		Name:    &name,
 		Context: context.Background(),
 	})
@@ -160,7 +160,7 @@ func (a *appsCmd) getConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
-	app, err := a.mustGetApp(appName)
+	app, err := GetAppByName(a.client,appName)
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func (a *appsCmd) getConfig(c *cli.Context) error {
 
 func (a *appsCmd) listConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
-	app, err := a.mustGetApp(appName)
+	app, err := GetAppByName(a.client,appName)
 
 	if err != nil {
 		return err
@@ -195,7 +195,7 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
-	app, err := a.mustGetApp(appName)
+	app, err := GetAppByName(a.client,appName)
 	if err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 }
 
 func (a *appsCmd) putApp(app *models.App) error {
-	_, err := a.client.Apps.PutAppsAppID(&apiapps.PutAppsAppIDParams{
+	_, err := a.client.Apps.UpdateApp(&apiapps.UpdateAppParams{
 		Context: context.Background(),
 		AppID:   app.ID,
 		Body:    app,
@@ -222,9 +222,9 @@ func (a *appsCmd) putApp(app *models.App) error {
 
 	if err != nil {
 		switch e := err.(type) {
-		case *apiapps.PutAppsAppIDBadRequest:
+		case *apiapps.UpdateAppBadRequest:
 			return errors.New(e.Payload.Error.Message)
-		case *apiapps.PutAppsAppIDNotFound:
+		case *apiapps.UpdateAppNotFound:
 			return errors.New(e.Payload.Error.Message)
 		default:
 			return err
@@ -242,7 +242,7 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 	appName := c.Args().First()
 	prop := c.Args().Get(1)
 
-	app, err := a.mustGetApp(appName)
+	app, err := GetAppByName(a.client,appName)
 	if err != nil {
 		return err
 	}
@@ -283,19 +283,19 @@ func (a *appsCmd) delete(c *cli.Context) error {
 		return errors.New("App name required to delete")
 	}
 
-	app, err := a.mustGetApp(appName)
+	app, err := GetAppByName(a.client,appName)
 	if err != nil {
 		return err
 	}
 
-	_, err = a.client.Apps.DeleteAppsAppID(&apiapps.DeleteAppsAppIDParams{
+	_, err = a.client.Apps.DeleteApp(&apiapps.DeleteAppParams{
 		Context: context.Background(),
 		AppID:   app.ID,
 	})
 
 	if err != nil {
 		switch e := err.(type) {
-		case *apiapps.DeleteAppsAppIDNotFound:
+		case *apiapps.DeleteAppNotFound:
 			return errors.New(e.Payload.Error.Message)
 		}
 		return err
@@ -304,3 +304,4 @@ func (a *appsCmd) delete(c *cli.Context) error {
 	fmt.Println("App", appName, "deleted")
 	return nil
 }
+
