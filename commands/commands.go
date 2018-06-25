@@ -5,12 +5,13 @@ import (
 	"github.com/fnproject/cli/objects/app"
 	"github.com/fnproject/cli/objects/call"
 	"github.com/fnproject/cli/objects/context"
+	"github.com/fnproject/cli/objects/fn"
 	"github.com/fnproject/cli/objects/log"
 	"github.com/fnproject/cli/objects/route"
 	"github.com/fnproject/cli/objects/server"
+	"github.com/fnproject/cli/objects/trigger"
 	"github.com/fnproject/cli/run"
 	"github.com/urfave/cli"
-	"github.com/fnproject/cli/objects/fn"
 )
 
 type cmd map[string]cli.Command
@@ -43,6 +44,7 @@ var CreateCmds = cmd{
 	"apps":      app.Create(),
 	"routes":    route.Create(),
 	"functions": fn.Create(),
+	"triggers":  trigger.Create(),
 	"context":   context.Create(),
 }
 
@@ -99,6 +101,7 @@ var ListCmds = cmd{
 	"config":    ConfigCommand("list"),
 	"apps":      app.List(),
 	"functions": fn.List(),
+	"triggers":  trigger.List(),
 	"routes":    route.List(),
 	"calls":     call.List(),
 	"context":   context.List(),

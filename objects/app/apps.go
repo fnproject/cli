@@ -10,12 +10,12 @@ import (
 	"strings"
 
 	"github.com/fnproject/cli/common"
+	"github.com/fnproject/fn_go/clientv2"
 	apiapps "github.com/fnproject/fn_go/clientv2/apps"
 	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
-	"github.com/fnproject/fn_go/clientv2"
 )
 
 type appsCmd struct {
@@ -26,6 +26,7 @@ type appsCmd struct {
 func (a *appsCmd) list(c *cli.Context) error {
 	params := &apiapps.ListAppsParams{Context: context.Background()}
 	var resApps []*models.App
+
 	for {
 		resp, err := a.client.Apps.ListApps(params)
 		if err != nil {
@@ -85,6 +86,8 @@ func (a *appsCmd) create(c *cli.Context) error {
 		Body:    app,
 	})
 
+	fmt.Println("Resp:", resp)
+
 	if err != nil {
 		switch e := err.(type) {
 		case *apiapps.CreateAppBadRequest:
@@ -102,7 +105,7 @@ func (a *appsCmd) create(c *cli.Context) error {
 func (a *appsCmd) update(c *cli.Context) error {
 	appName := c.Args().First()
 
-	app, err := GetAppByName(a.client,appName)
+	app, err := GetAppByName(a.client, appName)
 	if err != nil {
 		return err
 	}
@@ -123,7 +126,7 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	key := c.Args().Get(1)
 	value := c.Args().Get(2)
 
-	app, err := GetAppByName(a.client,appName)
+	app, err := GetAppByName(a.client, appName)
 	if err != nil {
 		return err
 	}
@@ -138,7 +141,7 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	return nil
 }
 
-func  GetAppByName(client *clientv2.Fn, name string) (*models.App, error) {
+func GetAppByName(client *clientv2.Fn, name string) (*models.App, error) {
 
 	resp, err := client.Apps.ListApps(&apiapps.ListAppsParams{
 		Name:    &name,
@@ -160,7 +163,7 @@ func (a *appsCmd) getConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
-	app, err := GetAppByName(a.client,appName)
+	app, err := GetAppByName(a.client, appName)
 	if err != nil {
 		return err
 	}
@@ -178,7 +181,7 @@ func (a *appsCmd) getConfig(c *cli.Context) error {
 
 func (a *appsCmd) listConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
-	app, err := GetAppByName(a.client,appName)
+	app, err := GetAppByName(a.client, appName)
 
 	if err != nil {
 		return err
@@ -195,7 +198,7 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
-	app, err := GetAppByName(a.client,appName)
+	app, err := GetAppByName(a.client, appName)
 	if err != nil {
 		return err
 	}
@@ -242,7 +245,7 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 	appName := c.Args().First()
 	prop := c.Args().Get(1)
 
-	app, err := GetAppByName(a.client,appName)
+	app, err := GetAppByName(a.client, appName)
 	if err != nil {
 		return err
 	}
@@ -283,7 +286,7 @@ func (a *appsCmd) delete(c *cli.Context) error {
 		return errors.New("App name required to delete")
 	}
 
-	app, err := GetAppByName(a.client,appName)
+	app, err := GetAppByName(a.client, appName)
 	if err != nil {
 		return err
 	}
@@ -304,4 +307,3 @@ func (a *appsCmd) delete(c *cli.Context) error {
 	fmt.Println("App", appName, "deleted")
 	return nil
 }
-

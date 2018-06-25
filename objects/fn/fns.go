@@ -11,15 +11,15 @@ import (
 	"text/tabwriter"
 
 	"github.com/fnproject/cli/common"
+	"github.com/fnproject/cli/objects/app"
 	"github.com/fnproject/cli/run"
+	"github.com/fnproject/fn_go/clientv2"
 	fnclient "github.com/fnproject/fn_go/clientv2"
 	apifns "github.com/fnproject/fn_go/clientv2/fns"
 	fnmodels "github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
-	"github.com/fnproject/fn_go/clientv2"
-	"github.com/fnproject/cli/objects/app"
 )
 
 type fnsCmd struct {
@@ -223,7 +223,7 @@ func (f *fnsCmd) create(c *cli.Context) error {
 }
 
 // CreateFn request
-func CreateFn(r *fnclient.Fn, rt *fnmodels.Fn) error {
+func CreateFn(r *clientv2.Fn, rt *fnmodels.Fn) error {
 	err := common.ValidateImageName(rt.Image)
 	if err != nil {
 		return err
@@ -279,8 +279,8 @@ func UpdateFn(client *fnclient.Fn, fn *fnmodels.Fn) error {
 func GetFnByName(client *clientv2.Fn, appId string, fnName string) (*fnmodels.Fn, error) {
 	fnList, err := client.Fns.ListFns(&apifns.ListFnsParams{
 		Context: context.Background(),
-		AppID: &appId,
-		Name:  &fnName,
+		AppID:   &appId,
+		Name:    &fnName,
 	})
 
 	if err != nil {
