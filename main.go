@@ -46,80 +46,74 @@ func newFn() *cli.App {
 		Name:  "version",
 		Usage: "Display version",
 	}
-
 	// AppHelpTemplate is the text template for the Default help topic.
 	// cli.go uses text/template to render templates. You can
 	// render custom help text by setting this variable.
 	cli.AppHelpTemplate = `
-	{{if .ArgsUsage}}{{else}}{{.Description}} - Version {{.Version}} 
+    {{if .ArgsUsage}}{{else}} ` + "\x1b[31;1m{{if .ArgsUsage}}{{else}}{{.Description}} - Version {{.Version}}\x1b[0m" + `
 
-	ENVIRONMENT VARIABLES:
-	   FN_API_URL   Fn server address
-	   FN_REGISTRY  Docker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]USERNAME]{{end}}{{if .VisibleCommands}}
+    ` + "\x1b[1mENVIRONMENT VARIABLES:\x1b[0m" + `
+        FN_API_URL   ` + "\x1b[3mFn server address\x1b[0m" + `
+        FN_REGISTRY  ` + "\x1b[3mDocker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]USERNAME]\x1b[0m" + `{{end}}{{if .VisibleCommands}}
 
-	{{if .ArgsUsage}}{{else}}GENERAL COMMANDS:{{end}}{{end}}{{range .VisibleCategories}}{{if .Name}}
+    ` + "\x1b[1m{{if .ArgsUsage}}{{else}}GENERAL COMMANDS:\x1b[0m" + `{{end}}{{end}}{{range .VisibleCategories}}{{if .Name}}
 
-	{{.Name}}:{{end}}{{range .VisibleCommands}}
-		{{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
+    ` + "\x1b[1m{{.Name}}:\x1b[0m" + `{{end}}{{range .VisibleCommands}}
+        {{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
 
-	GLOBAL OPTIONS:
-	   {{range $index, $option := .VisibleFlags}}{{if $index}}
-	   {{end}}{{$option}}{{end}}{{end}}
+    ` + "\x1b[1mGLOBAL OPTIONS:\x1b[0m" + `
+       {{range $index, $option := .VisibleFlags}}{{if $index}}
+       {{end}}{{$option}}{{end}}{{end}}
 
-	FURTHER HELP:
-	   See 'fn <command> --help' for more information about a command.
+    ` + "\x1b[1mFURTHER HELP:\x1b[0m" + ` ` + "\x1b[3mSee \x1b[0m" + `'` + "\x1b[96;21mfn <command> --help\x1b[0m" + `' ` + "\x1b[3mfor more information about a command.\x1b[0m" + `
 
-	LEARN MORE:
-	   https://github.com/fnproject/fn
-	`
-	//Override command template
+    ` + "\x1b[1mLEARN MORE:\x1b[0m" + ` ` + "\x1b[91;4mhttps://github.com/fnproject/fn\x1b[0m" + ``
+
+	// Override command template
 	// SubcommandHelpTemplate is the text template for the subcommand help topic.
 	// cli.go uses text/template to render templates. You can
 	// render custom help text by setting this variable.
 	cli.SubcommandHelpTemplate = `{{range .VisibleCategories}}{{if .Name}}
-	{{.Name}}:{{end}}{{end}}
-		{{ .HelpName}}{{if .Usage}} - {{.Usage}}
+    ` + "\x1b[1m{{.Name}}:\x1b[0m" + `{{end}}{{end}}
+        ` + "\x1b[36;1m{{ .HelpName}}\x1b[0m" + `{{if .Usage}} - ` + "\x1b[3m{{.Usage}}\x1b[0m" + `
 
-	USAGE:
-		{{ .HelpName}} {{if .VisibleFlags}}[global options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{end}} {{if .Flags}}[command options]{{end}} {{end}}{{if .Description}}
-	
-	DESCRIPTION:
-		{{.Description}}{{end}}{{if .Commands}}
+    ` + "\x1b[1mUSAGE:\x1b[0m" + `
+        ` + "\x1b[36;1m{{ .HelpName}}\x1b[0m" + ` {{if .VisibleFlags}} ` + "\x1b[36;21m[global options]\x1b[0m" + `{{end}} {{if .ArgsUsage}}` + "\x1b[91;21m{{.ArgsUsage}}\x1b[0m" + `{{end}} {{if .Flags}}` + "\x1b[33;21m[command options]\x1b[0m" + `{{end}} {{end}}{{if .Description}}
+    
+    ` + "\x1b[1mDESCRIPTION:\x1b[0m" + `
+        {{.Description}}{{end}}{{if .Commands}}
 
-	SUBCOMMANDS: {{range .Commands}}
-		{{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
+    ` + "\x1b[1mSUBCOMMANDS:\x1b[0m" + ` {{range .Commands}}
+        {{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
 
-	COMMAND OPTIONS: {{range .VisibleFlags}}
-		{{.}}{{end}}{{end}}{{if .Commands}}
+    ` + "\x1b[1mCOMMAND OPTIONS:\x1b[0m" + ` {{range .VisibleFlags}}
+        {{.}}{{end}}{{end}}{{if .Commands}}
 
-	FURTHER HELP:
-		See '{{ .HelpName}} <subcommand> --help' for more information about a subcommand.{{end}}
-	`
-
+    ` + "\x1b[1mFURTHER HELP:\x1b[0m" + ` ` + "\x1b[3mSee \x1b[0m" + `'` + "\x1b[96;21mfn <command> --help\x1b[0m" + `' ` + "\x1b[3mfor more information about a command.\x1b[0m" + `{{end}}
+    `
 	//Override command template
 	// CommandHelpTemplate is the text template for the command help topic.
 	// cli.go uses text/template to render templates. You can
 	// render custom help text by setting this variable.
 	cli.CommandHelpTemplate = `{{if .Category}}
-	{{.Category}}:{{end}}
-		{{.HelpName}}{{if .Usage}} - {{.Usage}}
-	
-	USAGE:
-		{{.HelpName}} [global options] {{if .ArgsUsage}}{{.ArgsUsage}}{{end}} {{if .Flags}}[command options]{{end}}{{end}}{{if .Description}}
-	
-	DESCRIPTION:
-		{{.Description}}{{end}}{{if .Subcommands}}
+    ` + "\x1b[1m{{.Category}}:\x1b[0m" + `{{end}}
+    ` + "\x1b[36;1m{{.HelpName}}\x1b[0m" + `{{if .Usage}} - ` + "\x1b[3m{{.Usage}}\x1b[0m" + `
+    
+    ` + "\x1b[1mUSAGE:\x1b[0m" + `
+    ` + "\x1b[36;1m{{.HelpName}}\x1b[0m" + ` ` + "\x1b[36;21m[global options]\x1b[0m" + ` {{if .ArgsUsage}}` + "\x1b[91;21m{{.ArgsUsage}}\x1b[0m" + `{{end}} {{if .Flags}}` + "\x1b[33;21m[command options]\x1b[0m" + `{{end}}{{end}}{{if .Description}}
+    
+    ` + "\x1b[1mDESCRIPTION:\x1b[0m" + `
+        {{.Description}}{{end}}{{if .Subcommands}}
 
-	SUBCOMMANDS: {{range .Subcommands}}
-		{{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
+    ` + "\x1b[1mSUBCOMMANDS:\x1b[0m" + ` {{range .Subcommands}}
+        {{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
    
-	COMMAND OPTIONS:
-		{{range .Flags}}{{.}}
-		{{end}}{{if .Subcommands}}
-	
-	FURTHER HELP:
-		See '{{ .HelpName}} <subcommand> --help' for more information about a subcommand.{{end}}{{end}}
-	`
+    ` + "\x1b[1mCOMMAND OPTIONS:\x1b[0m" + `
+        {{range .Flags}}{{.}}
+        {{end}}{{if .Subcommands}}
+    
+    ` + "\x1b[1mFURTHER HELP:\x1b[0m" + ` ` + "\x1b[3mSee \x1b[0m" + `'` + "\x1b[96;21mfn <command> --help\x1b[0m" + `' ` + "\x1b[3mfor more information about a command.\x1b[0m" + `{{end}}{{end}}
+    `
 
 	app.CommandNotFound = func(c *cli.Context, cmd string) {
 		fmt.Fprintf(os.Stderr, "Command not found: \"%v\" -- see `fn --help` for more information.\n", cmd)
