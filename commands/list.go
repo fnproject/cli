@@ -10,7 +10,7 @@ func ListCommand() cli.Command {
 		Name:        "list",
 		Aliases:     []string{"ls"},
 		Usage:       "Return a list of created objects",
-		Category:    "MANAGEMENT COMMAND",
+		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
 		Description: "This is the description",
