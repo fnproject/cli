@@ -174,8 +174,13 @@ func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, metho
 	var runEnv []string // env to pass into the container via -e's
 	callID := "12345678901234567890123456"
 	if contentType == "" {
-		contentType = "text/plain"
+		if ff.ContentType != "" {
+			contentType = ff.ContentType
+		} else {
+			contentType = "text/plain"
+		}
 	}
+
 	to := int32(30)
 	if ff.Timeout != nil {
 		to = *ff.Timeout
