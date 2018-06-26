@@ -83,6 +83,7 @@ var DeleteCmds = cmd{
 	"routes":    route.Delete(),
 	"functions": fn.Delete(),
 	"context":   context.Delete(),
+	"triggers":  trigger.Delete(),
 }
 
 var GetCmds = cmd{
@@ -95,6 +96,7 @@ var InspectCmds = cmd{
 	"apps":      app.Inspect(),
 	"functions": fn.Inspect(),
 	"routes":    route.Inspect(),
+	"triggers":  trigger.Inspect(),
 }
 
 var ListCmds = cmd{

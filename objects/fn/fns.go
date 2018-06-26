@@ -106,6 +106,7 @@ func (f *fnsCmd) list(c *cli.Context) error {
 		}
 
 		resFns = append(resFns, resp.Payload.Items...)
+		fmt.Println("resFns: ", resFns)
 		howManyMore := n - int64(len(resFns)+len(resp.Payload.Items))
 		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
@@ -115,6 +116,7 @@ func (f *fnsCmd) list(c *cli.Context) error {
 	}
 
 	callURL := f.provider.CallURL()
+	fmt.Println("Call URl:", callURL)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprint(w, "name", "\t", "image", "\t", "endpoint", "\n")
@@ -237,9 +239,9 @@ func CreateFn(r *clientv2.Fn, rt *fnmodels.Fn) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apifns.CreateFnBadRequest:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Message)
 		case *apifns.CreateFnConflict:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Message)
 		default:
 			return err
 		}
@@ -266,7 +268,7 @@ func UpdateFn(client *fnclient.Fn, fn *fnmodels.Fn) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apifns.UpdateFnBadRequest:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Message)
 
 		default:
 			return err
@@ -439,12 +441,12 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 
 	data, err := json.Marshal(fn)
 	if err != nil {
-		return fmt.Errorf("failed to inspect fnName: %s", err)
+		return fmt.Errorf("failed to inspect %s: %s", fnName, err)
 	}
 	var inspect map[string]interface{}
 	err = json.Unmarshal(data, &inspect)
 	if err != nil {
-		return fmt.Errorf("failed to inspect fnName: %s", err)
+		return fmt.Errorf("failed to inspect %s: %s", fnName, err)
 	}
 
 	jq := jsonq.NewQuery(inspect)

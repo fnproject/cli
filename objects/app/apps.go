@@ -91,7 +91,7 @@ func (a *appsCmd) create(c *cli.Context) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apiapps.CreateAppBadRequest:
-			return fmt.Errorf("%v", e.Payload.Error.Message)
+			return fmt.Errorf("%v", e.Payload.Message)
 
 		default:
 			return err
@@ -226,9 +226,9 @@ func (a *appsCmd) putApp(app *models.App) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apiapps.UpdateAppBadRequest:
-			return errors.New(e.Payload.Error.Message)
+			return errors.New(e.Payload.Message)
 		case *apiapps.UpdateAppNotFound:
-			return errors.New(e.Payload.Error.Message)
+			return errors.New(e.Payload.Message)
 		default:
 			return err
 		}
@@ -299,7 +299,7 @@ func (a *appsCmd) delete(c *cli.Context) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apiapps.DeleteAppNotFound:
-			return errors.New(e.Payload.Error.Message)
+			return errors.New(e.Payload.Message)
 		}
 		return err
 	}

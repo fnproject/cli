@@ -56,7 +56,7 @@ func List() cli.Command {
 	}
 }
 
-func update() cli.Command {
+func Update() cli.Command {
 	t := triggersCmd{}
 	return cli.Command{
 		Name:      "triggers",
@@ -71,12 +71,18 @@ func update() cli.Command {
 			t.client = provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<trigger> ",
+		ArgsUsage: "<app> <function> <trigger>",
 		Action:    t.update,
+		Flags: []cli.Flag{
+			cli.StringSliceFlag{
+				Name:  "annotation",
+				Usage: "trigger annotations",
+			},
+		},
 	}
 }
 
-func delete() cli.Command {
+func Delete() cli.Command {
 	t := triggersCmd{}
 	return cli.Command{
 		Name:      "triggers",
@@ -91,7 +97,27 @@ func delete() cli.Command {
 			t.client = provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<trigger>",
+		ArgsUsage: "<app> <function> <trigger>",
 		Action:    t.delete,
+	}
+}
+
+func Inspect() cli.Command {
+	t := triggersCmd{}
+	return cli.Command{
+		Name:      "triggers",
+		ShortName: "trigger",
+		Usage:     "inspect a trigger",
+		Aliases:   []string{"t", "tr", "trig"},
+		Before: func(ctx *cli.Context) error {
+			provider, err := client.CurrentProvider()
+			if err != nil {
+				return err
+			}
+			t.client = provider.APIClientv2()
+			return nil
+		},
+		ArgsUsage: "<app> <function> <trigger>",
+		Action:    t.inspect,
 	}
 }
