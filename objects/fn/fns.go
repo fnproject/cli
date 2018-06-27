@@ -473,9 +473,9 @@ func (f *fnsCmd) delete(c *cli.Context) error {
 		return err
 	}
 
-	_, err = f.client.Fns.DeleteFn(&apifns.DeleteFnParams{
-		FnID: fn.ID,
-	})
+	params := apifns.NewDeleteFnParams()
+	params.FnID = fn.ID
+	_, err = f.client.Fns.DeleteFn(params)
 
 	if err != nil {
 		return err
