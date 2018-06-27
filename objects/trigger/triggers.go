@@ -90,9 +90,9 @@ func CreateTrigger(client *clientv2.Fn, trigger *fnmodels.Trigger) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apitriggers.CreateTriggerBadRequest:
-			return fmt.Errorf("%s", e.Payload.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		case *apitriggers.CreateTriggerConflict:
-			return fmt.Errorf("%s", e.Payload.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		default:
 			return err
 		}
@@ -187,7 +187,7 @@ func updateTrigger(client *clientv2.Fn, trigger *fnmodels.Trigger) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apitriggers.UpdateTriggerBadRequest:
-			return fmt.Errorf("%s", e.Payload.Message)
+			return fmt.Errorf("%s", e.Payload.Error.Message)
 		default:
 			return err
 		}
