@@ -178,6 +178,7 @@ func (t *triggersCmd) update(c *cli.Context) error {
 }
 
 func updateTrigger(client *clientv2.Fn, trigger *fnmodels.Trigger) error {
+	fmt.Println("Trigger: ", trigger)
 	_, err := client.Triggers.UpdateTrigger(&apitriggers.UpdateTriggerParams{
 		Context: context.Background(),
 		Body:    trigger,

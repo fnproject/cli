@@ -41,7 +41,8 @@ func List() cli.Command {
 			t.client = provider.APIClientv2()
 			return nil
 		},
-		Action: t.list,
+		ArgsUsage: "<app> <function>",
+		Action:    t.list,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "cursor",

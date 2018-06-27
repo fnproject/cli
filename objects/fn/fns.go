@@ -253,6 +253,7 @@ func CreateFn(r *clientv2.Fn, rt *fnmodels.Fn) error {
 
 // PatchRoute request
 func UpdateFn(client *fnclient.Fn, fn *fnmodels.Fn) error {
+	fmt.Println("Fn: ", fn)
 	if fn.Image != "" {
 		err := common.ValidateImageName(fn.Image)
 		if err != nil {

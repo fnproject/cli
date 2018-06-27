@@ -120,6 +120,7 @@ var UpdateCmds = cmd{
 	"functions": fn.Update(),
 	"context":   context.Update(),
 	"server":    server.Update(),
+	"trigger":   trigger.Update(),
 }
 
 var UseCmds = cmd{
