@@ -121,7 +121,10 @@ func (r *routesCmd) list(c *cli.Context) error {
 		params.Cursor = &resp.Payload.NextCursor
 	}
 
-	callURL := r.provider.CallURL()
+	callURL, err := r.provider.CallURL(appName)
+	if err != nil {
+		return err
+	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprint(w, "path", "\t", "image", "\t", "endpoint", "\n")

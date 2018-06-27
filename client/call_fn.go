@@ -41,7 +41,10 @@ type callID struct {
 }
 
 func CallFN(provider provider.Provider, appName string, route string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
-	u := *provider.CallURL()
+	u, err := provider.CallURL(appName)
+	if err != nil {
+		return err
+	}
 	u.Path = strings.Join([]string{"r", appName, route}, "/")
 
 	if method == "" {

@@ -103,6 +103,15 @@
   revision = "5df930a27be2502f99b292b7cc09ebad4d0891f4"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/fnproject/fdk-go"
+  packages = [
+    ".",
+    "utils"
+  ]
+  revision = "1eb29530716f262bad5b83eb9a5b3f7483636949"
+
+[[projects]]
   name = "github.com/fnproject/fn_go"
   packages = [
     ".",
@@ -117,8 +126,8 @@
     "provider/defaultprovider",
     "provider/oracle"
   ]
-  revision = "ba119f998930f50ffb458ee509253811461fe150"
-  version = "0.2.7"
+  revision = "9c0630b825a7027d528352d40dbf8d0afbf84b85"
+  version = "0.2.8"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -446,6 +455,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9fb59c4f1c50d687685ce680db95a15284084f91e2f9fb0bd99cf8c6dc97a430"
+  inputs-digest = "be155a89285ed602a44bacb101071c757e56f9513360af00ec51126dc525683b"
   solver-name = "gps-cdcl"
   solver-version = 1
