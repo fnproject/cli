@@ -8,12 +8,11 @@ import (
 func Create() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:      "apps",
-		ShortName: "app",
-		Usage:     "Create a new application",
-		Category:  "MANAGEMENT COMMAND",
+		Name:     "app",
+		Usage:    "Create a new application",
+		Category: "MANAGEMENT COMMAND",
 		Description: "This command creates a new application.\n		Fn supports grouping functions into a set that defines an application (or API), making it easy to organize and deploy.\n 		Applications define a namespace to organize functions and can contain configuration values that are shared across all functions in that application.",
-		Aliases: []string{"a"},
+		Aliases: []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -40,11 +39,10 @@ func Create() cli.Command {
 func List() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:      "apps",
-		ShortName: "app",
-		Usage:     "List all created applications",
-		Category:  "MANAGEMENT COMMANDS",
-		Aliases:   []string{"a"},
+		Name:     "apps",
+		Usage:    "List all created applications",
+		Category: "MANAGEMENT COMMANDS",
+		Aliases:  []string{"app", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -72,11 +70,10 @@ func Delete() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
 		Name:        "apps",
-		ShortName:   "app",
 		Usage:       "Delete an application",
 		Category:    "MANAGEMENT COMMANDS",
 		Description: "This command deletes a created application.",
-		Aliases:     []string{"a"},
+		Aliases:     []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -92,11 +89,10 @@ func Delete() cli.Command {
 func Inspect() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:      "apps",
-		ShortName: "app",
-		Usage:     "Retrieve one or all apps properties",
-		Category:  "MANAGEMENT COMMANDS",
-		Aliases:   []string{"a"},
+		Name:     "apps",
+		Usage:    "Retrieve one or all apps properties",
+		Category: "MANAGEMENT COMMANDS",
+		Aliases:  []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -113,11 +109,10 @@ func Inspect() cli.Command {
 func Update() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:      "apps",
-		ShortName: "app",
-		Usage:     "Update an application",
-		Category:  "MANAGEMENT COMMANDS",
-		Aliases:   []string{"a"},
+		Name:     "apps",
+		Usage:    "Update an application",
+		Category: "MANAGEMENT COMMANDS",
+		Aliases:  []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -144,10 +139,9 @@ func Update() cli.Command {
 func SetConfig() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:      "apps",
-		ShortName: "app",
-		Usage:     "Store a configuration key for this application",
-		Aliases:   []string{"a"},
+		Name:    "apps",
+		Usage:   "Store a configuration key for this application",
+		Aliases: []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -164,10 +158,9 @@ func SetConfig() cli.Command {
 func ListConfig() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:      "apps",
-		ShortName: "app",
-		Usage:     "List configuration key/value pairs for this application",
-		Aliases:   []string{"a"},
+		Name:    "apps",
+		Usage:   "List configuration key/value pairs for this application",
+		Aliases: []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -184,10 +177,9 @@ func ListConfig() cli.Command {
 func GetConfig() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:      "apps",
-		ShortName: "app",
-		Usage:     "Inspect configuration key for this application",
-		Aliases:   []string{"a"},
+		Name:    "apps",
+		Usage:   "Inspect configuration key for this application",
+		Aliases: []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -204,10 +196,9 @@ func GetConfig() cli.Command {
 func UnsetConfig() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:      "apps",
-		ShortName: "app",
-		Usage:     "Remove a configuration key for this application",
-		Aliases:   []string{"a"},
+		Name:    "apps",
+		Usage:   "Remove a configuration key for this application",
+		Aliases: []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {

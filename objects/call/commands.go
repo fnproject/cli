@@ -8,10 +8,9 @@ import (
 func Get() cli.Command {
 	c := callsCmd{}
 	return cli.Command{
-		Name:        "calls",
-		ShortName:   "call",
+		Name:        "call",
 		Usage:       "Get function call info per app",
-		Aliases:     []string{"cl"},
+		Aliases:     []string{"calls", "cl"},
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This is the description",
 		Before: func(cxt *cli.Context) error {
@@ -31,9 +30,8 @@ func List() cli.Command {
 	c := callsCmd{}
 	return cli.Command{
 		Name:        "calls",
-		ShortName:   "call",
 		Usage:       "List all calls for the specific app. Route is optional",
-		Aliases:     []string{"cl"},
+		Aliases:     []string{"call", "cl"},
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This is the description",
 		Before: func(cxt *cli.Context) error {

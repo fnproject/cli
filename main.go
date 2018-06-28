@@ -18,7 +18,7 @@ func newFn() *cli.App {
 	app.Name = "fn"
 	app.Version = Version
 	app.Authors = []cli.Author{{Name: "Fn Project"}}
-	app.Description = "COMMAND Line Tool"
+	app.Description = "Fn Command Line Tool"
 	app.EnableBashCompletion = true
 	app.Before = func(c *cli.Context) error {
 		err := config.LoadConfiguration(c)
@@ -51,7 +51,7 @@ func newFn() *cli.App {
 	// cli.go uses text/template to render templates. You can
 	// render custom help text by setting this variable.
 	cli.AppHelpTemplate = `
-	{{if .ArgsUsage}}{{else}}{{.Name}} {{.Version}} {{.Description}}
+	{{if .ArgsUsage}}{{else}}{{.Description}} - Version {{.Version}} 
 
 	ENVIRONMENT VARIABLES:
 	   FN_API_URL   Fn server address

@@ -9,11 +9,10 @@ import (
 func Create() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:      "routes",
-		ShortName: "route",
-		Usage:     "Create a route in an application",
-		Category:  "MANAGEMENT COMMAND",
-		Aliases:   []string{"r"},
+		Name:     "route",
+		Usage:    "Create a route in an application",
+		Category: "MANAGEMENT COMMAND",
+		Aliases:  []string{"routes", "r"},
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -34,11 +33,10 @@ func Create() cli.Command {
 func List() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:      "routes",
-		ShortName: "route",
-		Usage:     "list routes for `app`",
-		Aliases:   []string{"r"},
-		Category:  "MANAGEMENT COMMAND",
+		Name:     "routes",
+		Usage:    "list routes for `app`",
+		Aliases:  []string{"route", "r"},
+		Category: "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -68,11 +66,10 @@ func List() cli.Command {
 func Delete() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:      "routes",
-		ShortName: "route",
-		Usage:     "Delete a route from an application `app`",
-		Category:  "MANAGEMENT COMMAND",
-		Aliases:   []string{"r"},
+		Name:     "route",
+		Usage:    "Delete a route from an application `app`",
+		Category: "MANAGEMENT COMMAND",
+		Aliases:  []string{"routes", "r"},
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -91,11 +88,10 @@ func Delete() cli.Command {
 func Inspect() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:      "routes",
-		ShortName: "route",
-		Usage:     "Retrieve one or all routes properties",
-		Aliases:   []string{"r"},
-		Category:  "MANAGEMENT COMMAND",
+		Name:     "route",
+		Usage:    "Retrieve one or all routes properties",
+		Aliases:  []string{"routes", "r"},
+		Category: "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -114,11 +110,10 @@ func Inspect() cli.Command {
 func Update() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:      "routes",
-		ShortName: "route",
-		Usage:     "Update a route in an `app`",
-		Aliases:   []string{"r"},
-		Category:  "MANAGEMENT COMMAND",
+		Name:     "route",
+		Usage:    "Update a route in an `app`",
+		Aliases:  []string{"routes", "r"},
+		Category: "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -138,11 +133,10 @@ func Update() cli.Command {
 func GetConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:      "routes",
-		ShortName: "route",
-		Usage:     "Inspect configuration key for this route",
-		Aliases:   []string{"r"},
-		Category:  "MANAGEMENT COMMAND",
+		Name:     "route",
+		Usage:    "Inspect configuration key for this route",
+		Aliases:  []string{"routes", "r"},
+		Category: "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -161,11 +155,10 @@ func GetConfig() cli.Command {
 func SetConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:      "routes",
-		ShortName: "route",
-		Usage:     "Store a configuration key for this route",
-		Category:  "MANAGEMENT COMMAND",
-		Aliases:   []string{"r"},
+		Name:     "route",
+		Usage:    "Store a configuration key for this route",
+		Category: "MANAGEMENT COMMAND",
+		Aliases:  []string{"routes", "r"},
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -184,11 +177,10 @@ func SetConfig() cli.Command {
 func ListConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:      "routes",
-		ShortName: "route",
-		Usage:     "List configuration key/value pairs for this route",
-		Aliases:   []string{"r"},
-		Category:  "MANAGEMENT COMMAND",
+		Name:     "route",
+		Usage:    "List configuration key/value pairs for this route",
+		Aliases:  []string{"routes", "r"},
+		Category: "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -207,11 +199,10 @@ func ListConfig() cli.Command {
 func UnsetConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:      "routes",
-		ShortName: "route",
-		Usage:     "Remove a configuration key for this route",
-		Aliases:   []string{"r"},
-		Category:  "MANAGEMENT COMMAND",
+		Name:     "route",
+		Usage:    "Remove a configuration key for this route",
+		Aliases:  []string{"routes", "r"},
+		Category: "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
