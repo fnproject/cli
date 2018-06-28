@@ -239,9 +239,9 @@ func CreateFn(r *clientv2.Fn, rt *fnmodels.Fn) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apifns.CreateFnBadRequest:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Message)
 		case *apifns.CreateFnConflict:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Message)
 		default:
 			return err
 		}
@@ -269,7 +269,7 @@ func UpdateFn(client *fnclient.Fn, fn *fnmodels.Fn) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apifns.UpdateFnBadRequest:
-			return fmt.Errorf("%s", e.Payload.Error.Message)
+			return fmt.Errorf("%s", e.Payload.Message)
 
 		default:
 			return err
