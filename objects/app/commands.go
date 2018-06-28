@@ -69,7 +69,7 @@ func List() cli.Command {
 func Delete() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:        "apps",
+		Name:        "app",
 		Usage:       "Delete an application",
 		Category:    "MANAGEMENT COMMANDS",
 		Description: "This command deletes a created application.",
@@ -89,7 +89,7 @@ func Delete() cli.Command {
 func Inspect() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:     "apps",
+		Name:     "app",
 		Usage:    "Retrieve one or all apps properties",
 		Category: "MANAGEMENT COMMANDS",
 		Aliases:  []string{"apps", "a"},
@@ -109,7 +109,7 @@ func Inspect() cli.Command {
 func Update() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:     "apps",
+		Name:     "app",
 		Usage:    "Update an application",
 		Category: "MANAGEMENT COMMANDS",
 		Aliases:  []string{"apps", "a"},
@@ -139,7 +139,7 @@ func Update() cli.Command {
 func SetConfig() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:    "apps",
+		Name:    "app",
 		Usage:   "Store a configuration key for this application",
 		Aliases: []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
@@ -158,7 +158,7 @@ func SetConfig() cli.Command {
 func ListConfig() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:    "apps",
+		Name:    "app",
 		Usage:   "List configuration key/value pairs for this application",
 		Aliases: []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
@@ -177,7 +177,7 @@ func ListConfig() cli.Command {
 func GetConfig() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:    "apps",
+		Name:    "app",
 		Usage:   "Inspect configuration key for this application",
 		Aliases: []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
@@ -196,7 +196,7 @@ func GetConfig() cli.Command {
 func UnsetConfig() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:    "apps",
+		Name:    "app",
 		Usage:   "Remove a configuration key for this application",
 		Aliases: []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
