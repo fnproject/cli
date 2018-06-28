@@ -22,11 +22,12 @@ func BuildServerCommand() cli.Command {
 	cmd := BuildServerCmd{}
 	flags := append([]cli.Flag{}, cmd.flags()...)
 	return cli.Command{
-		Name:     "build-server",
-		Usage:    "build custom fn server",
-		Category: "SERVER COMMANDS",
-		Flags:    flags,
-		Action:   cmd.buildServer,
+		Name:        "build-server",
+		Usage:       "Build custom Fn server",
+		Category:    "SERVER COMMANDS",
+		Description: "This is the description",
+		Flags:       flags,
+		Action:      cmd.buildServer,
 	}
 }
 
@@ -44,7 +45,7 @@ func (b *BuildServerCmd) flags() []cli.Flag {
 		},
 		cli.StringFlag{
 			Name:  "tag,t",
-			Usage: "image name and optional tag",
+			Usage: "Image name and optional tag",
 		},
 	}
 }
@@ -59,7 +60,7 @@ func (b *BuildServerCmd) flags() []cli.Flag {
 func (b *BuildServerCmd) buildServer(c *cli.Context) error {
 
 	if c.String("tag") == "" {
-		return errors.New("docker tag required")
+		return errors.New("Docker tag required")
 	}
 
 	// path, err := os.Getwd()
@@ -69,7 +70,7 @@ func (b *BuildServerCmd) buildServer(c *cli.Context) error {
 	fpath := "ext.yaml"
 	bb, err := ioutil.ReadFile(fpath)
 	if err != nil {
-		return fmt.Errorf("could not open %s for parsing. Error: %v", fpath, err)
+		return fmt.Errorf("Could not open %s for parsing. Error: %v", fpath, err)
 	}
 	ef := &extFile{}
 	err = yaml.Unmarshal(bb, ef)

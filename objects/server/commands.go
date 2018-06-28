@@ -6,9 +6,11 @@ import (
 
 func Update() cli.Command {
 	return cli.Command{
-		Name:    "server",
-		Usage:   "pulls latest functions server",
-		Aliases: []string{"sv"},
-		Action:  update,
+		Name:        "server",
+		Usage:       "Pulls latest functions server",
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This is the description",
+		Aliases:     []string{"sv"},
+		Action:      update,
 	}
 }

@@ -24,7 +24,7 @@ func DeployCommand() cli.Command {
 	flags = append(flags, cmd.flags()...)
 	return cli.Command{
 		Name:    "deploy",
-		Usage:   "deploys a function to the functions server. (bumps, build, pushes and updates route)",
+		Usage:   "Deploys a function to the functions server. (bumps, build, pushes and updates route)",
 		Aliases: []string{"dp"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
@@ -34,9 +34,10 @@ func DeployCommand() cli.Command {
 			cmd.client = provider.APIClient()
 			return nil
 		},
-		Category: "DEVELOPMENT COMMANDS",
-		Flags:    flags,
-		Action:   cmd.deploy,
+		Category:    "DEVELOPMENT COMMANDS",
+		Description: "This is the description",
+		Flags:       flags,
+		Action:      cmd.deploy,
 	}
 }
 
@@ -57,12 +58,12 @@ func (p *deploycmd) flags() []cli.Flag {
 	return []cli.Flag{
 		cli.StringFlag{
 			Name:        "app",
-			Usage:       "app name to deploy to",
+			Usage:       "App name to deploy to",
 			Destination: &p.appName,
 		},
 		cli.BoolFlag{
 			Name:        "verbose, v",
-			Usage:       "verbose mode",
+			Usage:       "Verbose mode",
 			Destination: &p.verbose,
 		},
 		cli.BoolFlag{
@@ -72,27 +73,27 @@ func (p *deploycmd) flags() []cli.Flag {
 		},
 		cli.BoolFlag{
 			Name:        "local, skip-push", // todo: deprecate skip-push
-			Usage:       "does not push Docker built images onto Docker Hub - useful for local development.",
+			Usage:       "Do not push Docker built images onto Docker Hub - useful for local development.",
 			Destination: &p.local,
 		},
 		cli.StringFlag{
 			Name:        "registry",
-			Usage:       "Sets the Docker owner for images and optionally the registry. This will be prefixed to your function name for pushing to Docker registries. eg: `--registry username` will set your Docker Hub owner. `--registry registry.hub.docker.com/username` will set the registry and owner.",
+			Usage:       "Set the Docker owner for images and optionally the registry. This will be prefixed to your function name for pushing to Docker registries.\r  eg: `--registry username` will set your Docker Hub owner. `--registry registry.hub.docker.com/username` will set the registry and owner. ",
 			Destination: &p.registry,
 		},
 		cli.BoolFlag{
 			Name:        "all",
-			Usage:       "if in root directory containing `app.yaml`, this will deploy all functions",
+			Usage:       "If in root directory containing `app.yaml`, this will deploy all functions",
 			Destination: &p.all,
 		},
 		cli.BoolFlag{
 			Name:        "no-bump",
-			Usage:       "Don't bump the version, assuming external version management",
+			Usage:       "Do not bump the version, assuming external version management",
 			Destination: &p.noBump,
 		},
 		cli.StringSliceFlag{
 			Name:  "build-arg",
-			Usage: "set build time variables",
+			Usage: "Set build time variables",
 		},
 	}
 }
@@ -129,7 +130,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	}
 
 	if appName == "" {
-		return errors.New("app name must be provided, try `--app APP_NAME`")
+		return errors.New("App name must be provided, try `--app APP_NAME`")
 	}
 
 	if p.all {
@@ -169,7 +170,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 	if appf != nil {
 		err = p.updateAppConfig(appf)
 		if err != nil {
-			return fmt.Errorf("failed to update app config: %v", err)
+			return fmt.Errorf("Failed to update app config: %v", err)
 		}
 	}
 
@@ -186,7 +187,7 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFi
 	if appf != nil {
 		err := p.updateAppConfig(appf)
 		if err != nil {
-			return fmt.Errorf("failed to update app config: %v", err)
+			return fmt.Errorf("Failed to update app config: %v", err)
 		}
 	}
 
@@ -234,7 +235,7 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFi
 	}
 
 	if !funcFound {
-		return errors.New("no functions found to deploy")
+		return errors.New("No functions found to deploy")
 	}
 
 	return nil
@@ -246,7 +247,7 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFi
 // the route can be overriden inside the func.yaml file.
 func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *common.FuncFile) error {
 	if appName == "" {
-		return errors.New("app name must be provided, try `--app APP_NAME`")
+		return errors.New("App name must be provided, try `--app APP_NAME`")
 	}
 	dir := filepath.Dir(funcfilePath)
 	// get name from directory if it's not defined
@@ -290,7 +291,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 
 func setRootFuncInfo(ff *common.FuncFile, appName string) {
 	if ff.Name == "" {
-		fmt.Println("setting name")
+		fmt.Println("Setting name")
 		ff.Name = fmt.Sprintf("%s-root", appName)
 	}
 	if ff.Path == "" {
@@ -303,7 +304,7 @@ func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *common.FuncF
 	fmt.Printf("Updating route %s using image %s...\n", ff.Path, ff.ImageName())
 	rt := &models.Route{}
 	if err := route.WithFuncFile(ff, rt); err != nil {
-		return fmt.Errorf("error getting route with funcfile: %s", err)
+		return fmt.Errorf("Error getting route with funcfile: %s", err)
 	}
 	return route.PutRoute(p.client, appName, ff.Path, rt)
 }

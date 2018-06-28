@@ -19,7 +19,7 @@ func TestEnvAsHeader(t *testing.T) {
 		req, _ := http.NewRequest("GET", "http://www.example.com", nil)
 		EnvAsHeader(req, selectedEnv)
 		if found := req.Header.Get("k"); found != expectedValue {
-			t.Errorf("not found expected header: %v", found)
+			t.Errorf("Not found expected header: %v", found)
 		}
 	}
 }

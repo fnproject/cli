@@ -54,7 +54,7 @@ func create(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		return errors.New("context already exists")
+		return errors.New("Context already exists")
 	}
 	path := createFilePath(context + fileExtension)
 	file, err := os.Create(path)
@@ -85,15 +85,15 @@ func delete(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		return errors.New("context file not found")
+		return errors.New("Context file not found")
 	}
 
 	if context == viper.GetString(config.CurrentContext) {
-		return fmt.Errorf("can not delete the current context: %v", context)
+		return fmt.Errorf("Cannot delete the current context: %v", context)
 	}
 
 	if context == "default" {
-		return errors.New("can not delete default context")
+		return errors.New("Cannot delete default context")
 	}
 
 	path := createFilePath(context + fileExtension)
@@ -113,11 +113,11 @@ func use(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		return errors.New("context file not found")
+		return errors.New("Context file not found")
 	}
 
 	if context == viper.GetString(config.CurrentContext) {
-		return fmt.Errorf("context %v currently in use", context)
+		return fmt.Errorf("Context %v currently in use", context)
 	}
 
 	err := config.WriteCurrentContextToConfigFile(context)
@@ -132,7 +132,7 @@ func use(c *cli.Context) error {
 
 func unset(c *cli.Context) error {
 	if currentContext := viper.GetString(config.CurrentContext); currentContext == "" {
-		return errors.New("no context currently in use")
+		return errors.New("No context currently in use")
 	}
 
 	err := config.WriteCurrentContextToConfigFile("")
@@ -192,7 +192,7 @@ func (ctxMap *ContextMap) update(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Printf("current context updated %v with %v\n", key, value)
+	fmt.Printf("Current context updated %v with %v\n", key, value)
 	return err
 }
 
@@ -218,12 +218,12 @@ func getAvailableContexts() ([]os.FileInfo, error) {
 
 func ValidateAPIURL(apiURL string) error {
 	if !strings.Contains(apiURL, "://") {
-		return errors.New("invalid Fn API URL: does not contain ://")
+		return errors.New("Invalid Fn API URL: does not contain ://")
 	}
 
 	_, err := url.Parse(apiURL)
 	if err != nil {
-		return fmt.Errorf("invalid Fn API URL: %s", err)
+		return fmt.Errorf("Invalid Fn API URL: %s", err)
 	}
 	return nil
 }
@@ -232,7 +232,7 @@ func ValidateContextName(context string) error {
 	re := regexp.MustCompile("[^a-zA-Z0-9_-]+")
 
 	for range re.FindAllString(context, -1) {
-		return errors.New("please enter a context name with only Alphanumeric, _, or -")
+		return errors.New("Please enter a context name with only Alphanumeric, _, or -")
 	}
 	return nil
 }

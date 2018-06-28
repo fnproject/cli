@@ -42,32 +42,32 @@ func initFlags(a *initFnCmd) []cli.Flag {
 	fgs := []cli.Flag{
 		cli.StringFlag{
 			Name:        "name",
-			Usage:       "name of the function. Defaults to directory name in lowercase.",
+			Usage:       "Name of the function. Defaults to directory name in lowercase.",
 			Destination: &a.ff.Name,
 		},
 		cli.BoolFlag{
 			Name:        "force",
-			Usage:       "overwrite existing func.yaml",
+			Usage:       "Overwrite existing func.yaml",
 			Destination: &a.force,
 		},
 		cli.StringFlag{
 			Name:        "runtime",
-			Usage:       "choose an existing runtime - " + langsList(),
+			Usage:       "Choose an existing runtime - " + langsList(),
 			Destination: &a.ff.Runtime,
 		},
 		cli.StringFlag{
 			Name:        "entrypoint",
-			Usage:       "entrypoint is the command to run to start this function - equivalent to Dockerfile ENTRYPOINT.",
+			Usage:       "Entrypoint is the command to run to start this function - equivalent to Dockerfile ENTRYPOINT.",
 			Destination: &a.ff.Entrypoint,
 		},
 		cli.StringFlag{
 			Name:        "cmd",
-			Usage:       "command to run to start this function - equivalent to Dockerfile CMD.",
+			Usage:       "Command to run to start this function - equivalent to Dockerfile CMD.",
 			Destination: &a.ff.Entrypoint,
 		},
 		cli.StringFlag{
 			Name:        "version",
-			Usage:       "set initial function version",
+			Usage:       "Set initial function version",
 			Destination: &a.ff.Version,
 			Value:       common.InitialVersion,
 		},
@@ -90,7 +90,7 @@ func InitCommand() cli.Command {
 
 	return cli.Command{
 		Name:        "init",
-		Usage:       "create a local func.yaml file",
+		Usage:       "Create a local func.yaml file",
 		Category:    "DEVELOPMENT COMMANDS",
 		Aliases:     []string{"in"},
 		Description: "Creates a func.yaml file in the current directory.",
@@ -111,7 +111,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	if runtimeSpecified {
 		// go no further if the specified runtime is not supported
 		if a.ff.Runtime != common.FuncfileDockerRuntime && langs.GetLangHelper(a.ff.Runtime) == nil {
-			return fmt.Errorf("init does not support the '%s' runtime", a.ff.Runtime)
+			return fmt.Errorf("Init does not support the '%s' runtime", a.ff.Runtime)
 		}
 	}
 
@@ -123,7 +123,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		// check if dir exists, if it does, then we can't create function
 		if common.Exists(dir) {
 			if !a.force {
-				return fmt.Errorf("directory %s already exists, cannot init function", dir)
+				return fmt.Errorf("Directory %s already exists, cannot init function", dir)
 			}
 		} else {
 			err = os.MkdirAll(dir, 0755)
@@ -144,7 +144,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			return err
 		}
 		if ff != nil {
-			return errors.New("function file already exists, aborting")
+			return errors.New("Function file already exists, aborting")
 		}
 	}
 
@@ -209,10 +209,10 @@ func (a *initFnCmd) bindRoute(rt *models.Route) {
 // must be all lowercase
 func ValidateFuncName(name string) error {
 	if strings.Contains(name, ":") {
-		return errors.New("function name cannot contain a colon")
+		return errors.New("Function name cannot contain a colon")
 	}
 	if strings.ToLower(name) != name {
-		return errors.New("function name must be lowercase")
+		return errors.New("Function name must be lowercase")
 	}
 	return nil
 }
@@ -237,7 +237,7 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context) error {
 		return nil
 	}
 	if a.ff.Runtime == common.FuncfileDockerRuntime {
-		return errors.New("function file runtime is 'docker', but no Dockerfile exists")
+		return errors.New("Function file runtime is 'docker', but no Dockerfile exists")
 	}
 
 	var helper langs.LangHelper
@@ -302,7 +302,7 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context) error {
 	}
 
 	if a.ff.Entrypoint == "" && a.ff.Cmd == "" {
-		return fmt.Errorf("could not detect entrypoint or cmd for %v, use --entrypoint and/or --cmd to set them explicitly", a.ff.Runtime)
+		return fmt.Errorf("Could not detect entrypoint or cmd for %v, use --entrypoint and/or --cmd to set them explicitly", a.ff.Runtime)
 	}
 
 	return nil
@@ -324,5 +324,5 @@ func detectRuntime(path string) (langs.LangHelper, error) {
 			}
 		}
 	}
-	return nil, fmt.Errorf("no supported files found to guess runtime, please set runtime explicitly with --runtime flag")
+	return nil, fmt.Errorf("No supported files found to guess runtime, please set runtime explicitly with --runtime flag")
 }

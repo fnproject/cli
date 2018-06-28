@@ -9,10 +9,11 @@ func CreateCommand() cli.Command {
 	return cli.Command{
 		Name:        "create",
 		Aliases:     []string{"c"},
-		Usage:       "create",
-		Category:    "MANAGEMENT COMMANDS",
+		Usage:       "Create a new object",
+		Description: "This command creates a new object ('app', 'context' or 'route').",
 		Hidden:      false,
-		ArgsUsage:   "<object>",
+		ArgsUsage:   "<object-type>",
+		Category:    "MANAGEMENT COMMANDS",
 		Subcommands: GetCommands(CreateCmds),
 	}
 }

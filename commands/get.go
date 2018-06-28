@@ -9,10 +9,11 @@ func GetCommand() cli.Command {
 	return cli.Command{
 		Name:        "get",
 		Aliases:     []string{"g"},
-		Usage:       "get command",
+		Usage:       "Get an object to retrieve its information",
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
-		ArgsUsage:   "<command>",
+		ArgsUsage:   "<subcommand>",
+		Description: "This is the description",
 		Subcommands: GetCommands(GetCmds),
 	}
 }

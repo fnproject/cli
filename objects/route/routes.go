@@ -29,35 +29,35 @@ type routesCmd struct {
 var RouteFlags = []cli.Flag{
 	cli.Uint64Flag{
 		Name:  "memory,m",
-		Usage: "memory in MiB",
+		Usage: "Memory in MiB",
 	},
 	cli.StringFlag{
 		Name:  "type,t",
-		Usage: "route type - sync or async",
+		Usage: "Route type - sync or async",
 	},
 	cli.StringSliceFlag{
 		Name:  "config,c",
-		Usage: "route configuration",
+		Usage: "Route configuration",
 	},
 	cli.StringSliceFlag{
 		Name:  "headers",
-		Usage: "route response headers",
+		Usage: "Route response headers",
 	},
 	cli.StringFlag{
 		Name:  "format,f",
-		Usage: "hot container IO format - default or http",
+		Usage: "Hot container IO format - default or http",
 	},
 	cli.IntFlag{
 		Name:  "timeout",
-		Usage: "route timeout (eg. 30)",
+		Usage: "Route timeout (eg. 30)",
 	},
 	cli.IntFlag{
 		Name:  "idle-timeout",
-		Usage: "route idle timeout (eg. 30)",
+		Usage: "Route idle timeout (eg. 30)",
 	},
 	cli.StringSliceFlag{
 		Name:  "annotation",
-		Usage: "route annotation (can be specified multiple times)",
+		Usage: "Route annotation (can be specified multiple times)",
 	},
 }
 var updateRouteFlags = RouteFlags
@@ -109,7 +109,7 @@ func (r *routesCmd) list(c *cli.Context) error {
 		}
 		n := c.Int64("n")
 		if n < 0 {
-			return errors.New("number of calls: negative value not allowed")
+			return errors.New("Number of calls: negative value not allowed")
 		}
 
 		resRoutes = append(resRoutes, resp.Payload.Routes...)
@@ -254,10 +254,10 @@ func (r *routesCmd) create(c *cli.Context) error {
 	WithFlags(c, rt)
 
 	if rt.Path == "" {
-		return errors.New("route path is missing")
+		return errors.New("Route path is missing")
 	}
 	if rt.Image == "" {
-		return errors.New("no image specified")
+		return errors.New("No image specified")
 	}
 
 	return PostRoute(r.client, appName, rt)
@@ -399,7 +399,7 @@ func (r *routesCmd) getConfig(c *cli.Context) error {
 
 	val, ok := resp.Payload.Route.Config[key]
 	if !ok {
-		return fmt.Errorf("config key does not exist")
+		return fmt.Errorf("Config key does not exist")
 	}
 
 	fmt.Println(val)
@@ -444,7 +444,7 @@ func (r *routesCmd) unsetConfig(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Printf("removed key '%s' from the route '%s%s'", key, appName, key)
+	fmt.Printf("Removed key '%s' from the route '%s%s'", key, appName, key)
 	return nil
 }
 
@@ -478,18 +478,18 @@ func (r *routesCmd) inspect(c *cli.Context) error {
 
 	data, err := json.Marshal(resp.Payload.Route)
 	if err != nil {
-		return fmt.Errorf("failed to inspect route: %s", err)
+		return fmt.Errorf("Failed to inspect route: %s", err)
 	}
 	var inspect map[string]interface{}
 	err = json.Unmarshal(data, &inspect)
 	if err != nil {
-		return fmt.Errorf("failed to inspect route: %s", err)
+		return fmt.Errorf("Failed to inspect route: %s", err)
 	}
 
 	jq := jsonq.NewQuery(inspect)
 	field, err := jq.Interface(strings.Split(prop, ".")...)
 	if err != nil {
-		return errors.New("failed to inspect that route's field")
+		return errors.New("Failed to inspect that route's field")
 	}
 	enc.Encode(field)
 

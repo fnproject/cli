@@ -9,10 +9,11 @@ func UseCommand() cli.Command {
 	return cli.Command{
 		Name:        "use",
 		Aliases:     []string{"u"},
-		Usage:       "use command",
+		Usage:       "Select context for further commands",
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
-		ArgsUsage:   "<command>",
+		ArgsUsage:   "<subcommand>",
+		Description: "This is the description",
 		Subcommands: GetCommands(UseCmds),
 	}
 }
