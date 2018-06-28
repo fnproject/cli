@@ -50,7 +50,7 @@ func newFn() *cli.App {
 	// cli.go uses text/template to render templates. You can
 	// render custom help text by setting this variable.
 	cli.AppHelpTemplate = `
-    {{if .ArgsUsage}}{{else}} ` + "\x1b[31;1m{{if .ArgsUsage}}{{else}}{{.Description}} - Version {{.Version}}\x1b[0m" + `
+    {{if .ArgsUsage}}{{else}} ` + "\x1b[31;1m{{.Description}} - Version {{.Version}}\x1b[0m" + `
 
     ` + "\x1b[1mENVIRONMENT VARIABLES:\x1b[0m" + `
         FN_API_URL   ` + "\x1b[3mFn server address\x1b[0m" + `
@@ -67,7 +67,8 @@ func newFn() *cli.App {
 
     ` + "\x1b[1mFURTHER HELP:\x1b[0m" + ` ` + "\x1b[3mSee \x1b[0m" + `'` + "\x1b[96;21mfn <command> --help\x1b[0m" + `' ` + "\x1b[3mfor more information about a command.\x1b[0m" + `
 
-    ` + "\x1b[1mLEARN MORE:\x1b[0m" + ` ` + "\x1b[91;4mhttps://github.com/fnproject/fn\x1b[0m" + ``
+    ` + "\x1b[1mLEARN MORE:\x1b[0m" + ` ` + "\x1b[91;4mhttps://github.com/fnproject/fn\x1b[0m" + `
+`
 
 	// Override command template
 	// SubcommandHelpTemplate is the text template for the subcommand help topic.
@@ -90,30 +91,31 @@ func newFn() *cli.App {
         {{.}}{{end}}{{end}}{{if .Commands}}
 
     ` + "\x1b[1mFURTHER HELP:\x1b[0m" + ` ` + "\x1b[3mSee \x1b[0m" + `'` + "\x1b[96;21mfn <command> --help\x1b[0m" + `' ` + "\x1b[3mfor more information about a command.\x1b[0m" + `{{end}}
-    `
+`
+
 	//Override command template
 	// CommandHelpTemplate is the text template for the command help topic.
 	// cli.go uses text/template to render templates. You can
 	// render custom help text by setting this variable.
 	cli.CommandHelpTemplate = `{{if .Category}}
     ` + "\x1b[1m{{.Category}}:\x1b[0m" + `{{end}}
-    ` + "\x1b[36;1m{{.HelpName}}\x1b[0m" + `{{if .Usage}} - ` + "\x1b[3m{{.Usage}}\x1b[0m" + `
+		` + "\x1b[36;1m{{.HelpName}}\x1b[0m" + `{{if .Usage}} - ` + "\x1b[3m{{.Usage}}\x1b[0m" + `
     
     ` + "\x1b[1mUSAGE:\x1b[0m" + `
-    ` + "\x1b[36;1m{{.HelpName}}\x1b[0m" + ` ` + "\x1b[36;21m[global options]\x1b[0m" + ` {{if .ArgsUsage}}` + "\x1b[91;21m{{.ArgsUsage}}\x1b[0m" + `{{end}} {{if .Flags}}` + "\x1b[33;21m[command options]\x1b[0m" + `{{end}}{{end}}{{if .Description}}
+		` + "\x1b[36;1m{{.HelpName}}\x1b[0m" + ` ` + "\x1b[36;21m[global options]\x1b[0m" + ` {{if .ArgsUsage}}` + "\x1b[91;21m{{.ArgsUsage}}\x1b[0m" + `{{end}} {{if .Flags}}` + "\x1b[33;21m[command options]\x1b[0m" + `{{end}}{{end}}{{if .Description}}
     
     ` + "\x1b[1mDESCRIPTION:\x1b[0m" + `
-        {{.Description}}{{end}}{{if .Subcommands}}
+		{{.Description}}{{end}}{{if .Subcommands}}
 
     ` + "\x1b[1mSUBCOMMANDS:\x1b[0m" + ` {{range .Subcommands}}
-        {{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
+		{{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
    
     ` + "\x1b[1mCOMMAND OPTIONS:\x1b[0m" + `
         {{range .Flags}}{{.}}
         {{end}}{{if .Subcommands}}
     
     ` + "\x1b[1mFURTHER HELP:\x1b[0m" + ` ` + "\x1b[3mSee \x1b[0m" + `'` + "\x1b[96;21mfn <command> --help\x1b[0m" + `' ` + "\x1b[3mfor more information about a command.\x1b[0m" + `{{end}}{{end}}
-    `
+`
 
 	app.CommandNotFound = func(c *cli.Context, cmd string) {
 		fmt.Fprintf(os.Stderr, "Command not found: \"%v\" -- see `fn --help` for more information.\n", cmd)
