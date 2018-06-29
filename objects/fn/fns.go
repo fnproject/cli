@@ -115,14 +115,10 @@ func (f *fnsCmd) list(c *cli.Context) error {
 		params.Cursor = &resp.Payload.NextCursor
 	}
 
-	callURL := f.provider.CallURL()
-	fmt.Println("Call URl:", callURL)
-
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprint(w, "name", "\t", "image", "\t", "endpoint", "\n")
+	fmt.Fprint(w, "name", "\t", "image", "\n")
 	for _, route := range resFns {
-		endpoint := path.Join(callURL.Host, "f", appName, route.Name)
-		fmt.Fprint(w, route.Name, "\t", route.Image, "\t", endpoint, "\n")
+		fmt.Fprint(w, route.Name, "\t", route.Image, "\t",  "\n")
 	}
 	w.Flush()
 	return nil
