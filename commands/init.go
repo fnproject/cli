@@ -90,7 +90,7 @@ func InitCommand() cli.Command {
 
 	return cli.Command{
 		Name:        "init",
-		Usage:       "Create a local func.yaml file",
+		Usage:       "\tCreate a local func.yaml file",
 		Category:    "DEVELOPMENT COMMANDS",
 		Aliases:     []string{"in"},
 		Description: "Creates a func.yaml file in the current directory.",

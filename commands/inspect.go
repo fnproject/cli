@@ -9,7 +9,7 @@ func InspectCommand() cli.Command {
 	return cli.Command{
 		Name:        "inspect",
 		Aliases:     []string{"i"},
-		Usage:       "Retrieve properties of an object",
+		Usage:       "\tRetrieve properties of an object",
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",

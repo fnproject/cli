@@ -33,7 +33,7 @@ func LambdaCommand() cli.Command {
 
 	return cli.Command{
 		Name:        "lambda",
-		Usage:       "Create and publish lambda functions",
+		Usage:       "\tCreate and publish lambda functions",
 		Description: "This is the description",
 		Aliases:     []string{"la"},
 		Hidden:      true,

@@ -9,7 +9,7 @@ func GetCommand() cli.Command {
 	return cli.Command{
 		Name:        "get",
 		Aliases:     []string{"g"},
-		Usage:       "Get an object to retrieve its information",
+		Usage:       "\tGet an object to retrieve its information",
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",

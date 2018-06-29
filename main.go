@@ -9,6 +9,7 @@ import (
 
 	"github.com/fnproject/cli/commands"
 	"github.com/fnproject/cli/config"
+	tty "github.com/mattn/go-isatty"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
@@ -50,32 +51,32 @@ func newFn() *cli.App {
 	// cli.go uses text/template to render templates. You can
 	// render custom help text by setting this variable.
 	cli.AppHelpTemplate = `
-    {{if not .ArgsUsage}}` + "\x1b[31;1m{{.Description}}\x1b[0m" + `{{"\t"}}` + "\x1b[31;1m- Version {{.Version}}\x1b[0m" + `
-
-    ` + "\x1b[1mENVIRONMENT VARIABLES:\x1b[0m" + `
-        FN_API_URL   ` + "\x1b[3mFn server address\x1b[0m" + `
-        FN_REGISTRY  ` + "\x1b[3mDocker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]USERNAME]\x1b[0m" + `{{if .VisibleCommands}}
-
-    ` + "\x1b[1mGENERAL COMMANDS:\x1b[0m" + `{{end}}{{else}}{{range .VisibleCategories}}{{if .Name}}` + "\x1b[1m{{.Name}}:\x1b[0m" + `{{end}}{{end}}
-        ` + "\x1b[36;1m{{ .HelpName}}\x1b[0m" + `{{if .Usage}} - ` + "\x1b[3m{{.Usage}}\x1b[0m" + ` 
-
-    ` + "\x1b[1mUSAGE:\x1b[0m" + `
-        ` + "\x1b[36;1m{{ .HelpName}}\x1b[0m" + ` {{if .VisibleFlags}} ` + "\x1b[36;21m[global options]\x1b[0m" + `{{end}} {{if .ArgsUsage}}` + "\x1b[91;21m{{.ArgsUsage}}\x1b[0m" + `{{end}} {{if .Flags}}` + "\x1b[33;21m[command options]\x1b[0m" + `{{end}}{{if .Description}}
-  
-    ` + "\x1b[1mDESCRIPTION:\x1b[0m" + `
-        {{.Description}}{{end}} {{end}}{{end}}{{range .VisibleCategories}}{{if .Name}}
-
-    ` + "\x1b[1m{{.Name}}:\x1b[0m" + `{{end}}{{range .VisibleCommands}}
-        {{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
-        
-    {{if not .ArgsUsage}}` + "\x1b[1mGLOBAL OPTIONS:\x1b[0m" + `{{else}}` + "\x1b[1mCOMMAND OPTIONS:\x1b[0m" + `{{end}}
-       {{range $index, $option := .VisibleFlags}}{{if $index}}
-       {{end}}{{$option}}{{end}}{{end}}
-
-    ` + "\x1b[1mFURTHER HELP:\x1b[0m" + ` ` + "\x1b[3mSee \x1b[0m" + `'` + "\x1b[96;21mfn <command> --help\x1b[0m" + `' ` + "\x1b[3mfor more information about a command.\x1b[0m" + `{{if not .ArgsUsage}}
-
-    ` + "\x1b[1mLEARN MORE:\x1b[0m" + ` ` + "\x1b[91;4mhttps://github.com/fnproject/fn\x1b[0m" + `{{else}}{{end}}
-`
+	{{"\t"}}{{if not .ArgsUsage}}` + "\x1b[31;1m{{.Description}}\x1b[0m" + `{{"\t"}}` + "\x1b[31;1m-" + `{{"\t"}}` + "Version {{.Version}}\x1b[0m" + `
+	
+		{{"\t"}}` + "\x1b[1mENVIRONMENT VARIABLES:\x1b[0m" + `
+			{{"\t"}}{{"\t"}}FN_API_URL{{"\t"}}` + "\x1b[3mFn server address\x1b[0m" + `
+			{{"\t"}}{{"\t"}}FN_REGISTRY{{"\t"}}` + "\x1b[3mDocker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]USERNAME]\x1b[0m" + `{{if .VisibleCommands}}
+	
+		{{"\t"}}` + "\x1b[1mGENERAL COMMANDS:\x1b[0m" + `{{end}}{{else}}{{range .VisibleCategories}}{{if .Name}}` + "\x1b[1m{{.Name}}:\x1b[0m" + `{{end}}{{end}}
+			{{"\t"}}` + "\x1b[36;1m{{ .HelpName}}\x1b[0m" + `{{if .Usage}} - ` + "\x1b[3m{{.Usage}}\x1b[0m" + ` 
+	
+		{{"\t"}}` + "\x1b[1mUSAGE:\x1b[0m" + `
+			{{"\t"}}` + "\x1b[36;1m{{ .HelpName}}\x1b[0m" + ` {{if .VisibleFlags}} ` + "\x1b[36;21m[global options]\x1b[0m" + `{{end}} {{if .ArgsUsage}}` + "\x1b[91;21m{{.ArgsUsage}}\x1b[0m" + `{{end}} {{if .Flags}}` + "\x1b[33;21m[command options]\x1b[0m" + `{{end}}{{if .Description}}
+	  
+		{{"\t"}}` + "\x1b[1mDESCRIPTION:\x1b[0m" + `
+			{{"\t"}}{{.Description}}{{end}} {{end}}{{end}}{{range .VisibleCategories}}{{if .Name}}
+	
+		{{"\t"}}` + "\x1b[1m{{.Name}}:\x1b[0m" + `{{end}}{{range .VisibleCommands}}
+			{{"\t"}}{{"\t"}}{{join .Names ", "}}{{"\t"}}{{"\t"}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
+	        
+		{{"\t"}}{{if not .ArgsUsage}}` + "\x1b[1mGLOBAL OPTIONS:\x1b[0m" + `{{else}}` + "\x1b[1mCOMMAND OPTIONS:\x1b[0m" + `{{end}}
+			{{"\t"}}{{"\t"}}{{range $index, $option := .VisibleFlags}}{{if $index}}
+			{{"\t"}}{{"\t"}}{{end}}{{$option}}{{end}}{{end}}
+	
+		{{"\t"}}` + "\x1b[1mFURTHER HELP:\x1b[0m" + `{{"\t"}}` + "\x1b[3mSee \x1b[0m" + `'` + "\x1b[96;21mfn <command> --help\x1b[0m" + `' ` + "\x1b[3mfor more information about a command.\x1b[0m" + `{{if not .ArgsUsage}}
+	
+		{{"\t"}}` + "\x1b[1mLEARN MORE:\x1b[0m" + `{{"\t"}}{{"\t"}}` + "\x1b[91;4mhttps://github.com/fnproject/fn\x1b[0m" + `{{else}}{{end}}
+	`
 	// Override command template
 	// SubcommandHelpTemplate is the text template for the subcommand help topic.
 	// cli.go uses text/template to render templates. You can
@@ -190,13 +191,19 @@ func commandArgOverrides(c *cli.Context) {
 }
 
 func main() {
-	app := newFn()
 
-	err := app.Run(os.Args)
-	if err != nil {
-		// TODO: this doesn't seem to get called even when an error returns from a command, but maybe urfave is doing a non zero exit anyways? nope: https://github.com/urfave/cli/issues/610
-		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Client version: %s\n", Version)
-		os.Exit(1)
+	if tty.IsTerminal(os.Stdout.Fd()) || tty.IsCygwinTerminal(os.Stdout.Fd()) {
+		app := newFn()
+		err := app.Run(os.Args)
+
+		if err != nil {
+			// TODO: this doesn't seem to get called even when an error returns from a command, but maybe urfave is doing a non zero exit anyways? nope: https://github.com/urfave/cli/issues/610
+			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+			fmt.Fprintf(os.Stderr, "Client version: %s\n", Version)
+			os.Exit(1)
+		}
+	} else {
+		fmt.Println("Is Not Terminal")
 	}
+
 }

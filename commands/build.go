@@ -14,7 +14,7 @@ func BuildCommand() cli.Command {
 	flags := append([]cli.Flag{}, cmd.flags()...)
 	return cli.Command{
 		Name:        "build",
-		Usage:       "Build function version",
+		Usage:       "\tBuild function version",
 		Category:    "DEVELOPMENT COMMANDS",
 		Description: "This is the description",
 		Aliases:     []string{"bu"},

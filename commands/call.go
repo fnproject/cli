@@ -22,7 +22,7 @@ func CallCommand() cli.Command {
 	cl := callCmd{}
 	return cli.Command{
 		Name:    "call",
-		Usage:   "Invoke a remote function",
+		Usage:   "\tInvoke a remote function",
 		Aliases: []string{"cl"},
 		Before: func(c *cli.Context) error {
 			var err error

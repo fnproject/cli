@@ -60,3 +60,7 @@
   name = "github.com/go-yaml/yaml"
   version = "2.2.1"
 
+
+[[constraint]]
+  name = "github.com/mattn/go-isatty"
+  version = "0.0.3"
