@@ -32,7 +32,7 @@ func create(c *cli.Context) error {
 	}
 
 	providerId := config.DefaultProvider
-	if cProvider := c.String("providerId"); cProvider != "" {
+	if cProvider := c.String("provider"); cProvider != "" {
 		providerId = cProvider
 	}
 
