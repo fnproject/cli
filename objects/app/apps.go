@@ -86,8 +86,6 @@ func (a *appsCmd) create(c *cli.Context) error {
 		Body:    app,
 	})
 
-	fmt.Println("Resp:", resp)
-
 	if err != nil {
 		switch e := err.(type) {
 		case *apiapps.CreateAppBadRequest:
@@ -110,9 +108,11 @@ func (a *appsCmd) update(c *cli.Context) error {
 		return err
 	}
 
-	appWithFlags(c, app)
+	updatedApp := &models.App{}
 
-	err = a.putApp(app)
+	appWithFlags(c, updatedApp)
+
+	err = a.putApp(updatedApp, app.ID)
 	if err != nil {
 		return err
 	}
@@ -131,9 +131,10 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 		return err
 	}
 
+	app.Config = make(map[string]string)
 	app.Config[key] = value
 
-	if err := a.putApp(app); err != nil {
+	if err := a.putApp(app, app.ID); err != nil {
 		return fmt.Errorf("Error updating app configuration: %v", err)
 	}
 
@@ -208,7 +209,7 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	}
 	app.Config[key] = ""
 
-	if err := a.putApp(app); err != nil {
+	if err := a.putApp(app, app.ID); err != nil {
 		return fmt.Errorf("Error updating app configuration: %v", err)
 	}
 
@@ -216,10 +217,10 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) putApp(app *models.App) error {
+func (a *appsCmd) putApp(app *models.App, appID string) error {
 	_, err := a.client.Apps.UpdateApp(&apiapps.UpdateAppParams{
 		Context: context.Background(),
-		AppID:   app.ID,
+		AppID:   appID,
 		Body:    app,
 	})
 

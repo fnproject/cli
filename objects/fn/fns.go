@@ -106,7 +106,6 @@ func (f *fnsCmd) list(c *cli.Context) error {
 		}
 
 		resFns = append(resFns, resp.Payload.Items...)
-		fmt.Println("resFns: ", resFns)
 		howManyMore := n - int64(len(resFns)+len(resp.Payload.Items))
 		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
@@ -118,7 +117,7 @@ func (f *fnsCmd) list(c *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprint(w, "name", "\t", "image", "\n")
 	for _, route := range resFns {
-		fmt.Fprint(w, route.Name, "\t", route.Image, "\t",  "\n")
+		fmt.Fprint(w, route.Name, "\t", route.Image, "\t", "\n")
 	}
 	w.Flush()
 	return nil
