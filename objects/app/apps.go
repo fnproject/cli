@@ -108,11 +108,9 @@ func (a *appsCmd) update(c *cli.Context) error {
 		return err
 	}
 
-	updatedApp := &models.App{}
+	appWithFlags(c, app)
 
-	appWithFlags(c, updatedApp)
-
-	err = a.putApp(updatedApp, app.ID)
+	err = a.putApp(app)
 	if err != nil {
 		return err
 	}
@@ -163,7 +161,7 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	app.Config = make(map[string]string)
 	app.Config[key] = value
 
-	if err := a.putApp(app, app.ID); err != nil {
+	if err := a.putApp(app); err != nil {
 		return fmt.Errorf("Error updating app configuration: %v", err)
 	}
 
@@ -220,7 +218,7 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	}
 	app.Config[key] = ""
 
-	if err := a.putApp(app, app.ID); err != nil {
+	if err := a.putApp(app); err != nil {
 		return fmt.Errorf("Error updating app configuration: %v", err)
 	}
 
@@ -228,10 +226,10 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) putApp(app *models.App, appID string) error {
+func (a *appsCmd) putApp(app *models.App) error {
 	_, err := a.client.Apps.UpdateApp(&apiapps.UpdateAppParams{
 		Context: context.Background(),
-		AppID:   appID,
+		AppID:   app.ID,
 		Body:    app,
 	})
 

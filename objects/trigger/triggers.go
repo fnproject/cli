@@ -169,10 +169,9 @@ func (t *triggersCmd) update(c *cli.Context) error {
 		return err
 	}
 
-	updatedTrigger := &models.Trigger{}
-	WithFlags(c, updatedTrigger)
+	WithFlags(c, trigger)
 
-	err = t.putTrigger(updatedTrigger, trigger.ID)
+	err = t.putTrigger(trigger)
 	if err != nil {
 		return err
 	}
@@ -181,10 +180,10 @@ func (t *triggersCmd) update(c *cli.Context) error {
 	return nil
 }
 
-func (t *triggersCmd) putTrigger(trigger *models.Trigger, triggerID string) error {
+func (t *triggersCmd) putTrigger(trigger *models.Trigger) error {
 	_, err := t.client.Triggers.UpdateTrigger(&apitriggers.UpdateTriggerParams{
 		Context:   context.Background(),
-		TriggerID: triggerID,
+		TriggerID: trigger.ID,
 		Body:      trigger,
 	})
 

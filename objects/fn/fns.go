@@ -247,8 +247,7 @@ func CreateFn(r *clientv2.Fn, rt *models.Fn) error {
 	return nil
 }
 
-func (f *fnsCmd) putFn(fn *models.Fn, fnID string) error {
-	fmt.Println("FN:", fn)
+func (f *fnsCmd) putFn(fn *models.Fn) error {
 	if fn.Image != "" {
 		err := common.ValidateImageName(fn.Image)
 		if err != nil {
@@ -258,7 +257,7 @@ func (f *fnsCmd) putFn(fn *models.Fn, fnID string) error {
 
 	_, err := f.client.Fns.UpdateFn(&apifns.UpdateFnParams{
 		Context: context.Background(),
-		FnID:    fnID,
+		FnID:    fn.ID,
 		Body:    fn,
 	})
 
@@ -311,11 +310,9 @@ func (f *fnsCmd) update(c *cli.Context) error {
 		return err
 	}
 
-	updatedFn := &models.Fn{}
-
 	fnWithFlags(c, fn)
 
-	err = f.putFn(updatedFn, fn.ID)
+	err = f.putFn(fn)
 	if err != nil {
 		return err
 	}
@@ -342,7 +339,7 @@ func (f *fnsCmd) setConfig(c *cli.Context) error {
 	fn.Config = make(map[string]string)
 	fn.Config[key] = value
 
-	if err = f.putFn(fn, fn.ID); err != nil {
+	if err = f.putFn(fn); err != nil {
 		return fmt.Errorf("Error updating function configuration: %v", err)
 	}
 
@@ -413,7 +410,7 @@ func (f *fnsCmd) unsetConfig(c *cli.Context) error {
 	}
 	fn.Config[key] = ""
 
-	err = f.putFn(fn, fn.ID)
+	err = f.putFn(fn)
 	if err != nil {
 		return err
 	}
