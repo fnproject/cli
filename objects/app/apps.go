@@ -121,6 +121,35 @@ func (a *appsCmd) update(c *cli.Context) error {
 	return nil
 }
 
+func GetAppByName(client *clientv2.Fn, name string) (*models.App, error) {
+	appsResp, err := client.Apps.ListApps(&apiapps.ListAppsParams{
+		Context: context.Background(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var app *models.App
+	for i := 0; i < len(appsResp.Payload.Items); i++ {
+		if appsResp.Payload.Items[i].Name == name {
+			app = appsResp.Payload.Items[i]
+		}
+	}
+	if app == nil {
+		return nil, fmt.Errorf("app %s not found", name)
+	}
+
+	appResp, err := client.Apps.GetApp(&apiapps.GetAppParams{
+		AppID:   app.ID,
+		Context: context.Background(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return appResp.Payload, nil
+}
+
 func (a *appsCmd) setConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
@@ -140,24 +169,6 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 
 	fmt.Println(appName, "updated", key, "with", value)
 	return nil
-}
-
-func GetAppByName(client *clientv2.Fn, name string) (*models.App, error) {
-
-	resp, err := client.Apps.ListApps(&apiapps.ListAppsParams{
-		Name:    &name,
-		Context: context.Background(),
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if len(resp.Payload.Items) == 0 {
-		return nil, fmt.Errorf("app %s not found", name)
-	}
-
-	return resp.Payload.Items[0], nil
 }
 
 func (a *appsCmd) getConfig(c *cli.Context) error {
@@ -213,7 +224,7 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 		return fmt.Errorf("Error updating app configuration: %v", err)
 	}
 
-	fmt.Printf("Removed key '%s' from app '%s' \n", key, appName)
+	fmt.Printf("removed key '%s' from app '%s' \n", key, appName)
 	return nil
 }
 
@@ -245,7 +256,6 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 
 	appName := c.Args().First()
 	prop := c.Args().Get(1)
-
 	app, err := GetAppByName(a.client, appName)
 	if err != nil {
 		return err

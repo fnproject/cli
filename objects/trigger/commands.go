@@ -13,11 +13,12 @@ func Create() cli.Command {
 		Usage:     "create a new trigger",
 		Aliases:   []string{"t", "tr", "trig"},
 		Before: func(ctx *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			var err error
+			t.provider, err = client.CurrentProvider()
 			if err != nil {
 				return err
 			}
-			t.client = provider.APIClientv2()
+			t.client = t.provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app> <function> <trigger>",
@@ -34,11 +35,12 @@ func List() cli.Command {
 		Usage:     "list all triggers",
 		Aliases:   []string{"t", "tr", "trig"},
 		Before: func(ctx *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			var err error
+			t.provider, err = client.CurrentProvider()
 			if err != nil {
 				return err
 			}
-			t.client = provider.APIClientv2()
+			t.client = t.provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app> <function>",
@@ -65,11 +67,12 @@ func Update() cli.Command {
 		Usage:     "update a trigger",
 		Aliases:   []string{"t", "tr", "trig"},
 		Before: func(ctx *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			var err error
+			t.provider, err = client.CurrentProvider()
 			if err != nil {
 				return err
 			}
-			t.client = provider.APIClientv2()
+			t.client = t.provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app> <function> <trigger>",
@@ -91,11 +94,12 @@ func Delete() cli.Command {
 		Usage:     "delete a trigger",
 		Aliases:   []string{"t", "tr", "trig"},
 		Before: func(ctx *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			var err error
+			t.provider, err = client.CurrentProvider()
 			if err != nil {
 				return err
 			}
-			t.client = provider.APIClientv2()
+			t.client = t.provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app> <function> <trigger>",
@@ -111,11 +115,12 @@ func Inspect() cli.Command {
 		Usage:     "inspect a trigger",
 		Aliases:   []string{"t", "tr", "trig"},
 		Before: func(ctx *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			var err error
+			t.provider, err = client.CurrentProvider()
 			if err != nil {
 				return err
 			}
-			t.client = provider.APIClientv2()
+			t.client = t.provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app> <function> <trigger>",

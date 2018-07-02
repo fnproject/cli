@@ -14,9 +14,8 @@ import (
 	"github.com/fnproject/cli/objects/app"
 	"github.com/fnproject/cli/run"
 	"github.com/fnproject/fn_go/clientv2"
-	fnclient "github.com/fnproject/fn_go/clientv2"
 	apifns "github.com/fnproject/fn_go/clientv2/fns"
-	fnmodels "github.com/fnproject/fn_go/modelsv2"
+	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
@@ -93,7 +92,7 @@ func (f *fnsCmd) list(c *cli.Context) error {
 		AppID:   &a.ID,
 	}
 
-	var resFns []*fnmodels.Fn
+	var resFns []*models.Fn
 	for {
 		resp, err := f.client.Fns.ListFns(params)
 
@@ -113,52 +112,54 @@ func (f *fnsCmd) list(c *cli.Context) error {
 
 		params.Cursor = &resp.Payload.NextCursor
 	}
+	fmt.Println("F: ", f.provider)
+	callURL, err := f.provider.CallURL(appName)
+	if err != nil {
+		return err
+	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprint(w, "name", "\t", "image", "\n")
-	for _, route := range resFns {
-		fmt.Fprint(w, route.Name, "\t", route.Image, "\t", "\n")
+	for _, fn := range resFns {
+		endpoint := path.Join(callURL.Host, "f", appName, fn.Name)
+		fmt.Fprint(w, fn.Name, "\t", fn.Image, "\t", endpoint, "\t", "\n")
 	}
 	w.Flush()
 	return nil
 }
 
 // WithFlags returns a route with specified flags
-func WithFlags(c *cli.Context, rt *fnmodels.Fn) {
+func fnWithFlags(c *cli.Context, fn *models.Fn) {
 	if i := c.String("image"); i != "" {
-		rt.Image = i
+		fn.Image = i
 	}
 	if f := c.String("format"); f != "" {
-		rt.Format = f
+		fn.Format = f
 	}
 
 	if m := c.Uint64("memory"); m > 0 {
-		rt.Mem = m
+		fn.Mem = m
 	}
-	//if rt.Cpus == "" {
-	//	if m := c.String("cpus"); m != "" {
-	//		rt.Cpus = m
-	//	}
-	//}
+	if len(fn.Config) == 0 {
+		fn.Config = common.ExtractEnvConfig(c.StringSlice("config"))
+	}
+	if len(fn.Annotations) == 0 {
+		if len(c.StringSlice("annotation")) > 0 {
+			fn.Annotations = common.ExtractAnnotations(c)
+		}
+	}
 	if t := c.Int("timeout"); t > 0 {
 		to := int32(t)
-		rt.Timeout = &to
+		fn.Timeout = &to
 	}
 	if t := c.Int("idle-timeout"); t > 0 {
 		to := int32(t)
-		rt.IDLETimeout = &to
-	}
-
-	if len(c.StringSlice("config")) > 0 {
-		rt.Config = common.ExtractEnvConfig(c.StringSlice("config"))
-	}
-	if len(c.StringSlice("annotation")) > 0 {
-		rt.Annotations = common.ExtractAnnotations(c)
+		fn.IDLETimeout = &to
 	}
 }
 
 // WithFuncFile used when creating a route from a funcfile
-func WithFuncFile(ff *common.FuncFile, rt *fnmodels.Fn) error {
+func WithFuncFile(ff *common.FuncFile, rt *models.Fn) error {
 	var err error
 	if ff == nil {
 		_, ff, err = common.LoadFuncfile()
@@ -201,13 +202,13 @@ func (f *fnsCmd) create(c *cli.Context) error {
 		return err
 	}
 
-	rt := &fnmodels.Fn{
+	rt := &models.Fn{
 		AppID: a.ID,
 	}
 	rt.Name = fnName
 	rt.Image = c.Args().Get(2)
 
-	WithFlags(c, rt)
+	fnWithFlags(c, rt)
 
 	if rt.Name == "" {
 		return errors.New("fnName path is missing")
@@ -220,7 +221,7 @@ func (f *fnsCmd) create(c *cli.Context) error {
 }
 
 // CreateFn request
-func CreateFn(r *clientv2.Fn, rt *fnmodels.Fn) error {
+func CreateFn(r *clientv2.Fn, rt *models.Fn) error {
 	err := common.ValidateImageName(rt.Image)
 	if err != nil {
 		return err
@@ -246,9 +247,8 @@ func CreateFn(r *clientv2.Fn, rt *fnmodels.Fn) error {
 	return nil
 }
 
-// PatchRoute request
-func UpdateFn(client *fnclient.Fn, fn *fnmodels.Fn) error {
-	fmt.Println("Fn: ", fn)
+func (f *fnsCmd) putFn(fn *models.Fn, fnID string) error {
+	fmt.Println("FN:", fn)
 	if fn.Image != "" {
 		err := common.ValidateImageName(fn.Image)
 		if err != nil {
@@ -256,8 +256,9 @@ func UpdateFn(client *fnclient.Fn, fn *fnmodels.Fn) error {
 		}
 	}
 
-	_, err := client.Fns.UpdateFn(&apifns.UpdateFnParams{
+	_, err := f.client.Fns.UpdateFn(&apifns.UpdateFnParams{
 		Context: context.Background(),
+		FnID:    fnID,
 		Body:    fn,
 	})
 
@@ -274,21 +275,27 @@ func UpdateFn(client *fnclient.Fn, fn *fnmodels.Fn) error {
 	return nil
 }
 
-func GetFnByName(client *clientv2.Fn, appId string, fnName string) (*fnmodels.Fn, error) {
-	fnList, err := client.Fns.ListFns(&apifns.ListFnsParams{
+func GetFnByName(client *clientv2.Fn, appID, fnName string) (*models.Fn, error) {
+	resp, err := client.Fns.ListFns(&apifns.ListFnsParams{
 		Context: context.Background(),
-		AppID:   &appId,
+		AppID:   &appID,
 		Name:    &fnName,
 	})
-
 	if err != nil {
 		return nil, err
 	}
-	if len(fnList.Payload.Items) == 0 {
-		return nil, fmt.Errorf("Function %s not found", fnName)
+
+	var fn *models.Fn
+	for i := 0; i < len(resp.Payload.Items); i++ {
+		if resp.Payload.Items[i].Name == fnName {
+			fn = resp.Payload.Items[i]
+		}
+	}
+	if fn == nil {
+		return nil, fmt.Errorf("function %s not found", fnName)
 	}
 
-	return fnList.Payload.Items[0], nil
+	return fn, nil
 }
 
 func (f *fnsCmd) update(c *cli.Context) error {
@@ -304,9 +311,11 @@ func (f *fnsCmd) update(c *cli.Context) error {
 		return err
 	}
 
-	WithFlags(c, fn)
+	updatedFn := &models.Fn{}
 
-	err = UpdateFn(f.client, fn)
+	fnWithFlags(c, fn)
+
+	err = f.putFn(updatedFn, fn.ID)
 	if err != nil {
 		return err
 	}
@@ -330,11 +339,11 @@ func (f *fnsCmd) setConfig(c *cli.Context) error {
 		return err
 	}
 
+	fn.Config = make(map[string]string)
 	fn.Config[key] = value
 
-	err = UpdateFn(f.client, fn)
-	if err != nil {
-		return err
+	if err = f.putFn(fn, fn.ID); err != nil {
+		return fmt.Errorf("Error updating function configuration: %v", err)
 	}
 
 	fmt.Println(appName, fnName, "updated", key, "with", value)
@@ -404,12 +413,12 @@ func (f *fnsCmd) unsetConfig(c *cli.Context) error {
 	}
 	fn.Config[key] = ""
 
-	err = UpdateFn(f.client, fn)
+	err = f.putFn(fn, fn.ID)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("removed key '%s' from the function '%s.%s'", key, appName, key)
+	fmt.Printf("removed key '%s' from the function '%s' \n", key, fnName)
 	return nil
 }
 
