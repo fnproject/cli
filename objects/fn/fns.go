@@ -112,7 +112,7 @@ func (f *fnsCmd) list(c *cli.Context) error {
 
 		params.Cursor = &resp.Payload.NextCursor
 	}
-	fmt.Println("F: ", f.provider)
+
 	callURL, err := f.provider.CallURL(appName)
 	if err != nil {
 		return err
@@ -243,7 +243,7 @@ func CreateFn(r *clientv2.Fn, rt *models.Fn) error {
 		}
 	}
 
-	fmt.Println(resp.Payload.Name, "created with", resp.Payload.Image)
+	fmt.Println("Successfully created function:", resp.Payload.Name, "with", resp.Payload.Image)
 	return nil
 }
 

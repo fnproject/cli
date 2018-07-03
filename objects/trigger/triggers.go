@@ -99,7 +99,7 @@ func CreateTrigger(client *clientv2.Fn, trigger *models.Trigger) error {
 		}
 	}
 
-	fmt.Println(resp.Payload.Name, "create with")
+	fmt.Println("Successfully created trigger:", resp.Payload.Name)
 	return nil
 }
 
@@ -249,11 +249,16 @@ func (t *triggersCmd) delete(c *cli.Context) error {
 		return err
 	}
 
-	_, err = t.client.Triggers.DeleteTrigger(&apitriggers.DeleteTriggerParams{
-		TriggerID: trigger.ID,
-	})
+	params := apitriggers.NewDeleteTriggerParams()
+	params.TriggerID = trigger.ID
 
-	return err
+	_, err = t.client.Triggers.DeleteTrigger(params)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(appName, fnName, triggerName, "deleted")
+	return nil
 }
 
 func getTrigger(client *clientv2.Fn, appName, fnName, triggerName string) (*models.Trigger, error) {

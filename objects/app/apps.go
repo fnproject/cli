@@ -96,7 +96,7 @@ func (a *appsCmd) create(c *cli.Context) error {
 		}
 	}
 
-	fmt.Println("Successfully created app: ", resp.Payload.Name)
+	fmt.Println("Successfully created app:", resp.Payload.Name)
 	return nil
 }
 
