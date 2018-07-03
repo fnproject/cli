@@ -28,7 +28,7 @@ type triggersCmd struct {
 }
 
 var TriggerFlags = []cli.Flag{
-	cli.StringSliceFlag{
+	cli.StringFlag{
 		Name:  "source,s",
 		Usage: "trigger source",
 	},

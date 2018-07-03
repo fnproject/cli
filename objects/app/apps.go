@@ -90,7 +90,8 @@ func (a *appsCmd) create(c *cli.Context) error {
 		switch e := err.(type) {
 		case *apiapps.CreateAppBadRequest:
 			return fmt.Errorf("%v", e.Payload.Message)
-
+		case *apiapps.CreateAppConflict:
+			return fmt.Errorf("%v", e.Payload.Message)
 		default:
 			return err
 		}
