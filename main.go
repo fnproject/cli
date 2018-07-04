@@ -109,7 +109,7 @@ func newFn() *cli.App {
     ` + colour.BoldCyan("{{.HelpName}}") + `{{if .Usage}} - ` + colour.Italic("{{.Usage}}") + `
     
     ` + colour.Bold("USAGE:") + `
-    ` + colour.BoldCyan("{{.HelpName}}") + ` ` + colour.Cyan("[global options]") + ` {{if .ArgsUsage}}` + colour.BrightRed("{{.ArgsUsage}}") + `{{end}} {{if .Flags}}` + colour.Yellow("[command options]") + `{{end}}{{end}}{{if .Description}}
+    ` + colour.BoldCyan("{{ .HelpName}}") + ` ` + colour.Cyan("[global options]") + ` {{if .ArgsUsage}}` + colour.BrightRed("{{.ArgsUsage}}") + `{{end}} {{if .Flags}}` + colour.Yellow("[command options]") + `{{end}}{{end}}{{if .Description}}
     
     ` + colour.Bold("DESCRIPTION:") + `
         {{.Description}}{{end}}{{if .Subcommands}}
