@@ -222,10 +222,11 @@ func (f *fnsCmd) create(c *cli.Context) error {
 
 // CreateFn request
 func CreateFn(r *clientv2.Fn, rt *models.Fn) error {
-	err := common.ValidateImageName(rt.Image)
+	image, err := common.ValidateImageName(rt.Image)
 	if err != nil {
 		return err
 	}
+	rt.Image = image
 
 	resp, err := r.Fns.CreateFn(&apifns.CreateFnParams{
 		Context: context.Background(),
@@ -249,7 +250,7 @@ func CreateFn(r *clientv2.Fn, rt *models.Fn) error {
 
 func (f *fnsCmd) putFn(fn *models.Fn) error {
 	if fn.Image != "" {
-		err := common.ValidateImageName(fn.Image)
+		_, err := common.ValidateImageName(fn.Image)
 		if err != nil {
 			return err
 		}

@@ -319,7 +319,7 @@ func ExtractEnvConfig(configs []string) map[string]string {
 
 // DockerPush pushes to docker registry.
 func DockerPush(ff *FuncFile) error {
-	err := ValidateImageName(ff.ImageName())
+	_, err := ValidateImageName(ff.ImageName())
 	if err != nil {
 		return err
 	}
@@ -341,7 +341,7 @@ func ValidateImageName(n string) (string, error) {
 		if viper.GetString("registry") == "" {
 			return "", errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var, pass in --registry or configure your context file")
 		}
-		n = viper.GetString("registry") + n
+		n = viper.GetString("registry") + "/" + n
 	}
 	lastParts := strings.Split(parts[len(parts)-1], ":")
 	if len(lastParts) != 2 {
