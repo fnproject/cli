@@ -113,16 +113,10 @@ func (f *fnsCmd) list(c *cli.Context) error {
 		params.Cursor = &resp.Payload.NextCursor
 	}
 
-	callURL, err := f.provider.CallURL(appName)
-	if err != nil {
-		return err
-	}
-
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprint(w, "name", "\t", "image", "\n")
 	for _, fn := range resFns {
-		endpoint := path.Join(callURL.Host, "f", appName, fn.Name)
-		fmt.Fprint(w, fn.Name, "\t", fn.Image, "\t", endpoint, "\t", "\n")
+		fmt.Fprint(w, fn.Name, "\t", fn.Image, "\t", "\n")
 	}
 	w.Flush()
 	return nil
