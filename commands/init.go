@@ -1,22 +1,22 @@
 package commands
 
 /*
- usage: fn init --help
+usage: fn init --help
 
- o If there's a Dockerfile found, this will generate a basic
-   function file with the image and 'docker' as 'runtime'
-   like following, for example:
+o If there's a Dockerfile found, this will generate a basic
+function file with the image and 'docker' as 'runtime'
+like following, for example:
 
-   name: hello
-   version: 0.0.1
-   runtime: docker
-   path: /hello
+name: hello
+version: 0.0.1
+runtime: docker
+path: /hello
 
-   then exit; if 'runtime' is 'docker' in the function file
-   and no Dockerfile exists,  print an error message then exit
- o It will then try to decipher the runtime based on
-   the files in the current directory, if it can't figure it out,
-   it will print an error message then exit.
+then exit; if 'runtime' is 'docker' in the function file
+and no Dockerfile exists, print an error message then exit
+o It will then try to decipher the runtime based on
+the files in the current directory, if it can't figure it out,
+it will print an error message then exit.
 */
 
 import (
