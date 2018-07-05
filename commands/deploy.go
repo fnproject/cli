@@ -321,7 +321,8 @@ func (p *deploycmd) updateAppConfig(appf *common.AppFile) error {
 	param.App = appf.Name
 	param.Body = &models.AppWrapper{
 		App: &models.App{
-			Config: appf.Config,
+			Config:      appf.Config,
+			Annotations: appf.Annotations,
 		},
 	}
 
@@ -330,8 +331,9 @@ func (p *deploycmd) updateAppConfig(appf *common.AppFile) error {
 		postParams := clientApps.NewPostAppsParams() //XXX switch to put when v2.0 Fn
 		postParams.Body = &models.AppWrapper{
 			App: &models.App{
-				Name:   appf.Name,
-				Config: appf.Config,
+				Name:        appf.Name,
+				Config:      appf.Config,
+				Annotations: appf.Annotations,
 			},
 		}
 
