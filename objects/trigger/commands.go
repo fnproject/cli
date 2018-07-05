@@ -5,13 +5,14 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Create trigger command
 func Create() cli.Command {
 	t := triggersCmd{}
 	return cli.Command{
-		Name:      "triggers",
-		ShortName: "trigger",
+		Name:      "trigger",
+		ShortName: "trig",
+		Aliases:   []string{"t", "tr"},
 		Usage:     "create a new trigger",
-		Aliases:   []string{"t", "tr", "trig"},
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
@@ -27,13 +28,14 @@ func Create() cli.Command {
 	}
 }
 
+// List trigger command
 func List() cli.Command {
 	t := triggersCmd{}
 	return cli.Command{
 		Name:      "triggers",
-		ShortName: "trigger",
+		ShortName: "trigs",
+		Aliases:   []string{"t", "tr"},
 		Usage:     "list all triggers",
-		Aliases:   []string{"t", "tr", "trig"},
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
@@ -59,13 +61,14 @@ func List() cli.Command {
 	}
 }
 
+// Update trigger command
 func Update() cli.Command {
 	t := triggersCmd{}
 	return cli.Command{
-		Name:      "triggers",
-		ShortName: "trigger",
+		Name:      "trigger",
+		ShortName: "trig",
+		Aliases:   []string{"t", "tr"},
 		Usage:     "update a trigger",
-		Aliases:   []string{"t", "tr", "trig"},
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
@@ -86,13 +89,14 @@ func Update() cli.Command {
 	}
 }
 
+// Delete trigger command
 func Delete() cli.Command {
 	t := triggersCmd{}
 	return cli.Command{
-		Name:      "triggers",
-		ShortName: "trigger",
+		Name:      "trigger",
+		ShortName: "trig",
+		Aliases:   []string{"t", "tr"},
 		Usage:     "delete a trigger",
-		Aliases:   []string{"t", "tr", "trig"},
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
@@ -107,13 +111,14 @@ func Delete() cli.Command {
 	}
 }
 
+// Inspect trigger command
 func Inspect() cli.Command {
 	t := triggersCmd{}
 	return cli.Command{
-		Name:      "triggers",
-		ShortName: "trigger",
+		Name:      "trigger",
+		ShortName: "trig",
+		Aliases:   []string{"t", "tr"},
 		Usage:     "inspect a trigger",
-		Aliases:   []string{"t", "tr", "trig"},
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()

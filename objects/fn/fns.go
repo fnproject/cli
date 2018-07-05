@@ -26,7 +26,7 @@ type fnsCmd struct {
 	client   *clientv2.Fn
 }
 
-// RouteFlags use to create/update routes
+/// FnFlags use to create/update functions
 var FnFlags = []cli.Flag{
 	cli.Uint64Flag{
 		Name:  "memory,m",
@@ -55,7 +55,7 @@ var FnFlags = []cli.Flag{
 }
 var updateFnFlags = FnFlags
 
-// CallFnFlags used to call a route
+// CallFnFlags used to call a function
 var CallFnFlags = append(run.RunFlags,
 	cli.BoolFlag{
 		Name:  "display-call-id",
@@ -63,7 +63,7 @@ var CallFnFlags = append(run.RunFlags,
 	},
 )
 
-// WithSlash appends "/" to route path
+// WithSlash appends "/" to function path
 func WithSlash(p string) string {
 	p = path.Clean(p)
 
@@ -83,7 +83,7 @@ func WithoutSlash(p string) string {
 func (f *fnsCmd) list(c *cli.Context) error {
 	appName := c.Args().Get(0)
 
-	a, err := app.GetAppByName(f.client, appName)
+	a, err := app.GetAppByName(appName)
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (f *fnsCmd) list(c *cli.Context) error {
 	return nil
 }
 
-// WithFlags returns a route with specified flags
+// WithFlags returns a function with specified flags
 func fnWithFlags(c *cli.Context, fn *models.Fn) {
 	if i := c.String("image"); i != "" {
 		fn.Image = i
@@ -158,7 +158,7 @@ func fnWithFlags(c *cli.Context, fn *models.Fn) {
 	}
 }
 
-// WithFuncFile used when creating a route from a funcfile
+// WithFuncFile used when creating a function from a funcfile
 func WithFuncFile(ff *common.FuncFile, rt *models.Fn) error {
 	var err error
 	if ff == nil {
@@ -197,7 +197,7 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
-	a, err := app.GetAppByName(f.client, appName)
+	a, err := app.GetAppByName(appName)
 	if err != nil {
 		return err
 	}
@@ -302,7 +302,7 @@ func (f *fnsCmd) update(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := app.GetAppByName(appName)
 	if err != nil {
 		return err
 	}
@@ -328,7 +328,7 @@ func (f *fnsCmd) setConfig(c *cli.Context) error {
 	key := c.Args().Get(2)
 	value := c.Args().Get(3)
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := app.GetAppByName(appName)
 	if err != nil {
 		return err
 	}
@@ -353,7 +353,7 @@ func (f *fnsCmd) getConfig(c *cli.Context) error {
 	fnName := c.Args().Get(1)
 	key := c.Args().Get(2)
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := app.GetAppByName(appName)
 	if err != nil {
 		return err
 	}
@@ -376,7 +376,7 @@ func (f *fnsCmd) listConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := app.GetAppByName(appName)
 	if err != nil {
 		return err
 	}
@@ -401,7 +401,7 @@ func (f *fnsCmd) unsetConfig(c *cli.Context) error {
 	fnName := WithoutSlash(c.Args().Get(1))
 	key := c.Args().Get(2)
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := app.GetAppByName(appName)
 	if err != nil {
 		return err
 	}
@@ -425,7 +425,7 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	fnName := WithoutSlash(c.Args().Get(1))
 	prop := c.Args().Get(2)
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := app.GetAppByName(appName)
 	if err != nil {
 		return err
 	}
@@ -466,7 +466,7 @@ func (f *fnsCmd) delete(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := app.GetAppByName(appName)
 	if err != nil {
 		return err
 	}

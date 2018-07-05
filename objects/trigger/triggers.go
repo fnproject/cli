@@ -47,7 +47,7 @@ func (t *triggersCmd) create(c *cli.Context) error {
 	fnName := c.Args().Get(1)
 	triggerName := c.Args().Get(2)
 
-	app, err := app.GetAppByName(t.client, appName)
+	app, err := app.GetAppByName(appName)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (t *triggersCmd) list(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
-	app, err := app.GetAppByName(t.client, appName)
+	app, err := app.GetAppByName(appName)
 	if err != nil {
 		return err
 	}
@@ -262,7 +262,7 @@ func (t *triggersCmd) delete(c *cli.Context) error {
 }
 
 func getTrigger(client *clientv2.Fn, appName, fnName, triggerName string) (*models.Trigger, error) {
-	app, err := app.GetAppByName(client, appName)
+	app, err := app.GetAppByName(appName)
 	if err != nil {
 		return nil, err
 	}

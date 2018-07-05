@@ -5,14 +5,14 @@ import (
 	"github.com/urfave/cli"
 )
 
-// Create route command
+// Create function command
 func Create() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "functions",
-		ShortName: "funcs",
+		Name:      "function",
+		ShortName: "func",
+		Aliases:   []string{"f", "fn"},
 		Usage:     "create a function in an application",
-		Aliases:   []string{"f","fn"},
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -28,13 +28,13 @@ func Create() cli.Command {
 	}
 }
 
-// List routes command
+// List functions command
 func List() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
 		Name:      "functions",
-		ShortName: "function",
-		Aliases:   []string{"f","fn","fns","func","funcs"},
+		ShortName: "funcs",
+		Aliases:   []string{"f", "fn"},
 		Usage:     "list functions for `app`",
 		Before: func(c *cli.Context) error {
 			var err error
@@ -54,21 +54,20 @@ func List() cli.Command {
 			},
 			cli.Int64Flag{
 				Name:  "n",
-				Usage: "number of routes to return",
+				Usage: "number of functions to return",
 				Value: int64(100),
 			},
 		},
 	}
 }
 
-// Delete route command
+// Delete function command
 func Delete() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "functions",
-		ShortName: "function",
-		Aliases:   []string{"f","fn","fns","func","funcs"},
-
+		Name:      "function",
+		ShortName: "func",
+		Aliases:   []string{"f", "fn"},
 		Usage:     "delete a function from an application `app`",
 		Before: func(c *cli.Context) error {
 			var err error
@@ -84,14 +83,14 @@ func Delete() cli.Command {
 	}
 }
 
-// Inspect route command
+// Inspect function command
 func Inspect() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "functions",
-		ShortName: "function",
-		Aliases:   []string{"f","fn","fns","func","funcs"},
-		Usage:     "retrieve one or all routes properties",
+		Name:      "function",
+		ShortName: "func",
+		Aliases:   []string{"f", "fn"},
+		Usage:     "retrieve one or all functions properties",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -106,13 +105,13 @@ func Inspect() cli.Command {
 	}
 }
 
-// Update route command
+// Update function command
 func Update() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "functions",
-		ShortName: "function",
-		Aliases:   []string{"f","fn","fns","func","funcs"},
+		Name:      "function",
+		ShortName: "func",
+		Aliases:   []string{"f", "fn"},
 		Usage:     "update a function in an `app`",
 		Before: func(c *cli.Context) error {
 			var err error
@@ -129,14 +128,13 @@ func Update() cli.Command {
 	}
 }
 
-
-// GetConfig for route command
+// GetConfig for function command
 func GetConfig() cli.Command {
 	r := fnsCmd{}
 	return cli.Command{
-		Name:      "functions",
-		ShortName: "function",
-		Aliases:   []string{"f","fn","fns","func","funcs"},
+		Name:      "function",
+		ShortName: "func",
+		Aliases:   []string{"f", "fn"},
 		Usage:     "inspect configuration key for this function",
 		Before: func(c *cli.Context) error {
 			var err error
@@ -152,15 +150,14 @@ func GetConfig() cli.Command {
 	}
 }
 
-// SetConfig for route command
+// SetConfig for function command
 func SetConfig() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "functions",
-		ShortName: "function",
-		Aliases:   []string{"f","fn","fns","func","funcs"},
+		Name:      "function",
+		ShortName: "func",
+		Aliases:   []string{"f", "fn"},
 		Usage:     "store a configuration key for this function",
-
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -175,14 +172,13 @@ func SetConfig() cli.Command {
 	}
 }
 
-// ListConfig for route command
+// ListConfig for function command
 func ListConfig() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "functions",
-		ShortName: "function",
-		Aliases:   []string{"f","fn","fns","func","funcs"},
-
+		Name:      "function",
+		ShortName: "func",
+		Aliases:   []string{"f", "fn"},
 		Usage:     "list configuration key/value pairs for this function",
 		Before: func(c *cli.Context) error {
 			var err error
@@ -198,14 +194,14 @@ func ListConfig() cli.Command {
 	}
 }
 
-// UnsetConfig for route command
+// UnsetConfig for function command
 func UnsetConfig() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "functions",
-		ShortName: "function",
-		Aliases:   []string{"f","fn","fns","func","funcs"},
-		Usage:     "remove a configuration key for this route",
+		Name:      "function",
+		ShortName: "func",
+		Aliases:   []string{"f", "fn"},
+		Usage:     "remove a configuration key for this function",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
