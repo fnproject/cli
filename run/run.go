@@ -80,8 +80,8 @@ var RunFlags = []cli.Flag{
 		Usage: "Set build time variables",
 	},
 	cli.StringFlag{
-		Name:  "wd, working-dir",
-		Usage: "specify the working directory to deploy a function, must be the full path.",
+		Name:  "working-dir,w",
+		Usage: "Specify the working directory to run a function, must be the full path.",
 	},
 }
 

@@ -65,8 +65,8 @@ func (t *testcmd) flags() []cli.Flag {
 			Usage: "If in root directory containing `app.yaml`, this will deploy all functions",
 		},
 		cli.StringFlag{
-			Name:  "working-dir",
-			Usage: "specify the working directory to deploy a function, must be the full path.",
+			Name:  "working-dir,w",
+			Usage: "Specify the working directory to test a function, must be the full path.",
 		},
 	}
 }

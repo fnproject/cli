@@ -96,8 +96,8 @@ func (p *deploycmd) flags() []cli.Flag {
 			Usage: "Set build time variables",
 		},
 		cli.StringFlag{
-			Name:  "wd, working-directory",
-			Usage: "specify the working directory to deploy a function, must be the full path.",
+			Name:  "working-dir,w",
+			Usage: "Specify the working directory to deploy a function, must be the full path.",
 		},
 	}
 }
@@ -151,8 +151,8 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 	var dir string
 	wd := common.GetWd()
 
-	if c.String("wd") != "" || c.String("working-directory") != "" {
-		dir = c.String("dir")
+	if c.String("working-dir") != "" {
+		dir = c.String("working-dir")
 	} else {
 		// if we're in the context of an app, first arg is path to the function
 		path := c.Args().First()
@@ -161,6 +161,8 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 		}
 		dir = filepath.Join(wd, path)
 	}
+
+	fmt.Println("dir: ", dir)
 
 	err := os.Chdir(dir)
 	if err != nil {

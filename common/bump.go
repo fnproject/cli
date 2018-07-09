@@ -63,8 +63,8 @@ func (b *bumpcmd) flags() []cli.Flag {
 			Destination: &b.verbose,
 		},
 		cli.StringFlag{
-			Name:  "working-dir",
-			Usage: "specify the working directory to deploy a function, must be the full path.",
+			Name:  "working-dir,w",
+			Usage: "Specify the working directory to bump a function, must be the full path.",
 		},
 	}
 }

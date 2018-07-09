@@ -73,8 +73,8 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Value:       common.InitialVersion,
 		},
 		cli.StringFlag{
-			Name:        "working-dir",
-			Usage:       "specify the working directory to deploy a function, must be the full path.",
+			Name:        "working-dir,w",
+			Usage:       "Specify the working directory to initialise a function, must be the full path.",
 			Destination: &a.wd,
 		},
 	}
