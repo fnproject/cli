@@ -80,8 +80,8 @@ var RunFlags = []cli.Flag{
 		Usage: "Set build time variables",
 	},
 	cli.StringFlag{
-		Name:  "dir",
-		Usage: "specify the working directory to run a function",
+		Name:  "wd, working-dir",
+		Usage: "specify the working directory to deploy a function, must be the full path.",
 	},
 }
 
@@ -95,26 +95,26 @@ func PreRun(c *cli.Context) (string, *common.FuncFile, []string, error) {
 	var ff *common.FuncFile
 	var fpath string
 
-	if c.String("dir") != "" {
-		dir = c.String("dir")
-	} else {
-		wd := common.GetWd()
-		// if image name is passed in, it will run that image
-		path := c.Args().First() // TODO: should we ditch this?
+	dir = common.GetWd()
 
-		if path != "" {
-			fmt.Printf("Running function at: /%s\n", path)
-			dir := filepath.Join(wd, path)
-			err := os.Chdir(dir)
-			if err != nil {
-				return "", nil, nil, err
-			}
-			defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
-			wd = dir
-		}
+	if c.String("working-dir") != "" {
+		dir = c.String("working-dir")
 	}
 
-	fpath, ff, err := common.FindAndParseFuncfile(dir)
+	// if image name is passed in, it will run that image
+	path := c.Args().First() // TODO: should we ditch this?
+	if path != "" {
+		fmt.Printf("Running function at: /%s\n", path)
+		dir = filepath.Join(dir, path)
+	}
+
+	err := os.Chdir(dir)
+	if err != nil {
+		return "", nil, nil, err
+	}
+	defer os.Chdir(dir) // todo: wrap this so we can log the error if changing back fails
+
+	fpath, ff, err = common.FindAndParseFuncfile(dir)
 	if err != nil {
 		return fpath, nil, nil, err
 	}

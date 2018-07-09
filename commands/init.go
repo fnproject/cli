@@ -35,6 +35,7 @@ import (
 
 type initFnCmd struct {
 	force bool
+	wd    string
 	ff    *common.FuncFile
 }
 
@@ -72,8 +73,9 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Value:       common.InitialVersion,
 		},
 		cli.StringFlag{
-			Name:  "dir",
-			Usage: "specify the working directory to init a function",
+			Name:        "working-dir",
+			Usage:       "specify the working directory to deploy a function, must be the full path.",
+			Destination: &a.wd,
 		},
 	}
 
@@ -109,9 +111,20 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	var dir string
 
 	dir = common.GetWd()
+	if a.wd != "" {
+		dir = a.wd
+	}
 
-	if c.String("dir") != "" {
-		dir = c.String("dir")
+	var rt models.Route
+	route.WithFlags(c, &rt)
+	a.bindRoute(&rt)
+
+	runtimeSpecified := a.ff.Runtime != ""
+	if runtimeSpecified {
+		// go no further if the specified runtime is not supported
+		if a.ff.Runtime != common.FuncfileDockerRuntime && langs.GetLangHelper(a.ff.Runtime) == nil {
+			return fmt.Errorf("Init does not support the '%s' runtime", a.ff.Runtime)
+		}
 	}
 
 	path := c.Args().First()
@@ -138,18 +151,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	}
 
 	defer os.Chdir(dir) // todo: wrap this so we can log the error if changing back fails
-
-	var rt models.Route
-	route.WithFlags(c, &rt)
-	a.bindRoute(&rt)
-
-	runtimeSpecified := a.ff.Runtime != ""
-	if runtimeSpecified {
-		// go no further if the specified runtime is not supported
-		if a.ff.Runtime != common.FuncfileDockerRuntime && langs.GetLangHelper(a.ff.Runtime) == nil {
-			return fmt.Errorf("Init does not support the '%s' runtime", a.ff.Runtime)
-		}
-	}
 
 	if !a.force {
 		_, ff, err := common.LoadFuncfile(dir)

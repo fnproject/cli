@@ -44,8 +44,8 @@ func (b *buildcmd) flags() []cli.Flag {
 			Usage: "Set build-time variables",
 		},
 		cli.StringFlag{
-			Name:  "dir",
-			Usage: "specify the working directory to build a function",
+			Name:  "working-dir",
+			Usage: "specify the working directory to deploy a function, must be the full path.",
 		},
 	}
 }

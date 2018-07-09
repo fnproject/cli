@@ -42,8 +42,8 @@ func GetWd() string {
 // GetDir returns the dir if defined as a flag in cli.Context
 func GetDir(c *cli.Context) string {
 	var dir string
-	if c.String("dir") != "" {
-		dir = c.String("dir")
+	if c.String("working-dir") != "" {
+		dir = c.String("working-dir")
 	} else {
 		dir = GetWd()
 	}
