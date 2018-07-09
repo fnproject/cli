@@ -14,12 +14,13 @@ func PushCommand() cli.Command {
 	var flags []cli.Flag
 	flags = append(flags, cmd.flags()...)
 	return cli.Command{
-		Name:     "push",
-		Usage:    "Push function to docker registry",
-		Aliases:  []string{"p"},
-		Category: "DEVELOPMENT COMMANDS",
-		Flags:    flags,
-		Action:   cmd.push,
+		Name:        "push",
+		Usage:       "Push function to docker registry",
+		Aliases:     []string{"p"},
+		Category:    "DEVELOPMENT COMMANDS",
+		Description: "This is the description",
+		Flags:       flags,
+		Action:      cmd.push,
 	}
 }
 
@@ -32,12 +33,12 @@ func (p *pushcmd) flags() []cli.Flag {
 	return []cli.Flag{
 		cli.BoolFlag{
 			Name:        "v",
-			Usage:       "verbose mode",
+			Usage:       "Verbose mode",
 			Destination: &p.verbose,
 		},
 		cli.StringFlag{
 			Name:        "registry",
-			Usage:       "Sets the Docker owner for images and optionally the registry. This will be prefixed to your function name for pushing to Docker registries. eg: `--registry username` will set your Docker Hub owner. `--registry registry.hub.docker.com/username` will set the registry and owner.",
+			Usage:       "Set the Docker owner for images and optionally the registry. This will be prefixed to your function name for pushing to Docker registries. eg: `--registry username` will set your Docker Hub owner. `--registry registry.hub.docker.com/username` will set the registry and owner.",
 			Destination: &p.registry,
 		},
 	}
@@ -51,7 +52,7 @@ func (p *pushcmd) push(c *cli.Context) error {
 	_, ff, err := common.LoadFuncfile()
 	if err != nil {
 		if _, ok := err.(*common.NotFoundError); ok {
-			return errors.New("image name is missing or no function file found")
+			return errors.New("Image name is missing or no function file found")
 		}
 		return err
 	}

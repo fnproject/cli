@@ -22,7 +22,7 @@ func CallCommand() cli.Command {
 	cl := callCmd{}
 	return cli.Command{
 		Name:    "call",
-		Usage:   "call a remote function",
+		Usage:   "Invoke a remote function",
 		Aliases: []string{"cl"},
 		Before: func(c *cli.Context) error {
 			var err error
@@ -33,10 +33,11 @@ func CallCommand() cli.Command {
 			cl.client = cl.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app> </path>",
-		Flags:     route.CallFnFlags,
-		Category:  "DEVELOPMENT COMMANDS",
-		Action:    cl.Call,
+		ArgsUsage:   "<app> </path>",
+		Flags:       route.CallFnFlags,
+		Category:    "DEVELOPMENT COMMANDS",
+		Description: "This is the description",
+		Action:      cl.Call,
 	}
 }
 

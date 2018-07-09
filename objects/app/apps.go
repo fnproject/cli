@@ -41,7 +41,7 @@ func (a *appsCmd) list(c *cli.Context) error {
 
 		n := c.Int64("n")
 		if n < 0 {
-			return errors.New("number of calls: negative value not allowed")
+			return errors.New("Number of calls: negative value not allowed")
 		}
 
 		howManyMore := n - int64(len(resApps)+len(resp.Payload.Apps))
@@ -53,7 +53,7 @@ func (a *appsCmd) list(c *cli.Context) error {
 	}
 
 	if len(resApps) == 0 {
-		fmt.Println("no apps found")
+		fmt.Println("No apps found")
 		return nil
 	}
 
@@ -132,7 +132,7 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	app.Config[key] = value
 
 	if err := a.patchApp(appName, app); err != nil {
-		return fmt.Errorf("error updating app configuration: %v", err)
+		return fmt.Errorf("Error updating app configuration: %v", err)
 	}
 
 	fmt.Println(appName, "updated", key, "with", value)
@@ -154,7 +154,7 @@ func (a *appsCmd) getConfig(c *cli.Context) error {
 
 	val, ok := resp.Payload.App.Config[key]
 	if !ok {
-		return fmt.Errorf("config key does not exist")
+		return fmt.Errorf("Config key does not exist")
 	}
 
 	fmt.Println(val)
@@ -192,10 +192,10 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	app.Config[key] = ""
 
 	if err := a.patchApp(appName, app); err != nil {
-		return fmt.Errorf("error updating app configuration: %v", err)
+		return fmt.Errorf("Error updating app configuration: %v", err)
 	}
 
-	fmt.Printf("removed key '%s' from app '%s' \n", key, appName)
+	fmt.Printf("Removed key '%s' from app '%s' \n", key, appName)
 	return nil
 }
 
@@ -222,7 +222,7 @@ func (a *appsCmd) patchApp(appName string, app *models.App) error {
 
 func (a *appsCmd) inspect(c *cli.Context) error {
 	if c.Args().Get(0) == "" {
-		return errors.New("missing app name after the inspect command")
+		return errors.New("Missing app name after the inspect command")
 	}
 
 	appName := c.Args().First()
@@ -254,18 +254,18 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 	// unmarshal as map[string]interface{}?
 	data, err := json.Marshal(resp.Payload.App)
 	if err != nil {
-		return fmt.Errorf("could not marshal app: %v", err)
+		return fmt.Errorf("Could not marshal app: %v", err)
 	}
 	var inspect map[string]interface{}
 	err = json.Unmarshal(data, &inspect)
 	if err != nil {
-		return fmt.Errorf("could not unmarshal data: %v", err)
+		return fmt.Errorf("Could not unmarshal data: %v", err)
 	}
 
 	jq := jsonq.NewQuery(inspect)
 	field, err := jq.Interface(strings.Split(prop, ".")...)
 	if err != nil {
-		return fmt.Errorf("failed to inspect field %v", prop)
+		return fmt.Errorf("Failed to inspect field %v", prop)
 	}
 	enc.Encode(field)
 
@@ -275,7 +275,7 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 func (a *appsCmd) delete(c *cli.Context) error {
 	appName := c.Args().First()
 	if appName == "" {
-		return errors.New("app name required to delete")
+		return errors.New("App name required to delete")
 	}
 
 	_, err := a.client.Apps.DeleteAppsApp(&apiapps.DeleteAppsAppParams{

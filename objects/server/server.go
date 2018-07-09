@@ -20,7 +20,7 @@ func update(c *cli.Context) error {
 	cmd.Stderr = os.Stderr
 	err := cmd.Start()
 	if err != nil {
-		log.Fatalln("starting command failed:", err)
+		log.Fatalln("Starting command failed:", err)
 	}
 
 	done := make(chan error, 1)
@@ -32,16 +32,16 @@ func update(c *cli.Context) error {
 	signal.Notify(sigC, os.Interrupt, syscall.SIGTERM)
 	select {
 	case <-sigC:
-		log.Println("interrupt caught, exiting")
+		log.Println("Interrupt caught, exiting")
 		err = cmd.Process.Kill()
 		if err != nil {
-			log.Println("error: could not kill process")
+			log.Println("Error: could not kill process")
 		}
 	case err := <-done:
 		if err != nil {
-			log.Println("processed finished with error:", err)
+			log.Println("Processed finished with error:", err)
 		} else {
-			log.Println("process finished gracefully")
+			log.Println("Process finished gracefully")
 		}
 	}
 	return nil

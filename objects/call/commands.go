@@ -8,10 +8,11 @@ import (
 func Get() cli.Command {
 	c := callsCmd{}
 	return cli.Command{
-		Name:      "calls",
-		ShortName: "call",
-		Usage:     "get function call info per app",
-		Aliases:   []string{"cl"},
+		Name:        "call",
+		Usage:       "Get function call info per app",
+		Aliases:     []string{"calls", "cl"},
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This is the description",
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -20,7 +21,7 @@ func Get() cli.Command {
 			c.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app> <call-id>",
+		ArgsUsage: "<app_name> <call-id>",
 		Action:    c.get,
 	}
 }
@@ -28,10 +29,11 @@ func Get() cli.Command {
 func List() cli.Command {
 	c := callsCmd{}
 	return cli.Command{
-		Name:      "calls",
-		ShortName: "call",
-		Usage:     "list all calls for the specific app. Route is optional",
-		Aliases:   []string{"cl"},
+		Name:        "calls",
+		Usage:       "List all calls for the specific app. Route is optional",
+		Aliases:     []string{"call", "cl"},
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This is the description",
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -40,16 +42,16 @@ func List() cli.Command {
 			c.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app>",
+		ArgsUsage: "<app_name>",
 		Action:    c.list,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "path",
-				Usage: "function's path",
+				Usage: "Function's path",
 			},
 			cli.StringFlag{
 				Name:  "cursor",
-				Usage: "pagination cursor",
+				Usage: "Pagination cursor",
 			},
 			cli.StringFlag{
 				Name:  "from-time",
@@ -61,7 +63,7 @@ func List() cli.Command {
 			},
 			cli.Int64Flag{
 				Name:  "n",
-				Usage: "number of calls to return",
+				Usage: "Number of calls to return",
 				Value: int64(100),
 			},
 		},

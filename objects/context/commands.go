@@ -4,23 +4,25 @@ import "github.com/urfave/cli"
 
 func Create() cli.Command {
 	return cli.Command{
-		Name:      "context",
-		Usage:     "create a new context",
-		Aliases:   []string{"ctx"},
-		ArgsUsage: "<context>",
-		Action:    create,
+		Name:        "context",
+		Usage:       "Create a new context",
+		Aliases:     []string{"ctx"},
+		ArgsUsage:   "<context>",
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This command creates a new context for a created application.",
+		Action:      create,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "provider",
-				Usage: "context provider",
+				Usage: "Context provider",
 			},
 			cli.StringFlag{
 				Name:  "api-url",
-				Usage: "context api url",
+				Usage: "Context api url",
 			},
 			cli.StringFlag{
 				Name:  "registry",
-				Usage: "context registry",
+				Usage: "Context registry",
 			},
 		},
 	}
@@ -28,19 +30,21 @@ func Create() cli.Command {
 
 func List() cli.Command {
 	return cli.Command{
-		Name:    "context",
-		Usage:   "list contexts",
-		Aliases: []string{"ctx"},
-		Action:  list,
+		Name:     "context",
+		Usage:    "List contexts",
+		Aliases:  []string{"ctx"},
+		Category: "MANAGEMENT COMMAND",
+		Action:   list,
 	}
 }
 
 func Delete() cli.Command {
 	return cli.Command{
 		Name:      "context",
-		Usage:     "delete a context",
+		Usage:     "Delete a context",
 		Aliases:   []string{"ctx"},
 		ArgsUsage: "<context>",
+		Category:  "MANAGEMENT COMMAND",
 		Action:    delete,
 	}
 }
@@ -49,9 +53,10 @@ func Update() cli.Command {
 	ctxMap := ContextMap{}
 	return cli.Command{
 		Name:      "context",
-		Usage:     "update context files",
+		Usage:     "Update context files",
 		Aliases:   []string{"ctx"},
 		ArgsUsage: "<key> <value>",
+		Category:  "MANAGEMENT COMMAND",
 		Action:    ctxMap.update,
 	}
 }
@@ -59,18 +64,20 @@ func Update() cli.Command {
 func Use() cli.Command {
 	return cli.Command{
 		Name:      "context",
-		Usage:     "use context for future invocations",
+		Usage:     "Use context for future invocations",
 		Aliases:   []string{"ctx"},
 		ArgsUsage: "<context>",
+		Category:  "MANAGEMENT COMMAND",
 		Action:    use,
 	}
 }
 
 func Unset() cli.Command {
 	return cli.Command{
-		Name:    "context",
-		Usage:   "unset current-context",
-		Aliases: []string{"ctx"},
-		Action:  unset,
+		Name:     "context",
+		Usage:    "Unset current-context",
+		Aliases:  []string{"ctx"},
+		Category: "MANAGEMENT COMMAND",
+		Action:   unset,
 	}
 }

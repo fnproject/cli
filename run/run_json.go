@@ -44,7 +44,7 @@ func createJSONInput(callID, contentType, deadline string, method string, reques
 	if stdin != nil {
 		input, err = ioutil.ReadAll(stdin)
 		if err != nil {
-			return "", fmt.Errorf("error reading from stdin: %v", err)
+			return "", fmt.Errorf("Error reading from stdin: %v", err)
 		}
 	}
 
@@ -66,7 +66,7 @@ func createJSONInput(callID, contentType, deadline string, method string, reques
 	}
 	err = enc.Encode(jin)
 	if err != nil {
-		return "", fmt.Errorf("error encoding json: %v", err)
+		return "", fmt.Errorf("Error encoding json: %v", err)
 	}
 	body := b.String()
 	return body, nil
@@ -85,7 +85,7 @@ func stdoutJSON(stdout io.Writer) io.Writer {
 			jsout := &jsonOut{}
 			err = dec.Decode(jsout)
 			if err != nil {
-				fmt.Println("error decoding", err)
+				fmt.Println("Error decoding", err)
 				return
 			}
 			stdout.Write([]byte(jsout.Body))

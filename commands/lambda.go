@@ -32,14 +32,15 @@ func LambdaCommand() cli.Command {
 	flags = append(flags, getFlags()...)
 
 	return cli.Command{
-		Name:    "lambda",
-		Usage:   "create and publish lambda functions",
-		Aliases: []string{"la"},
-		Hidden:  true,
+		Name:        "lambda",
+		Usage:       "Create and publish lambda functions",
+		Description: "This is the description",
+		Aliases:     []string{"la"},
+		Hidden:      true,
 		Subcommands: []cli.Command{
 			{
 				Name:      "aws-import",
-				Usage:     `converts an existing Lambda function to an image, where the function code is downloaded to a directory in the current working directory that has the same name as the Lambda function.`,
+				Usage:     `Convert an existing Lambda function to an image, where the function code is downloaded to a directory in the current working directory that has the same name as the Lambda function.`,
 				ArgsUsage: "<arn> <region> <image/name>",
 				Action:    awsImport,
 				Flags:     flags,
@@ -66,7 +67,7 @@ func getFlags() []cli.Flag {
 		},
 		cli.StringSliceFlag{
 			Name:  "config",
-			Usage: "function configuration",
+			Usage: "Function configuration",
 		},
 	}
 }

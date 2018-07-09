@@ -75,7 +75,7 @@ As mention in [CLI Proposal](https://github.com/fnproject/cli/wiki/CLI-Proposal:
 ### Examples:
 
 ```
-fn [verb] [noun] <command>
+fn [verb] [noun] <subcommand>
 
 fn config app <app> <key> <value>
 fn create route <app> <route> <image>

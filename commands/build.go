@@ -13,12 +13,13 @@ func BuildCommand() cli.Command {
 	cmd := buildcmd{}
 	flags := append([]cli.Flag{}, cmd.flags()...)
 	return cli.Command{
-		Name:     "build",
-		Usage:    "build function version",
-		Category: "DEVELOPMENT COMMANDS",
-		Aliases:  []string{"bu"},
-		Flags:    flags,
-		Action:   cmd.build,
+		Name:        "build",
+		Usage:       "Build function version",
+		Category:    "DEVELOPMENT COMMANDS",
+		Description: "This is the description",
+		Aliases:     []string{"bu"},
+		Flags:       flags,
+		Action:      cmd.build,
 	}
 }
 
@@ -31,7 +32,7 @@ func (b *buildcmd) flags() []cli.Flag {
 	return []cli.Flag{
 		cli.BoolFlag{
 			Name:        "v",
-			Usage:       "verbose mode",
+			Usage:       "Verbose mode",
 			Destination: &b.verbose,
 		},
 		cli.BoolFlag{
@@ -41,7 +42,7 @@ func (b *buildcmd) flags() []cli.Flag {
 		},
 		cli.StringSliceFlag{
 			Name:  "build-arg",
-			Usage: "set build-time variables",
+			Usage: "Set build-time variables",
 		},
 	}
 }

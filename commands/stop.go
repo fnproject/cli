@@ -11,17 +11,18 @@ import (
 // StopCommand returns stop server cli.command
 func StopCommand() cli.Command {
 	return cli.Command{
-		Name:     "stop",
-		Usage:    "stops a functions server",
-		Category: "SERVER COMMANDS",
-		Action:   stop,
+		Name:        "stop",
+		Usage:       "Stop a function server",
+		Category:    "SERVER COMMANDS",
+		Description: "This is the description",
+		Action:      stop,
 	}
 }
 func stop(c *cli.Context) error {
 	cmd := exec.Command("docker", "stop", "fnserver")
 	err := cmd.Run()
 	if err != nil {
-		return errors.New("failed to stop 'fnserver'")
+		return errors.New("Failed to stop 'fnserver'")
 	}
 
 	fmt.Println("Successfully stopped 'fnserver'")

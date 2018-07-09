@@ -32,7 +32,7 @@ func RunCommand() cli.Command {
 
 	return cli.Command{
 		Name:     "run",
-		Usage:    "run a function locally",
+		Usage:    "Run a function locally",
 		Aliases:  []string{"r"},
 		Category: "DEVELOPMENT COMMANDS",
 		Flags:    append(GetRunFlags(), []cli.Flag{}...),
@@ -45,23 +45,23 @@ type runCmd struct{}
 var RunFlags = []cli.Flag{
 	cli.StringSliceFlag{
 		Name:  "env, e",
-		Usage: "select environment variables to be sent to function",
+		Usage: "Select environment variables to be sent to function",
 	},
 	cli.StringSliceFlag{
 		Name:  "link",
-		Usage: "select container links for the function",
+		Usage: "Select container links for the function",
 	},
 	cli.StringFlag{
 		Name:  "method",
-		Usage: "http method for function",
+		Usage: "Http method for function",
 	},
 	cli.StringFlag{
 		Name:  "format",
-		Usage: "format to use. `default` and `http` (hot) formats currently supported.",
+		Usage: "Format to use. `default` and `http` (hot) formats currently supported.",
 	},
 	cli.IntFlag{
 		Name:  "runs",
-		Usage: "for hot functions only, will call the function `runs` times in a row.",
+		Usage: "For hot functions only, will call the function `runs` times in a row.",
 	},
 	cli.Uint64Flag{
 		Name:  "memory",
@@ -77,7 +77,7 @@ var RunFlags = []cli.Flag{
 	},
 	cli.StringSliceFlag{
 		Name:  "build-arg",
-		Usage: "set build time variables",
+		Usage: "Set build time variables",
 	},
 }
 
