@@ -126,8 +126,13 @@ func (r *routesCmd) list(c *cli.Context) error {
 		return err
 	}
 
+	if len(resRoutes) == 0 {
+		fmt.Fprint(os.Stderr, "No routes found for app: %s\n", appName)
+		return nil
+	}
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprint(w, "path", "\t", "image", "\t", "endpoint", "\n")
+	fmt.Fprint(w, "PATH", "\t", "IMAGE", "\t", "ENDPOINT", "\n")
 	for _, route := range resRoutes {
 		endpoint := path.Join(callURL.Host, "r", appName, route.Path)
 		fmt.Fprint(w, route.Path, "\t", route.Image, "\t", endpoint, "\n")

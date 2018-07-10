@@ -113,7 +113,7 @@ func (t *triggersCmd) list(c *cli.Context) error {
 
 	fn, err := fn.GetFnByName(t.client, app.ID, fnName)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	params := &apitriggers.ListTriggersParams{
@@ -142,6 +142,11 @@ func (t *triggersCmd) list(c *cli.Context) error {
 		params.Cursor = &resp.Payload.NextCursor
 	}
 
+	if len(resTriggers) == 0 {
+		fmt.Fprintf(os.Stderr, "No triggers found for function: %s\n", fnName)
+		return nil
+	}
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
 	fmt.Fprint(w, "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
 	for _, trigger := range resTriggers {
@@ -149,6 +154,7 @@ func (t *triggersCmd) list(c *cli.Context) error {
 		fmt.Fprint(w, trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
 	}
 	w.Flush()
+
 	return nil
 }
 
