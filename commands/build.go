@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/fnproject/cli/common"
 	"github.com/urfave/cli"
@@ -44,16 +43,20 @@ func (b *buildcmd) flags() []cli.Flag {
 			Name:  "build-arg",
 			Usage: "Set build-time variables",
 		},
+		cli.StringFlag{
+			Name:  "working-dir, w",
+			Usage: "Specify the working directory to build a function, must be the full path.",
+		},
 	}
 }
 
 // build will take the found valid function and build it
 func (b *buildcmd) build(c *cli.Context) error {
-	path, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	fpath, ff, err := common.FindAndParseFuncfile(path)
+	var err error
+
+	dir := common.GetDir(c)
+
+	fpath, ff, err := common.FindAndParseFuncfile(dir)
 	if err != nil {
 		return err
 	}

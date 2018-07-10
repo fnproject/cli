@@ -142,8 +142,8 @@ func FindAndParseFuncfile(path string) (fpath string, ff *FuncFile, err error) {
 }
 
 // LoadFuncfile returns a parsed funcfile.
-func LoadFuncfile() (string, *FuncFile, error) {
-	return FindAndParseFuncfile(".")
+func LoadFuncfile(path string) (string, *FuncFile, error) {
+	return FindAndParseFuncfile(path)
 }
 
 // ParseFuncfile check file type to decode and parse.
