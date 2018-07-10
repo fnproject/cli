@@ -44,15 +44,10 @@ func (lh *KotlinLangHelper) DefaultFormat() string { return "http" }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime.
 // project.
-func (lh *KotlinLangHelper) GenerateBoilerplate() error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
+func (lh *KotlinLangHelper) GenerateBoilerplate(path string) error {
 	mkDirAndWriteFile := func(dir, filename, content string) error {
-		fullPath := filepath.Join(wd, dir)
-		if err = os.MkdirAll(fullPath, os.FileMode(0755)); err != nil {
+		fullPath := filepath.Join(path, dir)
+		if err := os.MkdirAll(fullPath, os.FileMode(0755)); err != nil {
 			return err
 		}
 
@@ -60,12 +55,12 @@ func (lh *KotlinLangHelper) GenerateBoilerplate() error {
 		return ioutil.WriteFile(fullFilePath, []byte(content), os.FileMode(0644))
 	}
 
-	err = mkDirAndWriteFile("src/main/kotlin", "Hello.kt", helloKotlinSrcBoilerplate)
+	err := mkDirAndWriteFile("src/main/kotlin", "Hello.kt", helloKotlinSrcBoilerplate)
 	if err != nil {
 		return err
 	}
 
-	testFile := filepath.Join(wd, "test.json")
+	testFile := filepath.Join(path, "test.json")
 	if exists(testFile) {
 		return ErrBoilerplateExists
 	}

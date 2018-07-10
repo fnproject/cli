@@ -40,8 +40,8 @@ func findAppfile(path string) (string, error) {
 }
 
 // LoadAppfile returns a parsed appfile.
-func LoadAppfile() (*AppFile, error) {
-	fn, err := findAppfile(".")
+func LoadAppfile(path string) (*AppFile, error) {
+	fn, err := findAppfile(path)
 	if err != nil {
 		return nil, err
 	}

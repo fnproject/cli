@@ -1,22 +1,22 @@
 package commands
 
 /*
- usage: fn init --help
+usage: fn init --help
 
- o If there's a Dockerfile found, this will generate a basic
-   function file with the image and 'docker' as 'runtime'
-   like following, for example:
+o If there's a Dockerfile found, this will generate a basic
+function file with the image and 'docker' as 'runtime'
+like following, for example:
 
-   name: hello
-   version: 0.0.1
-   runtime: docker
-   path: /hello
+name: hello
+version: 0.0.1
+runtime: docker
+path: /hello
 
-   then exit; if 'runtime' is 'docker' in the function file
-   and no Dockerfile exists,  print an error message then exit
- o It will then try to decipher the runtime based on
-   the files in the current directory, if it can't figure it out,
-   it will print an error message then exit.
+then exit; if 'runtime' is 'docker' in the function file
+and no Dockerfile exists, print an error message then exit
+o It will then try to decipher the runtime based on
+the files in the current directory, if it can't figure it out,
+it will print an error message then exit.
 */
 
 import (
@@ -35,6 +35,7 @@ import (
 
 type initFnCmd struct {
 	force bool
+	wd    string
 	ff    *common.FuncFile
 }
 
@@ -71,6 +72,11 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Destination: &a.ff.Version,
 			Value:       common.InitialVersion,
 		},
+		cli.StringFlag{
+			Name:        "working-dir,w",
+			Usage:       "Specify the working directory to initialise a function, must be the full path.",
+			Destination: &a.wd,
+		},
 	}
 
 	return append(fgs, route.RouteFlags...)
@@ -101,7 +107,13 @@ func InitCommand() cli.Command {
 }
 
 func (a *initFnCmd) init(c *cli.Context) error {
-	wd := common.GetWd()
+	var err error
+	var dir string
+
+	dir = common.GetWd()
+	if a.wd != "" {
+		dir = a.wd
+	}
 
 	var rt models.Route
 	route.WithFlags(c, &rt)
@@ -115,15 +127,15 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 	}
 
-	var err error
 	path := c.Args().First()
 	if path != "" {
 		fmt.Printf("Creating function at: /%s\n", path)
-		dir := filepath.Join(wd, path)
+		dir = filepath.Join(dir, path)
+
 		// check if dir exists, if it does, then we can't create function
 		if common.Exists(dir) {
 			if !a.force {
-				return fmt.Errorf("Directory %s already exists, cannot init function", dir)
+				return fmt.Errorf("directory %s already exists, cannot init function", dir)
 			}
 		} else {
 			err = os.MkdirAll(dir, 0755)
@@ -131,15 +143,17 @@ func (a *initFnCmd) init(c *cli.Context) error {
 				return err
 			}
 		}
-		err = os.Chdir(dir)
-		if err != nil {
-			return err
-		}
-		defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
 	}
 
+	err = os.Chdir(dir)
+	if err != nil {
+		return err
+	}
+
+	defer os.Chdir(dir) // todo: wrap this so we can log the error if changing back fails
+
 	if !a.force {
-		_, ff, err := common.LoadFuncfile()
+		_, ff, err := common.LoadFuncfile(dir)
 		if _, ok := err.(*common.NotFoundError); !ok && err != nil {
 			return err
 		}
@@ -148,7 +162,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 	}
 
-	err = a.BuildFuncFile(c) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
+	err = a.BuildFuncFile(c, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
 	if err != nil {
 		return err
 	}
@@ -156,7 +170,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	// TODO: why don't we treat "docker" runtime as just another language helper? Then can get rid of several Docker
 	// specific if/else's like this one.
 	if runtimeSpecified && a.ff.Runtime != common.FuncfileDockerRuntime {
-		err := a.generateBoilerplate()
+		err := a.generateBoilerplate(dir)
 		if err != nil {
 			return err
 		}
@@ -169,10 +183,10 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	return nil
 }
 
-func (a *initFnCmd) generateBoilerplate() error {
+func (a *initFnCmd) generateBoilerplate(path string) error {
 	helper := langs.GetLangHelper(a.ff.Runtime)
 	if helper != nil && helper.HasBoilerplate() {
-		if err := helper.GenerateBoilerplate(); err != nil {
+		if err := helper.GenerateBoilerplate(path); err != nil {
 			if err == langs.ErrBoilerplateExists {
 				return nil
 			}
@@ -217,13 +231,12 @@ func ValidateFuncName(name string) error {
 	return nil
 }
 
-func (a *initFnCmd) BuildFuncFile(c *cli.Context) error {
-	wd := common.GetWd()
+func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 	var err error
 
 	if a.ff.Name == "" {
 		// then defaults to current directory for name, the name must be lowercase
-		a.ff.Name = strings.ToLower(filepath.Base(wd))
+		a.ff.Name = strings.ToLower(filepath.Base(path))
 	}
 
 	if err = ValidateFuncName(a.ff.Name); err != nil {
@@ -242,7 +255,7 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context) error {
 
 	var helper langs.LangHelper
 	if a.ff.Runtime == "" {
-		helper, err = detectRuntime(wd)
+		helper, err = detectRuntime(path)
 		if err != nil {
 			return err
 		}

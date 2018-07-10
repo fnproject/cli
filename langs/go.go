@@ -75,12 +75,8 @@ func (lh *GoLangHelper) Entrypoint() (string, error) {
 
 func (lh *GoLangHelper) HasBoilerplate() bool { return true }
 
-func (lh *GoLangHelper) GenerateBoilerplate() error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	codeFile := filepath.Join(wd, "func.go")
+func (lh *GoLangHelper) GenerateBoilerplate(path string) error {
+	codeFile := filepath.Join(path, "func.go")
 	if exists(codeFile) {
 		return errors.New("func.go already exists, canceling init")
 	}
@@ -92,7 +88,7 @@ func (lh *GoLangHelper) GenerateBoilerplate() error {
 		return err
 	}
 
-	testFile := filepath.Join(wd, "test.json")
+	testFile := filepath.Join(path, "test.json")
 	if exists(testFile) {
 		fmt.Println("test.json already exists, skipping")
 	} else {

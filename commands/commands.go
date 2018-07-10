@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"sort"
+
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/objects/app"
 	"github.com/fnproject/cli/objects/call"
@@ -117,5 +119,7 @@ func GetCommands(commands map[string]cli.Command) []cli.Command {
 	for _, cmd := range commands {
 		cmds = append(cmds, cmd)
 	}
+
+	sort.Sort(cli.CommandsByName(cmds))
 	return cmds
 }
