@@ -23,7 +23,7 @@ func TestFnAppUpdateCycle(t *testing.T) {
 	h.Fn("inspect", "app", appName).AssertSuccess().AssertStdoutContains(fmt.Sprintf(`"name": "%s"`, appName))
 	h.Fn("config", "app", appName, "fooConfig", "barval").AssertSuccess()
 	h.Fn("get", "config", "app", appName, "fooConfig").AssertSuccess().AssertStdoutContains("barval")
-	h.Fn("list", "config", "app", appName).AssertSuccess().AssertStdoutContains("fooConfig=barval")
+	h.Fn("list", "config", "app", appName).AssertSuccess().AssertStdoutContains("barval")
 	h.Fn("unset", "config", "app", appName, "fooConfig").AssertSuccess()
 	h.Fn("get", "config", "app", appName, "fooConfig").AssertFailed()
 	h.Fn("list", "config", "app", appName).AssertSuccess().AssertStdoutEmpty()
@@ -42,7 +42,7 @@ func TestSimpleFnRouteUpdateCycle(t *testing.T) {
 	h.Fn("update", "route", appName1, "myroute", "bar/duffbeer:0.1.2").AssertSuccess()
 	h.Fn("config", "route", appName1, "myroute", "confA", "valB").AssertSuccess()
 	h.Fn("get", "config", "route", appName1, "myroute", "confA").AssertSuccess().AssertStdoutContains("valB")
-	h.Fn("list", "config", "route", appName1, "myroute").AssertSuccess().AssertStdoutContains("confA=valB")
+	h.Fn("list", "config", "route", appName1, "myroute").AssertSuccess().AssertStdoutContains("valB")
 	h.Fn("unset", "config", "route", appName1, "myroute", "confA").AssertSuccess()
 	h.Fn("get", "config", "route", appName1, "myroute", "confA").AssertFailed()
 }

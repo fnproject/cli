@@ -127,7 +127,7 @@ func (r *routesCmd) list(c *cli.Context) error {
 	}
 
 	if len(resRoutes) == 0 {
-		fmt.Fprint(os.Stderr, "No routes found for app: %s\n", appName)
+		fmt.Fprintf(os.Stderr, "No routes found for app: %s\n", appName)
 		return nil
 	}
 
@@ -427,9 +427,17 @@ func (r *routesCmd) listConfig(c *cli.Context) error {
 		return err
 	}
 
-	for key, val := range resp.Payload.Route.Config {
-		fmt.Printf("%s=%s\n", key, val)
+	if len(resp.Payload.Route.Config) == 0 {
+		fmt.Fprintf(os.Stderr, "No config found for route: %s\n", route)
+		return nil
 	}
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
+	fmt.Fprint(w, "KEY", "\t", "VALUE", "\n")
+	for key, val := range resp.Payload.Route.Config {
+		fmt.Fprint(w, key, "\t", val, "\n")
+	}
+	w.Flush()
 
 	return nil
 }
