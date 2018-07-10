@@ -2,19 +2,28 @@ package colour
 
 import (
 	"os"
+	"strings"
 
 	tty "github.com/mattn/go-isatty"
 )
 
 var useColors bool
 
-var Colours map[string]func(string) string
+var Colours map[string]interface{}
 
 func init() {
 	useColors = tty.IsTerminal(os.Stdout.Fd()) || tty.IsCygwinTerminal(os.Stdout.Fd())
-	Colours = map[string]func(string) string{
-		"b": Bold,
-		"i": Italic,
+	Colours = map[string]interface{}{
+		"bold":               Bold,
+		"italic":             Italic,
+		"join":               strings.Join,
+		"cyan":               Cyan,
+		"brightcyan":         BrightCyan,
+		"boldcyan":           BoldCyan,
+		"yellow":             Yellow,
+		"brightred":          BrightRed,
+		"boldred":            BoldRed,
+		"underlinebrightred": UnderlineBrightRed,
 	}
 }
 
