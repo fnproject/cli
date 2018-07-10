@@ -113,12 +113,18 @@ func (f *fnsCmd) list(c *cli.Context) error {
 		params.Cursor = &resp.Payload.NextCursor
 	}
 
+	if len(resFns) == 0 {
+		fmt.Fprintf(os.Stderr, "No functions found for app: %s\n", appName)
+		return nil
+	}
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprint(w, "name", "\t", "image", "\n")
+	fmt.Fprint(w, "NAME", "\t", "IMAGE", "\n")
 	for _, fn := range resFns {
 		fmt.Fprint(w, fn.Name, "\t", fn.Image, "\t", "\n")
 	}
 	w.Flush()
+
 	return nil
 }
 
@@ -379,13 +385,17 @@ func (f *fnsCmd) listConfig(c *cli.Context) error {
 		return err
 	}
 
-	if err != nil {
-		return err
+	if len(fn.Config) == 0 {
+		fmt.Fprintf(os.Stderr, "No config found for function: %s\n", fnName)
+		return nil
 	}
 
+	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
+	fmt.Fprint(w, "KEY", "\t", "VALUE", "\n")
 	for key, val := range fn.Config {
-		fmt.Printf("%s=%s\n", key, val)
+		fmt.Fprint(w, key, "\t", val, "\n")
 	}
+	w.Flush()
 
 	return nil
 }

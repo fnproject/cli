@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"text/tabwriter"
 
 	"context"
 	"strings"
@@ -58,9 +59,12 @@ func (a *appsCmd) list(c *cli.Context) error {
 		return nil
 	}
 
+	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
+	fmt.Fprint(w, "NAME", "\n")
 	for _, app := range resApps {
-		fmt.Println(app.Name)
+		fmt.Fprint(w, app.Name, "\n")
 	}
+	w.Flush()
 
 	return nil
 }
@@ -175,9 +179,17 @@ func (a *appsCmd) listConfig(c *cli.Context) error {
 		return err
 	}
 
-	for key, val := range resp.Payload.App.Config {
-		fmt.Printf("%s=%s\n", key, val)
+	if len(resp.Payload.App.Config) == 0 {
+		fmt.Fprintf(os.Stderr, "No config found for app: %s\n", appName)
+		return nil
 	}
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
+	fmt.Fprint(w, "KEY", "\t", "VALUE", "\n")
+	for key, val := range resp.Payload.App.Config {
+		fmt.Fprint(w, key, "\t", val, "\n")
+	}
+	w.Flush()
 
 	return nil
 }
