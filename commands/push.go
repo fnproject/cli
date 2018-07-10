@@ -49,7 +49,7 @@ func (p *pushcmd) flags() []cli.Flag {
 // push the container, and finally it will update function's route. Optionally,
 // the route can be overriden inside the functions file.
 func (p *pushcmd) push(c *cli.Context) error {
-	_, ff, err := common.LoadFuncfile()
+	_, ff, err := common.LoadFuncfile(".")
 	if err != nil {
 		if _, ok := err.(*common.NotFoundError); ok {
 			return errors.New("Image name is missing or no function file found")

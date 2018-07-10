@@ -201,7 +201,7 @@ func WithFlags(c *cli.Context, rt *fnmodels.Route) {
 func WithFuncFile(ff *common.FuncFile, rt *fnmodels.Route) error {
 	var err error
 	if ff == nil {
-		_, ff, err = common.LoadFuncfile()
+		_, ff, err = common.LoadFuncfile(".")
 		if err != nil {
 			return err
 		}

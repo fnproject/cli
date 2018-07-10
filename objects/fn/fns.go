@@ -156,7 +156,7 @@ func fnWithFlags(c *cli.Context, fn *models.Fn) {
 func WithFuncFile(ff *common.FuncFile, rt *models.Fn) error {
 	var err error
 	if ff == nil {
-		_, ff, err = common.LoadFuncfile()
+		_, ff, err = common.LoadFuncfile(".")
 		if err != nil {
 			return err
 		}

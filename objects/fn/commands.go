@@ -12,7 +12,7 @@ func Create() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "create a function in an application",
+		Usage:     "Create a function in an application",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -35,7 +35,7 @@ func List() cli.Command {
 		Name:      "functions",
 		ShortName: "funcs",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "list functions for `app`",
+		Usage:     "List functions for `app`",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -68,7 +68,7 @@ func Delete() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "delete a function from an application `app`",
+		Usage:     "Delete a function from an application `app`",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -90,7 +90,7 @@ func Inspect() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "retrieve one or all functions properties",
+		Usage:     "Retrieve one or all functions properties",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -112,7 +112,7 @@ func Update() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "update a function in an `app`",
+		Usage:     "Update a function in an `app`",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -135,7 +135,7 @@ func GetConfig() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "inspect configuration key for this function",
+		Usage:     "Inspect configuration key for this function",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -157,7 +157,7 @@ func SetConfig() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "store a configuration key for this function",
+		Usage:     "Store a configuration key for this function",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -179,7 +179,7 @@ func ListConfig() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "list configuration key/value pairs for this function",
+		Usage:     "List configuration key/value pairs for this function",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -201,7 +201,7 @@ func UnsetConfig() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "remove a configuration key for this function",
+		Usage:     "Remove a configuration key for this function",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()

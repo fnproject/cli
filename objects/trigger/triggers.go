@@ -143,7 +143,7 @@ func (t *triggersCmd) list(c *cli.Context) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprint(w, "name", "\t", "type", "\t", "source", "\t", "endpoint", "\n")
+	fmt.Fprint(w, "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
 	for _, trigger := range resTriggers {
 		endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
 		fmt.Fprint(w, trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")

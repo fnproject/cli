@@ -28,7 +28,7 @@ func TestInit(t *testing.T) {
 	}
 
 	helper := &langs.GoLangHelper{}
-	helper.GenerateBoilerplate()
+	helper.GenerateBoilerplate(testdir)
 
 	app := newFn()
 	err = app.Command("init").Run(cli.NewContext(app, &flag.FlagSet{}, nil))
