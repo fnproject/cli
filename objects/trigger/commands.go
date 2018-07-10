@@ -12,7 +12,7 @@ func Create() cli.Command {
 		Name:      "trigger",
 		ShortName: "trig",
 		Aliases:   []string{"t", "tr"},
-		Usage:     "create a new trigger",
+		Usage:     "Create a new trigger",
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
@@ -35,7 +35,7 @@ func List() cli.Command {
 		Name:      "triggers",
 		ShortName: "trigs",
 		Aliases:   []string{"t", "tr"},
-		Usage:     "list all triggers",
+		Usage:     "List all triggers",
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
@@ -68,7 +68,7 @@ func Update() cli.Command {
 		Name:      "trigger",
 		ShortName: "trig",
 		Aliases:   []string{"t", "tr"},
-		Usage:     "update a trigger",
+		Usage:     "Update a trigger",
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
@@ -96,7 +96,7 @@ func Delete() cli.Command {
 		Name:      "trigger",
 		ShortName: "trig",
 		Aliases:   []string{"t", "tr"},
-		Usage:     "delete a trigger",
+		Usage:     "Delete a trigger",
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
@@ -118,7 +118,7 @@ func Inspect() cli.Command {
 		Name:      "trigger",
 		ShortName: "trig",
 		Aliases:   []string{"t", "tr"},
-		Usage:     "inspect a trigger",
+		Usage:     "Retrieve one or all trigger properties",
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
