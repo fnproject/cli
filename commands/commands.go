@@ -27,7 +27,6 @@ var Commands = cmd{
 	"get":          GetCommand(),
 	"init":         InitCommand(),
 	"inspect":      InspectCommand(),
-	"lamba":        LambdaCommand(),
 	"list":         ListCommand(),
 	"push":         PushCommand(),
 	"run":          run.RunCommand(),
