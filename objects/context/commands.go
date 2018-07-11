@@ -30,9 +30,9 @@ func Create() cli.Command {
 
 func List() cli.Command {
 	return cli.Command{
-		Name:     "context",
+		Name:     "contexts",
 		Usage:    "List contexts",
-		Aliases:  []string{"ctx"},
+		Aliases:  []string{"context", "ctx"},
 		Category: "MANAGEMENT COMMAND",
 		Action:   list,
 	}

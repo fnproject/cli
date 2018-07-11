@@ -126,8 +126,13 @@ func (r *routesCmd) list(c *cli.Context) error {
 		return err
 	}
 
+	if len(resRoutes) == 0 {
+		fmt.Fprintf(os.Stderr, "No routes found for app: %s\n", appName)
+		return nil
+	}
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprint(w, "path", "\t", "image", "\t", "endpoint", "\n")
+	fmt.Fprint(w, "PATH", "\t", "IMAGE", "\t", "ENDPOINT", "\n")
 	for _, route := range resRoutes {
 		endpoint := path.Join(callURL.Host, "r", appName, route.Path)
 		fmt.Fprint(w, route.Path, "\t", route.Image, "\t", endpoint, "\n")
@@ -265,10 +270,11 @@ func (r *routesCmd) create(c *cli.Context) error {
 
 // PostRoute request
 func PostRoute(r *fnclient.Fn, appName string, rt *fnmodels.Route) error {
-	err := common.ValidateImageName(rt.Image)
+	image, err := common.ValidateImageName(rt.Image)
 	if err != nil {
 		return err
 	}
+	rt.Image = image
 
 	body := &fnmodels.RouteWrapper{
 		Route: rt,
@@ -298,7 +304,7 @@ func PostRoute(r *fnclient.Fn, appName string, rt *fnmodels.Route) error {
 // PatchRoute request
 func PatchRoute(r *fnclient.Fn, appName, routePath string, rt *fnmodels.Route) error {
 	if rt.Image != "" {
-		err := common.ValidateImageName(rt.Image)
+		_, err := common.ValidateImageName(rt.Image)
 		if err != nil {
 			return err
 		}
@@ -421,9 +427,17 @@ func (r *routesCmd) listConfig(c *cli.Context) error {
 		return err
 	}
 
-	for key, val := range resp.Payload.Route.Config {
-		fmt.Printf("%s=%s\n", key, val)
+	if len(resp.Payload.Route.Config) == 0 {
+		fmt.Fprintf(os.Stderr, "No config found for route: %s\n", route)
+		return nil
 	}
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
+	fmt.Fprint(w, "KEY", "\t", "VALUE", "\n")
+	for key, val := range resp.Payload.Route.Config {
+		fmt.Fprint(w, key, "\t", val, "\n")
+	}
+	w.Flush()
 
 	return nil
 }

@@ -20,13 +20,13 @@ func printCalls(calls []*models.Call) {
 	for _, call := range calls {
 		fmt.Println(fmt.Sprintf(
 			"ID: %v\n"+
-				"App: %v\n"+
+				"App Id: %v\n"+
 				"Route: %v\n"+
 				"Created At: %v\n"+
 				"Started At: %v\n"+
 				"Completed At: %v\n"+
 				"Status: %v\n",
-			call.ID, call.AppName, call.Path, call.CreatedAt,
+			call.ID, call.AppID, call.Path, call.CreatedAt,
 			call.StartedAt, call.CompletedAt, call.Status))
 		if call.Error != "" {
 			fmt.Println(fmt.Sprintf("Error reason: %v\n", call.Error))

@@ -2,21 +2,6 @@
 
 
 [[projects]]
-  branch = "master"
-  name = "github.com/Azure/go-ansiterm"
-  packages = [
-    ".",
-    "winterm"
-  ]
-  revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/Nvveen/Gotty"
-  packages = ["."]
-  revision = "cd527374f1e5bff4938207604a14f2e38a9cf512"
-
-[[projects]]
   name = "github.com/PuerkitoBio/purell"
   packages = ["."]
   revision = "0bcb03f4b4d0a9428594752bd2a3b9aa0a9d4bd4"
@@ -29,72 +14,16 @@
   revision = "de5bf2ad457846296e2031421a34e2568e304e35"
 
 [[projects]]
-  name = "github.com/Sirupsen/logrus"
-  packages = ["."]
-  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
-  version = "v1.0.4"
-
-[[projects]]
   name = "github.com/asaskevich/govalidator"
   packages = ["."]
   revision = "521b25f4b05fd26bec69d9dedeb8f9c9a83939a8"
   version = "v8"
 
 [[projects]]
-  name = "github.com/aws/aws-sdk-go"
-  packages = [
-    "aws",
-    "aws/awserr",
-    "aws/awsutil",
-    "aws/client",
-    "aws/client/metadata",
-    "aws/corehandlers",
-    "aws/credentials",
-    "aws/credentials/ec2rolecreds",
-    "aws/credentials/endpointcreds",
-    "aws/credentials/stscreds",
-    "aws/defaults",
-    "aws/ec2metadata",
-    "aws/endpoints",
-    "aws/request",
-    "aws/session",
-    "aws/signer/v4",
-    "internal/shareddefaults",
-    "private/protocol",
-    "private/protocol/json/jsonutil",
-    "private/protocol/jsonrpc",
-    "private/protocol/query",
-    "private/protocol/query/queryutil",
-    "private/protocol/rest",
-    "private/protocol/restjson",
-    "private/protocol/xml/xmlutil",
-    "service/lambda",
-    "service/sts"
-  ]
-  revision = "71472b3d628115a0650f4851e48dde483cc84776"
-  version = "v1.12.45"
-
-[[projects]]
   name = "github.com/coreos/go-semver"
   packages = ["semver"]
   revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
   version = "v0.2.0"
-
-[[projects]]
-  name = "github.com/docker/docker"
-  packages = [
-    "pkg/jsonlog",
-    "pkg/term",
-    "pkg/term/windows"
-  ]
-  revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
-  version = "v1.13.1"
-
-[[projects]]
-  name = "github.com/docker/go-units"
-  packages = ["."]
-  revision = "0dadbb0345b35ec7ef35e228dabb8de89a65bf52"
-  version = "v0.3.2"
 
 [[projects]]
   branch = "master"
@@ -112,13 +41,18 @@
     "client/operations",
     "client/routes",
     "client/version",
+    "clientv2",
+    "clientv2/apps",
+    "clientv2/fns",
+    "clientv2/triggers",
     "models",
+    "modelsv2",
     "provider",
     "provider/defaultprovider",
     "provider/oracle"
   ]
-  revision = "9c0630b825a7027d528352d40dbf8d0afbf84b85"
-  version = "0.2.8"
+  revision = "d2ed1b23cfd24ac552561ec87dc34e5fcd203773"
+  version = "0.2.10"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -134,12 +68,6 @@
   ]
   revision = "88e6c9f2fe390c48839eaba32490fd09cb3b581c"
   version = "1.1.1"
-
-[[projects]]
-  name = "github.com/go-ini/ini"
-  packages = ["."]
-  revision = "32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a"
-  version = "v1.32.0"
 
 [[projects]]
   branch = "master"
@@ -234,11 +162,6 @@
   revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
 
 [[projects]]
-  name = "github.com/jmespath/go-jmespath"
-  packages = ["."]
-  revision = "0b12d6b5"
-
-[[projects]]
   branch = "master"
   name = "github.com/jmoiron/jsonq"
   packages = ["."]
@@ -289,12 +212,6 @@
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
   revision = "06020f85339e21b2478f756a78e295255ffa4d6a"
-
-[[projects]]
-  name = "github.com/moby/moby"
-  packages = ["pkg/jsonmessage"]
-  revision = "90d35abf7b3535c1c319c872900fbd76374e521c"
-  version = "v17.05.0-ce-rc3"
 
 [[projects]]
   name = "github.com/onsi/gomega"
@@ -446,6 +363,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "dbc683c93cf478d7c40b8030166600da91ce07cd2bdf9282a35044a69e6d7469"
+  inputs-digest = "9c2658a16c7ee514de136f1c79d3e6c146c600d6d02449e234900ba49909ed54"
   solver-name = "gps-cdcl"
   solver-version = 1
