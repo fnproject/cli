@@ -51,27 +51,23 @@ func mainContent() string {
 `
 }
 
-func (lh *RustLangHelper) GenerateBoilerplate() error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
+func (lh *RustLangHelper) GenerateBoilerplate(path string) error {
 	username := os.Getenv("USER")
 	if len(username) == 0 {
 		username = "unknown"
 	}
 
-	pathToCargoToml := filepath.Join(wd, "Cargo.toml")
+	pathToCargoToml := filepath.Join(path, "Cargo.toml")
 	if exists(pathToCargoToml) {
 		return ErrBoilerplateExists
 	}
 	if err := ioutil.WriteFile(pathToCargoToml, []byte(cargoTomlContent(username)), os.FileMode(0644)); err != nil {
 		return err
 	}
-	if err = os.MkdirAll(filepath.Join(wd, "src"), os.FileMode(0755)); err != nil {
+	if err := os.MkdirAll(filepath.Join(path, "src"), os.FileMode(0755)); err != nil {
 		return err
 	}
-	pathToMain := filepath.Join(wd, "src", "main.rs")
+	pathToMain := filepath.Join(path, "src", "main.rs")
 	if err := ioutil.WriteFile(pathToMain, []byte(mainContent()), os.FileMode(0644)); err != nil {
 		return err
 	}

@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/coreos/go-semver/semver"
@@ -63,12 +62,17 @@ func (b *bumpcmd) flags() []cli.Flag {
 			Usage:       "verbose mode",
 			Destination: &b.verbose,
 		},
+		cli.StringFlag{
+			Name:  "working-dir,w",
+			Usage: "Specify the working directory to bump a function, must be the full path.",
+		},
 	}
 }
 
 // bump will take the found valid function and bump its version
 func (b *bumpcmd) bump(c *cli.Context) error {
 	var t VType
+	var dir string
 	if b.major {
 		t = Major
 	} else if b.minor {
@@ -77,11 +81,9 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 		t = Patch
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	_, err = bumpItWd(wd, t)
+	dir = GetDir(c)
+
+	_, err := bumpItWd(dir, t)
 	return err
 }
 func bumpItWd(wd string, vtype VType) (*FuncFile, error) {

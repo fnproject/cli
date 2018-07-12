@@ -17,6 +17,8 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/spf13/viper"
+
 	"github.com/coreos/go-semver/semver"
 	"github.com/fatih/color"
 	"github.com/fnproject/cli/langs"
@@ -37,6 +39,18 @@ func GetWd() string {
 		log.Fatalln("Couldn't get working directory:", err)
 	}
 	return wd
+}
+
+// GetDir returns the dir if defined as a flag in cli.Context
+func GetDir(c *cli.Context) string {
+	var dir string
+	if c.String("working-dir") != "" {
+		dir = c.String("working-dir")
+	} else {
+		dir = GetWd()
+	}
+
+	return dir
 }
 
 // BuildFunc bumps version and builds function.
@@ -317,7 +331,7 @@ func ExtractEnvConfig(configs []string) map[string]string {
 
 // DockerPush pushes to docker registry.
 func DockerPush(ff *FuncFile) error {
-	err := ValidateImageName(ff.ImageName())
+	_, err := ValidateImageName(ff.ImageName())
 	if err != nil {
 		return err
 	}
@@ -333,16 +347,19 @@ func DockerPush(ff *FuncFile) error {
 
 // ValidateImageName validates that the full image name (REGISTRY/name:tag) is allowed for push
 // remember that private registries must be supported here
-func ValidateImageName(n string) error {
+func ValidateImageName(n string) (string, error) {
 	parts := strings.Split(n, "/")
 	if len(parts) < 2 {
-		return errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var, pass in --registry or configure your context file")
+		if viper.GetString("registry") == "" {
+			return "", errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var, pass in --registry or configure your context file")
+		}
+		n = viper.GetString("registry") + "/" + n
 	}
 	lastParts := strings.Split(parts[len(parts)-1], ":")
 	if len(lastParts) != 2 {
-		return errors.New("image name must have a tag")
+		return "", errors.New("image name must have a tag")
 	}
-	return nil
+	return n, nil
 }
 
 func appNamePath(img string) (string, string) {

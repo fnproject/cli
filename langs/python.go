@@ -19,12 +19,8 @@ func (h *PythonLangHelper) DefaultFormat() string {
 
 func (h *PythonLangHelper) HasBoilerplate() bool { return true }
 
-func (h *PythonLangHelper) GenerateBoilerplate() error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	codeFile := filepath.Join(wd, "func.py")
+func (h *PythonLangHelper) GenerateBoilerplate(path string) error {
+	codeFile := filepath.Join(path, "func.py")
 	if exists(codeFile) {
 		return errors.New("func.py already exists, canceling init")
 	}
@@ -36,7 +32,7 @@ func (h *PythonLangHelper) GenerateBoilerplate() error {
 		return err
 	}
 
-	testFile := filepath.Join(wd, "test.json")
+	testFile := filepath.Join(path, "test.json")
 	if exists(testFile) {
 		fmt.Println("test.json already exists, skipping")
 	} else {

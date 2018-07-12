@@ -95,6 +95,10 @@ func (p *deploycmd) flags() []cli.Flag {
 			Name:  "build-arg",
 			Usage: "Set build time variables",
 		},
+		cli.StringFlag{
+			Name:  "working-dir,w",
+			Usage: "Specify the working directory to deploy a function, must be the full path.",
+		},
 	}
 }
 
@@ -109,8 +113,10 @@ func (p *deploycmd) flags() []cli.Flag {
 // is the one that lives in the same directory as the app.yaml.
 func (p *deploycmd) deploy(c *cli.Context) error {
 	appName := ""
+	dir := common.GetDir(c)
 
-	appf, err := common.LoadAppfile()
+	appf, err := common.LoadAppfile(dir)
+
 	if err != nil {
 		if _, ok := err.(*common.NotFoundError); ok {
 			if p.all {
@@ -142,20 +148,27 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 // deploySingle deploys a single function, either the current directory or if in the context
 // of an app and user provides relative path as the first arg, it will deploy that function.
 func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.AppFile) error {
+	var dir string
 	wd := common.GetWd()
 
-	dir := wd
-	// if we're in the context of an app, first arg is path to the function
-	path := c.Args().First()
-	if path != "" {
-		fmt.Printf("Deploying function at: /%s\n", path)
-		dir = filepath.Join(wd, path)
-		err := os.Chdir(dir)
-		if err != nil {
-			return err
+	if c.String("working-dir") != "" {
+		dir = c.String("working-dir")
+	} else {
+		// if we're in the context of an app, first arg is path to the function
+		path := c.Args().First()
+		if path != "" {
+			fmt.Printf("Deploying function at: /%s\n", path)
 		}
-		defer os.Chdir(wd) // todo: wrap this so we can log the error if changing back fails
+		dir = filepath.Join(wd, path)
 	}
+
+	fmt.Println("dir: ", dir)
+
+	err := os.Chdir(dir)
+	if err != nil {
+		return err
+	}
+	defer os.Chdir(wd)
 
 	fpath, ff, err := common.FindAndParseFuncfile(dir)
 	if err != nil {
@@ -191,10 +204,17 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFi
 		}
 	}
 
+	var dir string
 	wd := common.GetWd()
 
+	if c.String("dir") != "" {
+		dir = c.String("dir")
+	} else {
+		dir = wd
+	}
+
 	var funcFound bool
-	err := common.WalkFuncs(wd, func(path string, ff *common.FuncFile, err error) error {
+	err := common.WalkFuncs(dir, func(path string, ff *common.FuncFile, err error) error {
 		if err != nil { // probably some issue with funcfile parsing, can decide to handle this differently if we'd like
 			return err
 		}
@@ -321,7 +341,8 @@ func (p *deploycmd) updateAppConfig(appf *common.AppFile) error {
 	param.App = appf.Name
 	param.Body = &models.AppWrapper{
 		App: &models.App{
-			Config: appf.Config,
+			Config:      appf.Config,
+			Annotations: appf.Annotations,
 		},
 	}
 
@@ -330,8 +351,9 @@ func (p *deploycmd) updateAppConfig(appf *common.AppFile) error {
 		postParams := clientApps.NewPostAppsParams() //XXX switch to put when v2.0 Fn
 		postParams.Body = &models.AppWrapper{
 			App: &models.App{
-				Name:   appf.Name,
-				Config: appf.Config,
+				Name:        appf.Name,
+				Config:      appf.Config,
+				Annotations: appf.Annotations,
 			},
 		}
 
