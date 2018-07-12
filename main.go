@@ -95,7 +95,7 @@ func newFn() *cli.App {
 	{{.Description}}{{end}}{{if .Commands}}
 		
 {{bold "SUBCOMMANDS"}}{{range .Commands}}
-	{{join .Names ", "}}	{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
+	{{join .Names ", "}}			{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
 		
 {{bold "COMMAND OPTIONS"}}{{range .VisibleFlags}}
 	{{.}}{{end}}{{end}}{{if .Commands}}
@@ -116,7 +116,7 @@ func newFn() *cli.App {
 	{{.Description}}{{end}}{{if .Subcommands}}
 		
 {{bold "SUBCOMMANDS"}}{{range .Subcommands}}
-	{{join .Names ", "}}	{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
+	{{join .Names ", "}}			{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
 		
 {{bold "COMMAND OPTIONS"}}
 	{{range .Flags}}{{.}}
