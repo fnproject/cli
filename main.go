@@ -54,17 +54,75 @@ func newFn() *cli.App {
 	// Override app template
 	// AppHelpTemplate is the text template for the Default help topic.
 	// cli.go uses text/template to render templates. You can render custom help text by setting this variable.
-	cli.AppHelpTemplate = `{{"\n"}}{{"\t"}}{{if not .ArgsUsage}}{{boldred .Description}}{{"\t"}}{{boldred "-"}}{{"\t"}}{{boldred "Version "}}{{boldred .Version}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "ENVIRONMENT VARIABLES"}}{{"\n"}}{{"\t"}}{{"\t"}}FN_API_URL{{"\t"}}{{italic "Fn server address"}}{{"\n"}}{{"\t"}}{{"\t"}}FN_REGISTRY{{"\t"}}{{italic "Docker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]USERNAME]"}}{{if .VisibleCommands}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "GENERAL COMMANDS"}}{{end}}{{else}}{{range .VisibleCategories}}{{if .Name}}{{bold .Name}}{{end}}{{end}}{{"\n"}}{{"\t"}}{{"\t"}}{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "USAGE"}}{{"\n"}}{{"\t"}}{{"\t"}}{{boldcyan .HelpName}}{{if .VisibleFlags}}{{cyan " [global options]"}}{{end}} {{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{if .Description}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "DESCRIPTION"}}{{"\n"}}{{"\t"}}{{"\t"}}{{.Description}}{{end}}{{end}}{{end}}{{range .VisibleCategories}}{{if .Name}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold .Name}}{{end}}{{range .VisibleCommands}}{{"\n"}}{{"\t"}}{{"\t"}}{{join .Names ", "}}{{"\t"}}{{"\t"}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}{{"\n"}}{{"\n"}}{{"\t"}}{{if not .ArgsUsage}}{{bold "GLOBAL OPTIONS"}}{{else}}{{bold "COMMAND OPTIONS"}}{{end}}{{"\n"}}{{"\t"}}{{"\t"}}{{range $index, $option := .VisibleFlags}}{{if $index}}{{"\n"}}{{"\t"}}{{"\t"}}{{end}}{{$option}}{{end}}{{end}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "FURTHER HELP:"}}{{"\t"}}{{italic "See "}}{{"'"}}{{brightcyan .HelpName}}{{brightcyan " <command> --help"}}{{"'"}}{{italic " for more information about a command."}}{{if not .ArgsUsage}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "LEARN MORE:"}}{{"\t"}}{{"\t"}}{{underlinebrightred "https://github.com/fnproject/fn"}}{{else}}{{end}}
+	cli.AppHelpTemplate = `
+{{if not .ArgsUsage}}{{boldred .Description}}	{{boldred "-"}}	{{boldred "Version "}}{{boldred .Version}}
+	
+{{bold "ENVIRONMENT VARIABLES"}}
+	FN_API_URL		 {{italic "Fn server address"}}
+	FN_REGISTRY		 {{italic "Docker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]USERNAME]"}}{{if .VisibleCommands}}
+		
+{{bold "GENERAL COMMANDS"}}{{end}}{{else}}{{range .VisibleCategories}}{{if .Name}}{{bold .Name}}{{end}}{{end}}
+	{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}
+	
+{{bold "USAGE"}}
+	{{boldcyan .HelpName}}{{if .VisibleFlags}}{{cyan " [global options]"}}{{end}} {{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{if .Description}}
+	
+{{bold "DESCRIPTION"}}
+	{{.Description}}{{end}}{{end}}{{end}}{{range .VisibleCategories}}{{if .Name}}
+	
+{{bold .Name}}{{end}}{{range .VisibleCommands}}
+	{{join .Names ", "}}				 {{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
+		
+{{if not .ArgsUsage}}{{bold "GLOBAL OPTIONS"}}{{else}}{{bold "COMMAND OPTIONS"}}{{end}}
+  {{range $index, $option := .VisibleFlags}}{{if $index}}
+  {{end}}{{$option}}{{end}}{{end}}
+		
+{{bold "FURTHER HELP:"}}	{{italic "See "}}{{"'"}}{{brightcyan .HelpName}}{{brightcyan " <command> --help"}}{{"'"}}{{italic " for more information about a command."}}{{if not .ArgsUsage}}
+	
+{{bold "LEARN MORE:"}}	{{underlinebrightred "https://github.com/fnproject/fn"}}{{else}}{{end}}
 	`
 	// Override subcommand template
 	// SubcommandHelpTemplate is the text template for the subcommand help topic.
 	// cli.go uses text/template to render templates. You can render custom help text by setting this variable.
-	cli.SubcommandHelpTemplate = `{{"\n"}}{{range .VisibleCategories}}{{if .Name}}{{"\t"}}{{bold .Name}}{{end}}{{end}}{{"\n"}}{{"\t"}}{{"\t"}}{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "USAGE"}}{{"\n"}}{{"\t"}}{{"\t"}}{{boldcyan .HelpName}}{{if .VisibleFlags}}{{cyan " [global options] "}}{{end}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{end}}{{if .Description}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "DESCRIPTION"}}{{"\n"}}{{"\t"}}{{"\t"}}{{.Description}}{{end}}{{if .Commands}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "SUBCOMMANDS"}}{{range .Commands}}{{"\n"}}{{"\t"}}{{"\t"}}{{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "COMMAND OPTIONS"}}{{range .VisibleFlags}}{{"\n"}}{{"\t"}}{{"\t"}}{{.}}{{end}}{{end}}{{if .Commands}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "FURTHER HELP:"}}{{"\t"}}{{italic "See "}}{{"'"}}{{brightcyan .HelpName}}{{brightcyan " <subcommand> --help"}}{{"'"}}{{italic " for more information about a command."}}{{end}}
+	cli.SubcommandHelpTemplate = `
+{{range .VisibleCategories}}{{if .Name}}{{bold .Name}}{{end}}{{end}}
+	{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}
+		
+{{bold "USAGE"}}
+	{{boldcyan .HelpName}}{{if .VisibleFlags}}{{cyan " [global options] "}}{{end}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{end}}{{if .Description}}
+		
+{{bold "DESCRIPTION"}}
+	{{.Description}}{{end}}{{if .Commands}}
+		
+{{bold "SUBCOMMANDS"}}{{range .Commands}}
+	{{join .Names ", "}}	{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
+		
+{{bold "COMMAND OPTIONS"}}{{range .VisibleFlags}}
+	{{.}}{{end}}{{end}}{{if .Commands}}
+
+{{bold "FURTHER HELP:"}}	{{italic "See "}}{{"'"}}{{brightcyan .HelpName}}{{brightcyan " <subcommand> --help"}}{{"'"}}{{italic " for more information about a command."}}{{end}}
 `
 	//Override command template
 	// CommandHelpTemplate is the text template for the command help topic.
 	// cli.go uses text/template to render templates. You can render custom help text by setting this variable.
-	cli.CommandHelpTemplate = `{{"\n"}}{{if .Category}}{{"\t"}}{{bold .Category}}{{end}}{{"\n"}}{{"\t"}}{{"\t"}}{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "USAGE"}}{{"\n"}}{{"\t"}}{{"\t"}}{{boldcyan .HelpName}}{{cyan " [global options] "}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{end}}{{if .Description}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "DESCRIPTION"}}{{"\n"}}{{"\t"}}{{"\t"}}{{.Description}}{{end}}{{if .Subcommands}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "SUBCOMMANDS"}}{{range .Subcommands}}{{"\n"}}{{"\t"}}{{"\t"}}{{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "COMMAND OPTIONS"}}{{"\n"}}{{"\t"}}{{"\t"}}{{range .Flags}}{{.}}{{"\n"}}{{"\t"}}{{"\t"}}{{end}}{{if .Subcommands}}{{"\n"}}{{"\n"}}{{"\t"}}{{bold "FURTHER HELP:"}}{{"\t"}}{{italic "See "}}){{"'"}}{{brightcyan .HelpName}}{{brightcyan " <subcommand> --help"}}{{"'"}}{{italic "for more information about a command."}}{{end}}{{end}}
+	cli.CommandHelpTemplate = `
+{{if .Category}}{{bold .Category}}{{end}}
+	{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}
+		
+{{bold "USAGE"}}
+	{{boldcyan .HelpName}}{{cyan " [global options] "}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{end}}{{if .Description}}
+		
+{{bold "DESCRIPTION"}}
+	{{.Description}}{{end}}{{if .Subcommands}}
+		
+{{bold "SUBCOMMANDS"}}{{range .Subcommands}}
+	{{join .Names ", "}}	{{.Usage}}{{end}}{{end}}{{if .VisibleFlags}}
+		
+{{bold "COMMAND OPTIONS"}}
+	{{range .Flags}}{{.}}
+	{{end}}{{if .Subcommands}}
+		
+{{bold "FURTHER HELP:"}}	{{italic "See "}}){{"'"}}{{brightcyan .HelpName}}{{brightcyan " <subcommand> --help"}}{{"'"}}{{italic "for more information about a command."}}{{end}}{{end}}
 `
 
 	app.CommandNotFound = func(c *cli.Context, cmd string) {
@@ -90,10 +148,8 @@ func newFn() *cli.App {
 //Override function for customised app template
 func printHelpCostum(out io.Writer, templ string, data interface{}, customFunc map[string]interface{}) {
 	funcMap := color.Colors
-	if customFunc != nil {
-		for key, value := range customFunc {
-			funcMap[key] = value
-		}
+	for key, value := range customFunc {
+		funcMap[key] = value
 	}
 
 	w := tabwriter.NewWriter(out, 1, 8, 2, ' ', 0)
