@@ -64,6 +64,10 @@ func (t *testcmd) flags() []cli.Flag {
 			Name:  "all",
 			Usage: "If in root directory containing `app.yaml`, this will deploy all functions",
 		},
+		cli.StringFlag{
+			Name:  "working-dir,w",
+			Usage: "Specify the working directory to test a function, must be the full path.",
+		},
 	}
 }
 
@@ -72,14 +76,14 @@ func (t *testcmd) test(c *cli.Context) error {
 		fmt.Println("In gomega FailHandler:", message)
 	})
 
-	wd := common.GetWd()
+	dir := common.GetDir(c)
 
 	if c.Bool("all") {
 		fmt.Println("Testing all functions in this directory and all sub directories.")
-		return t.testAll(c, wd)
+		return t.testAll(c, dir)
 	}
 
-	_, _, err := t.testSingle(c, wd)
+	_, _, err := t.testSingle(c, dir)
 	return err
 }
 

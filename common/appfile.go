@@ -25,7 +25,8 @@ var (
 type AppFile struct {
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 	// TODO: Config here is not yet used
-	Config map[string]string `yaml:"config,omitempty" json:"config,omitempty"`
+	Config      map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
+	Annotations map[string]interface{} `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 }
 
 func findAppfile(path string) (string, error) {
@@ -39,8 +40,8 @@ func findAppfile(path string) (string, error) {
 }
 
 // LoadAppfile returns a parsed appfile.
-func LoadAppfile() (*AppFile, error) {
-	fn, err := findAppfile(".")
+func LoadAppfile(path string) (*AppFile, error) {
+	fn, err := findAppfile(path)
 	if err != nil {
 		return nil, err
 	}
