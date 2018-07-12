@@ -41,7 +41,7 @@ func List() cli.Command {
 	return cli.Command{
 		Name:     "apps",
 		Usage:    "List all created applications",
-		Category: "MANAGEMENT COMMANDS",
+		Category: "MANAGEMENT COMMAND",
 		Aliases:  []string{"app", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
@@ -71,7 +71,7 @@ func Delete() cli.Command {
 	return cli.Command{
 		Name:        "app",
 		Usage:       "Delete an application",
-		Category:    "MANAGEMENT COMMANDS",
+		Category:    "MANAGEMENT COMMAND",
 		Description: "This command deletes a created application.",
 		Aliases:     []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
@@ -91,7 +91,7 @@ func Inspect() cli.Command {
 	return cli.Command{
 		Name:     "app",
 		Usage:    "Retrieve one or all apps properties",
-		Category: "MANAGEMENT COMMANDS",
+		Category: "MANAGEMENT COMMAND",
 		Aliases:  []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
@@ -111,7 +111,7 @@ func Update() cli.Command {
 	return cli.Command{
 		Name:     "app",
 		Usage:    "Update an application",
-		Category: "MANAGEMENT COMMANDS",
+		Category: "MANAGEMENT COMMAND",
 		Aliases:  []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
