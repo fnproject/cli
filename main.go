@@ -11,7 +11,7 @@ import (
 	"text/template"
 
 	"github.com/fnproject/cli/commands"
-	"github.com/fnproject/cli/common/colour"
+	"github.com/fnproject/cli/common/color"
 	"github.com/fnproject/cli/config"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
@@ -81,14 +81,15 @@ func newFn() *cli.App {
 	prepareCmdArgsValidation(app.Commands)
 
 	cli.HelpPrinter = func(w io.Writer, templ string, data interface{}) {
-		doStuff(w, templ, data, colour.Colours)
+		printHelpCostum(w, templ, data, color.Colors)
 	}
 
 	return app
 }
 
-func doStuff(out io.Writer, templ string, data interface{}, customFunc map[string]interface{}) {
-	funcMap := colour.Colours
+//Override function for customised app template
+func printHelpCostum(out io.Writer, templ string, data interface{}, customFunc map[string]interface{}) {
+	funcMap := color.Colors
 	if customFunc != nil {
 		for key, value := range customFunc {
 			funcMap[key] = value
