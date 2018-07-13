@@ -83,6 +83,37 @@ type FuncFile struct {
 	Expects Expects `yaml:"expects,omitempty" json:"expects,omitempty"`
 }
 
+type FuncFileV2 struct {
+	Schema_version int `yaml:"schema_version,omitempty" json:"schema_version,omitempty"`
+
+	Name         string `yaml:"name,omitempty" json:"name,omitempty"`
+	Version      string `yaml:"version,omitempty" json:"version,omitempty"`
+	Runtime      string `yaml:"runtime,omitempty" json:"runtime,omitempty"`
+	Build_image  string `yaml:"build_image,omitempty" json:"build_image,omitempty"` // Image to use as base for building
+	Run_image    string `yaml:"run_image,omitempty" json:"run_image,omitempty"`     // Image to use for running
+	Cmd          string `yaml:"cmd,omitempty" json:"cmd,omitempty"`
+	Entrypoint   string `yaml:"entrypoint,omitempty" json:"entrypoint,omitempty"`
+	Content_type string `yaml:"content_type,omitempty" json:"content_type,omitempty"`
+	Memory       uint64 `yaml:"memory,omitempty" json:"memory,omitempty"`
+	Timeout      *int32 `yaml:"timeout,omitempty" json:"timeout,omitempty"`
+	IDLE_timeout *int32 `yaml:"idle_timeout,omitempty" json:"idle_timeout,omitempty"`
+
+	Config      map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
+	Annotations map[string]interface{} `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+
+	Build []string `yaml:"build,omitempty" json:"build,omitempty"`
+
+	Expects  Expects   `yaml:"expects,omitempty" json:"expects,omitempty"`
+	Triggers []Trigger `yaml:"triggers,omitempty" json:"triggers,omitempty"`
+}
+
+// Trigger represents the
+type Trigger struct {
+	Name   string `yaml:"name,omitempty" json:"name,omitempty"`
+	Type   string `yaml:"type,omitempty" json:"type,omitempty"`
+	Source string `yaml:"source,omitempty" json:"source,omitempty"`
+}
+
 // ImageName returns the name of a funcfile image
 func (ff *FuncFile) ImageName() string {
 	fname := ff.Name
@@ -118,7 +149,7 @@ func (ff *FuncFile) RuntimeTag() (runtime, tag string) {
 }
 
 // findFuncfile for a func.yaml/json/yml file in path
-func findFuncfile(path string) (string, error) {
+func FindFuncfile(path string) (string, error) {
 	for _, fn := range validFuncfileNames {
 		fullfn := filepath.Join(path, fn)
 		if Exists(fullfn) {
@@ -130,7 +161,7 @@ func findFuncfile(path string) (string, error) {
 
 // FindAndParseFuncfile for a func.yaml/json/yml file.
 func FindAndParseFuncfile(path string) (fpath string, ff *FuncFile, err error) {
-	fpath, err = findFuncfile(path)
+	fpath, err = FindFuncfile(path)
 	if err != nil {
 		return "", nil, err
 	}

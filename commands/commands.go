@@ -32,6 +32,7 @@ var Commands = cmd{
 	"init":         InitCommand(),
 	"inspect":      InspectCommand(),
 	"list":         ListCommand(),
+	"migrate":      MigrateCommand(),
 	"push":         PushCommand(),
 	"run":          run.RunCommand(),
 	"start":        StartCommand(),

@@ -7,7 +7,7 @@ import (
 	"github.com/fnproject/cli/testharness"
 )
 
-var runtimes = []struct {
+var Runtimes = []struct {
 	runtime        string
 	generatesTests bool
 	callInput      string
@@ -26,7 +26,7 @@ var runtimes = []struct {
 func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 	t.Parallel()
 
-	for _, runtimeI := range runtimes {
+	for _, runtimeI := range Runtimes {
 		rt := runtimeI
 		t.Run(fmt.Sprintf("%s runtime", rt.runtime), func(t *testing.T) {
 			t.Parallel()

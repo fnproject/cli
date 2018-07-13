@@ -87,7 +87,7 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 	return err
 }
 func bumpItWd(wd string, vtype VType) (*FuncFile, error) {
-	fn, err := findFuncfile(wd)
+	fn, err := FindFuncfile(wd)
 	if err != nil {
 		return nil, err
 	}
