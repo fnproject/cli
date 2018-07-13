@@ -9,11 +9,11 @@ func UnsetCommand() cli.Command {
 	return cli.Command{
 		Name:        "unset",
 		Aliases:     []string{"un"},
-		Usage:       "\tUnset elements of created object",
+		Usage:       "\tUnset elements of a created object",
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
-		Description: "This is the description",
+		Description: "This command unsets elements ('configurations') for a created object ('app', 'route', 'context').",
 		Subcommands: GetCommands(UnsetCmds),
 	}
 }
