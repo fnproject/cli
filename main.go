@@ -139,14 +139,14 @@ func newFn() *cli.App {
 	prepareCmdArgsValidation(app.Commands)
 
 	cli.HelpPrinter = func(w io.Writer, templ string, data interface{}) {
-		printHelpCostum(w, templ, data, color.Colors)
+		printHelpCustom(w, templ, data, color.Colors)
 	}
 
 	return app
 }
 
 //Override function for customised app template
-func printHelpCostum(out io.Writer, templ string, data interface{}, customFunc map[string]interface{}) {
+func printHelpCustom(out io.Writer, templ string, data interface{}, customFunc map[string]interface{}) {
 	funcMap := color.Colors
 	for key, value := range customFunc {
 		funcMap[key] = value
