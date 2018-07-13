@@ -126,8 +126,8 @@ func newFn() *cli.App {
 `
 
 	app.CommandNotFound = func(c *cli.Context, cmd string) {
-		fmt.Fprintf(os.Stderr, "Command not found: \"%v\" -- see `fn --help` for more information.\n", cmd)
-		fmt.Fprintf(os.Stderr, "Note: the fn CLI command structure has changed, change your command to use the new structure.\n")
+		fmt.Fprintf(os.Stderr, "\n'"+color.Red("%v")+"' is not a Fn Command: "+color.Italic("note the fn CLI command structure has changed, please change your command to use the new structure.\n\n"), cmd)
+		fmt.Fprintf(os.Stderr, color.Bold("FURTHER HELP: ")+color.Italic("See ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information.\n"))
 	}
 
 	app.Commands = append(app.Commands, commands.GetCommands(commands.Commands)...)

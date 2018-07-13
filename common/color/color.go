@@ -21,6 +21,7 @@ func init() {
 		"brightcyan":         BrightCyan,
 		"boldcyan":           BoldCyan,
 		"yellow":             Yellow,
+		"red":                Red,
 		"brightred":          BrightRed,
 		"boldred":            BoldRed,
 		"underlinebrightred": UnderlineBrightRed,
@@ -54,6 +55,14 @@ func BoldRed(text string) string {
 func BrightRed(text string) string {
 	if useColors {
 		return "\x1b[91;21m" + text + "\x1b[0m"
+	} else {
+		return text
+	}
+}
+
+func Red(text string) string {
+	if useColors {
+		return "\x1b[31;21m" + text + "\x1b[0m"
 	} else {
 		return text
 	}
