@@ -31,7 +31,7 @@ func BumpCommand() cli.Command {
 	flags := append([]cli.Flag{}, cmd.flags()...)
 	return cli.Command{
 		Name:     "bump",
-		Usage:    "Bump function version",
+		Usage:    "\tBump function version",
 		Aliases:  []string{"bm"},
 		Category: "DEVELOPMENT COMMANDS",
 		Flags:    flags,

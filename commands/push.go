@@ -15,7 +15,7 @@ func PushCommand() cli.Command {
 	flags = append(flags, cmd.flags()...)
 	return cli.Command{
 		Name:        "push",
-		Usage:       "Push function to docker registry",
+		Usage:       "\tPush function to docker registry",
 		Aliases:     []string{"p"},
 		Category:    "DEVELOPMENT COMMANDS",
 		Description: "This is the description",

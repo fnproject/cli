@@ -20,7 +20,7 @@ func ConfigCommand(command string) cli.Command {
 
 	return cli.Command{
 		Name:        "config",
-		Usage:       "Get configurations for apps and routes",
+		Usage:       "\tGet configurations for apps and routes",
 		Aliases:     []string{"cf"},
 		ArgsUsage:   "<subcommand>",
 		Description: "This is the description",

@@ -11,7 +11,7 @@ func Create() cli.Command {
 		Name:     "app",
 		Usage:    "Create a new application",
 		Category: "MANAGEMENT COMMAND",
-		Description: "This command creates a new application.\n		Fn supports grouping functions into a set that defines an application (or API), making it easy to organize and deploy.\n 		Applications define a namespace to organize functions and can contain configuration values that are shared across all functions in that application.",
+		Description: "This command creates a new application.\n	Fn supports grouping functions into a set that defines an application (or API), making it easy to organize and deploy.\n	Applications define a namespace to organize functions and can contain configuration values that are shared across all functions in that application.",
 		Aliases: []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()

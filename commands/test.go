@@ -29,7 +29,7 @@ func TestCommand() cli.Command {
 	cmd := testcmd{}
 	return cli.Command{
 		Name:        "test",
-		Usage:       "Run functions test if present",
+		Usage:       "\tRun functions test if present",
 		Aliases:     []string{"t"},
 		Category:    "DEVELOPMENT COMMANDS",
 		Description: "This is the description",
