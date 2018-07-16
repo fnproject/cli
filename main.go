@@ -126,8 +126,10 @@ func newFn() *cli.App {
 `
 
 	app.CommandNotFound = func(c *cli.Context, cmd string) {
-		fmt.Fprintf(os.Stderr, "\n'"+color.Red("%v")+"' is not a Fn Command: "+color.Italic("note the fn CLI command structure has changed, please change your command to use the new structure.\n\n"), cmd)
-		fmt.Fprintf(os.Stderr, color.Bold("FURTHER HELP: ")+color.Italic("See ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information.\n"))
+		fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+"'"+color.Red("%v")+"' is not a Fn Command ", cmd)
+		//fmt.Fprintf(os.Stderr, "\n\nNote the fn CLI command structure has changed, please change your command to use the new structure.\n")
+		fmt.Fprintf(os.Stderr, color.Italic("\n\nSee ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information."))
+		fmt.Fprintf(os.Stderr, color.BrightCyan(" Note ")+"the fn CLI command structure has changed, please change your command to use the new structure.\n")
 	}
 
 	app.Commands = append(app.Commands, commands.GetCommands(commands.Commands)...)
@@ -191,7 +193,7 @@ func prepareCmdArgsValidation(cmds []cli.Command) {
 			if c.NArg() < len(reqArgs) {
 				var help bytes.Buffer
 				cli.HelpPrinter(&help, cli.CommandHelpTemplate, c.Command)
-				fmt.Fprintf(os.Stderr, "\n"+c.Command.Usage+" using "+color.Cyan(c.Command.HelpName)+" requires the argument '"+color.Red("%v")+"'\n", strings.Join(reqArgs[c.NArg():], " "))
+				fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+c.Command.Usage+" using "+color.Cyan(c.Command.HelpName)+" requires the argument '"+color.Red("%v")+"'\n", strings.Join(reqArgs[c.NArg():], " "))
 				fmt.Fprintf(os.Stderr, color.Italic("\nSee ")+"'"+color.BrightCyan(c.Command.HelpName+" --help")+"'"+color.Italic(" for more information.\n"))
 				os.Exit(1)
 			}
@@ -222,8 +224,9 @@ func main() {
 
 	if err != nil {
 		// TODO: this doesn't seem to get called even when an error returns from a command, but maybe urfave is doing a non zero exit anyways? nope: https://github.com/urfave/cli/issues/610
-		fmt.Fprintf(os.Stderr, color.Bold("\nERROR:")+" %v", err)
-		fmt.Fprintf(os.Stderr, "\nClient version: %s\n", Version)
+		fmt.Fprintf(os.Stderr, color.Bold("\nFn:")+" %v", err)
+		fmt.Fprintf(os.Stderr, color.Italic("\n\nSee ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information."))
+		fmt.Fprintf(os.Stderr, " Client version: %s\n", Version)
 		os.Exit(1)
 	}
 
