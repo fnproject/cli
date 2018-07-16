@@ -193,7 +193,11 @@ func prepareCmdArgsValidation(cmds []cli.Command) {
 			if c.NArg() < len(reqArgs) {
 				var help bytes.Buffer
 				cli.HelpPrinter(&help, cli.CommandHelpTemplate, c.Command)
-				fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+c.Command.Usage+" using "+color.Cyan(c.Command.HelpName)+" requires the argument '"+color.Red("%v")+"'\n", strings.Join(reqArgs[c.NArg():], " "))
+				if len(reqArgs)-c.NArg() == 1 {
+					fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+c.Command.Usage+" using "+color.Cyan(c.Command.HelpName)+" requires the missing argument '"+color.Red("%v")+"'\n", strings.Join(reqArgs[c.NArg():], " "))
+				} else {
+					fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+c.Command.Usage+" using "+color.Cyan(c.Command.HelpName)+" requires the missing arguments '"+color.Red("%v")+"'\n", strings.Join(reqArgs[c.NArg():], " "))
+				}
 				fmt.Fprintf(os.Stderr, color.Italic("\nSee ")+"'"+color.BrightCyan(c.Command.HelpName+" --help")+"'"+color.Italic(" for more information.\n"))
 				os.Exit(1)
 			}
