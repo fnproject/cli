@@ -13,7 +13,7 @@ func UpdateCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
-		Description: "This is the description",
+		Description: "This command updates created objects ('app', 'context', 'function', 'route', 'server', 'trigger')",
 		Subcommands: GetCommands(UpdateCmds),
 	}
 }

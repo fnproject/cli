@@ -9,7 +9,7 @@ func Get() cli.Command {
 	l := logsCmd{}
 	return cli.Command{
 		Name:        "logs",
-		Usage:       "Get logs for a call. Must provide call_id or last (l) to retrieve the most recent calls logs.",
+		Usage:       "Get logs for a call, providing call_id or last (l) to retrieve the most recent calls logs",
 		Aliases:     []string{"log", "lg"},
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This is the description",

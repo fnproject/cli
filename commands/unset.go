@@ -13,7 +13,7 @@ func UnsetCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
-		Description: "This is the description",
+		Description: "This command unsets elements ('config', 'context') of created objects ('app', 'function', 'route') ",
 		Subcommands: GetCommands(UnsetCmds),
 	}
 }
