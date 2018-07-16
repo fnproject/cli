@@ -32,7 +32,7 @@ func TestCommand() cli.Command {
 		Usage:       "\tRun functions test if present",
 		Aliases:     []string{"t"},
 		Category:    "DEVELOPMENT COMMANDS",
-		Description: "This is the description",
+		Description: "This commmand runs fn tests",
 		Flags:       cmd.flags(),
 		Action:      cmd.test,
 		Before: func(cxt *cli.Context) error {
