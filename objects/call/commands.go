@@ -30,10 +30,10 @@ func List() cli.Command {
 	c := callsCmd{}
 	return cli.Command{
 		Name:        "calls",
-		Usage:       "List all calls for the specific app. Route is optional",
+		Usage:       "List all calls for the specific app (route is optional)",
+		Description: "This command provides a list of defined calls for a specific application.",
 		Aliases:     []string{"call", "cl"},
 		Category:    "MANAGEMENT COMMAND",
-		Description: "This is the description",
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {

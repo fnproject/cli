@@ -33,10 +33,11 @@ func Create() cli.Command {
 func List() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "routes",
-		Usage:    "list routes for `app`",
-		Aliases:  []string{"route", "r"},
-		Category: "MANAGEMENT COMMAND",
+		Name:        "routes",
+		Usage:       "List routes for `app`",
+		Description: "This command provides a list of defined routes for a specific application.",
+		Aliases:     []string{"route", "r"},
+		Category:    "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
