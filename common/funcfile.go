@@ -83,7 +83,7 @@ type FuncFile struct {
 	Expects Expects `yaml:"expects,omitempty" json:"expects,omitempty"`
 }
 
-type FuncFileV2 struct {
+type FuncFileV20180707 struct {
 	Schema_version int `yaml:"schema_version,omitempty" json:"schema_version,omitempty"`
 
 	Name         string `yaml:"name,omitempty" json:"name,omitempty"`

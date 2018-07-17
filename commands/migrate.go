@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -15,12 +16,13 @@ import (
 )
 
 type migrateFnCmd struct {
-	ff   *common.FuncFile
-	ffV2 *common.FuncFileV2
+	newFF *common.FuncFileV20180707
 }
 
+const latestYamlVersion = "v20180707"
+
 func MigrateCommand() cli.Command {
-	m := &migrateFnCmd{ff: &common.FuncFile{}, ffV2: &common.FuncFileV2{}}
+	m := &migrateFnCmd{newFF: &common.FuncFileV20180707{}}
 
 	return cli.Command{
 		Name:        "migrate",
@@ -33,51 +35,23 @@ func MigrateCommand() cli.Command {
 }
 
 func (m *migrateFnCmd) migrate(c *cli.Context) error {
-	return detectFuncYamlVersion()
-}
-
-func detectFuncYamlVersion() error {
-	wd := common.GetWd()
-
-	fpath, err := common.FindFuncfile(wd)
+	var err error
+	oldFF, err := readInFuncFile()
 	if err != nil {
 		return err
 	}
 
-	b, err := ioutil.ReadFile(fpath)
-	if err != nil {
-		return fmt.Errorf("could not open %s for parsing. Error: %v", fpath, err)
-	}
-	var ff map[string]interface{}
-	err = yaml.Unmarshal(b, &ff)
-
-	if _, ok := ff["schema_version"]; !ok {
-		return migrateFuncYaml(ff)
+	version := detectFuncYamlVersion(oldFF)
+	if version != latestYamlVersion {
+		return errors.New("you have an up to date func.yaml file and do not need to migrate.")
 	}
 
-	fmt.Println("You have an up to date func file and do not need to migrate.")
-	return nil
-}
-
-func migrateFuncYaml(ff map[string]interface{}) error {
-	b, err := yaml.Marshal(ff)
+	err = backUpYamlFile(oldFF)
 	if err != nil {
 		return err
 	}
 
-	err = writeYamlFile(b, "func.yaml.bak")
-	if err != nil {
-		return err
-	}
-
-	return writeNewFile(ff)
-}
-
-func writeNewFile(ff map[string]interface{}) error {
-	var ffV2 common.FuncFileV2
-	mapstructure.Decode(ff, &ffV2)
-
-	b, err := yaml.Marshal(ff)
+	b, err := m.decodeFuncFile(oldFF)
 	if err != nil {
 		return err
 	}
@@ -87,16 +61,7 @@ func writeNewFile(ff map[string]interface{}) error {
 		return err
 	}
 
-	ffV2.Schema_version = 20180708
-	trig := make([]common.Trigger, 1)
-	trig[0] = common.Trigger{
-		ff["name"].(string),
-		"http",
-		"/" + ff["name"].(string),
-	}
-	ffV2.Triggers = trig
-
-	b, err = yaml.Marshal(ffV2)
+	b, err = m.creatFuncFileBytes(oldFF)
 	if err != nil {
 		return err
 	}
@@ -115,6 +80,75 @@ func writeNewFile(ff map[string]interface{}) error {
 	return nil
 }
 
+func readInFuncFile() (map[string]interface{}, error) {
+	wd := common.GetWd()
+
+	fpath, err := common.FindFuncfile(wd)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := ioutil.ReadFile(fpath)
+	if err != nil {
+		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", fpath, err)
+	}
+	var ff map[string]interface{}
+	err = yaml.Unmarshal(b, &ff)
+	if err != nil {
+		return nil, err
+	}
+
+	return ff, nil
+}
+
+func detectFuncYamlVersion(oldFF map[string]interface{}) string {
+	if _, ok := oldFF["schema_version"]; !ok {
+		return latestYamlVersion
+	}
+	return "v1"
+}
+
+func backUpYamlFile(ff map[string]interface{}) error {
+	b, err := yaml.Marshal(ff)
+	if err != nil {
+		return err
+	}
+
+	return writeYamlFile(b, "func.yaml.bak")
+}
+
+func (m *migrateFnCmd) decodeFuncFile(oldFF map[string]interface{}) ([]byte, error) {
+	err := mapstructure.Decode(oldFF, &m.newFF)
+	if err != nil {
+		return nil, err
+	}
+
+	return yaml.Marshal(oldFF)
+}
+
+func (m *migrateFnCmd) creatFuncFileBytes(oldFF map[string]interface{}) ([]byte, error) {
+	m.newFF.Schema_version = 20180708
+	trig := make([]common.Trigger, 1)
+
+	var trigName, trigSource string
+
+	if oldFF["name"] != nil {
+		trigName = oldFF["name"].(string)
+		trigSource = "/" + oldFF["name"].(string)
+	}
+
+	trigType := "http"
+
+	trig[0] = common.Trigger{
+		trigName,
+		trigType,
+		trigSource,
+	}
+	m.newFF.Triggers = trig
+
+	return yaml.Marshal(m.newFF)
+}
+
 func convertYamlToJson(b []byte) error {
 	jsonB, err := yamltojson.YAMLToJSON(b)
 	if err != nil {
@@ -127,7 +161,7 @@ func convertYamlToJson(b []byte) error {
 	}
 	defer os.Remove("temp.json")
 
-	err = common.ValidateSchema("temp.json")
+	err = common.ValidateFileAgainstSchema("temp.json")
 	if err != nil {
 		return err
 	}

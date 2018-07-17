@@ -40,8 +40,6 @@ func TestMigrateFuncYaml(t *testing.T) {
 				t.Fatalf("Exepected type to be 'http' in %s", yamlFile.Triggers[0].Type)
 			}
 
-			h.Fn("migrate").AssertSuccess().AssertStdoutContains("You have an up to date func file and do not need to migrate.")
-
 			h.Fn("build").AssertSuccess()
 
 			h.FnWithInput("", "run").AssertSuccess()

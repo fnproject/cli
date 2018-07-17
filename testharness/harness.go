@@ -465,12 +465,12 @@ func (h *CLIHarness) GetFile(s string) string {
 
 }
 
-func (h *CLIHarness) GetYamlFile(s string) common.FuncFileV2 {
+func (h *CLIHarness) GetYamlFile(s string) common.FuncFileV20180707 {
 	b, err := ioutil.ReadFile(h.relativeToCwd(s))
 	if err != nil {
 		h.t.Fatalf("could not open func file for parsing. Error: %v", err)
 	}
-	var ff common.FuncFileV2
+	var ff common.FuncFileV20180707
 	err = yaml.Unmarshal(b, &ff)
 
 	return ff

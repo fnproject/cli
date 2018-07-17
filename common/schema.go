@@ -9,7 +9,7 @@ import (
 )
 
 const schema = `{
-    "title": "V2 func file schema",
+    "title": "V20180707 func file schema",
     "type": "object",
     "properties": {
         "name": {
@@ -68,7 +68,7 @@ const schema = `{
     }
 }`
 
-func ValidateSchema(jsonFile string) error {
+func ValidateFileAgainstSchema(jsonFile string) error {
 	schemaLoader := gojsonschema.NewStringLoader(schema)
 	documentLoader := gojsonschema.NewReferenceLoader(filepath.Join("file://", GetWd(), jsonFile))
 
