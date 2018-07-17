@@ -21,7 +21,7 @@ func Get() cli.Command {
 			c.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> <call-id>",
+		ArgsUsage: "<app-name> <call-id>",
 		Action:    c.get,
 	}
 }
@@ -42,7 +42,7 @@ func List() cli.Command {
 			c.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name>",
+		ArgsUsage: "<app-name>",
 		Action:    c.list,
 		Flags: []cli.Flag{
 			cli.StringFlag{

@@ -12,7 +12,7 @@ func Create() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "Create a function in an application",
+		Usage:     "Create a function within an application",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -22,7 +22,7 @@ func Create() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <fnname> <image>",
+		ArgsUsage: "<app-name> <function-name> <image>",
 		Action:    f.create,
 		Flags:     FnFlags,
 	}
@@ -35,7 +35,7 @@ func List() cli.Command {
 		Name:      "functions",
 		ShortName: "funcs",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "List functions for application`app-name`",
+		Usage:     "List functions for an application",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -68,7 +68,7 @@ func Delete() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "Delete a function from an application `app`",
+		Usage:     "Delete a function from an application",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -90,7 +90,7 @@ func Inspect() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "Retrieve one or all functions properties",
+		Usage:     "Retrieve one or all properties for a function",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -112,7 +112,7 @@ func Update() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "Update a function in an `app`",
+		Usage:     "Update a function in application",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -122,7 +122,7 @@ func Update() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> </path>",
+		ArgsUsage: "<app-name>",
 		Action:    f.update,
 		Flags:     updateFnFlags,
 	}
@@ -145,7 +145,7 @@ func GetConfig() cli.Command {
 			r.client = r.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <funct> <key>",
+		ArgsUsage: "<app-name> <funct> <key>",
 		Action:    r.getConfig,
 	}
 }
@@ -167,7 +167,7 @@ func SetConfig() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <fn> <key> <value>",
+		ArgsUsage: "<app-name> <function-name> <key> <value>",
 		Action:    f.setConfig,
 	}
 }
@@ -189,7 +189,7 @@ func ListConfig() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <fnname>",
+		ArgsUsage: "<app-name> <function-name>",
 		Action:    f.listConfig,
 	}
 }
@@ -211,7 +211,7 @@ func UnsetConfig() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> </path> <key>",
+		ArgsUsage: "<app-name> </path> <key>",
 		Action:    f.unsetConfig,
 	}
 }

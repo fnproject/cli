@@ -22,7 +22,7 @@ func Create() cli.Command {
 			t.client = t.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <function> <trigger>",
+		ArgsUsage: "<app-name> <function-name> <trigger-name>",
 		Action:    t.create,
 		Flags:     TriggerFlags,
 	}
@@ -45,7 +45,7 @@ func List() cli.Command {
 			t.client = t.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <function>",
+		ArgsUsage: "<app-name> <function-name>",
 		Action:    t.list,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -78,7 +78,7 @@ func Update() cli.Command {
 			t.client = t.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <function> <trigger>",
+		ArgsUsage: "<app-name> <function-name> <trigger-name>",
 		Action:    t.update,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
@@ -106,7 +106,7 @@ func Delete() cli.Command {
 			t.client = t.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <function> <trigger>",
+		ArgsUsage: "<app-name> <function-name> <trigger-name>",
 		Action:    t.delete,
 	}
 }
@@ -128,7 +128,7 @@ func Inspect() cli.Command {
 			t.client = t.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <function> <trigger>",
+		ArgsUsage: "<app-name> <function-name> <trigger-name>",
 		Action:    t.inspect,
 	}
 }
