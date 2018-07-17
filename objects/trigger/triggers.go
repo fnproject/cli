@@ -68,7 +68,7 @@ func (t *triggersCmd) create(c *cli.Context) error {
 	}
 
 	if triggerSource := c.String("source"); triggerSource != "" {
-		trigger.Source = triggerSource
+		trigger.Source = validateTriggerSource(triggerSource)
 	}
 
 	WithFlags(c, trigger)
@@ -78,6 +78,13 @@ func (t *triggersCmd) create(c *cli.Context) error {
 	}
 
 	return CreateTrigger(t.client, trigger)
+}
+
+func validateTriggerSource(ts string) string {
+	if !strings.HasPrefix(ts, "/") {
+		ts = "/" + ts
+	}
+	return ts
 }
 
 func CreateTrigger(client *clientv2.Fn, trigger *models.Trigger) error {
