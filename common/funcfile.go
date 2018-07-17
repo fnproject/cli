@@ -83,6 +83,7 @@ type FuncFile struct {
 	Expects Expects `yaml:"expects,omitempty" json:"expects,omitempty"`
 }
 
+// FuncFileV20180707 defines the latest internal structure of a func.yaml/json/yml
 type FuncFileV20180707 struct {
 	Schema_version int `yaml:"schema_version,omitempty" json:"schema_version,omitempty"`
 
@@ -107,7 +108,7 @@ type FuncFileV20180707 struct {
 	Triggers []Trigger `yaml:"triggers,omitempty" json:"triggers,omitempty"`
 }
 
-// Trigger represents the
+// Trigger represents a trigger for a FuncFileV20180707
 type Trigger struct {
 	Name   string `yaml:"name,omitempty" json:"name,omitempty"`
 	Type   string `yaml:"type,omitempty" json:"type,omitempty"`
