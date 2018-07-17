@@ -35,7 +35,7 @@ func List() cli.Command {
 		Name:      "functions",
 		ShortName: "funcs",
 		Aliases:   []string{"f", "fn"},
-		Usage:     "List functions for `app`",
+		Usage:     "List functions for application`app-name`",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -45,7 +45,7 @@ func List() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app>",
+		ArgsUsage: "<app-name>",
 		Action:    f.list,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -78,7 +78,7 @@ func Delete() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> </path>",
+		ArgsUsage: "<app-name> <function-name>",
 		Action:    f.delete,
 	}
 }
@@ -100,7 +100,7 @@ func Inspect() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <fn> [property.[key]]",
+		ArgsUsage: "<app-name> <function-name> [property.[key]]",
 		Action:    f.inspect,
 	}
 }
