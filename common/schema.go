@@ -8,7 +8,7 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
-const schema = `{
+const V20180707Schema = `{
     "title": "V20180707 func file schema",
     "type": "object",
     "properties": {
@@ -68,7 +68,7 @@ const schema = `{
     }
 }`
 
-func ValidateFileAgainstSchema(jsonFile string) error {
+func ValidateFileAgainstSchema(jsonFile, schema string) error {
 	schemaLoader := gojsonschema.NewStringLoader(schema)
 	documentLoader := gojsonschema.NewReferenceLoader(filepath.Join("file://", GetWd(), jsonFile))
 

@@ -157,7 +157,7 @@ func vaidateFuncFileSchema(b []byte) error {
 	}
 	defer os.Remove("temp.json")
 
-	err = common.ValidateFileAgainstSchema("temp.json")
+	err = common.ValidateFileAgainstSchema("temp.json", common.V20180707Schema)
 	if err != nil {
 		return err
 	}
