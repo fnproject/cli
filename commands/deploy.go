@@ -36,7 +36,6 @@ func DeployCommand() cli.Command {
 		},
 		Category:    "DEVELOPMENT COMMANDS",
 		Description: "This is the description",
-		ArgsUsage:   "<app_name>",
 		Flags:       flags,
 		Action:      cmd.deploy,
 	}
