@@ -36,7 +36,7 @@ func CallCommand() cli.Command {
 		ArgsUsage:   "<app-name> </path>",
 		Flags:       route.CallFnFlags,
 		Category:    "DEVELOPMENT COMMANDS",
-		Description: "This is the description",
+		Description: "This command calls explicitly a function.",
 		Action:      cl.Call,
 	}
 }

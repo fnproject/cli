@@ -30,12 +30,13 @@ func BumpCommand() cli.Command {
 	cmd := bumpcmd{}
 	flags := append([]cli.Flag{}, cmd.flags()...)
 	return cli.Command{
-		Name:     "bump",
-		Usage:    "\tBump function version",
-		Aliases:  []string{"bm"},
-		Category: "DEVELOPMENT COMMANDS",
-		Flags:    flags,
-		Action:   cmd.bump,
+		Name:        "bump",
+		Usage:       "\tBump function version",
+		Aliases:     []string{"bm"},
+		Category:    "DEVELOPMENT COMMANDS",
+		Description: "This command bumps the version of the func.yaml.",
+		Flags:       flags,
+		Action:      cmd.bump,
 	}
 }
 
