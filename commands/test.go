@@ -29,10 +29,10 @@ func TestCommand() cli.Command {
 	cmd := testcmd{}
 	return cli.Command{
 		Name:        "test",
-		Usage:       "\tRun functions test if present",
+		Usage:       "\tRun functions test",
 		Aliases:     []string{"t"},
 		Category:    "DEVELOPMENT COMMANDS",
-		Description: "This is the description",
+		Description: "This commmand runs fn tests if present.",
 		Flags:       cmd.flags(),
 		Action:      cmd.test,
 		Before: func(cxt *cli.Context) error {

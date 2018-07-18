@@ -18,7 +18,7 @@ func PushCommand() cli.Command {
 		Usage:       "\tPush function to docker registry",
 		Aliases:     []string{"p"},
 		Category:    "DEVELOPMENT COMMANDS",
-		Description: "This is the description",
+		Description: "This command pushes the created image to the Docker registry.",
 		Flags:       flags,
 		Action:      cmd.push,
 	}

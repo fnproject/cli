@@ -13,14 +13,14 @@ import (
 )
 
 // Version of Fn CLI
-var Version = "0.4.125"
+var Version = "0.4.126"
 
 // VersionCommand
 func VersionCommand() cli.Command {
 	return cli.Command{
 		Name:        "version",
 		Usage:       "Display CLI and server versions",
-		Description: "This is the description",
+		Description: "This is commands shows the latest client and server version.",
 		Action:      versionCMD,
 	}
 }
