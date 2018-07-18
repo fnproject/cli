@@ -41,7 +41,7 @@ func (m *migrateFnCmd) migrate(c *cli.Context) error {
 		return err
 	}
 
-	version := detectFuncYamlVersion(oldFF)
+	version := getFuncYamlVersion(oldFF)
 	if version == latestYamlVersion {
 		return errors.New("you have an up to date func.yaml file and do not need to migrate.")
 	}
@@ -51,22 +51,12 @@ func (m *migrateFnCmd) migrate(c *cli.Context) error {
 		return err
 	}
 
-	b, err := m.decodeFuncFile(oldFF)
+	b, err := m.creatFuncFileBytes(oldFF)
 	if err != nil {
 		return err
 	}
 
-	err = convertYamlToJson(b)
-	if err != nil {
-		return err
-	}
-
-	b, err = m.creatFuncFileBytes(oldFF)
-	if err != nil {
-		return err
-	}
-
-	err = convertYamlToJson(b)
+	err = vaidateFuncFileSchema(b)
 	if err != nil {
 		return err
 	}
@@ -101,7 +91,7 @@ func readInFuncFile() (map[string]interface{}, error) {
 	return ff, nil
 }
 
-func detectFuncYamlVersion(oldFF map[string]interface{}) int {
+func getFuncYamlVersion(oldFF map[string]interface{}) int {
 	if _, ok := oldFF["schema_version"]; ok {
 		return oldFF["schema_version"].(int)
 	}
@@ -119,14 +109,20 @@ func backUpYamlFile(ff map[string]interface{}) error {
 
 func (m *migrateFnCmd) decodeFuncFile(oldFF map[string]interface{}) ([]byte, error) {
 	_ = mapstructure.Decode(oldFF, &m.newFF)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	return yaml.Marshal(oldFF)
 }
 
 func (m *migrateFnCmd) creatFuncFileBytes(oldFF map[string]interface{}) ([]byte, error) {
+	b, err := m.decodeFuncFile(oldFF)
+	if err != nil {
+		return nil, err
+	}
+
+	err = vaidateFuncFileSchema(b)
+	if err != nil {
+		return nil, err
+	}
+
 	m.newFF.Schema_version = 20180708
 	trig := make([]common.Trigger, 1)
 
@@ -149,7 +145,7 @@ func (m *migrateFnCmd) creatFuncFileBytes(oldFF map[string]interface{}) ([]byte,
 	return yaml.Marshal(m.newFF)
 }
 
-func convertYamlToJson(b []byte) error {
+func vaidateFuncFileSchema(b []byte) error {
 	jsonB, err := yamltojson.YAMLToJSON(b)
 	if err != nil {
 		return err
