@@ -15,7 +15,7 @@ func BuildCommand() cli.Command {
 		Name:        "build",
 		Usage:       "\tBuild function version",
 		Category:    "DEVELOPMENT COMMANDS",
-		Description: "This is the description",
+		Description: "This command builds a new function.",
 		Aliases:     []string{"bu"},
 		Flags:       flags,
 		Action:      cmd.build,
