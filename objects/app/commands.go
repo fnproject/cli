@@ -21,7 +21,7 @@ func Create() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name>",
+		ArgsUsage: "<app-name>",
 		Action:    a.create,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
@@ -103,7 +103,7 @@ func Inspect() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> [property.[key]]",
+		ArgsUsage: "<app-name> [property.[key]]",
 		Action:    a.inspect,
 	}
 }
@@ -123,7 +123,7 @@ func Update() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name>",
+		ArgsUsage: "<app-name>",
 		Action:    a.update,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
@@ -152,7 +152,7 @@ func SetConfig() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> <key> <value>",
+		ArgsUsage: "<app-name> <key> <value>",
 		Action:    a.setConfig,
 	}
 }
@@ -171,7 +171,7 @@ func ListConfig() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name>",
+		ArgsUsage: "<app-name>",
 		Action:    a.listConfig,
 	}
 }
@@ -190,7 +190,7 @@ func GetConfig() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> <key>",
+		ArgsUsage: "<app-name> <key>",
 		Action:    a.getConfig,
 	}
 }
@@ -209,7 +209,7 @@ func UnsetConfig() cli.Command {
 			a.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> <key>",
+		ArgsUsage: "<app-name> <key>",
 		Action:    a.unsetConfig,
 	}
 }

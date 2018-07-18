@@ -21,7 +21,7 @@ func Get() cli.Command {
 			l.client = provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> <call-id>",
+		ArgsUsage: "<app-name> <call-id>",
 		Action:    l.get,
 	}
 }

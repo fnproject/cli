@@ -22,8 +22,8 @@ func Create() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage:   "<app_name> </path> <image>",
-		Description: "This command creates a new route for a created application.",
+		ArgsUsage:   "<app-name> </path> <image>",
+		Description: "This command creates a new route within an application.",
 		Action:      r.create,
 		Flags:       RouteFlags,
 	}
@@ -34,9 +34,9 @@ func List() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
 		Name:        "routes",
-		Usage:       "List routes for `app`",
-		Description: "This command provides a list of defined routes for a specific application.",
+		Usage:       "list routes for an application",
 		Aliases:     []string{"route", "r"},
+		Description: "This command provides a list of defined routes for a specific application.",
 		Category:    "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
@@ -47,7 +47,7 @@ func List() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name>",
+		ArgsUsage: "<app-name>",
 		Action:    r.list,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -80,7 +80,7 @@ func Delete() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path>",
+		ArgsUsage: "<app-name> </path>",
 		Action:    r.delete,
 	}
 }
@@ -102,7 +102,7 @@ func Inspect() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path> [property.[key]]",
+		ArgsUsage: "<app-name> </path> [property.[key]]",
 		Action:    r.inspect,
 	}
 }
@@ -112,7 +112,7 @@ func Update() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
 		Name:     "route",
-		Usage:    "Update a route in an `app`",
+		Usage:    "Update a route in application",
 		Aliases:  []string{"routes", "r"},
 		Category: "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
@@ -124,7 +124,7 @@ func Update() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path>",
+		ArgsUsage: "<app-name> </path>",
 		Action:    r.update,
 		Flags:     updateRouteFlags,
 	}
@@ -147,7 +147,7 @@ func GetConfig() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path> <key>",
+		ArgsUsage: "<app-name> </path> <key>",
 		Action:    r.getConfig,
 	}
 }
@@ -169,7 +169,7 @@ func SetConfig() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path> <key> <value>",
+		ArgsUsage: "<app-name> </path> <key> <value>",
 		Action:    r.setConfig,
 	}
 }
@@ -191,7 +191,7 @@ func ListConfig() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path>",
+		ArgsUsage: "<app-name> </path>",
 		Action:    r.listConfig,
 	}
 }
@@ -213,7 +213,7 @@ func UnsetConfig() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path> <key>",
+		ArgsUsage: "<app-name> </path> <key>",
 		Action:    r.unsetConfig,
 	}
 }

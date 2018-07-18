@@ -38,7 +38,7 @@ var FnFlags = []cli.Flag{
 	},
 	cli.StringFlag{
 		Name:  "format,f",
-		Usage: "hot container IO format - default or http",
+		Usage: "hot container IO format - can be one of: default, http, json or cloudevent (check FDK docs to see which are supported for the FDK in use.)",
 	},
 	cli.IntFlag{
 		Name:  "timeout",
