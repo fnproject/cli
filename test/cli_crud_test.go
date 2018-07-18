@@ -77,9 +77,9 @@ func TestSimpleFnTriggerUpdateCycle(t *testing.T) {
 	funcName1 := h.NewFuncName()
 	h.Fn("create", "app", appName1).AssertSuccess()
 	h.Fn("create", "function", appName1, funcName1, "foo/duffimage:0.0.1").AssertSuccess()
-	h.Fn("create", "trigger", appName1, funcName1, "mytrigger", "--type", "http", "--source", "mytrigger").AssertSuccess()
-	h.Fn("create", "trigger", appName1, funcName1, "mytrigger", "--type", "http", "--source", "mytrigger").AssertFailed()
-	h.Fn("inspect", "trigger", appName1, funcName1, "mytrigger").AssertSuccess().AssertStdoutContains(`"source": "mytrigger`)
+	h.Fn("create", "trigger", appName1, funcName1, "mytrigger", "--type", "http", "--source", "/mytrigger").AssertSuccess()
+	h.Fn("create", "trigger", appName1, funcName1, "mytrigger", "--type", "http", "--source", "/mytrigger").AssertFailed()
+	h.Fn("inspect", "trigger", appName1, funcName1, "mytrigger").AssertSuccess().AssertStdoutContains(`"source": "/mytrigger`)
 	h.Fn("update", "trigger", appName1, funcName1, "mytrigger", "--annotation", `"val1='["val2"]'"`).AssertSuccess()
 	h.Fn("config", "trigger", appName1, funcName1, "mytrigger", "confA", "valB").AssertSuccess()
 }
