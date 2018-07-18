@@ -39,10 +39,11 @@ func Create() cli.Command {
 func List() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:     "apps",
-		Usage:    "List all created applications",
-		Category: "MANAGEMENT COMMAND",
-		Aliases:  []string{"app", "a"},
+		Name:        "apps",
+		Usage:       "List all created applications",
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This command provides a list of defined application.",
+		Aliases:     []string{"app", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
@@ -73,6 +74,7 @@ func Delete() cli.Command {
 		Usage:       "Delete an application",
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This command deletes a created application.",
+		ArgsUsage:   "<app_name>",
 		Aliases:     []string{"apps", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()

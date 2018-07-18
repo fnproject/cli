@@ -22,7 +22,7 @@ func Create() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <fnname> <image>",
+		ArgsUsage: "<app_name> <fnname> <image>",
 		Action:    f.create,
 		Flags:     FnFlags,
 	}
@@ -45,7 +45,7 @@ func List() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app>",
+		ArgsUsage: "<app_name>",
 		Action:    f.list,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -78,7 +78,7 @@ func Delete() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> </path>",
+		ArgsUsage: "<app_name> </path>",
 		Action:    f.delete,
 	}
 }
@@ -100,7 +100,7 @@ func Inspect() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <fn> [property.[key]]",
+		ArgsUsage: "<app_name> <fn> [property.[key]]",
 		Action:    f.inspect,
 	}
 }
@@ -122,7 +122,7 @@ func Update() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> </path>",
+		ArgsUsage: "<app_name> </path>",
 		Action:    f.update,
 		Flags:     updateFnFlags,
 	}
@@ -145,7 +145,7 @@ func GetConfig() cli.Command {
 			r.client = r.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <funct> <key>",
+		ArgsUsage: "<app_name> <funct> <key>",
 		Action:    r.getConfig,
 	}
 }
@@ -167,7 +167,7 @@ func SetConfig() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <fn> <key> <value>",
+		ArgsUsage: "<app_name> <fn> <key> <value>",
 		Action:    f.setConfig,
 	}
 }
@@ -189,7 +189,7 @@ func ListConfig() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <fnname>",
+		ArgsUsage: "<app_name> <fnname>",
 		Action:    f.listConfig,
 	}
 }
@@ -211,7 +211,7 @@ func UnsetConfig() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> </path> <key>",
+		ArgsUsage: "<app_name> </path> <key>",
 		Action:    f.unsetConfig,
 	}
 }
