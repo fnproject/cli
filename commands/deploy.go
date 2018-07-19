@@ -13,6 +13,7 @@ import (
 	apps "github.com/fnproject/cli/objects/app"
 	function "github.com/fnproject/cli/objects/fn"
 	route "github.com/fnproject/cli/objects/route"
+	trigger "github.com/fnproject/cli/objects/trigger"
 	fnclient "github.com/fnproject/fn_go/client"
 	clientApps "github.com/fnproject/fn_go/client/apps"
 	v2Client "github.com/fnproject/fn_go/clientv2"
@@ -36,6 +37,7 @@ func DeployCommand() cli.Command {
 				return err
 			}
 			cmd.client = provider.APIClient()
+			cmd.clientV2 = provider.APIClientv2()
 			return nil
 		},
 		Category:    "DEVELOPMENT COMMANDS",
@@ -193,10 +195,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 			}
 		}
 
-		err = p.deployFuncV20180707(c, appName, wd, fpath, ff)
-		if err != nil {
-			return err
-		}
+		return p.deployFuncV20180707(c, appName, wd, fpath, ff)
 	}
 
 	fpath, ff, err := common.FindAndParseFuncfile(dir)
@@ -216,12 +215,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 		}
 	}
 
-	err = p.deployFunc(c, appName, wd, fpath, ff)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return p.deployFunc(c, appName, wd, fpath, ff)
 }
 
 // deployAll deploys all functions in an app.
@@ -419,20 +413,45 @@ func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.Fu
 		return fmt.Errorf("Error getting route with funcfile: %s", err)
 	}
 
-	app := &models.App{
-		Name: appName,
-	}
-
-	err := apps.CreateApp(p.client, app)
+	app, err := apps.GetAppByName(appName)
 	if err != nil {
-		return err
+		app = &models.App{
+			Name: appName,
+		}
+
+		err = apps.CreateApp(p.client, app)
+		if err != nil {
+			return err
+		}
 	}
 
 	fn.Name = ff.Name
+	_, err = function.GetFnByName(p.clientV2, app.ID, fn.Name)
+	if err != nil {
+		return function.CreateFn(p.clientV2, app.Name, fn)
+	}
 
-	err = function.CreateFn(p.clientV2, app.Name, fn)
+	err = function.PutFn(p.clientV2, fn)
 	if err != nil {
 		return err
+	}
+
+	if len(ff.Triggers) != 0 {
+		fmt.Println("Triggers: ", ff.Triggers)
+		trig := &modelsV2.Trigger{
+			AppID:  app.ID,
+			FnID:   fn.ID,
+			Name:   ff.Triggers[0].Name,
+			Source: ff.Triggers[0].Source,
+			Type:   ff.Triggers[0].Type,
+		}
+		trigs, err := trigger.GetTrigger(p.clientV2, appName, fn.Name, ff.Triggers[0].Name)
+		if err != nil {
+			return trigger.CreateTrigger(p.clientV2, trig)
+		}
+
+		trig.ID = trigs.ID
+		return trigger.PutTrigger(p.clientV2, trig)
 	}
 
 	return nil

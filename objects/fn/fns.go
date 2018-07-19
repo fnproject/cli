@@ -221,16 +221,17 @@ func CreateFn(r *clientv2.Fn, appName string, fn *models.Fn) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("A: ", a.ID)
 
 	fn.AppID = a.ID
-	fmt.Println("FN: ", fn.Name)
 
+	fmt.Println("FN: ", fn)
 	image, err := common.ValidateImageName(fn.Image)
 	if err != nil {
 		return err
 	}
-	fn.Image = image
 
+	fn.Image = image
 	resp, err := r.Fns.CreateFn(&apifns.CreateFnParams{
 		Context: context.Background(),
 		Body:    fn,
