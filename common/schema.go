@@ -8,6 +8,8 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
+const LatestYamlVersion = 20180708
+
 const V20180707Schema = `{
     "title": "V20180707 func file schema",
     "type": "object",

@@ -10,10 +10,13 @@ import (
 
 	client "github.com/fnproject/cli/client"
 	common "github.com/fnproject/cli/common"
+	function "github.com/fnproject/cli/objects/fn"
 	route "github.com/fnproject/cli/objects/route"
 	fnclient "github.com/fnproject/fn_go/client"
 	clientApps "github.com/fnproject/fn_go/client/apps"
-	"github.com/fnproject/fn_go/models"
+	v2Client "github.com/fnproject/fn_go/clientv2"
+	models "github.com/fnproject/fn_go/models"
+	modelsV2 "github.com/fnproject/fn_go/modelsv2"
 	"github.com/urfave/cli"
 )
 
@@ -42,8 +45,9 @@ func DeployCommand() cli.Command {
 }
 
 type deploycmd struct {
-	appName string
-	client  *fnclient.Fn
+	appName  string
+	client   *fnclient.Fn
+	clientV2 *v2Client.Fn
 
 	wd       string
 	verbose  bool
@@ -169,6 +173,32 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 		return err
 	}
 	defer os.Chdir(wd)
+
+	ffV, err := common.ReadInFuncFile()
+	version := common.GetFuncYamlVersion(ffV)
+	if version == common.LatestYamlVersion {
+		fpath, ff, err := common.FindAndParseFuncFileV20180707(dir)
+		if err != nil {
+			return err
+		}
+		if appf != nil {
+			if dir == wd {
+				setFuncInfoV20180707(ff, appf.Name)
+			}
+		}
+
+		if appf != nil {
+			err = p.updateAppConfig(appf)
+			if err != nil {
+				return fmt.Errorf("Failed to update app config: %v", err)
+			}
+		}
+
+		err = p.deployFuncV20180707(c, appName, wd, fpath, ff)
+		if err != nil {
+			return err
+		}
+	}
 
 	fpath, ff, err := common.FindAndParseFuncfile(dir)
 	if err != nil {
@@ -309,6 +339,49 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	return p.updateRoute(c, appName, funcfile)
 }
 
+func (p *deploycmd) deployFuncV20180707(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *common.FuncFileV20180707) error {
+	if appName == "" {
+		return errors.New("App name must be provided, try `--app APP_NAME`")
+	}
+	//dir := filepath.Dir(funcfilePath)
+	// get name from directory if it's not defined
+	if funcfile.Name == "" {
+		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
+	}
+	// if funcfile.Path == "" {
+	// 	if dir == "." {
+	// 		funcfile.Path = "/"
+	// 	} else {
+	// 		funcfile.Path = "/" + filepath.Base(dir)
+	// 	}
+	// }
+	// fmt.Printf("Deploying %s to app: %s at path: %s\n", funcfile.Name, appName, funcfile.Path)
+
+	var err error
+	if !p.noBump {
+		funcfile2, err := common.BumpItV20180707(funcfilePath, common.Patch)
+		if err != nil {
+			return err
+		}
+		funcfile.Version = funcfile2.Version
+		// TODO: this whole funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
+	}
+
+	buildArgs := c.StringSlice("build-arg")
+	_, err = common.BuildFuncV20180707(c, funcfilePath, funcfile, buildArgs, p.noCache)
+	if err != nil {
+		return err
+	}
+
+	if !p.local {
+		if err := common.DockerPushV20180707(funcfile); err != nil {
+			return err
+		}
+	}
+
+	return p.updateFunction(c, appName, funcfile)
+}
+
 func setRootFuncInfo(ff *common.FuncFile, appName string) {
 	if ff.Name == "" {
 		fmt.Println("Setting name")
@@ -320,6 +393,17 @@ func setRootFuncInfo(ff *common.FuncFile, appName string) {
 	}
 }
 
+func setFuncInfoV20180707(ff *common.FuncFileV20180707, appName string) {
+	if ff.Name == "" {
+		fmt.Println("Setting name")
+		ff.Name = fmt.Sprintf("%s-root", appName)
+	}
+	// if ff.en == "" {
+	// 	// then in root dir, so this will be deployed at /
+	// 	ff.Path = "/"
+	// }
+}
+
 func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *common.FuncFile) error {
 	fmt.Printf("Updating route %s using image %s...\n", ff.Path, ff.ImageName())
 	rt := &models.Route{}
@@ -329,6 +413,17 @@ func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *common.FuncF
 	return route.PutRoute(p.client, appName, ff.Path, rt)
 }
 
+func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.FuncFileV20180707) error {
+	fmt.Printf("Updating function %s using image %s...\n", ff.Name, ff.ImageNameV20180707())
+	fn := &modelsV2.Fn{}
+	if err := function.WithFuncFileV20180707(ff, fn); err != nil {
+		return fmt.Errorf("Error getting route with funcfile: %s", err)
+	}
+
+	fmt.Println("FN: ", fn)
+
+	return function.CreateFn(p.clientV2, fn)
+}
 func expandEnvConfig(configs map[string]string) map[string]string {
 	for k, v := range configs {
 		configs[k] = os.ExpandEnv(v)

@@ -49,7 +49,29 @@ func (p *pushcmd) flags() []cli.Flag {
 // push the container, and finally it will update function's route. Optionally,
 // the route can be overriden inside the functions file.
 func (p *pushcmd) push(c *cli.Context) error {
+	ffV, err := common.ReadInFuncFile()
+	version := common.GetFuncYamlVersion(ffV)
+	if version == common.LatestYamlVersion {
+		_, ff, err := common.LoadFuncFileV20180707(".")
+		if err != nil {
+			if _, ok := err.(*common.NotFoundError); ok {
+				return errors.New("Image name is missing or no function file found")
+			}
+			return err
+		}
+
+		fmt.Println("pushing", ff.ImageNameV20180707())
+
+		if err := common.DockerPushV20180707(ff); err != nil {
+			return err
+		}
+
+		fmt.Printf("Function %v pushed successfully to Docker Hub.\n", ff.ImageNameV20180707())
+		return nil
+	}
+
 	_, ff, err := common.LoadFuncfile(".")
+
 	if err != nil {
 		if _, ok := err.(*common.NotFoundError); ok {
 			return errors.New("Image name is missing or no function file found")

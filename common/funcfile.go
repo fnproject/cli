@@ -255,3 +255,102 @@ func IsFuncFile(path string, info os.FileInfo) bool {
 	}
 	return false
 }
+
+// --------- FuncFileV20180707 -------------
+
+func FindAndParseFuncFileV20180707(path string) (fpath string, ff *FuncFileV20180707, err error) {
+	fpath, err = FindFuncfile(path)
+	if err != nil {
+		return "", nil, err
+	}
+	ff, err = ParseFuncFileV20180707(fpath)
+	if err != nil {
+		return "", nil, err
+	}
+	return fpath, ff, err
+}
+
+func LoadFuncFileV20180707(path string) (string, *FuncFileV20180707, error) {
+	return FindAndParseFuncFileV20180707(path)
+}
+
+func ParseFuncFileV20180707(path string) (*FuncFileV20180707, error) {
+	ext := filepath.Ext(path)
+	switch ext {
+	case ".json":
+		return decodeFuncFileV20180707JSON(path)
+	case ".yaml", ".yml":
+		return decodeFuncFileV20180707YAML(path)
+	}
+	return nil, errUnexpectedFileFormat
+}
+
+func decodeFuncFileV20180707JSON(path string) (*FuncFileV20180707, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", path, err)
+	}
+	ff := &FuncFileV20180707{}
+	// ff.Route = &fnmodels.Route{}
+	err = json.NewDecoder(f).Decode(ff)
+	// ff := fff.MakeFuncFile()
+	return ff, err
+}
+
+func decodeFuncFileV20180707YAML(path string) (*FuncFileV20180707, error) {
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", path, err)
+	}
+	ff := &FuncFileV20180707{}
+	err = yaml.Unmarshal(b, ff)
+	// ff := fff.MakeFuncFile()
+	return ff, err
+}
+
+func encodeFuncFileV20180707JSON(path string, ff *FuncFileV20180707) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("could not open %s for encoding. Error: %v", path, err)
+	}
+	return json.NewEncoder(f).Encode(ff)
+}
+
+// EncodeFuncfileYAML encodes function file.
+func EncodeFuncFileV20180707YAML(path string, ff *FuncFileV20180707) error {
+	b, err := yaml.Marshal(ff)
+	if err != nil {
+		return fmt.Errorf("could not encode function file. Error: %v", err)
+	}
+	return ioutil.WriteFile(path, b, os.FileMode(0644))
+}
+
+func storeFuncFileV20180707(path string, ff *FuncFileV20180707) error {
+	ext := filepath.Ext(path)
+	switch ext {
+	case ".json":
+		return encodeFuncFileV20180707JSON(path, ff)
+	case ".yaml", ".yml":
+		return EncodeFuncFileV20180707YAML(path, ff)
+	}
+	return errUnexpectedFileFormat
+}
+
+// ImageName returns the name of a funcfile image
+func (ff *FuncFileV20180707) ImageNameV20180707() string {
+	fname := ff.Name
+	if !strings.Contains(fname, "/") {
+
+		reg := viper.GetString(config.EnvFnRegistry)
+		if reg != "" {
+			if reg[len(reg)-1] != '/' {
+				reg += "/"
+			}
+			fname = fmt.Sprintf("%s%s", reg, fname)
+		}
+	}
+	if ff.Version != "" {
+		fname = fmt.Sprintf("%s:%s", fname, ff.Version)
+	}
+	return fname
+}

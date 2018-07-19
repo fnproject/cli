@@ -28,15 +28,17 @@ import (
 
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/langs"
+	function "github.com/fnproject/cli/objects/fn"
 	"github.com/fnproject/cli/objects/route"
-	"github.com/fnproject/fn_go/models"
+	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/urfave/cli"
 )
 
 type initFnCmd struct {
-	force bool
-	wd    string
-	ff    *common.FuncFile
+	force       bool
+	triggerType string
+	wd          string
+	ff          *common.FuncFileV20180707
 }
 
 func initFlags(a *initFnCmd) []cli.Flag {
@@ -77,6 +79,11 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Usage:       "Specify the working directory to initialise a function, must be the full path.",
 			Destination: &a.wd,
 		},
+		cli.StringFlag{
+			Name:        "trigger",
+			Usage:       "Specify the trigger type.",
+			Destination: &a.triggerType,
+		},
 	}
 
 	return append(fgs, route.RouteFlags...)
@@ -92,7 +99,7 @@ func langsList() string {
 
 // InitCommand returns init cli.command
 func InitCommand() cli.Command {
-	a := &initFnCmd{ff: &common.FuncFile{}}
+	a := &initFnCmd{ff: &common.FuncFileV20180707{}}
 
 	return cli.Command{
 		Name:        "init",
@@ -115,9 +122,9 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		dir = a.wd
 	}
 
-	var rt models.Route
-	route.WithFlags(c, &rt)
-	a.bindRoute(&rt)
+	var fn models.Fn
+	function.FnWithFlags(c, &fn)
+	a.bindFn(&fn)
 
 	runtimeSpecified := a.ff.Runtime != ""
 	if runtimeSpecified {
@@ -161,11 +168,22 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			return errors.New("Function file already exists, aborting")
 		}
 	}
-
 	err = a.BuildFuncFile(c, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
 	if err != nil {
 		return err
 	}
+
+	if a.triggerType != "" {
+		trig := make([]common.Trigger, 1)
+		trig[0] = common.Trigger{
+			a.ff.Name + "-trigger",
+			a.triggerType,
+			"/" + a.ff.Name + "-trigger",
+		}
+		a.ff.Triggers = trig
+	}
+
+	a.ff.Schema_version = common.LatestYamlVersion
 
 	// TODO: why don't we treat "docker" runtime as just another language helper? Then can get rid of several Docker
 	// specific if/else's like this one.
@@ -176,7 +194,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 	}
 
-	if err := common.EncodeFuncfileYAML("func.yaml", a.ff); err != nil {
+	if err := common.EncodeFuncFileV20180707YAML("func.yaml", a.ff); err != nil {
 		return err
 	}
 	fmt.Println("func.yaml created.")
@@ -197,25 +215,19 @@ func (a *initFnCmd) generateBoilerplate(path string) error {
 	return nil
 }
 
-func (a *initFnCmd) bindRoute(rt *models.Route) {
+func (a *initFnCmd) bindFn(fn *models.Fn) {
 	ff := a.ff
-	if rt.Format != "" {
-		ff.Format = rt.Format
+	// if rt.Format != "" {
+	// 	ff.Format = rt.Format
+	// }
+	if fn.Mem > 0 {
+		ff.Memory = fn.Mem
 	}
-	if rt.Type != "" {
-		ff.Type = rt.Type
+	if fn.Timeout != nil {
+		ff.Timeout = fn.Timeout
 	}
-	if rt.Memory > 0 {
-		ff.Memory = rt.Memory
-	}
-	if rt.Cpus != "" {
-		ff.Cpus = rt.Cpus
-	}
-	if rt.Timeout != nil {
-		ff.Timeout = rt.Timeout
-	}
-	if rt.IDLETimeout != nil {
-		ff.IDLETimeout = rt.IDLETimeout
+	if fn.IDLETimeout != nil {
+		ff.IDLE_timeout = fn.IDLETimeout
 	}
 }
 
@@ -261,9 +273,9 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 		}
 		fmt.Printf("Found %v function, assuming %v runtime.\n", helper.Runtime(), helper.Runtime())
 		// need to default this to default format to be backwards compatible. Might want to just not allow this anymore, fail here.
-		if a.ff.Format == "" {
-			a.ff.Format = "default"
-		}
+		// if a.ff.Format == "" {
+		// 	a.ff.Format = "default"
+		// }
 	} else {
 		fmt.Println("Runtime:", a.ff.Runtime)
 		helper = langs.GetLangHelper(a.ff.Runtime)
@@ -282,9 +294,9 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 			a.ff.Runtime = helper.Runtime()
 		}
 
-		if a.ff.Format == "" {
-			a.ff.Format = helper.DefaultFormat()
-		}
+		// if a.ff.Format == "" {
+		// 	a.ff.Format = helper.DefaultFormat()
+		// }
 
 		if a.ff.Cmd == "" {
 			cmd, err := helper.Cmd()
@@ -295,20 +307,20 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 		}
 
 		if helper.FixImagesOnInit() {
-			if a.ff.BuildImage == "" {
+			if a.ff.Build_image == "" {
 				buildImage, err := helper.BuildFromImage()
 				if err != nil {
 					return err
 				}
-				a.ff.BuildImage = buildImage
+				a.ff.Build_image = buildImage
 			}
 			if helper.IsMultiStage() {
-				if a.ff.RunImage == "" {
+				if a.ff.Run_image == "" {
 					runImage, err := helper.RunFromImage()
 					if err != nil {
 						return err
 					}
-					a.ff.RunImage = runImage
+					a.ff.Run_image = runImage
 				}
 			}
 		}

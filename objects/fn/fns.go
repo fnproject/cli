@@ -129,7 +129,7 @@ func (f *fnsCmd) list(c *cli.Context) error {
 }
 
 // WithFlags returns a function with specified flags
-func fnWithFlags(c *cli.Context, fn *models.Fn) {
+func FnWithFlags(c *cli.Context, fn *models.Fn) {
 	if i := c.String("image"); i != "" {
 		fn.Image = i
 	}
@@ -159,36 +159,41 @@ func fnWithFlags(c *cli.Context, fn *models.Fn) {
 }
 
 // WithFuncFile used when creating a function from a funcfile
-func WithFuncFile(ff *common.FuncFile, rt *models.Fn) error {
+func WithFuncFileV20180707(ff *common.FuncFileV20180707, fn *models.Fn) error {
 	var err error
 	if ff == nil {
-		_, ff, err = common.LoadFuncfile(".")
+		_, ff, err = common.LoadFuncFileV20180707(".")
 		if err != nil {
 			return err
 		}
 	}
-	if ff.ImageName() != "" { // args take precedence
-		rt.Image = ff.ImageName()
+	fmt.Println("FF: ", ff.Timeout)
+	if ff.ImageNameV20180707() != "" { // args take precedence
+		fn.Image = ff.ImageNameV20180707()
 	}
-	if ff.Format != "" {
-		rt.Format = ff.Format
-	}
+	// if ff.Format != "" {
+	// 	rt.Format = ff.Format
+	// }
+
 	if ff.Timeout != nil {
-		rt.Timeout = ff.Timeout
+		fn.Timeout = ff.Timeout
 	}
 	if ff.Memory != 0 {
-		rt.Mem = ff.Memory
+		fn.Mem = ff.Memory
 	}
-	if ff.IDLETimeout != nil {
-		rt.IDLETimeout = ff.IDLETimeout
+	if ff.IDLE_timeout != nil {
+		fn.IDLETimeout = ff.IDLE_timeout
 	}
 
 	if len(ff.Config) != 0 {
-		rt.Config = ff.Config
+		fn.Config = ff.Config
 	}
 	if len(ff.Annotations) != 0 {
-		rt.Annotations = ff.Annotations
+		fn.Annotations = ff.Annotations
 	}
+
+	fmt.Println("Fn: ", fn)
+	// do something with triggers here
 
 	return nil
 }
@@ -202,35 +207,35 @@ func (f *fnsCmd) create(c *cli.Context) error {
 		return err
 	}
 
-	rt := &models.Fn{
+	fn := &models.Fn{
 		AppID: a.ID,
 	}
-	rt.Name = fnName
-	rt.Image = c.Args().Get(2)
+	fn.Name = fnName
+	fn.Image = c.Args().Get(2)
 
-	fnWithFlags(c, rt)
+	FnWithFlags(c, fn)
 
-	if rt.Name == "" {
+	if fn.Name == "" {
 		return errors.New("fnName path is missing")
 	}
-	if rt.Image == "" {
+	if fn.Image == "" {
 		return errors.New("no image specified")
 	}
 
-	return CreateFn(f.client, rt)
+	return CreateFn(f.client, fn)
 }
 
 // CreateFn request
-func CreateFn(r *clientv2.Fn, rt *models.Fn) error {
-	image, err := common.ValidateImageName(rt.Image)
+func CreateFn(r *clientv2.Fn, fn *models.Fn) error {
+	image, err := common.ValidateImageName(fn.Image)
 	if err != nil {
 		return err
 	}
-	rt.Image = image
+	fn.Image = image
 
 	resp, err := r.Fns.CreateFn(&apifns.CreateFnParams{
 		Context: context.Background(),
-		Body:    rt,
+		Body:    fn,
 	})
 
 	if err != nil {
@@ -248,7 +253,8 @@ func CreateFn(r *clientv2.Fn, rt *models.Fn) error {
 	return nil
 }
 
-func (f *fnsCmd) putFn(fn *models.Fn) error {
+func PutFn(f *clientv2.Fn, fn *models.Fn) error {
+	fmt.Println("FN: ", fn)
 	if fn.Image != "" {
 		_, err := common.ValidateImageName(fn.Image)
 		if err != nil {
@@ -256,7 +262,7 @@ func (f *fnsCmd) putFn(fn *models.Fn) error {
 		}
 	}
 
-	_, err := f.client.Fns.UpdateFn(&apifns.UpdateFnParams{
+	_, err := f.Fns.UpdateFn(&apifns.UpdateFnParams{
 		Context: context.Background(),
 		FnID:    fn.ID,
 		Body:    fn,
@@ -311,9 +317,9 @@ func (f *fnsCmd) update(c *cli.Context) error {
 		return err
 	}
 
-	fnWithFlags(c, fn)
+	FnWithFlags(c, fn)
 
-	err = f.putFn(fn)
+	err = PutFn(f.client, fn)
 	if err != nil {
 		return err
 	}
@@ -340,7 +346,7 @@ func (f *fnsCmd) setConfig(c *cli.Context) error {
 	fn.Config = make(map[string]string)
 	fn.Config[key] = value
 
-	if err = f.putFn(fn); err != nil {
+	if err = PutFn(f.client, fn); err != nil {
 		return fmt.Errorf("Error updating function configuration: %v", err)
 	}
 
@@ -415,7 +421,7 @@ func (f *fnsCmd) unsetConfig(c *cli.Context) error {
 	}
 	fn.Config[key] = ""
 
-	err = f.putFn(fn)
+	err = PutFn(f.client, fn)
 	if err != nil {
 		return err
 	}

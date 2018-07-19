@@ -56,6 +56,25 @@ func (b *buildcmd) build(c *cli.Context) error {
 
 	dir := common.GetDir(c)
 
+	ffV, err := common.ReadInFuncFile()
+	version := common.GetFuncYamlVersion(ffV)
+	if version == common.LatestYamlVersion {
+		fpath, ff, err := common.FindAndParseFuncFileV20180707(dir)
+		if err != nil {
+			return err
+		}
+
+		buildArgs := c.StringSlice("build-arg")
+		ff, err = common.BuildFuncV20180707(c, fpath, ff, buildArgs, b.noCache)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Function %v built successfully.\n", ff.ImageNameV20180707())
+		return nil
+
+	}
+
 	fpath, ff, err := common.FindAndParseFuncfile(dir)
 	if err != nil {
 		return err

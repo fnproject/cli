@@ -19,8 +19,6 @@ type migrateFnCmd struct {
 	newFF *common.FuncFileV20180707
 }
 
-const latestYamlVersion = 20180708
-
 func MigrateCommand() cli.Command {
 	m := &migrateFnCmd{newFF: &common.FuncFileV20180707{}}
 
@@ -36,13 +34,13 @@ func MigrateCommand() cli.Command {
 
 func (m *migrateFnCmd) migrate(c *cli.Context) error {
 	var err error
-	oldFF, err := readInFuncFile()
+	oldFF, err := common.ReadInFuncFile()
 	if err != nil {
 		return err
 	}
 
-	version := getFuncYamlVersion(oldFF)
-	if version == latestYamlVersion {
+	version := common.GetFuncYamlVersion(oldFF)
+	if version == common.LatestYamlVersion {
 		return errors.New("you have an up to date func.yaml file and do not need to migrate.")
 	}
 
@@ -68,34 +66,6 @@ func (m *migrateFnCmd) migrate(c *cli.Context) error {
 
 	fmt.Println("Successfully migrated func.yaml and created a back up func.yaml.bak")
 	return nil
-}
-
-func readInFuncFile() (map[string]interface{}, error) {
-	wd := common.GetWd()
-
-	fpath, err := common.FindFuncfile(wd)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := ioutil.ReadFile(fpath)
-	if err != nil {
-		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", fpath, err)
-	}
-	var ff map[string]interface{}
-	err = yaml.Unmarshal(b, &ff)
-	if err != nil {
-		return nil, err
-	}
-
-	return ff, nil
-}
-
-func getFuncYamlVersion(oldFF map[string]interface{}) int {
-	if _, ok := oldFF["schema_version"]; ok {
-		return oldFF["schema_version"].(int)
-	}
-	return 1
 }
 
 func backUpYamlFile(ff map[string]interface{}) error {
