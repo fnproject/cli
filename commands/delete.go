@@ -11,7 +11,7 @@ func DeleteCommand() cli.Command {
 		Aliases:     []string{"d"},
 		Usage:       "\tDelete an object",
 		Category:    "MANAGEMENT COMMANDS",
-		Description: "This is the description",
+		Description: "This command deletes a created object ('app', 'context', 'function', 'route' or 'trigger').",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
 		Subcommands: GetCommands(DeleteCmds),

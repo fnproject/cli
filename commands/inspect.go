@@ -13,7 +13,7 @@ func InspectCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
-		Description: "This is the description",
+		Description: "This command allows to inspect the properties of an object ('app','route','trigger', 'function').",
 		Subcommands: GetCommands(InspectCmds),
 	}
 }

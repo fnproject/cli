@@ -13,7 +13,7 @@ func UseCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
-		Description: "This is the description",
+		Description: "This command uses a selected object ('context') for further invocations.",
 		Subcommands: GetCommands(UseCmds),
 	}
 }
