@@ -11,6 +11,7 @@ func Create() cli.Command {
 	return cli.Command{
 		Name:      "trigger",
 		ShortName: "trig",
+		Category:  "MANAGEMENT COMMAND",
 		Aliases:   []string{"t", "tr"},
 		Usage:     "Create a new trigger",
 		Before: func(ctx *cli.Context) error {
@@ -34,6 +35,7 @@ func List() cli.Command {
 	return cli.Command{
 		Name:      "triggers",
 		ShortName: "trigs",
+		Category:  "MANAGEMENT COMMAND",
 		Aliases:   []string{"t", "tr"},
 		Usage:     "List all triggers",
 		Before: func(ctx *cli.Context) error {
@@ -67,6 +69,7 @@ func Update() cli.Command {
 	return cli.Command{
 		Name:      "trigger",
 		ShortName: "trig",
+		Category:  "MANAGEMENT COMMAND",
 		Aliases:   []string{"t", "tr"},
 		Usage:     "Update a trigger",
 		Before: func(ctx *cli.Context) error {
@@ -95,6 +98,7 @@ func Delete() cli.Command {
 	return cli.Command{
 		Name:      "trigger",
 		ShortName: "trig",
+		Category:  "MANAGEMENT COMMAND",
 		Aliases:   []string{"t", "tr"},
 		Usage:     "Delete a trigger",
 		Before: func(ctx *cli.Context) error {
@@ -117,6 +121,7 @@ func Inspect() cli.Command {
 	return cli.Command{
 		Name:      "trigger",
 		ShortName: "trig",
+		Category:  "MANAGEMENT COMMAND",
 		Aliases:   []string{"t", "tr"},
 		Usage:     "Retrieve one or all trigger properties",
 		Before: func(ctx *cli.Context) error {

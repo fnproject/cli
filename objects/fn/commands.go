@@ -12,6 +12,7 @@ func Create() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
+		Category:  "MANAGEMENT COMMAND",
 		Usage:     "Create a function within an application",
 		Before: func(c *cli.Context) error {
 			var err error
@@ -36,6 +37,7 @@ func List() cli.Command {
 		ShortName: "funcs",
 		Aliases:   []string{"f", "fn"},
 		Usage:     "List functions for an application",
+		Category:  "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -68,6 +70,7 @@ func Delete() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
+		Category:  "MANAGEMENT COMMAND",
 		Usage:     "Delete a function from an application",
 		Before: func(c *cli.Context) error {
 			var err error
@@ -90,6 +93,7 @@ func Inspect() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
+		Category:  "MANAGEMENT COMMAND",
 		Usage:     "Retrieve one or all properties for a function",
 		Before: func(c *cli.Context) error {
 			var err error
@@ -112,6 +116,7 @@ func Update() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
+		Category:  "MANAGEMENT COMMAND",
 		Usage:     "Update a function in application",
 		Before: func(c *cli.Context) error {
 			var err error
@@ -135,6 +140,7 @@ func GetConfig() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
+		Category:  "MANAGEMENT COMMAND",
 		Usage:     "Inspect configuration key for this function",
 		Before: func(c *cli.Context) error {
 			var err error
@@ -157,6 +163,7 @@ func SetConfig() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
+		Category:  "MANAGEMENT COMMAND",
 		Usage:     "Store a configuration key for this function",
 		Before: func(c *cli.Context) error {
 			var err error
@@ -179,6 +186,7 @@ func ListConfig() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
+		Category:  "MANAGEMENT COMMAND",
 		Usage:     "List configuration key/value pairs for this function",
 		Before: func(c *cli.Context) error {
 			var err error
@@ -201,6 +209,7 @@ func UnsetConfig() cli.Command {
 		Name:      "function",
 		ShortName: "func",
 		Aliases:   []string{"f", "fn"},
+		Category:  "MANAGEMENT COMMAND",
 		Usage:     "Remove a configuration key for this function",
 		Before: func(c *cli.Context) error {
 			var err error
