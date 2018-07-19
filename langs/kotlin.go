@@ -74,8 +74,12 @@ func (lh *KotlinLangHelper) GenerateBoilerplate(path string) error {
 		return ErrBoilerplateExists
 	}
 
-	err := ioutil.WriteFile(pathToPomFile, []byte(kotlinPomFileContent()), os.FileMode(0644))
+	apiVersion, err := lh.getFDKAPIVersion()
 	if err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(pathToPomFile, []byte(kotlinPomFileContent(apiVersion)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -161,8 +165,8 @@ func kotlinMavenOpts() string {
 
 /*    TODO temporarily generate maven project boilerplate from hardcoded values.
       Will eventually move to using a maven archetype.*/
-func kotlinPomFileContent() string {
-	return fmt.Sprintf(kotlinPomFile)
+func kotlinPomFileContent(APIversion string) string {
+	return fmt.Sprintf(kotlinPomFile, APIversion)
 }
 
 func (lh *KotlinLangHelper) getFDKAPIVersion() (string, error) {
@@ -220,7 +224,7 @@ const (
 	
 	<properties>
 		<kotlin.version>1.2.51</kotlin.version>
-		<fdk.version>1.0.63</fdk.version>
+		<fdk.version>%s</fdk.version>
 		<junit.version>4.12</junit.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
