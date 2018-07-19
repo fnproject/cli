@@ -12,7 +12,7 @@ func ConfigureCommand() cli.Command {
 		Usage:       "\tSet configuration for an object",
 		Category:    "MANAGEMENT COMMANDS",
 		ArgsUsage:   "<subcommand>",
-		Description: "This is the description",
+		Description: "This command sets a configuaration key for an application, function or route.",
 		Subcommands: GetCommands(ConfigCmds),
 	}
 }
