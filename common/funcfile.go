@@ -95,6 +95,8 @@ type FuncFileV20180707 struct {
 	Cmd          string `yaml:"cmd,omitempty" json:"cmd,omitempty"`
 	Entrypoint   string `yaml:"entrypoint,omitempty" json:"entrypoint,omitempty"`
 	Content_type string `yaml:"content_type,omitempty" json:"content_type,omitempty"`
+	Format       string `yaml:"format,omitempty" json:"format,omitempty"`
+	Type         string `yaml:"type,omitempty" json:"type,omitempty"`
 	Memory       uint64 `yaml:"memory,omitempty" json:"memory,omitempty"`
 	Timeout      *int32 `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 	IDLE_timeout *int32 `yaml:"idle_timeout,omitempty" json:"idle_timeout,omitempty"`

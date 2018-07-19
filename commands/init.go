@@ -217,9 +217,9 @@ func (a *initFnCmd) generateBoilerplate(path string) error {
 
 func (a *initFnCmd) bindFn(fn *models.Fn) {
 	ff := a.ff
-	// if rt.Format != "" {
-	// 	ff.Format = rt.Format
-	// }
+	if fn.Format != "" {
+		ff.Format = fn.Format
+	}
 	if fn.Mem > 0 {
 		ff.Memory = fn.Mem
 	}
@@ -272,10 +272,10 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 			return err
 		}
 		fmt.Printf("Found %v function, assuming %v runtime.\n", helper.Runtime(), helper.Runtime())
-		// need to default this to default format to be backwards compatible. Might want to just not allow this anymore, fail here.
-		// if a.ff.Format == "" {
-		// 	a.ff.Format = "default"
-		// }
+		//need to default this to default format to be backwards compatible. Might want to just not allow this anymore, fail here.
+		if a.ff.Format == "" {
+			a.ff.Format = "default"
+		}
 	} else {
 		fmt.Println("Runtime:", a.ff.Runtime)
 		helper = langs.GetLangHelper(a.ff.Runtime)
@@ -294,9 +294,9 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 			a.ff.Runtime = helper.Runtime()
 		}
 
-		// if a.ff.Format == "" {
-		// 	a.ff.Format = helper.DefaultFormat()
-		// }
+		if a.ff.Format == "" {
+			a.ff.Format = helper.DefaultFormat()
+		}
 
 		if a.ff.Cmd == "" {
 			cmd, err := helper.Cmd()

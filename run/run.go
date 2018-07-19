@@ -396,7 +396,13 @@ func RunFFV20180707(ff *common.FuncFileV20180707, stdin io.Reader, stdout, stder
 		}
 	}
 
-	format = DefaultFormat
+	if format == "" {
+		if ff.Format != "" {
+			format = ff.Format
+		} else {
+			format = DefaultFormat
+		}
+	}
 
 	// Add expected env vars that service will add
 	// Full set here: https://github.com/fnproject/fn/pull/660#issuecomment-356157279
