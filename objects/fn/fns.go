@@ -167,7 +167,6 @@ func WithFuncFileV20180707(ff *common.FuncFileV20180707, fn *models.Fn) error {
 			return err
 		}
 	}
-	fmt.Println("FF: ", ff.Timeout)
 	if ff.ImageNameV20180707() != "" { // args take precedence
 		fn.Image = ff.ImageNameV20180707()
 	}
@@ -191,8 +190,6 @@ func WithFuncFileV20180707(ff *common.FuncFileV20180707, fn *models.Fn) error {
 	if len(ff.Annotations) != 0 {
 		fn.Annotations = ff.Annotations
 	}
-
-	fmt.Println("Fn: ", fn)
 	// do something with triggers here
 
 	return nil
@@ -202,14 +199,7 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
-	a, err := app.GetAppByName(appName)
-	if err != nil {
-		return err
-	}
-
-	fn := &models.Fn{
-		AppID: a.ID,
-	}
+	fn := &models.Fn{}
 	fn.Name = fnName
 	fn.Image = c.Args().Get(2)
 
@@ -222,11 +212,19 @@ func (f *fnsCmd) create(c *cli.Context) error {
 		return errors.New("no image specified")
 	}
 
-	return CreateFn(f.client, fn)
+	return CreateFn(f.client, appName, fn)
 }
 
 // CreateFn request
-func CreateFn(r *clientv2.Fn, fn *models.Fn) error {
+func CreateFn(r *clientv2.Fn, appName string, fn *models.Fn) error {
+	a, err := app.GetAppByName(appName)
+	if err != nil {
+		return err
+	}
+
+	fn.AppID = a.ID
+	fmt.Println("FN: ", fn.Name)
+
 	image, err := common.ValidateImageName(fn.Image)
 	if err != nil {
 		return err
@@ -239,6 +237,7 @@ func CreateFn(r *clientv2.Fn, fn *models.Fn) error {
 	})
 
 	if err != nil {
+		fmt.Println("ERR: ", err)
 		switch e := err.(type) {
 		case *apifns.CreateFnBadRequest:
 			return fmt.Errorf("%s", e.Payload.Message)
@@ -254,7 +253,6 @@ func CreateFn(r *clientv2.Fn, fn *models.Fn) error {
 }
 
 func PutFn(f *clientv2.Fn, fn *models.Fn) error {
-	fmt.Println("FN: ", fn)
 	if fn.Image != "" {
 		_, err := common.ValidateImageName(fn.Image)
 		if err != nil {

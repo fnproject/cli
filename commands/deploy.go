@@ -10,6 +10,7 @@ import (
 
 	client "github.com/fnproject/cli/client"
 	common "github.com/fnproject/cli/common"
+	apps "github.com/fnproject/cli/objects/app"
 	function "github.com/fnproject/cli/objects/fn"
 	route "github.com/fnproject/cli/objects/route"
 	fnclient "github.com/fnproject/fn_go/client"
@@ -165,8 +166,6 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 		}
 		dir = filepath.Join(wd, path)
 	}
-
-	fmt.Println("dir: ", dir)
 
 	err := os.Chdir(dir)
 	if err != nil {
@@ -420,9 +419,23 @@ func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.Fu
 		return fmt.Errorf("Error getting route with funcfile: %s", err)
 	}
 
-	fmt.Println("FN: ", fn)
+	app := &models.App{
+		Name: appName,
+	}
 
-	return function.CreateFn(p.clientV2, fn)
+	err := apps.CreateApp(p.client, app)
+	if err != nil {
+		return err
+	}
+
+	fn.Name = ff.Name
+
+	err = function.CreateFn(p.clientV2, app.Name, fn)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 func expandEnvConfig(configs map[string]string) map[string]string {
 	for k, v := range configs {
