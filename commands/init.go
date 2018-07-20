@@ -124,7 +124,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		function.FnWithFlags(c, &fn)
 		a.bindFn(&fn)
 
-		fmt.Println("Fn: ", fn)
 		return a.initV2(c, fn)
 	}
 
@@ -451,8 +450,6 @@ func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
 		// then defaults to current directory for name, the name must be lowercase
 		a.ffV20180707.Name = strings.ToLower(filepath.Base(path))
 	}
-
-	fmt.Println("a.ffV20180707.Name: ", a.ffV20180707.Name)
 
 	a.ffV20180707.Version = c.String("version")
 	if err = ValidateFuncName(a.ffV20180707.Name); err != nil {

@@ -236,7 +236,6 @@ func CreateFn(r *clientv2.Fn, appName string, fn *models.Fn) error {
 	})
 
 	if err != nil {
-		fmt.Println("ERR: ", err)
 		switch e := err.(type) {
 		case *apifns.CreateFnBadRequest:
 			return fmt.Errorf("%s", e.Payload.Message)
