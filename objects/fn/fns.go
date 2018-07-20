@@ -170,9 +170,10 @@ func WithFuncFileV20180707(ff *common.FuncFileV20180707, fn *models.Fn) error {
 	if ff.ImageNameV20180707() != "" { // args take precedence
 		fn.Image = ff.ImageNameV20180707()
 	}
-	// if ff.Format != "" {
-	// 	rt.Format = ff.Format
-	// }
+
+	if ff.Format != "" {
+		fn.Format = ff.Format
+	}
 
 	if ff.Timeout != nil {
 		fn.Timeout = ff.Timeout
@@ -221,11 +222,8 @@ func CreateFn(r *clientv2.Fn, appName string, fn *models.Fn) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("A: ", a.ID)
 
 	fn.AppID = a.ID
-
-	fmt.Println("FN: ", fn)
 	image, err := common.ValidateImageName(fn.Image)
 	if err != nil {
 		return err
@@ -253,7 +251,7 @@ func CreateFn(r *clientv2.Fn, appName string, fn *models.Fn) error {
 	return nil
 }
 
-func PutFn(f *clientv2.Fn, fn *models.Fn) error {
+func PutFn(f *clientv2.Fn, fnID string, fn *models.Fn) error {
 	if fn.Image != "" {
 		_, err := common.ValidateImageName(fn.Image)
 		if err != nil {
@@ -263,7 +261,7 @@ func PutFn(f *clientv2.Fn, fn *models.Fn) error {
 
 	_, err := f.Fns.UpdateFn(&apifns.UpdateFnParams{
 		Context: context.Background(),
-		FnID:    fn.ID,
+		FnID:    fnID,
 		Body:    fn,
 	})
 
@@ -318,7 +316,7 @@ func (f *fnsCmd) update(c *cli.Context) error {
 
 	FnWithFlags(c, fn)
 
-	err = PutFn(f.client, fn)
+	err = PutFn(f.client, fn.ID, fn)
 	if err != nil {
 		return err
 	}
@@ -345,7 +343,7 @@ func (f *fnsCmd) setConfig(c *cli.Context) error {
 	fn.Config = make(map[string]string)
 	fn.Config[key] = value
 
-	if err = PutFn(f.client, fn); err != nil {
+	if err = PutFn(f.client, fn.ID, fn); err != nil {
 		return fmt.Errorf("Error updating function configuration: %v", err)
 	}
 
@@ -420,7 +418,7 @@ func (f *fnsCmd) unsetConfig(c *cli.Context) error {
 	}
 	fn.Config[key] = ""
 
-	err = PutFn(f.client, fn)
+	err = PutFn(f.client, fn.ID, fn)
 	if err != nil {
 		return err
 	}

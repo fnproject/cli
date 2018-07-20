@@ -34,7 +34,7 @@ func List() cli.Command {
 	return cli.Command{
 		Name:      "functions",
 		ShortName: "funcs",
-		Aliases:   []string{"f", "fn"},
+		Aliases:   []string{"fs", "fns"},
 		Usage:     "List functions for `app`",
 		Before: func(c *cli.Context) error {
 			var err error

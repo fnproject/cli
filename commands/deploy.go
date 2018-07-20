@@ -423,35 +423,58 @@ func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.Fu
 		if err != nil {
 			return err
 		}
+		app, err = apps.GetAppByName(appName)
+		if err != nil {
+			return err
+		}
 	}
 
-	fn.Name = ff.Name
-	_, err = function.GetFnByName(p.clientV2, app.ID, fn.Name)
+	fnRes, err := function.GetFnByName(p.clientV2, app.ID, ff.Name)
 	if err != nil {
-		return function.CreateFn(p.clientV2, app.Name, fn)
+		fn.Name = ff.Name
+		err := function.CreateFn(p.clientV2, appName, fn)
+		if err != nil {
+			return err
+		}
+	} else {
+		fn.ID = fnRes.ID
+		err = function.PutFn(p.clientV2, fn.ID, fn)
+		if err != nil {
+			return err
+		}
 	}
 
-	err = function.PutFn(p.clientV2, fn)
-	if err != nil {
-		return err
+	if fnRes == nil {
+		fn, err = function.GetFnByName(p.clientV2, app.ID, ff.Name)
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(ff.Triggers) != 0 {
-		fmt.Println("Triggers: ", ff.Triggers)
-		trig := &modelsV2.Trigger{
-			AppID:  app.ID,
-			FnID:   fn.ID,
-			Name:   ff.Triggers[0].Name,
-			Source: ff.Triggers[0].Source,
-			Type:   ff.Triggers[0].Type,
-		}
-		trigs, err := trigger.GetTrigger(p.clientV2, appName, fn.Name, ff.Triggers[0].Name)
-		if err != nil {
-			return trigger.CreateTrigger(p.clientV2, trig)
-		}
+		for _, t := range ff.Triggers {
+			trig := &modelsV2.Trigger{
+				AppID:  app.ID,
+				FnID:   fn.ID,
+				Name:   t.Name,
+				Source: t.Source,
+				Type:   t.Type,
+			}
 
-		trig.ID = trigs.ID
-		return trigger.PutTrigger(p.clientV2, trig)
+			trigs, err := trigger.GetTriggerByName(p.clientV2, app.ID, fn.ID, t.Name)
+			if err != nil {
+				err = trigger.CreateTrigger(p.clientV2, trig)
+				if err != nil {
+					return err
+				}
+			} else {
+				trig.ID = trigs.ID
+				err = trigger.PutTrigger(p.clientV2, trig)
+				if err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	return nil
