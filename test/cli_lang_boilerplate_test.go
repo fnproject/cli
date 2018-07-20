@@ -47,7 +47,7 @@ func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 			}
 
 			appName := h.NewAppName()
-			h.Fn("deploy", "--local", "--app", appName).AssertSuccess()
+			h.Fn("--registry", "test", "deploy", "--local", "--app", appName).AssertSuccess()
 
 			h.FnWithInput(rt.callInput, "call", appName, funcName)
 		})
