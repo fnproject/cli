@@ -206,9 +206,9 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 		dir = a.wd
 	}
 
-	a.ffV20180707.Name = c.String("app")
+	a.ffV20180707.Name = c.Args().First()
 
-	if a.triggerType != "none" {
+	if a.triggerType == "http" {
 		trig := make([]common.Trigger, 1)
 		trig[0] = common.Trigger{
 			a.ffV20180707.Name + "-trigger",
@@ -356,6 +356,8 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 		a.ff.Name = strings.ToLower(filepath.Base(path))
 	}
 
+	a.ff.Version = c.String("version")
+
 	if err = ValidateFuncName(a.ff.Name); err != nil {
 		return err
 	}
@@ -450,6 +452,9 @@ func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
 		a.ffV20180707.Name = strings.ToLower(filepath.Base(path))
 	}
 
+	fmt.Println("a.ffV20180707.Name: ", a.ffV20180707.Name)
+
+	a.ffV20180707.Version = c.String("version")
 	if err = ValidateFuncName(a.ffV20180707.Name); err != nil {
 		return err
 	}
