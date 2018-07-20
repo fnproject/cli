@@ -125,8 +125,10 @@ func newFn() *cli.App {
 {{bold "FURTHER HELP:"}}	{{italic "See "}}){{"'"}}{{brightcyan .HelpName}}{{brightcyan " <subcommand> --help"}}{{"'"}}{{italic "for more information about a command."}}{{end}}{{end}}
 `
 	app.CommandNotFound = func(c *cli.Context, cmd string) {
-		fmt.Fprintf(os.Stderr, "\n'"+color.Red("%v")+"' is not a Fn Command: "+color.Italic("note the fn CLI command structure has changed, please change your command to use the new structure.\n\n"), cmd)
-		fmt.Fprintf(os.Stderr, color.Bold("FURTHER HELP: ")+color.Italic("See ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information.\n"))
+		fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+"'"+color.Red("%v")+"' is not a Fn Command ", cmd)
+		//fmt.Fprintf(os.Stderr, "\n\nNote the fn CLI command structure has changed, please change your command to use the new structure.\n")
+		fmt.Fprintf(os.Stderr, color.Italic("\n\nSee ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information."))
+		fmt.Fprintf(os.Stderr, color.BrightCyan(" Note ")+"the fn CLI command structure has changed, please change your command to use the new structure.\n")
 	}
 
 	app.Commands = append(app.Commands, commands.GetCommands(commands.Commands)...)
@@ -190,7 +192,13 @@ func prepareCmdArgsValidation(cmds []cli.Command) {
 			if c.NArg() < len(reqArgs) {
 				var help bytes.Buffer
 				cli.HelpPrinter(&help, cli.CommandHelpTemplate, c.Command)
-				return fmt.Errorf("Missing required arguments: %s", strings.Join(reqArgs[c.NArg():], " "))
+				if len(reqArgs)-c.NArg() == 1 {
+					fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+c.Command.Usage+" using "+color.Cyan(c.Command.HelpName)+" requires the missing argument '"+color.Red("%v")+"'\n", strings.Join(reqArgs[c.NArg():], " "))
+				} else {
+					fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+c.Command.Usage+" using "+color.Cyan(c.Command.HelpName)+" requires the missing arguments '"+color.Red("%v")+"'\n", strings.Join(reqArgs[c.NArg():], " "))
+				}
+				fmt.Fprintf(os.Stderr, color.Italic("\nSee ")+"'"+color.BrightCyan(c.Command.HelpName+" --help")+"'"+color.Italic(" for more information.\n"))
+				os.Exit(1)
 			}
 			return cli.HandleAction(action, c)
 		}
@@ -201,7 +209,7 @@ func prepareCmdArgsValidation(cmds []cli.Command) {
 func init() {
 	err := config.Init()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+		fmt.Fprintf(os.Stderr, color.Bold("\nERROR: %v"), err)
 		os.Exit(1)
 	}
 }
@@ -219,8 +227,9 @@ func main() {
 
 	if err != nil {
 		// TODO: this doesn't seem to get called even when an error returns from a command, but maybe urfave is doing a non zero exit anyways? nope: https://github.com/urfave/cli/issues/610
-		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Client version: %s\n", Version)
+		fmt.Fprintf(os.Stderr, color.Bold("\nFn:")+" %v", err)
+		fmt.Fprintf(os.Stderr, color.Italic("\n\nSee ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information."))
+		fmt.Fprintf(os.Stderr, " Client version: %s\n", Version)
 		os.Exit(1)
 	}
 

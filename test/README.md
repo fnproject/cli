@@ -21,7 +21,7 @@ func TestPythonCall(t *testing.T) {
 	h.Cd(funcName)
 	h.Fn("init", "--name", funcName, "--runtime", "python3.6").AssertSuccess()
 	appName := h.NewAppName()
-	h.Fn("deploy", "--local", "--app", appName).AssertSuccess()
+	h.Fn("deploy", "--local", appName).AssertSuccess()
 	h.Fn("call", appName, funcName).AssertSuccess()
 	h.FnWithInput(`{"name": "John"}`, "call", appName, funcName).AssertSuccess()
 

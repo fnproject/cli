@@ -77,14 +77,14 @@ As mention in [CLI Proposal](https://github.com/fnproject/cli/wiki/CLI-Proposal:
 ```
 fn [verb] [noun] <subcommand>
 
-fn config app <app> <key> <value>
-fn create route <app> <route> <image>
-fn delete route <app> <route>
-fn get log <app> <call-id>
-fn inspect route <app> <route>
+fn config app <app-name> <key> <value>
+fn create route <app-name> <route> <image>
+fn delete route <app-name> <route>
+fn get log <app-name> <call-id>
+fn inspect route <app-name> <route>
 fn list calls
-fn unset config app <app> <key>
-fn update route <app> <route>
+fn unset config app <app-name> <key>
+fn update route <app-name> <route>
 fn use conetxt <context>
 ```
 

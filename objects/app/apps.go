@@ -288,7 +288,7 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 func (a *appsCmd) delete(c *cli.Context) error {
 	appName := c.Args().First()
 	if appName == "" {
-		return errors.New("App name required to delete")
+		//return errors.New("App name required to delete")
 	}
 
 	_, err := a.client.Apps.DeleteAppsApp(&apiapps.DeleteAppsAppParams{
