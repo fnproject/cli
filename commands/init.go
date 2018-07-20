@@ -106,7 +106,7 @@ func InitCommand() cli.Command {
 		Usage:       "\tCreate a local func.yaml file",
 		Category:    "DEVELOPMENT COMMANDS",
 		Aliases:     []string{"in"},
-		Description: "Creates a func.yaml file in the current directory.",
+		Description: "This command creates a func.yaml file in the current directory.",
 		ArgsUsage:   "[FUNCTION_NAME]",
 		Action:      a.init,
 		Flags:       initFlags(a),

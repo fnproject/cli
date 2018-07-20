@@ -13,7 +13,7 @@ func ListCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
-		Description: "This is the description",
+		Description: "This command returns a list of created objects ('app', 'call', 'context', 'route', 'trigger', 'function') or configurations.",
 		Subcommands: GetCommands(ListCmds),
 	}
 }

@@ -33,10 +33,10 @@ func CallCommand() cli.Command {
 			cl.client = cl.provider.APIClient()
 			return nil
 		},
-		ArgsUsage:   "<app> </path>",
+		ArgsUsage:   "<app-name> </path>",
 		Flags:       route.CallFnFlags,
 		Category:    "DEVELOPMENT COMMANDS",
-		Description: "This is the description",
+		Description: "This command calls explicitly a function.",
 		Action:      cl.Call,
 	}
 }

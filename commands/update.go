@@ -9,11 +9,11 @@ func UpdateCommand() cli.Command {
 	return cli.Command{
 		Name:        "update",
 		Aliases:     []string{"up"},
-		Usage:       "\tUpdate elements of created object",
+		Usage:       "\tUpdate a created object",
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
-		Description: "This is the description",
+		Description: "This command updates an object ('app', 'context', 'function', 'route', 'server', 'trigger').",
 		Subcommands: GetCommands(UpdateCmds),
 	}
 }

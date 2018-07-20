@@ -31,12 +31,13 @@ func RunCommand() cli.Command {
 	r := runCmd{}
 
 	return cli.Command{
-		Name:     "run",
-		Usage:    "\tRun a function locally",
-		Aliases:  []string{"r"},
-		Category: "DEVELOPMENT COMMANDS",
-		Flags:    append(GetRunFlags(), []cli.Flag{}...),
-		Action:   r.run,
+		Name:        "run",
+		Usage:       "\tRun a function locally",
+		Aliases:     []string{"r"},
+		Category:    "DEVELOPMENT COMMANDS",
+		Description: "This command runs a function locally.",
+		Flags:       append(GetRunFlags(), []cli.Flag{}...),
+		Action:      r.run,
 	}
 }
 

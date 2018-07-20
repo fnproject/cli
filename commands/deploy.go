@@ -41,7 +41,7 @@ func DeployCommand() cli.Command {
 			return nil
 		},
 		Category:    "DEVELOPMENT COMMANDS",
-		Description: "This is the description",
+		Description: "This command deploys one or all (--all) functions to the function server.",
 		Flags:       flags,
 		Action:      cmd.deploy,
 	}
