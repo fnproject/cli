@@ -176,8 +176,12 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 	defer os.Chdir(wd)
 
 	ffV, err := common.ReadInFuncFile()
-	version := common.GetFuncYamlVersion(ffV)
-	if version == common.LatestYamlVersion {
+	if err != nil {
+		return err
+	}
+
+	switch common.GetFuncYamlVersion(ffV) {
+	case common.LatestYamlVersion:
 		fpath, ff, err := common.FindAndParseFuncFileV20180707(dir)
 		if err != nil {
 			return err
@@ -196,26 +200,26 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 		}
 
 		return p.deployFuncV20180707(c, appName, wd, fpath, ff)
-	}
-
-	fpath, ff, err := common.FindAndParseFuncfile(dir)
-	if err != nil {
-		return err
-	}
-	if appf != nil {
-		if dir == wd {
-			setRootFuncInfo(ff, appf.Name)
-		}
-	}
-
-	if appf != nil {
-		err = p.updateAppConfig(appf)
+	default:
+		fpath, ff, err := common.FindAndParseFuncfile(dir)
 		if err != nil {
-			return fmt.Errorf("Failed to update app config: %v", err)
+			return err
 		}
-	}
+		if appf != nil {
+			if dir == wd {
+				setRootFuncInfo(ff, appf.Name)
+			}
+		}
 
-	return p.deployFunc(c, appName, wd, fpath, ff)
+		if appf != nil {
+			err = p.updateAppConfig(appf)
+			if err != nil {
+				return fmt.Errorf("Failed to update app config: %v", err)
+			}
+		}
+
+		return p.deployFunc(c, appName, wd, fpath, ff)
+	}
 }
 
 // deployAll deploys all functions in an app.
@@ -336,19 +340,11 @@ func (p *deploycmd) deployFuncV20180707(c *cli.Context, appName, baseDir, funcfi
 	if appName == "" {
 		return errors.New("App name must be provided, try `--app APP_NAME`")
 	}
-	//dir := filepath.Dir(funcfilePath)
-	// get name from directory if it's not defined
+
 	if funcfile.Name == "" {
 		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
 	}
-	// if funcfile.Path == "" {
-	// 	if dir == "." {
-	// 		funcfile.Path = "/"
-	// 	} else {
-	// 		funcfile.Path = "/" + filepath.Base(dir)
-	// 	}
-	// }
-	// fmt.Printf("Deploying %s to app: %s at path: %s\n", funcfile.Name, appName, funcfile.Path)
+	fmt.Printf("Deploying %s to app: %s\n", funcfile.Name, appName)
 
 	var err error
 	if !p.noBump {
@@ -391,10 +387,6 @@ func setFuncInfoV20180707(ff *common.FuncFileV20180707, appName string) {
 		fmt.Println("Setting name")
 		ff.Name = fmt.Sprintf("%s-root", appName)
 	}
-	// if ff.en == "" {
-	// 	// then in root dir, so this will be deployed at /
-	// 	ff.Path = "/"
-	// }
 }
 
 func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *common.FuncFile) error {

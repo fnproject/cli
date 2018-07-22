@@ -52,13 +52,14 @@ func (b *buildcmd) flags() []cli.Flag {
 
 // build will take the found valid function and build it
 func (b *buildcmd) build(c *cli.Context) error {
-	var err error
-
 	dir := common.GetDir(c)
-
 	ffV, err := common.ReadInFuncFile()
-	version := common.GetFuncYamlVersion(ffV)
-	if version == common.LatestYamlVersion {
+	if err != nil {
+		return err
+	}
+
+	switch common.GetFuncYamlVersion(ffV) {
+	case common.LatestYamlVersion:
 		fpath, ff, err := common.FindAndParseFuncFileV20180707(dir)
 		if err != nil {
 			return err
@@ -73,19 +74,19 @@ func (b *buildcmd) build(c *cli.Context) error {
 		fmt.Printf("Function %v built successfully.\n", ff.ImageNameV20180707())
 		return nil
 
-	}
+	default:
+		fpath, ff, err := common.FindAndParseFuncfile(dir)
+		if err != nil {
+			return err
+		}
 
-	fpath, ff, err := common.FindAndParseFuncfile(dir)
-	if err != nil {
-		return err
-	}
+		buildArgs := c.StringSlice("build-arg")
+		ff, err = common.BuildFunc(c, fpath, ff, buildArgs, b.noCache)
+		if err != nil {
+			return err
+		}
 
-	buildArgs := c.StringSlice("build-arg")
-	ff, err = common.BuildFunc(c, fpath, ff, buildArgs, b.noCache)
-	if err != nil {
-		return err
+		fmt.Printf("Function %v built successfully.\n", ff.ImageName())
+		return nil
 	}
-
-	fmt.Printf("Function %v built successfully.\n", ff.ImageName())
-	return nil
 }
