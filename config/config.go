@@ -131,7 +131,8 @@ func LoadConfiguration(c *cli.Context) error {
 	viper.SetConfigName(context)
 
 	if viper.GetString("cli-version") != Version {
-		fmt.Printf("Welcome to Fn CLI %s - please check the release notes at %s \n\n", Version, "https://github.com/fnproject/cli/blob/master/README.md")
+		fmt.Printf("Welcome to Fn CLI %s - please check the release notes at:\n%s \n\n", Version, "https://github.com/fnproject/cli/blob/master/README.md")
+		fmt.Printf("The recommended minimum Fn Server version for use with this CLI is 0.3.603 \n\n")
 		WriteCurrentContextToConfigFile(CurrentCliVersion, Version)
 	}
 
