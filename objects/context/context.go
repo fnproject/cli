@@ -108,6 +108,13 @@ func delete(c *cli.Context) error {
 
 func inspect(c *cli.Context) error {
 	context := c.Args().Get(0)
+	if context == "" {
+		if currentContext := viper.GetString(config.CurrentContext); currentContext != "" {
+			context = currentContext
+		} else {
+			return errors.New("no context is set, please provider a context to inspect.")
+		}
+	}
 	return PrintContext(context)
 }
 
