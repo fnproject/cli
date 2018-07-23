@@ -49,6 +49,16 @@ func Delete() cli.Command {
 	}
 }
 
+func Inspect() cli.Command {
+	return cli.Command{
+		Name:     "context",
+		Usage:    "Inspect the contents of a context, if no context is specified the current-context will be used.",
+		Aliases:  []string{"ctx"},
+		Category: "MANAGEMENT COMMAND",
+		Action:   inspect,
+	}
+}
+
 func Update() cli.Command {
 	ctxMap := ContextMap{}
 	return cli.Command{
