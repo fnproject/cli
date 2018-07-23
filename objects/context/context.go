@@ -108,7 +108,10 @@ func delete(c *cli.Context) error {
 
 func inspect(c *cli.Context) error {
 	context := c.Args().Get(0)
+	return PrintContext(context)
+}
 
+func PrintContext(context string) error {
 	if check, err := checkContextFileExists(context); !check {
 		if err != nil {
 			return err
