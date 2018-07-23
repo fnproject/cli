@@ -106,6 +106,37 @@ func delete(c *cli.Context) error {
 	return nil
 }
 
+func inspect(c *cli.Context) error {
+	context := c.Args().Get(0)
+	if context == "" {
+		if currentContext := viper.GetString(config.CurrentContext); currentContext != "" {
+			context = currentContext
+		} else {
+			return errors.New("no context is set, please provider a context to inspect.")
+		}
+	}
+	return PrintContext(context)
+}
+
+func PrintContext(context string) error {
+	if check, err := checkContextFileExists(context); !check {
+		if err != nil {
+			return err
+		}
+		return errors.New("Context file not found")
+	}
+
+	contextPath := filepath.Join(config.GetHomeDir(), ".fn", "contexts", (context + fileExtension))
+	b, err := ioutil.ReadFile(contextPath)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Current context: %s\n\n", context)
+	fmt.Println(string(b))
+	return nil
+}
+
 func use(c *cli.Context) error {
 	context := c.Args().Get(0)
 

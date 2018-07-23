@@ -97,6 +97,7 @@ var GetCmds = cmd{
 
 var InspectCmds = cmd{
 	"apps":      app.Inspect(),
+	"context":   context.Inspect(),
 	"functions": fn.Inspect(),
 	"routes":    route.Inspect(),
 	"triggers":  trigger.Inspect(),
