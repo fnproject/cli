@@ -104,7 +104,6 @@ func InitCommand() cli.Command {
 		Category:    "DEVELOPMENT COMMANDS",
 		Aliases:     []string{"in"},
 		Description: "This command creates a func.yaml file in the current directory.",
-		ArgsUsage:   "[FUNCTION_NAME]",
 		Action:      a.init,
 		Flags:       initFlags(a),
 	}
