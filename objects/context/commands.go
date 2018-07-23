@@ -69,7 +69,7 @@ func Update() cli.Command {
 		Aliases:     []string{"ctx"},
 		ArgsUsage:   "<key> <value>",
 		Category:    "MANAGEMENT COMMAND",
-		Description: "This command updates context files.",
+		Description: "This command updates the current context file.",
 		Action:      ctxMap.update,
 	}
 }

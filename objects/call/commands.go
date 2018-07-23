@@ -12,7 +12,7 @@ func Get() cli.Command {
 		Usage:       "Get function call info per app",
 		Aliases:     []string{"calls", "cl"},
 		Category:    "MANAGEMENT COMMAND",
-		Description: "This command gets information call of an app.",
+		Description: "This command gets information call of a route.",
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
