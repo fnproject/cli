@@ -132,6 +132,7 @@ func PrintContext(context string) error {
 		return err
 	}
 
+	fmt.Printf("Current context: %s\n\n", context)
 	fmt.Println(string(b))
 	return nil
 }
