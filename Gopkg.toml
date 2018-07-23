@@ -58,3 +58,11 @@ ignored = ["github.com/Azure/go-ansiterm*"]
 [[constraint]]
   name = "github.com/mattn/go-isatty"
   version = "0.0.3"
+
+[[constraint]]
+  name = "github.com/ghodss/yaml"
+  version = "1.0.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/xeipuuv/gojsonschema"

@@ -9,9 +9,40 @@ import (
 
 // WalkFuncsFunc good name huh?
 type walkFuncsFunc func(path string, ff *FuncFile, err error) error
+type walkFuncsFuncV20180707 func(path string, ff *FuncFileV20180707, err error) error
 
 // WalkFuncs is similar to filepath.Walk except only returns func.yaml's (so on per function)
 func WalkFuncs(root string, walkFn walkFuncsFunc) error {
+	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			// logging this so we can figure out any common issues
+			fmt.Println("error walking filesystem:", err)
+			return err
+		}
+		// was `path != wd` necessary?
+		if info.IsDir() {
+			return nil
+		}
+
+		if !IsFuncFile(path, info) {
+			return nil
+		}
+
+		// TODO: test/try this again to speed up deploys.
+		if false && !isstale(path) {
+			return nil
+		}
+		// Then we found a func file, so let's deploy it:
+		ff, err := ParseFuncfile(path)
+		// if err != nil {
+		// return err
+		// }
+		return walkFn(path, ff, err)
+	})
+}
+
+// WalkFuncs is similar to filepath.Walk except only returns func.yaml's (so on per function)
+func WalkFuncsV20180707(root string, walkFn walkFuncsFunc) error {
 	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			// logging this so we can figure out any common issues

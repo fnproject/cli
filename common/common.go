@@ -18,6 +18,7 @@ import (
 	"unicode"
 
 	"github.com/spf13/viper"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/fatih/color"
@@ -74,6 +75,28 @@ func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []stri
 	return funcfile, nil
 }
 
+// BuildFunc bumps version and builds function.
+func BuildFuncV20180707(c *cli.Context, fpath string, funcfile *FuncFileV20180707, buildArg []string, noCache bool) (*FuncFileV20180707, error) {
+	var err error
+
+	if funcfile.Version == "" {
+		funcfile, err = BumpItV20180707(fpath, Patch)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err := localBuild(fpath, funcfile.Build); err != nil {
+		return nil, err
+	}
+
+	if err := dockerBuildV20180707(c, fpath, funcfile, buildArg, noCache); err != nil {
+		return nil, err
+	}
+
+	return funcfile, nil
+}
+
 func localBuild(path string, steps []string) error {
 	for _, cmd := range steps {
 		exe := exec.Command("/bin/sh", "-c", cmd)
@@ -117,6 +140,50 @@ func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string,
 		}
 	}
 	err = RunBuild(c, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
+	if err != nil {
+		return err
+	}
+
+	if helper != nil {
+		err := helper.AfterBuild()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func dockerBuildV20180707(c *cli.Context, fpath string, ff *FuncFileV20180707, buildArgs []string, noCache bool) error {
+	err := dockerVersionCheck()
+	if err != nil {
+		return err
+	}
+
+	dir := filepath.Dir(fpath)
+
+	var helper langs.LangHelper
+	dockerfile := filepath.Join(dir, "Dockerfile")
+	if !Exists(dockerfile) {
+		if ff.Runtime == FuncfileDockerRuntime {
+			return fmt.Errorf("Dockerfile does not exist for 'docker' runtime")
+		}
+		helper = langs.GetLangHelper(ff.Runtime)
+		if helper == nil {
+			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
+		}
+		dockerfile, err = writeTmpDockerfileV20180707(helper, dir, ff)
+		if err != nil {
+			return err
+		}
+		defer os.Remove(dockerfile)
+		if helper.HasPreBuild() {
+			err := helper.PreBuild()
+			if err != nil {
+				return err
+			}
+		}
+	}
+	err = RunBuild(c, dir, ff.ImageNameV20180707(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
 	}
@@ -291,6 +358,60 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 	return fd.Name(), err
 }
 
+func writeTmpDockerfileV20180707(helper langs.LangHelper, dir string, ff *FuncFileV20180707) (string, error) {
+	if ff.Entrypoint == "" && ff.Cmd == "" {
+		return "", errors.New("entrypoint and cmd are missing, you must provide one or the other")
+	}
+
+	fd, err := ioutil.TempFile(dir, "Dockerfile")
+	if err != nil {
+		return "", err
+	}
+	defer fd.Close()
+
+	// multi-stage build: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
+	dfLines := []string{}
+	bi := ff.Build_image
+	if bi == "" {
+		bi, err = helper.BuildFromImage()
+		if err != nil {
+			return "", err
+		}
+	}
+	if helper.IsMultiStage() {
+		// build stage
+		dfLines = append(dfLines, fmt.Sprintf("FROM %s as build-stage", bi))
+	} else {
+		dfLines = append(dfLines, fmt.Sprintf("FROM %s", bi))
+	}
+	dfLines = append(dfLines, "WORKDIR /function")
+	dfLines = append(dfLines, helper.DockerfileBuildCmds()...)
+	if helper.IsMultiStage() {
+		// final stage
+		ri := ff.Run_image
+		if ri == "" {
+			ri, err = helper.RunFromImage()
+			if err != nil {
+				return "", err
+			}
+		}
+		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
+		dfLines = append(dfLines, "WORKDIR /function")
+		dfLines = append(dfLines, helper.DockerfileCopyCmds()...)
+	}
+	if ff.Entrypoint != "" {
+		dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", stringToSlice(ff.Entrypoint)))
+	}
+	if ff.Cmd != "" {
+		dfLines = append(dfLines, fmt.Sprintf("CMD [%s]", stringToSlice(ff.Cmd)))
+	}
+	err = writeLines(fd, dfLines)
+	if err != nil {
+		return "", err
+	}
+	return fd.Name(), err
+}
+
 func writeLines(w io.Writer, lines []string) error {
 	writer := bufio.NewWriter(w)
 	for _, l := range lines {
@@ -337,6 +458,22 @@ func DockerPush(ff *FuncFile) error {
 	}
 	fmt.Printf("Pushing %v to docker registry...", ff.ImageName())
 	cmd := exec.Command("docker", "push", ff.ImageName())
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("error running docker push, are you logged into docker?: %v", err)
+	}
+	return nil
+}
+
+// DockerPush pushes to docker registry.
+func DockerPushV20180707(ff *FuncFileV20180707) error {
+	_, err := ValidateImageName(ff.ImageNameV20180707())
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Pushing %v to docker registry...", ff.ImageNameV20180707())
+	cmd := exec.Command("docker", "push", ff.ImageNameV20180707())
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
@@ -392,4 +529,32 @@ func ExtractAnnotations(c *cli.Context) map[string]interface{} {
 		}
 	}
 	return annotations
+}
+
+func ReadInFuncFile() (map[string]interface{}, error) {
+	wd := GetWd()
+
+	fpath, err := FindFuncfile(wd)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := ioutil.ReadFile(fpath)
+	if err != nil {
+		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", fpath, err)
+	}
+	var ff map[string]interface{}
+	err = yaml.Unmarshal(b, &ff)
+	if err != nil {
+		return nil, err
+	}
+
+	return ff, nil
+}
+
+func GetFuncYamlVersion(oldFF map[string]interface{}) int {
+	if _, ok := oldFF["schema_version"]; ok {
+		return oldFF["schema_version"].(int)
+	}
+	return 1
 }
