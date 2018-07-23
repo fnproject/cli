@@ -83,6 +83,40 @@ type FuncFile struct {
 	Expects Expects `yaml:"expects,omitempty" json:"expects,omitempty"`
 }
 
+// FuncFileV20180707 defines the latest internal structure of a func.yaml/json/yml
+type FuncFileV20180707 struct {
+	Schema_version int `yaml:"schema_version,omitempty" json:"schema_version,omitempty"`
+
+	Name         string `yaml:"name,omitempty" json:"name,omitempty"`
+	Version      string `yaml:"version,omitempty" json:"version,omitempty"`
+	Runtime      string `yaml:"runtime,omitempty" json:"runtime,omitempty"`
+	Build_image  string `yaml:"build_image,omitempty" json:"build_image,omitempty"` // Image to use as base for building
+	Run_image    string `yaml:"run_image,omitempty" json:"run_image,omitempty"`     // Image to use for running
+	Cmd          string `yaml:"cmd,omitempty" json:"cmd,omitempty"`
+	Entrypoint   string `yaml:"entrypoint,omitempty" json:"entrypoint,omitempty"`
+	Content_type string `yaml:"content_type,omitempty" json:"content_type,omitempty"`
+	Format       string `yaml:"format,omitempty" json:"format,omitempty"`
+	Type         string `yaml:"type,omitempty" json:"type,omitempty"`
+	Memory       uint64 `yaml:"memory,omitempty" json:"memory,omitempty"`
+	Timeout      *int32 `yaml:"timeout,omitempty" json:"timeout,omitempty"`
+	IDLE_timeout *int32 `yaml:"idle_timeout,omitempty" json:"idle_timeout,omitempty"`
+
+	Config      map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
+	Annotations map[string]interface{} `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+
+	Build []string `yaml:"build,omitempty" json:"build,omitempty"`
+
+	Expects  Expects   `yaml:"expects,omitempty" json:"expects,omitempty"`
+	Triggers []Trigger `yaml:"triggers,omitempty" json:"triggers,omitempty"`
+}
+
+// Trigger represents a trigger for a FuncFileV20180707
+type Trigger struct {
+	Name   string `yaml:"name,omitempty" json:"name,omitempty"`
+	Type   string `yaml:"type,omitempty" json:"type,omitempty"`
+	Source string `yaml:"source,omitempty" json:"source,omitempty"`
+}
+
 // ImageName returns the name of a funcfile image
 func (ff *FuncFile) ImageName() string {
 	fname := ff.Name
@@ -118,7 +152,7 @@ func (ff *FuncFile) RuntimeTag() (runtime, tag string) {
 }
 
 // findFuncfile for a func.yaml/json/yml file in path
-func findFuncfile(path string) (string, error) {
+func FindFuncfile(path string) (string, error) {
 	for _, fn := range validFuncfileNames {
 		fullfn := filepath.Join(path, fn)
 		if Exists(fullfn) {
@@ -130,7 +164,7 @@ func findFuncfile(path string) (string, error) {
 
 // FindAndParseFuncfile for a func.yaml/json/yml file.
 func FindAndParseFuncfile(path string) (fpath string, ff *FuncFile, err error) {
-	fpath, err = findFuncfile(path)
+	fpath, err = FindFuncfile(path)
 	if err != nil {
 		return "", nil, err
 	}
@@ -222,4 +256,103 @@ func IsFuncFile(path string, info os.FileInfo) bool {
 		}
 	}
 	return false
+}
+
+// --------- FuncFileV20180707 -------------
+
+func FindAndParseFuncFileV20180707(path string) (fpath string, ff *FuncFileV20180707, err error) {
+	fpath, err = FindFuncfile(path)
+	if err != nil {
+		return "", nil, err
+	}
+	ff, err = ParseFuncFileV20180707(fpath)
+	if err != nil {
+		return "", nil, err
+	}
+	return fpath, ff, err
+}
+
+func LoadFuncFileV20180707(path string) (string, *FuncFileV20180707, error) {
+	return FindAndParseFuncFileV20180707(path)
+}
+
+func ParseFuncFileV20180707(path string) (*FuncFileV20180707, error) {
+	ext := filepath.Ext(path)
+	switch ext {
+	case ".json":
+		return decodeFuncFileV20180707JSON(path)
+	case ".yaml", ".yml":
+		return decodeFuncFileV20180707YAML(path)
+	}
+	return nil, errUnexpectedFileFormat
+}
+
+func decodeFuncFileV20180707JSON(path string) (*FuncFileV20180707, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", path, err)
+	}
+	ff := &FuncFileV20180707{}
+	// ff.Route = &fnmodels.Route{}
+	err = json.NewDecoder(f).Decode(ff)
+	// ff := fff.MakeFuncFile()
+	return ff, err
+}
+
+func decodeFuncFileV20180707YAML(path string) (*FuncFileV20180707, error) {
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", path, err)
+	}
+	ff := &FuncFileV20180707{}
+	err = yaml.Unmarshal(b, ff)
+	// ff := fff.MakeFuncFile()
+	return ff, err
+}
+
+func encodeFuncFileV20180707JSON(path string, ff *FuncFileV20180707) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("could not open %s for encoding. Error: %v", path, err)
+	}
+	return json.NewEncoder(f).Encode(ff)
+}
+
+// EncodeFuncfileYAML encodes function file.
+func EncodeFuncFileV20180707YAML(path string, ff *FuncFileV20180707) error {
+	b, err := yaml.Marshal(ff)
+	if err != nil {
+		return fmt.Errorf("could not encode function file. Error: %v", err)
+	}
+	return ioutil.WriteFile(path, b, os.FileMode(0644))
+}
+
+func storeFuncFileV20180707(path string, ff *FuncFileV20180707) error {
+	ext := filepath.Ext(path)
+	switch ext {
+	case ".json":
+		return encodeFuncFileV20180707JSON(path, ff)
+	case ".yaml", ".yml":
+		return EncodeFuncFileV20180707YAML(path, ff)
+	}
+	return errUnexpectedFileFormat
+}
+
+// ImageName returns the name of a funcfile image
+func (ff *FuncFileV20180707) ImageNameV20180707() string {
+	fname := ff.Name
+	if !strings.Contains(fname, "/") {
+
+		reg := viper.GetString(config.EnvFnRegistry)
+		if reg != "" {
+			if reg[len(reg)-1] != '/' {
+				reg += "/"
+			}
+			fname = fmt.Sprintf("%s%s", reg, fname)
+		}
+	}
+	if ff.Version != "" {
+		fname = fmt.Sprintf("%s:%s", fname, ff.Version)
+	}
+	return fname
 }

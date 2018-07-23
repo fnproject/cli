@@ -74,6 +74,7 @@ func (b *bumpcmd) flags() []cli.Flag {
 func (b *bumpcmd) bump(c *cli.Context) error {
 	var t VType
 	var dir string
+
 	if b.major {
 		t = Major
 	} else if b.minor {
@@ -84,11 +85,19 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 
 	dir = GetDir(c)
 
-	_, err := bumpItWd(dir, t)
+	ff, err := ReadInFuncFile()
+	version := GetFuncYamlVersion(ff)
+	if version == LatestYamlVersion {
+		_, err = bumpItWdV20180707(dir, t)
+	} else {
+		_, err = bumpItWd(dir, t)
+	}
+
 	return err
 }
+
 func bumpItWd(wd string, vtype VType) (*FuncFile, error) {
-	fn, err := findFuncfile(wd)
+	fn, err := FindFuncfile(wd)
 	if err != nil {
 		return nil, err
 	}
@@ -154,4 +163,63 @@ func cleanImageName(name string) string {
 		slashParts[l] = slashParts[l][:i]
 	}
 	return strings.Join(slashParts, "/")
+}
+
+// --------- FuncFileV20180707 -------------
+
+func bumpItWdV20180707(wd string, vtype VType) (*FuncFileV20180707, error) {
+	fn, err := FindFuncfile(wd)
+	if err != nil {
+		return nil, err
+	}
+	return BumpItV20180707(fn, vtype)
+}
+
+// BumpIt returns updated funcfile
+func BumpItV20180707(fpath string, vtype VType) (*FuncFileV20180707, error) {
+	// fmt.Println("Bumping version in func file at: ", fpath)
+	funcfile, err := ParseFuncFileV20180707(fpath)
+	if err != nil {
+		return nil, err
+	}
+
+	funcfile, err = bumpVersionV20180707(funcfile, vtype)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := storeFuncFileV20180707(fpath, funcfile); err != nil {
+		return nil, err
+	}
+	fmt.Println("Bumped to version", funcfile.Version)
+	return funcfile, nil
+}
+
+func bumpVersionV20180707(funcfile *FuncFileV20180707, t VType) (*FuncFileV20180707, error) {
+	funcfile.Name = cleanImageName(funcfile.Name)
+	if funcfile.Version == "" {
+		funcfile.Version = InitialVersion
+		return funcfile, nil
+	}
+
+	s, err := storage.NewVersionStorage("local", funcfile.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	version := bumper.NewSemverBumper(s, "")
+	var newver *semver.Version
+	if t == Major {
+		newver, err = version.BumpMajorVersion("", "")
+	} else if t == Minor {
+		newver, err = version.BumpMinorVersion("", "")
+	} else {
+		newver, err = version.BumpPatchVersion("", "")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	funcfile.Version = newver.String()
+	return funcfile, nil
 }

@@ -152,6 +152,68 @@ func PreRun(c *cli.Context) (string, *common.FuncFile, []string, error) {
 	return fpath, ff, envVars, nil
 }
 
+func PreRunV20180707(c *cli.Context) (string, *common.FuncFileV20180707, []string, error) {
+	var dir string
+	var ff *common.FuncFileV20180707
+	var fpath string
+
+	dir = common.GetWd()
+
+	if c.String("working-dir") != "" {
+		dir = c.String("working-dir")
+	}
+
+	// if image name is passed in, it will run that image
+	path := c.Args().First() // TODO: should we ditch this?
+	if path != "" {
+		fmt.Printf("Running function at: /%s\n", path)
+		dir = filepath.Join(dir, path)
+	}
+
+	err := os.Chdir(dir)
+	if err != nil {
+		return "", nil, nil, err
+	}
+	defer os.Chdir(dir) // todo: wrap this so we can log the error if changing back fails
+
+	fpath, ff, err = common.FindAndParseFuncFileV20180707(dir)
+	if err != nil {
+		return fpath, nil, nil, err
+	}
+
+	// check for valid input
+	envVars := c.StringSlice("env")
+	// Check expected env vars defined in func file
+	for _, expected := range ff.Expects.Config {
+		n := expected.Name
+		e := getEnvValue(n, envVars)
+		if e != "" {
+			continue
+		}
+		e = os.Getenv(n)
+		if e != "" {
+			envVars = append(envVars, kvEq(n, e))
+			continue
+		}
+		if expected.Required {
+			return "", ff, envVars, fmt.Errorf("required env var %s not found, please set either set it in your environment or pass in `-e %s=X` flag.", n, n)
+		}
+		fmt.Fprintf(os.Stderr, "info: optional env var %s not found.\n", n)
+	}
+	// get name from directory if it's not defined
+	if ff.Name == "" {
+		ff.Name = filepath.Base(filepath.Dir(fpath)) // todo: should probably make a copy of ff before changing it
+	}
+
+	buildArgs := c.StringSlice("build-arg")
+	_, err = common.BuildFuncV20180707(c, fpath, ff, buildArgs, c.Bool("no-cache"))
+	if err != nil {
+		return fpath, nil, nil, err
+	}
+
+	return fpath, ff, envVars, nil
+}
+
 func getEnvValue(n string, envVars []string) string {
 	for _, e := range envVars {
 		// assuming has equals for now
@@ -164,7 +226,25 @@ func getEnvValue(n string, envVars []string) string {
 }
 
 func (r *runCmd) run(c *cli.Context) error {
+	ffV, err := common.ReadInFuncFile()
+	version := common.GetFuncYamlVersion(ffV)
+
+	if version == common.LatestYamlVersion {
+		_, ff, envVars, err := PreRunV20180707(c)
+		if err != nil {
+			return err
+		}
+		// means no memory specified through CLI args
+		// memory from func.yaml applied
+		if c.Uint64("memory") != 0 {
+			ff.Memory = c.Uint64("memory")
+		}
+
+		return RunFFV20180707(ff, Stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"), c.String("content-type"))
+	}
+
 	_, ff, envVars, err := PreRun(c)
+
 	if err != nil {
 		return err
 	}
@@ -173,6 +253,7 @@ func (r *runCmd) run(c *cli.Context) error {
 	if c.Uint64("memory") != 0 {
 		ff.Memory = c.Uint64("memory")
 	}
+
 	return RunFF(ff, Stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"), c.String("content-type"))
 }
 
@@ -284,6 +365,119 @@ func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, metho
 	cmd.Stderr = stderr
 	// cmd.Env = env
 	return cmd.Run()
+}
+
+// TODO: share all this stuff with the Docker driver in server or better yet, actually use the Docker driver
+func RunFFV20180707(ff *common.FuncFileV20180707, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int, contentType string) error {
+	sh := []string{"docker", "run", "--rm", "-i", fmt.Sprintf("--memory=%dm", ff.Memory)}
+
+	var env []string    // env for the shelled out docker run command
+	var runEnv []string // env to pass into the container via -e's
+	callID := "12345678901234567890123456"
+	if contentType == "" {
+		if ff.Content_type != "" {
+			contentType = ff.Content_type
+		} else {
+			contentType = "text/plain"
+		}
+	}
+
+	to := int32(30)
+	if ff.Timeout != nil {
+		to = *ff.Timeout
+	}
+	deadline := time.Now().Add(time.Duration(to) * time.Second)
+	deadlineS := deadline.Format(time.RFC3339)
+
+	if method == "" {
+		if stdin == nil {
+			method = "GET"
+		} else {
+			method = "POST"
+		}
+	}
+
+	if format == "" {
+		if ff.Format != "" {
+			format = ff.Format
+		} else {
+			format = DefaultFormat
+		}
+	}
+
+	// Add expected env vars that service will add
+	// Full set here: https://github.com/fnproject/fn/pull/660#issuecomment-356157279
+	runEnv = append(runEnv, kvEq("FN_TYPE", "sync"))
+	runEnv = append(runEnv, kvEq("FN_FORMAT", format))
+	runEnv = append(runEnv, kvEq("FN_PATH", TestRoute))
+	runEnv = append(runEnv, kvEq("FN_MEMORY", fmt.Sprintf("%d", ff.Memory)))
+	runEnv = append(runEnv, kvEq("FN_APP_NAME", TestApp))
+
+	// add user defined envs
+	runEnv = append(runEnv, envVars...)
+
+	var requestURL string
+	if requestURL = viper.GetString("api-url"); requestURL == "" {
+		requestURL = LocalTestURL
+	}
+
+	requestURL = requestURL + "/" + TestApp + TestRoute
+
+	if format == DefaultFormat {
+		runEnv = append(runEnv, kvEq("FN_REQUEST_URL", requestURL))
+		runEnv = append(runEnv, kvEq("FN_CALL_ID", callID))
+		runEnv = append(runEnv, kvEq("FN_METHOD", method))
+		runEnv = append(runEnv, kvEq("FN_DEADLINE", deadlineS))
+	}
+
+	if runs <= 0 {
+		runs = 1
+	}
+
+	// NOTE: 'run' does 'sync'
+
+	handler := handle(format)
+
+	// TODO: we really should handle multiple runs better, clearly delimiting them,
+	// as well as at least an option for outputting the entire http / json blob.
+
+	stdin, stdout, err := handler(runConfig{
+		runs:        runs,
+		method:      method,
+		url:         requestURL,
+		contentType: contentType,
+		callID:      callID,
+		deadline:    deadlineS,
+		stdin:       stdin,
+		stdout:      stdout,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for _, l := range links {
+		sh = append(sh, "--link", l)
+	}
+
+	dockerenv := []string{"DOCKER_TLS_VERIFY", "DOCKER_HOST", "DOCKER_CERT_PATH", "DOCKER_MACHINE_NAME"}
+	for _, e := range dockerenv {
+		env = append(env, fmt.Sprint(e, "=", os.Getenv(e)))
+	}
+
+	for _, e := range runEnv {
+		sh = append(sh, "-e", e)
+	}
+
+	sh = append(sh, ff.ImageNameV20180707())
+	cmd := exec.Command(sh[0], sh[1:]...)
+	cmd.Stdin = stdin
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+
+	// cmd.Env = env
+	cmd.Run()
+	return nil
 }
 
 type runConfig struct {

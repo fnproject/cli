@@ -65,7 +65,7 @@ func newFn() *cli.App {
 	{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}
 	
 {{bold "USAGE"}}
-	{{boldcyan .HelpName}}{{if .VisibleFlags}}{{cyan " [global options]"}}{{end}} {{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{if .Description}}
+	{{boldcyan "fn"}}{{if .VisibleFlags}}{{cyan " [global options] "}}{{end}}` + color.BoldCyan(`{{trim .HelpName "fn"}}`) + `{{" "}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{if .Description}}
 	
 {{bold "DESCRIPTION"}}
 	{{.Description}}{{end}}{{end}}{{end}}{{range .VisibleCategories}}{{if .Name}}
@@ -86,10 +86,10 @@ func newFn() *cli.App {
 	// cli.go uses text/template to render templates. You can render custom help text by setting this variable.
 	cli.SubcommandHelpTemplate = `
 {{range .VisibleCategories}}{{if .Name}}{{bold .Name}}{{end}}{{end}}
-	{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}
+	{{boldcyan .Name}}{{if .Usage}}{{" - "}}{{italic .Usage}}
 		
-{{bold "USAGE"}}
-	{{boldcyan .HelpName}}{{if .VisibleFlags}}{{cyan " [global options] "}}{{end}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{end}}{{if .Description}}
+{{bold "USAGE (this is the subcommand template)"}}
+	{{boldcyan "fn"}}{{if .VisibleFlags}}{{cyan " [global options]"}}{{end}}` + color.BoldCyan(`{{trim .HelpName "fn"}}`) + `{{" "}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{end}}{{if .Description}}
 		
 {{bold "DESCRIPTION"}}
 	{{.Description}}{{end}}{{if .Commands}}
@@ -109,8 +109,8 @@ func newFn() *cli.App {
 {{if .Category}}{{bold .Category}}{{end}}
 	{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}
 		
-{{bold "USAGE"}}
-	{{boldcyan .HelpName}}{{cyan " [global options] "}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{end}}{{if .Description}}
+{{bold "USAGE (this is the command template)"}}
+	{{boldcyan "fn"}}{{cyan " [global options]"}}` + color.BoldCyan(`{{trim .HelpName "fn"}}`) + `{{" "}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{" "}}{{end}}{{if .Flags}}{{yellow "[command options]"}}{{end}}{{end}}{{if .Description}}
 		
 {{bold "DESCRIPTION"}}
 	{{.Description}}{{end}}{{if .Subcommands}}
@@ -144,6 +144,18 @@ func newFn() *cli.App {
 	}
 
 	return app
+}
+
+//Trim HelpName, removing 'fn' from the HelpName string
+func TrimLeftChars(s string, n int) string {
+	m := 0
+	for i := range s {
+		if m >= n {
+			return s[i:]
+		}
+		m++
+	}
+	return s[:0]
 }
 
 //Override function for customised app template

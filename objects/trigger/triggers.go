@@ -170,14 +170,14 @@ func (t *triggersCmd) update(c *cli.Context) error {
 	fnName := c.Args().Get(1)
 	triggerName := c.Args().Get(2)
 
-	trigger, err := getTrigger(t.client, appName, fnName, triggerName)
+	trigger, err := GetTrigger(t.client, appName, fnName, triggerName)
 	if err != nil {
 		return err
 	}
 
 	WithFlags(c, trigger)
 
-	err = t.putTrigger(trigger)
+	err = PutTrigger(t.client, trigger)
 	if err != nil {
 		return err
 	}
@@ -186,8 +186,8 @@ func (t *triggersCmd) update(c *cli.Context) error {
 	return nil
 }
 
-func (t *triggersCmd) putTrigger(trigger *models.Trigger) error {
-	_, err := t.client.Triggers.UpdateTrigger(&apitriggers.UpdateTriggerParams{
+func PutTrigger(t *clientv2.Fn, trigger *models.Trigger) error {
+	_, err := t.Triggers.UpdateTrigger(&apitriggers.UpdateTriggerParams{
 		Context:   context.Background(),
 		TriggerID: trigger.ID,
 		Body:      trigger,
@@ -211,7 +211,7 @@ func (t *triggersCmd) inspect(c *cli.Context) error {
 	triggerName := c.Args().Get(2)
 	prop := c.Args().Get(3)
 
-	trigger, err := getTrigger(t.client, appName, fnName, triggerName)
+	trigger, err := GetTrigger(t.client, appName, fnName, triggerName)
 	if err != nil {
 		return err
 	}
@@ -250,7 +250,7 @@ func (t *triggersCmd) delete(c *cli.Context) error {
 	fnName := c.Args().Get(1)
 	triggerName := c.Args().Get(2)
 
-	trigger, err := getTrigger(t.client, appName, fnName, triggerName)
+	trigger, err := GetTrigger(t.client, appName, fnName, triggerName)
 	if err != nil {
 		return err
 	}
@@ -267,7 +267,7 @@ func (t *triggersCmd) delete(c *cli.Context) error {
 	return nil
 }
 
-func getTrigger(client *clientv2.Fn, appName, fnName, triggerName string) (*models.Trigger, error) {
+func GetTrigger(client *clientv2.Fn, appName, fnName, triggerName string) (*models.Trigger, error) {
 	app, err := app.GetAppByName(appName)
 	if err != nil {
 		return nil, err
@@ -278,7 +278,7 @@ func getTrigger(client *clientv2.Fn, appName, fnName, triggerName string) (*mode
 		return nil, err
 	}
 
-	trigger, err := getTriggerByName(client, app.ID, fn.ID, triggerName)
+	trigger, err := GetTriggerByName(client, app.ID, fn.ID, triggerName)
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +286,7 @@ func getTrigger(client *clientv2.Fn, appName, fnName, triggerName string) (*mode
 	return trigger, nil
 }
 
-func getTriggerByName(client *clientv2.Fn, appId string, fnId string, triggerName string) (*models.Trigger, error) {
+func GetTriggerByName(client *clientv2.Fn, appId string, fnId string, triggerName string) (*models.Trigger, error) {
 	triggerList, err := client.Triggers.ListTriggers(&apitriggers.ListTriggersParams{
 		Context: context.Background(),
 		AppID:   &appId,
