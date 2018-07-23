@@ -22,6 +22,7 @@ import (
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/fatih/color"
+	"github.com/fnproject/cli/config"
 	"github.com/fnproject/cli/langs"
 	"github.com/urfave/cli"
 )
@@ -107,6 +108,21 @@ func localBuild(path string, steps []string) error {
 	}
 
 	return nil
+}
+
+func PrintContextualInfo() {
+	var registry, currentContext string
+	registry = viper.GetString(config.EnvFnRegistry)
+	if registry == "" {
+		registry = "fn registry is not set"
+	}
+	fmt.Println("FN_REGISTRY: ", registry)
+
+	currentContext = viper.GetString(config.CurrentContext)
+	if currentContext == "" {
+		currentContext = "no context currently in use"
+	}
+	fmt.Println("Current Context: ", currentContext)
 }
 
 func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string, noCache bool) error {
@@ -214,6 +230,7 @@ func RunBuild(c *cli.Context, dir, imageName, dockerfile string, buildArgs []str
 		fmt.Println()
 		buildOut = os.Stdout
 		buildErr = os.Stderr
+		PrintContextualInfo()
 	} else {
 		// print dots. quit channel explanation: https://stackoverflow.com/a/16466581/105562
 		ticker := time.NewTicker(1 * time.Second)
