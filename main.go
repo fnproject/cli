@@ -88,7 +88,7 @@ func newFn() *cli.App {
 {{range .VisibleCategories}}{{if .Name}}{{bold .Name}}{{end}}{{end}}
 	{{boldcyan .Name}}{{if .Usage}}{{" - "}}{{italic .Usage}}
 		
-{{bold "USAGE (this is the subcommand template)"}}
+{{bold "USAGE"}}
 	{{boldcyan "fn"}}{{if .VisibleFlags}}{{cyan " [global options]"}}{{end}}` + color.BoldCyan(`{{trim .HelpName "fn"}}`) + `{{" "}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{end}}{{if .Description}}
 		
 {{bold "DESCRIPTION"}}
@@ -109,7 +109,7 @@ func newFn() *cli.App {
 {{if .Category}}{{bold .Category}}{{end}}
 	{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}
 		
-{{bold "USAGE (this is the command template)"}}
+{{bold "USAGE"}}
 	{{boldcyan "fn"}}{{cyan " [global options]"}}` + color.BoldCyan(`{{trim .HelpName "fn"}}`) + `{{" "}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{" "}}{{end}}{{if .Flags}}{{yellow "[command options]"}}{{end}}{{end}}{{if .Description}}
 		
 {{bold "DESCRIPTION"}}
