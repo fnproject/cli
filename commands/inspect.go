@@ -14,7 +14,7 @@ func InspectCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
-		Description: "This command allows to inspect the properties of an object ('app','route','trigger', 'function').",
+		Description: "This command allows to inspect the properties of an object ('app', 'function', 'route' or 'trigger').",
 		Subcommands: GetCommands(InspectCmds),
 	}
 }

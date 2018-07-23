@@ -24,7 +24,7 @@ func ConfigCommand(command string) cli.Command {
 		Usage:       "Manage configurations for apps and routes",
 		Aliases:     []string{"cf"},
 		ArgsUsage:   "<subcommand>",
-		Description: "This command unsets the configuration of created objects ('app', 'function', 'route').",
+		Description: "This command unsets the configuration of created objects ('app', 'function' or 'route').",
 		Subcommands: cmds,
 	}
 }
