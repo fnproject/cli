@@ -130,10 +130,12 @@ func LoadConfiguration(c *cli.Context) error {
 	viper.AddConfigPath(filepath.Join(home, rootConfigPathName, contextsPathName))
 	viper.SetConfigName(context)
 
-	if viper.GetString("cli-version") != Version {
-		fmt.Printf("Welcome to Fn CLI %s - please check the release notes at:\n%s \n\n", Version, "https://github.com/fnproject/cli/blob/master/README.md")
-		WriteCurrentContextToConfigFile(CurrentCliVersion, Version)
+	if viper.GetString("cli-version") != "" {
+		if viper.GetString("cli-version") != Version {
+			fmt.Printf("Welcome to Fn CLI %s - please check the release notes at:\n%s \n\n", Version, "https://github.com/fnproject/cli/blob/master/README.md")
+		}
 	}
+	WriteCurrentContextToConfigFile(CurrentCliVersion, Version)
 
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Printf("%v \n", err)
