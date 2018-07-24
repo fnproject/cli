@@ -20,10 +20,11 @@ func ConfigCommand(command string) cli.Command {
 
 	return cli.Command{
 		Name:        "config",
+		ShortName:   "config",
 		Usage:       "Manage configurations for apps and routes",
 		Aliases:     []string{"cf"},
 		ArgsUsage:   "<subcommand>",
-		Description: "This command unsets the configuration of created objects ('app', 'function', 'route').",
+		Description: "This command unsets the configuration of created objects ('app', 'function' or 'route').",
 		Subcommands: cmds,
 	}
 }
