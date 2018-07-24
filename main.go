@@ -65,7 +65,7 @@ func newFn() *cli.App {
 	{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}
 	
 {{bold "USAGE"}}
-	{{boldcyan "fn"}}{{if .VisibleFlags}}{{cyan " [global options] "}}{{end}}` + color.BoldCyan(`{{trim .HelpName "fn"}}`) + `{{" "}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{if .Description}}
+	{{boldcyan "fn"}}{{if .VisibleFlags}}{{cyan " [global options] "}}{{end}}` + color.BoldCyan(`{{trim .HelpName "fn"}}`) + `{{" "}}{{if .Flags}}{{yellow "[command options] "}}{{end}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Description}}
 	
 {{bold "DESCRIPTION"}}
 	{{.Description}}{{end}}{{end}}{{end}}{{range .VisibleCategories}}{{if .Name}}
@@ -89,7 +89,7 @@ func newFn() *cli.App {
 	{{boldcyan .Name}}{{if .Usage}}{{" - "}}{{italic .Usage}}
 		
 {{bold "USAGE"}}
-	{{boldcyan "fn"}}{{if .VisibleFlags}}{{cyan " [global options]"}}{{end}}` + color.BoldCyan(`{{trim .HelpName "fn"}}`) + `{{" "}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{if .Flags}}{{yellow " [command options]"}}{{end}}{{end}}{{if .Description}}
+	{{boldcyan "fn"}}{{if .VisibleFlags}}{{cyan " [global options]"}}{{end}}` + color.BoldCyan(`{{trim .HelpName "fn"}}`) + `{{" "}}{{if .Flags}}{{yellow "[command options] "}}{{end}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{end}}{{end}}{{if .Description}}
 		
 {{bold "DESCRIPTION"}}
 	{{.Description}}{{end}}{{if .Commands}}
@@ -110,7 +110,7 @@ func newFn() *cli.App {
 	{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}
 		
 {{bold "USAGE"}}
-	{{boldcyan "fn"}}{{cyan " [global options]"}}` + color.BoldCyan(`{{trim .HelpName "fn"}}`) + `{{" "}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{" "}}{{end}}{{if .Flags}}{{yellow "[command options]"}}{{end}}{{end}}{{if .Description}}
+	{{boldcyan "fn"}}{{cyan " [global options]"}}` + color.BoldCyan(`{{trim .HelpName "fn"}}`) + `{{" "}}{{if .Flags}}{{yellow "[command options] "}}{{end}}{{if .ArgsUsage}}{{brightred .ArgsUsage}}{{" "}}{{end}}{{end}}{{if .Description}}
 		
 {{bold "DESCRIPTION"}}
 	{{.Description}}{{end}}{{if .Subcommands}}
