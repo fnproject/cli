@@ -42,6 +42,7 @@ func DeployCommand() cli.Command {
 		},
 		Category:    "DEVELOPMENT COMMANDS",
 		Description: "This command deploys one or all (--all) functions to the function server.",
+		ArgsUsage:   "[function-subdirectory]",
 		Flags:       flags,
 		Action:      cmd.deploy,
 	}
