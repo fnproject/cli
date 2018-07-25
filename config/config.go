@@ -130,12 +130,10 @@ func LoadConfiguration(c *cli.Context) error {
 	viper.AddConfigPath(filepath.Join(home, rootConfigPathName, contextsPathName))
 	viper.SetConfigName(context)
 
-	if viper.GetString("cli-version") != "" {
-		if viper.GetString("cli-version") != Version {
-			fmt.Printf("Welcome to Fn CLI %s - please check the release notes at:\n%s \n\n", Version, "https://github.com/fnproject/cli/blob/master/README.md")
-		}
+	if viper.GetString("cli-version") != Version {
+		fmt.Printf("Welcome to Fn CLI %s - please check the release notes at:\n%s \n\n", Version, "https://github.com/fnproject/cli/blob/master/README.md")
+		WriteConfigValueToConfigFile(CurrentCliVersion, Version)
 	}
-	WriteConfigValueToConfigFile(CurrentCliVersion, Version)
 
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Printf("%v \n", err)
@@ -143,6 +141,11 @@ func LoadConfiguration(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
+		WriteConfigValueToConfigFile(CurrentCliVersion, Version)
+		if err != nil {
+			return err
+		}
+
 		fmt.Println("current context has been set to default")
 		return nil
 	}
@@ -174,6 +177,7 @@ func WriteConfigValueToConfigFile(key, value string) error {
 			configValues[k] = v
 		}
 	}
+	configValues[key] = value
 
 	err = WriteYamlFile(f.Name(), &configValues)
 	if err != nil {
