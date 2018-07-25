@@ -12,8 +12,8 @@ import (
 func VersionCommand() cli.Command {
 	return cli.Command{
 		Name:        "version",
-		Usage:       "Display CLI and server versions",
-		Description: "This is commands shows the latest client and server version.",
+		Usage:       "Display Fn CLI and Fn Server versions",
+		Description: "This command shows the version of the Fn CLI being used and the version of the Fn Server referenced by the current context, if available.",
 		Action:      versionCMD,
 	}
 }

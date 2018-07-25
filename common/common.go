@@ -114,13 +114,13 @@ func PrintContextualInfo() {
 	var registry, currentContext string
 	registry = viper.GetString(config.EnvFnRegistry)
 	if registry == "" {
-		registry = "fn registry is not set"
+		registry = "FN_REGISTRY is not set."
 	}
 	fmt.Println("FN_REGISTRY: ", registry)
 
 	currentContext = viper.GetString(config.CurrentContext)
 	if currentContext == "" {
-		currentContext = "no context currently in use"
+		currentContext = "No context currently in use."
 	}
 	fmt.Println("Current Context: ", currentContext)
 }

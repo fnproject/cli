@@ -135,11 +135,11 @@ func LoadConfiguration(c *cli.Context) error {
 			fmt.Printf("Welcome to Fn CLI %s - please check the release notes at:\n%s \n\n", Version, "https://github.com/fnproject/cli/blob/master/README.md")
 		}
 	}
-	WriteCurrentContextToConfigFile(CurrentCliVersion, Version)
+	WriteConfigValueToConfigFile(CurrentCliVersion, Version)
 
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Printf("%v \n", err)
-		err := WriteCurrentContextToConfigFile(CurrentContext, "default")
+		err := WriteConfigValueToConfigFile(CurrentContext, "default")
 		if err != nil {
 			return err
 		}
@@ -151,7 +151,7 @@ func LoadConfiguration(c *cli.Context) error {
 	return nil
 }
 
-func WriteCurrentContextToConfigFile(key, value string) error {
+func WriteConfigValueToConfigFile(key, value string) error {
 	home := GetHomeDir()
 
 	configFilePath := filepath.Join(home, rootConfigPathName, contextConfigFileName)
