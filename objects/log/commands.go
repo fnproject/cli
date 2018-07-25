@@ -9,10 +9,10 @@ func Get() cli.Command {
 	l := logsCmd{}
 	return cli.Command{
 		Name:        "logs",
-		Usage:       "Get logs for a call, providing call_id or last (l) to retrieve the most recent calls logs",
+		Usage:       "Get logs for a call, providing call_id or last (l)",
 		Aliases:     []string{"log", "lg"},
 		Category:    "MANAGEMENT COMMAND",
-		Description: "This is the description",
+		Description: "This command gets logs for a call to retrieve the most recent calls logs.",
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {

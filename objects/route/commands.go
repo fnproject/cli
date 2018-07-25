@@ -67,10 +67,11 @@ func List() cli.Command {
 func Delete() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "Delete a route from an application `app`",
-		Category: "MANAGEMENT COMMAND",
-		Aliases:  []string{"routes", "r"},
+		Name:        "route",
+		Usage:       "Delete a route",
+		Description: "This command deletes a route from an application `app`.",
+		Category:    "MANAGEMENT COMMAND",
+		Aliases:     []string{"routes", "r"},
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -89,10 +90,11 @@ func Delete() cli.Command {
 func Inspect() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "Retrieve one or all routes properties",
-		Aliases:  []string{"routes", "r"},
-		Category: "MANAGEMENT COMMAND",
+		Name:        "route",
+		Usage:       "Retrieve one or all routes properties",
+		Description: "This command gets one or all routes properties.",
+		Aliases:     []string{"routes", "r"},
+		Category:    "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -111,10 +113,11 @@ func Inspect() cli.Command {
 func Update() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "Update a route in application",
-		Aliases:  []string{"routes", "r"},
-		Category: "MANAGEMENT COMMAND",
+		Name:        "route",
+		Usage:       "Update a route in application",
+		Aliases:     []string{"routes", "r"},
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This command updates a route in an application `app`.",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -134,10 +137,11 @@ func Update() cli.Command {
 func GetConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "Inspect configuration key for this route",
-		Aliases:  []string{"routes", "r"},
-		Category: "MANAGEMENT COMMAND",
+		Name:        "route",
+		Usage:       "Inspect configuration key for this route",
+		Description: "This command gets the configurations for a route.",
+		Aliases:     []string{"routes", "r"},
+		Category:    "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -156,10 +160,11 @@ func GetConfig() cli.Command {
 func SetConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "Store a configuration key for this route",
-		Category: "MANAGEMENT COMMAND",
-		Aliases:  []string{"routes", "r"},
+		Name:        "route",
+		Usage:       "Store a configuration key for this route",
+		Description: "This command sets configurations for a route.",
+		Category:    "MANAGEMENT COMMAND",
+		Aliases:     []string{"routes", "r"},
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -178,10 +183,11 @@ func SetConfig() cli.Command {
 func ListConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "List configuration key/value pairs for this route",
-		Aliases:  []string{"routes", "r"},
-		Category: "MANAGEMENT COMMAND",
+		Name:        "route",
+		Usage:       "List configuration key/value pairs for this route",
+		Description: "This command returs a list of configurations for a route.",
+		Aliases:     []string{"routes", "r"},
+		Category:    "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -200,10 +206,11 @@ func ListConfig() cli.Command {
 func UnsetConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "Remove a configuration key for this route",
-		Aliases:  []string{"routes", "r"},
-		Category: "MANAGEMENT COMMAND",
+		Name:        "route",
+		Usage:       "Remove a configuration key for this route",
+		Description: "This command unsets configurations for a route.",
+		Aliases:     []string{"routes", "r"},
+		Category:    "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
