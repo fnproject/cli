@@ -17,6 +17,7 @@ func init() {
 		"bold":               Bold,
 		"italic":             Italic,
 		"join":               strings.Join,
+		"trim":               strings.TrimLeft,
 		"cyan":               Cyan,
 		"brightcyan":         BrightCyan,
 		"boldcyan":           BoldCyan,

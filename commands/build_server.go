@@ -25,7 +25,7 @@ func BuildServerCommand() cli.Command {
 		Name:        "build-server",
 		Usage:       "Build custom Fn server",
 		Category:    "SERVER COMMANDS",
-		Description: "This is the description",
+		Description: "This command builds a custom Fn server.",
 		Flags:       flags,
 		Action:      cmd.buildServer,
 	}

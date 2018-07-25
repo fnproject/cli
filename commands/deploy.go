@@ -29,7 +29,7 @@ func DeployCommand() cli.Command {
 	flags = append(flags, cmd.flags()...)
 	return cli.Command{
 		Name:    "deploy",
-		Usage:   "\tDeploys a function to the functions server. (bumps, build, pushes and updates route)",
+		Usage:   "\tDeploys a function to the functions server (bumps, build, pushes and updates route).",
 		Aliases: []string{"dp"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
@@ -42,6 +42,7 @@ func DeployCommand() cli.Command {
 		},
 		Category:    "DEVELOPMENT COMMANDS",
 		Description: "This command deploys one or all (--all) functions to the function server.",
+		ArgsUsage:   "[function-subdirectory]",
 		Flags:       flags,
 		Action:      cmd.deploy,
 	}

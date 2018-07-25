@@ -36,6 +36,7 @@ func RunCommand() cli.Command {
 		Aliases:     []string{"r"},
 		Category:    "DEVELOPMENT COMMANDS",
 		Description: "This command runs a function locally.",
+		ArgsUsage:   "[function-subdirectory]",
 		Flags:       append(GetRunFlags(), []cli.Flag{}...),
 		Action:      r.run,
 	}
