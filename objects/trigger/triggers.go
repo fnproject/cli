@@ -112,21 +112,30 @@ func CreateTrigger(client *clientv2.Fn, trigger *models.Trigger) error {
 func (t *triggersCmd) list(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
+	var params *apitriggers.ListTriggersParams
 
 	app, err := app.GetAppByName(appName)
 	if err != nil {
 		return err
 	}
 
-	fn, err := fn.GetFnByName(t.client, app.ID, fnName)
-	if err != nil {
-		return err
-	}
+	if len(fnName) == 0 {
+		params = &apitriggers.ListTriggersParams{
+			Context: context.Background(),
+			AppID:   &app.ID,
+		}
 
-	params := &apitriggers.ListTriggersParams{
-		Context: context.Background(),
-		AppID:   &app.ID,
-		FnID:    &fn.ID,
+	} else {
+
+		fn, err := fn.GetFnByName(t.client, app.ID, fnName)
+		if err != nil {
+			return err
+		}
+		params = &apitriggers.ListTriggersParams{
+			Context: context.Background(),
+			AppID:   &app.ID,
+			FnID:    &fn.ID,
+		}
 	}
 
 	var resTriggers []*models.Trigger
@@ -150,7 +159,11 @@ func (t *triggersCmd) list(c *cli.Context) error {
 	}
 
 	if len(resTriggers) == 0 {
-		fmt.Fprintf(os.Stderr, "No triggers found for function: %s\n", fnName)
+		if len(fnName) == 0 {
+			fmt.Fprintf(os.Stderr, "No triggers found for app: %s\n", appName)
+		} else {
+			fmt.Fprintf(os.Stderr, "No triggers found for function: %s\n", fnName)
+		}
 		return nil
 	}
 

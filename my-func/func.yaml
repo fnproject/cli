@@ -1,0 +1,10 @@
+schema_version: 20180708
+name: my-func
+version: 0.0.10
+runtime: go
+entrypoint: ./func
+format: json
+triggers:
+- name: my-func-trigger
+  type: http
+  source: /my-func-trigger

@@ -49,7 +49,7 @@ func List() cli.Command {
 			t.client = t.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app-name> <function-name>",
+		ArgsUsage: "<app-name> [function-name]",
 		Action:    t.list,
 		Flags: []cli.Flag{
 			cli.StringFlag{
