@@ -9,6 +9,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/fnproject/fn_go/clientv2/fns"
+
 	"github.com/jmoiron/jsonq"
 
 	"github.com/fnproject/cli/common"
@@ -139,7 +141,9 @@ func (t *triggersCmd) list(c *cli.Context) error {
 	}
 
 	var resTriggers []*models.Trigger
+	//var resFns []*models.Fn
 	for {
+
 		resp, err := t.client.Triggers.ListTriggers(params)
 		if err != nil {
 			return err
@@ -168,13 +172,30 @@ func (t *triggersCmd) list(c *cli.Context) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprint(w, "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
-	for _, trigger := range resTriggers {
-		endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
-		fmt.Fprint(w, trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
+	if len(fnName) != 0 {
+
+		fmt.Fprint(w, "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
+		for _, trigger := range resTriggers {
+			endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
+			fmt.Fprint(w, trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
+		}
+	} else {
+		fmt.Fprint(w, "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\t", "FUNCTION", "\n")
+		for _, trigger := range resTriggers {
+			endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
+
+			resp, err := t.client.Fns.GetFn(&fns.GetFnParams{
+				FnID:    trigger.FnID,
+				Context: context.Background(),
+			})
+			if err != nil {
+				return err
+			}
+			fnName = resp.Payload.Name
+			fmt.Fprint(w, trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\t", fnName, "\n")
+		}
 	}
 	w.Flush()
-
 	return nil
 }
 
