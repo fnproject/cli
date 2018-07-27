@@ -218,7 +218,6 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 	}
 
 	runtime := c.String("runtime")
-	fmt.Println("runtime: ", runtime)
 
 	runtimeSpecified := runtime != ""
 

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/fnproject/fn_go/clientv2/fns"
+
 	"github.com/jmoiron/jsonq"
 
 	"github.com/fnproject/cli/common"
@@ -112,25 +114,36 @@ func CreateTrigger(client *clientv2.Fn, trigger *models.Trigger) error {
 func (t *triggersCmd) list(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
+	var params *apitriggers.ListTriggersParams
 
 	app, err := app.GetAppByName(appName)
 	if err != nil {
 		return err
 	}
 
-	fn, err := fn.GetFnByName(t.client, app.ID, fnName)
-	if err != nil {
-		return err
-	}
+	if len(fnName) == 0 {
+		params = &apitriggers.ListTriggersParams{
+			Context: context.Background(),
+			AppID:   &app.ID,
+		}
 
-	params := &apitriggers.ListTriggersParams{
-		Context: context.Background(),
-		AppID:   &app.ID,
-		FnID:    &fn.ID,
+	} else {
+
+		fn, err := fn.GetFnByName(t.client, app.ID, fnName)
+		if err != nil {
+			return err
+		}
+		params = &apitriggers.ListTriggersParams{
+			Context: context.Background(),
+			AppID:   &app.ID,
+			FnID:    &fn.ID,
+		}
 	}
 
 	var resTriggers []*models.Trigger
+	//var resFns []*models.Fn
 	for {
+
 		resp, err := t.client.Triggers.ListTriggers(params)
 		if err != nil {
 			return err
@@ -150,18 +163,39 @@ func (t *triggersCmd) list(c *cli.Context) error {
 	}
 
 	if len(resTriggers) == 0 {
-		fmt.Fprintf(os.Stderr, "No triggers found for function: %s\n", fnName)
+		if len(fnName) == 0 {
+			fmt.Fprintf(os.Stderr, "No triggers found for app: %s\n", appName)
+		} else {
+			fmt.Fprintf(os.Stderr, "No triggers found for function: %s\n", fnName)
+		}
 		return nil
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprint(w, "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
-	for _, trigger := range resTriggers {
-		endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
-		fmt.Fprint(w, trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
+	if len(fnName) != 0 {
+
+		fmt.Fprint(w, "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
+		for _, trigger := range resTriggers {
+			endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
+			fmt.Fprint(w, trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
+		}
+	} else {
+		fmt.Fprint(w, "FUNCTION", "\t", "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
+		for _, trigger := range resTriggers {
+			endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
+
+			resp, err := t.client.Fns.GetFn(&fns.GetFnParams{
+				FnID:    trigger.FnID,
+				Context: context.Background(),
+			})
+			if err != nil {
+				return err
+			}
+			fnName = resp.Payload.Name
+			fmt.Fprint(w, fnName, "\t", trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
+		}
 	}
 	w.Flush()
-
 	return nil
 }
 
