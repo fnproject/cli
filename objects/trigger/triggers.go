@@ -180,7 +180,7 @@ func (t *triggersCmd) list(c *cli.Context) error {
 			fmt.Fprint(w, trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
 		}
 	} else {
-		fmt.Fprint(w, "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\t", "FUNCTION", "\n")
+		fmt.Fprint(w, "FUNCTION", "\t", "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
 		for _, trigger := range resTriggers {
 			endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
 
@@ -192,7 +192,7 @@ func (t *triggersCmd) list(c *cli.Context) error {
 				return err
 			}
 			fnName = resp.Payload.Name
-			fmt.Fprint(w, trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\t", fnName, "\n")
+			fmt.Fprint(w, fnName, "\t", trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
 		}
 	}
 	w.Flush()
