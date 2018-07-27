@@ -7,10 +7,12 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"strings"
 
 	"github.com/fnproject/fn_go/provider"
+	"github.com/go-openapi/runtime/logger"
 )
 
 const (
@@ -86,7 +88,24 @@ func CallFN(provider provider.Provider, appName string, route string, content io
 	transport := provider.WrapCallTransport(http.DefaultTransport)
 	httpClient := http.Client{Transport: transport}
 
+	if logger.DebugEnabled() {
+		b, err := httputil.DumpRequestOut(req, content != nil)
+		if err != nil {
+			return err
+		}
+		fmt.Printf(string(b) + "\n")
+	}
+
 	resp, err := httpClient.Do(req)
+
+	if logger.DebugEnabled() {
+		b, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			return err
+		}
+		fmt.Printf(string(b) + "\n")
+	}
+
 	if err != nil {
 		return fmt.Errorf("Error running route: %s", err)
 	}
