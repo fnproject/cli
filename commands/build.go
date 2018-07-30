@@ -2,6 +2,8 @@ package commands
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/fnproject/cli/common"
 	"github.com/urfave/cli"
@@ -16,6 +18,7 @@ func BuildCommand() cli.Command {
 		Usage:       "\tBuild function version",
 		Category:    "DEVELOPMENT COMMANDS",
 		Description: "This command builds a new function.",
+		ArgsUsage:   "[function-subdirectory]",
 		Aliases:     []string{"bu"},
 		Flags:       flags,
 		Action:      cmd.build,
@@ -53,6 +56,19 @@ func (b *buildcmd) flags() []cli.Flag {
 // build will take the found valid function and build it
 func (b *buildcmd) build(c *cli.Context) error {
 	dir := common.GetDir(c)
+
+	path := c.Args().First()
+	if path != "" {
+		fmt.Printf("Building function at: /%s\n", path)
+		dir = filepath.Join(dir, path)
+	}
+
+	err := os.Chdir(dir)
+	if err != nil {
+		return err
+	}
+	defer os.Chdir(dir)
+
 	ffV, err := common.ReadInFuncFile()
 	if err != nil {
 		return err

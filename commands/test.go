@@ -33,6 +33,7 @@ func TestCommand() cli.Command {
 		Aliases:     []string{"t"},
 		Category:    "DEVELOPMENT COMMANDS",
 		Description: "This commmand runs fn tests if present.",
+		ArgsUsage:   "[function-subdirectory]",
 		Flags:       cmd.flags(),
 		Action:      cmd.test,
 		Before: func(cxt *cli.Context) error {
