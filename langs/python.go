@@ -71,17 +71,17 @@ func (h *PythonLangHelper) Entrypoint() (string, error) {
 }
 
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
-	pip := "pip3"
 	r := []string{}
-	r = append(r, "RUN apt-get update && apt-get install --no-install-recommends -qy build-essential gcc")
-	if exists("requirements.txt") {
-		r = append(r,
-			"ADD requirements.txt /function/",
-			fmt.Sprintf("RUN %v install --no-cache --no-cache-dir -r requirements.txt", pip),
-		)
-	}
 	r = append(r, "ADD . /function/")
-	r = append(r, "RUN rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv")
+	if exists("requirements.txt") {
+		r = append(r, `
+RUN apt-get update && apt-get install --no-install-recommends -qy build-essential gcc &&\
+    pip3 install --no-cache --no-cache-dir -r requirements.txt &&\
+    apt-get remove -y --purge build-essential gcc && apt-get autoremove -y &&\
+    rm -rf /var/lib/apt/lists/ &&\
+    apt clean all &&\
+    rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv`)
+	}
 	return r
 }
 

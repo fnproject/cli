@@ -37,7 +37,7 @@ func List() cli.Command {
 		Name:        "triggers",
 		ShortName:   "trigs",
 		Category:    "MANAGEMENT COMMAND",
-		Description: "This command returns a list of all created triggers.",
+		Description: "This command returns a list of all created triggers for an 'app' or for a specific 'function' of an application.",
 		Aliases:     []string{"t", "tr"},
 		Usage:       "List all triggers",
 		Before: func(ctx *cli.Context) error {
@@ -49,7 +49,7 @@ func List() cli.Command {
 			t.client = t.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app-name> <function-name>",
+		ArgsUsage: "<app-name> [function-name]",
 		Action:    t.list,
 		Flags: []cli.Flag{
 			cli.StringFlag{
