@@ -254,12 +254,18 @@ const (
 			<version>${kotlin.version}</version>
 		</dependency>
 
-		<dependency>
-			<groupId>com.fnproject.fn</groupId>
-			<artifactId>testing</artifactId>
-			<version>${fdk.version}</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>com.fnproject.fn</groupId>
+            <artifactId>testing-core</artifactId>
+            <version>${fdk.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fnproject.fn</groupId>
+            <artifactId>testing-junit4</artifactId>
+            <version>${fdk.version}</version>
+            <scope>test</scope>
+        </dependency>
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
 			<artifactId>kotlin-test-junit</artifactId>
