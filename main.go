@@ -20,7 +20,7 @@ import (
 func newFn() *cli.App {
 	app := cli.NewApp()
 	app.Name = "fn"
-	app.Version = Version
+	app.Version = config.Version
 	app.Authors = []cli.Author{{Name: "Fn Project"}}
 	app.Description = "Fn Command Line Tool"
 	app.EnableBashCompletion = true
@@ -132,7 +132,7 @@ func newFn() *cli.App {
 	}
 
 	app.Commands = append(app.Commands, commands.GetCommands(commands.Commands)...)
-	app.Commands = append(app.Commands, VersionCommand())
+	app.Commands = append(app.Commands, commands.VersionCommand())
 
 	sort.Sort(cli.FlagsByName(app.Flags))
 	sort.Sort(cli.CommandsByName(app.Commands))
@@ -241,7 +241,7 @@ func main() {
 		// TODO: this doesn't seem to get called even when an error returns from a command, but maybe urfave is doing a non zero exit anyways? nope: https://github.com/urfave/cli/issues/610
 		fmt.Fprintf(os.Stderr, color.Bold("\nFn:")+" %v", err)
 		fmt.Fprintf(os.Stderr, color.Italic("\n\nSee ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information."))
-		fmt.Fprintf(os.Stderr, " Client version: %s\n", Version)
+		fmt.Fprintf(os.Stderr, " Client version: %s\n", config.Version)
 		os.Exit(1)
 	}
 

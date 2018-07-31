@@ -151,7 +151,7 @@ func use(c *cli.Context) error {
 		return fmt.Errorf("Context %v currently in use", context)
 	}
 
-	err := config.WriteCurrentContextToConfigFile(context)
+	err := config.WriteConfigValueToConfigFile(config.CurrentContext, context)
 	if err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func unset(c *cli.Context) error {
 		return errors.New("No context currently in use")
 	}
 
-	err := config.WriteCurrentContextToConfigFile("")
+	err := config.WriteConfigValueToConfigFile(config.CurrentContext, "")
 	if err != nil {
 		return err
 	}
