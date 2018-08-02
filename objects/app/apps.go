@@ -70,6 +70,9 @@ func (a *appsCmd) list(c *cli.Context) error {
 }
 
 func appWithFlags(c *cli.Context, app *models.App) {
+	if app.SyslogURL == "" {
+		app.SyslogURL = c.String("syslog-url")
+	}
 	if len(app.Config) == 0 {
 		app.Config = common.ExtractEnvConfig(c.StringSlice("config"))
 	}
