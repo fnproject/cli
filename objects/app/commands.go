@@ -32,6 +32,10 @@ func Create() cli.Command {
 				Name:  "annotation",
 				Usage: "Application annotations",
 			},
+			cli.StringFlag{
+				Name:  "syslog-url",
+				Usage: "Syslog URL to send application logs to",
+			},
 		},
 	}
 }
@@ -135,6 +139,10 @@ func Update() cli.Command {
 			cli.StringSliceFlag{
 				Name:  "annotation",
 				Usage: "Application annotations",
+			},
+			cli.StringFlag{
+				Name:  "syslog-url",
+				Usage: "Syslog URL to send application logs to",
 			},
 		},
 	}
