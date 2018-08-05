@@ -11,7 +11,7 @@ import (
     "path/filepath"
 )
 
-// ClojureLangHelper provides a set of helper methods for the lifecycle of Clojure Maven projects
+// ClojureLangHelper provides a set of helper methods for the lifecycle of Clojure Leiningen projects
 type ClojureLangHelper struct {
     BaseHelper
     latestFdkVersion string
@@ -54,7 +54,7 @@ func (lh *ClojureLangHelper) HasBoilerplate() bool { return true }
 func (lh *ClojureLangHelper) DefaultFormat() string { return "cloudevent" }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime.
-// The default boilerplate is for a Maven project.
+// The default boilerplate is for a Leiningen project.
 func (lh *ClojureLangHelper) GenerateBoilerplate(path string) error {
     pathToProjectFile := filepath.Join(path, "project.clj")
     if exists(pathToProjectFile) {
@@ -111,7 +111,7 @@ func (lh *ClojureLangHelper) DockerfileCopyCmds() []string {
     }
 }
 
-// DockerfileBuildCmds returns the build stage steps to compile the Maven function project.
+// DockerfileBuildCmds returns the build stage steps to compile the Leiningen function project.
 func (lh *ClojureLangHelper) DockerfileBuildCmds() []string {
     return []string{
         `ADD project.clj /function/project.clj`,
@@ -123,7 +123,7 @@ func (lh *ClojureLangHelper) DockerfileBuildCmds() []string {
 // HasPreBuild returns whether the Leiningen runtime has a pre-build step.
 func (lh *ClojureLangHelper) HasPreBuild() bool { return true }
 
-// PreBuild ensures that the expected the function is based is a maven project.
+// PreBuild ensures that the expected the function is based is a leiningen project.
 func (lh *ClojureLangHelper) PreBuild() error {
     wd, err := os.Getwd()
     if err != nil {
