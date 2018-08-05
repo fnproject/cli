@@ -92,22 +92,22 @@ func (lh *ClojureLangHelper) GenerateBoilerplate(path string) error {
         return ioutil.WriteFile(fullFilePath, []byte(content), os.FileMode(0644))
     }
 
-    err = mkDirAndWriteFile("src/example", "core.clj", helloClojureSrcBoilerplate)
+    err = mkDirAndWriteFile("src/func", "core.clj", helloClojureSrcBoilerplate)
     if err != nil {
         return err
     }
 
-    return mkDirAndWriteFile("test/example", "core_test.clj", helloClojureTestBoilerplate)
+    return mkDirAndWriteFile("test/func", "core_test.clj", helloClojureTestBoilerplate)
 }
 
 func (lh *ClojureLangHelper) Entrypoint() (string, error) {
-    return "java -jar /function/app/example.jar", nil
+    return "java -jar /function/app/func.jar", nil
 }
 
 // DockerfileCopyCmds returns the Docker COPY command to copy the compiled Clojure standalone jar.
 func (lh *ClojureLangHelper) DockerfileCopyCmds() []string {
     return []string{
-        `COPY --from=build-stage /function/target/com.example.fn-1.0.0-standalone.jar /function/app/example.jar`,
+        `COPY --from=build-stage /function/target/com.fdk.func-1.0.0-standalone.jar /function/app/func.jar`,
     }
 }
 
@@ -185,7 +185,7 @@ func (lh *ClojureLangHelper) FixImagesOnInit() bool {
 }
 
 const (
-    clojureProjFile = `(defproject com.example.fn "1.0.0"
+    clojureProjFile = `(defproject com.fdk.func "1.0.0"
   :description "Clojure FDK for Fn"
   :url "https://github.com/fnproject"
   :license {:name "Apache License Version 2.0"
@@ -193,14 +193,14 @@ const (
   :dependencies [[org.clojure/clojure "%s"]
                 [unpause/fdk-clj "%s"]
                 [org.clojure/test.check "0.9.0"]]
-  :main example.core
+  :main func.core
   :jvm-opts ["-Duser.timezone=UTC"]
   :profiles {:uberjar { :aot :all }}
   :test-paths ["test"])
 `
 
     helloClojureSrcBoilerplate = `
-(ns example.core 
+(ns func.core 
   (:require [fdk-clj.core :as fdk]) 
   (:gen-class))
 
@@ -211,10 +211,10 @@ const (
 `
 
     helloClojureTestBoilerplate = `
-(ns example.core-test
+(ns func.core-test
   (:refer-clojure :exclude [extend second])
   (:require [clojure.test :refer :all]
-            [example.core :refer :all]))
+            [func.core :refer :all]))
 
 (deftest handler-test
   (is (= (handler nil { :name "Johnny" }) { :message "Hello Johnny" }))

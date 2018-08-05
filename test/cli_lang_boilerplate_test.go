@@ -12,7 +12,7 @@ var Runtimes = []struct {
 	generatesTests bool
 	callInput      string
 }{
-	{"clojure", true, `{"name": "John"}`}
+	{"clojure", true, `{"name": "John"}`},
 	{"go", true, ""},
 	{"java", false, ""},
 	{"java8", false, ""},
