@@ -76,9 +76,6 @@ func (h *PythonLangHelper) DockerfileBuildCmds() []string {
 	if exists("requirements.txt") {
 		r = append(r, `
 RUN pip3 install --target /python/  --no-cache --no-cache-dir -r requirements.txt &&\
-    apt-get remove -y --purge build-essential gcc && apt-get autoremove -y &&\
-    rm -rf /var/lib/apt/lists/ &&\
-    apt clean all &&\
     rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv`)
 	}
 	return r
