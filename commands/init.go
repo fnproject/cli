@@ -110,6 +110,22 @@ func InitCommand() cli.Command {
 	}
 }
 
+func pureInit(triggerType, dir string, rt models.Route, ffName, version, entrypoint, runtime, cmd, image, format string, mem uint64,
+	timeout, idleTimeout int, cfg, ann []string, fn *modelsV2.Fn, ffV2 *common.FuncFileV20180707) error {
+	//var err error
+	if triggerType != "" {
+		var fn modelsV2.Fn
+		function.FnWithFlags(image, format, mem, timeout, idleTimeout, cfg, ann, &fn)
+		bindFn(ffV2, &fn)
+
+		return a.initV2(dir, ffName,
+			version, format,
+			entrypoint, cmd,
+			runtime, fn)
+	}
+	return nil
+}
+
 func (a *initFnCmd) init(c *cli.Context) error {
 	var err error
 	var dir string
@@ -121,15 +137,18 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	if a.triggerType != "" {
 		var fn modelsV2.Fn
-		function.FnWithFlags(c, &fn)
-		a.bindFn(&fn)
+		function.FnWithFlagsContext(c, &fn)
+		bindFn(a.ffV20180707, &fn)
 
-		return a.initV2(c, fn)
+		return a.initV2(dir, c.Args().First(),
+			c.String("version"), c.String("format"),
+			c.String("entrypoint"), c.String("cmd"),
+			c.String("runtime"), fn)
 	}
 
 	var rt models.Route
-	route.WithFlags(c, &rt)
-	a.bindRoute(&rt)
+	route.WithFlagsContext(c, &rt)
+	bindRoute(a.ff, &rt)
 
 	runtime := c.String("runtime")
 
@@ -196,16 +215,10 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	return nil
 }
 
-func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
+func (a *initFnCmd) initV2(dir, ffName, version, format, entrypoint, cmd, runtime string, fn modelsV2.Fn) error {
 	var err error
-	var dir string
 
-	dir = common.GetWd()
-	if a.wd != "" {
-		dir = a.wd
-	}
-
-	a.ffV20180707.Name = c.Args().First()
+	a.ffV20180707.Name = ffName
 
 	if a.triggerType == "http" {
 		trig := make([]common.Trigger, 1)
@@ -217,8 +230,6 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 		a.ffV20180707.Triggers = trig
 	}
 
-	runtime := c.String("runtime")
-
 	runtimeSpecified := runtime != ""
 
 	a.ffV20180707.Schema_version = common.LatestYamlVersion
@@ -229,7 +240,7 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 		}
 	}
 
-	path := c.Args().First()
+	path := ffName
 	if path != "" {
 		fmt.Printf("Creating function at: /%s\n", path)
 		dir = filepath.Join(dir, path)
@@ -263,7 +274,10 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 			return errors.New("Function file already exists, aborting")
 		}
 	}
-	err = a.BuildFuncFileV20180707(c, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
+	err = a.BuildFuncFileV20180707(
+		version, runtime,
+		entrypoint, cmd,
+		format, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
 	if err != nil {
 		return err
 	}
@@ -302,8 +316,7 @@ func (a *initFnCmd) generateBoilerplate(path, runtime string) error {
 	return nil
 }
 
-func (a *initFnCmd) bindRoute(fn *models.Route) {
-	ff := a.ff
+func bindRoute(ff *common.FuncFile, fn *models.Route) {
 	if fn.Format != "" {
 		ff.Format = fn.Format
 	}
@@ -318,8 +331,7 @@ func (a *initFnCmd) bindRoute(fn *models.Route) {
 	}
 }
 
-func (a *initFnCmd) bindFn(fn *modelsV2.Fn) {
-	ff := a.ffV20180707
+func bindFn(ff *common.FuncFileV20180707, fn *modelsV2.Fn) {
 	if fn.Format != "" {
 		ff.Format = fn.Format
 	}
@@ -442,7 +454,7 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 	return nil
 }
 
-func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
+func (a *initFnCmd) BuildFuncFileV20180707(version, runtime, entrypoint, cmd, format string, path string) error {
 	var err error
 
 	if a.ffV20180707.Name == "" {
@@ -450,7 +462,7 @@ func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
 		a.ffV20180707.Name = strings.ToLower(filepath.Base(path))
 	}
 
-	a.ffV20180707.Version = c.String("version")
+	a.ffV20180707.Version = version
 	if err = ValidateFuncName(a.ffV20180707.Name); err != nil {
 		return err
 	}
@@ -461,7 +473,6 @@ func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
 		a.ff.Runtime = common.FuncfileDockerRuntime
 		return nil
 	}
-	runtime := c.String("runtime")
 	if runtime == common.FuncfileDockerRuntime {
 		return errors.New("Function file runtime is 'docker', but no Dockerfile exists")
 	}
@@ -474,7 +485,7 @@ func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
 		}
 		fmt.Printf("Found %v function, assuming %v runtime.\n", helper.Runtime(), helper.Runtime())
 		//need to default this to default format to be backwards compatible. Might want to just not allow this anymore, fail here.
-		if c.String("format") == "" {
+		if format == "" {
 			a.ffV20180707.Format = "default"
 		}
 	} else {
@@ -484,7 +495,7 @@ func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
 	if helper == nil {
 		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function.\n", runtime)
 	} else {
-		if c.String("entrypoint") == "" {
+		if entrypoint == "" {
 			a.ffV20180707.Entrypoint, err = helper.Entrypoint()
 			if err != nil {
 				return err
@@ -497,11 +508,11 @@ func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
 
 		a.ffV20180707.Runtime = runtime
 
-		if c.String("format") == "" {
+		if format == "" {
 			a.ffV20180707.Format = helper.DefaultFormat()
 		}
 
-		if c.String("cmd") == "" {
+		if cmd == "" {
 			cmd, err := helper.Cmd()
 			if err != nil {
 				return err

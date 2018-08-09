@@ -528,10 +528,9 @@ func appNamePath(img string) (string, string) {
 	return img[:sep], img[sep : sep+tag]
 }
 
-// ExtractAnnotations extract annotations from command flags.
-func ExtractAnnotations(c *cli.Context) map[string]interface{} {
+func ExtractAnnotations(ann []string) map[string]interface{} {
 	annotations := make(map[string]interface{})
-	for _, s := range c.StringSlice("annotation") {
+	for _, s := range ann {
 		parts := strings.Split(s, "=")
 		if len(parts) == 2 {
 			var v interface{}
