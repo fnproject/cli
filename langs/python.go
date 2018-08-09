@@ -51,7 +51,7 @@ func (h *PythonLangHelper) Runtime() string {
 }
 
 func (h *PythonLangHelper) LangStrings() []string {
-	return []string{"python", "python3.6"}
+	return []string{"python", fmt.Sprintf("python%s", h.Version)}
 }
 
 func (h *PythonLangHelper) Extensions() []string {
@@ -59,11 +59,11 @@ func (h *PythonLangHelper) Extensions() []string {
 }
 
 func (h *PythonLangHelper) BuildFromImage() (string, error) {
-	return fmt.Sprintf("python:%s-slim-stretch", h.Version), nil
+	return fmt.Sprintf("fnproject/python:%s-dev", h.Version), nil
 }
 
 func (h *PythonLangHelper) RunFromImage() (string, error) {
-	return fmt.Sprintf("python:%s-slim-stretch", h.Version), nil
+	return fmt.Sprintf("fnproject/python:%s", h.Version), nil
 }
 
 func (h *PythonLangHelper) Entrypoint() (string, error) {
@@ -75,18 +75,14 @@ func (h *PythonLangHelper) DockerfileBuildCmds() []string {
 	r = append(r, "ADD . /function/")
 	if exists("requirements.txt") {
 		r = append(r, `
-RUN apt-get update && apt-get install --no-install-recommends -qy build-essential gcc &&\
-    pip3 install --no-cache --no-cache-dir -r requirements.txt &&\
-    apt-get remove -y --purge build-essential gcc && apt-get autoremove -y &&\
-    rm -rf /var/lib/apt/lists/ &&\
-    apt clean all &&\
+RUN pip3 install --target /python/  --no-cache --no-cache-dir -r requirements.txt &&\
     rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv`)
 	}
 	return r
 }
 
 func (h *PythonLangHelper) IsMultiStage() bool {
-	return false
+	return true
 }
 
 const (
@@ -100,7 +96,6 @@ def handler(ctx, data=None, loop=None):
         body = json.loads(data)
         name = body.get("name")
     return {"message": "Hello {0}".format(name)}
-
 
 
 if __name__ == "__main__":
@@ -137,10 +132,10 @@ if __name__ == "__main__":
 `
 )
 
-// The multi-stage build didn't work, pip seems to be required for it to load the modules
-// func (h *PythonLangHelper) DockerfileCopyCmds() []string {
-// return []string{
-// "ADD . /function/",
-// "COPY --from=build-stage /root/.cache/pip/ /root/.cache/pip/",
-// }
-// }
+func (h *PythonLangHelper) DockerfileCopyCmds() []string {
+	return []string{
+		"COPY --from=build-stage /function /function",
+		"COPY --from=build-stage /python /python",
+		"ENV PYTHONPATH=/python",
+	}
+}
