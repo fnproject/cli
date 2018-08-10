@@ -80,6 +80,38 @@ func WithoutSlash(p string) string {
 	return p
 }
 
+func printFunctions(c *cli.Context, fns []*models.Fn) error {
+	outputFormat := strings.ToLower(c.String("output"))
+	if outputFormat == "json" {
+		var newFns []interface{}
+		for _, fn := range fns {
+			newFns = append(newFns, struct {
+				Name  string `json:"name"`
+				Image string `json:"image"`
+			}{
+				fn.Name,
+				fn.Image,
+			})
+		}
+		b, err := json.MarshalIndent(newFns, "", "    ")
+		if err != nil {
+			return err
+		}
+		fmt.Fprint(os.Stdout, string(b))
+	} else {
+		w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
+		fmt.Fprint(w, "NAME", "\t", "IMAGE", "\n")
+
+		for _, f := range fns {
+			fmt.Fprint(w, f.Name, "\t", f.Image, "\t", "\n")
+		}
+		if err := w.Flush(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (f *fnsCmd) list(c *cli.Context) error {
 	appName := c.Args().Get(0)
 
@@ -118,14 +150,7 @@ func (f *fnsCmd) list(c *cli.Context) error {
 		return nil
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprint(w, "NAME", "\t", "IMAGE", "\n")
-	for _, fn := range resFns {
-		fmt.Fprint(w, fn.Name, "\t", fn.Image, "\t", "\n")
-	}
-	w.Flush()
-
-	return nil
+	return printFunctions(c, resFns)
 }
 
 // WithFlags returns a function with specified flags

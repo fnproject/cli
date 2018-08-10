@@ -36,6 +36,13 @@ func List() cli.Command {
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This command returns a list of contexts.",
 		Action:      list,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "output",
+				Usage: "Output format (json)",
+				Value: "",
+			},
+		},
 	}
 }
 

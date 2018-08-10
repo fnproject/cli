@@ -61,6 +61,11 @@ func List() cli.Command {
 				Usage: "number of functions to return",
 				Value: int64(100),
 			},
+			cli.StringFlag{
+				Name:  "output",
+				Usage: "Output format (json)",
+				Value: "",
+			},
 		},
 	}
 }
