@@ -173,13 +173,15 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			if ff != nil {
 				return errors.New("Function file already exists, aborting")
 			}
+		} else {
+			a.ff = ff
+			fileExt = filepath.Ext(ffPath)
+			if a.ff.Runtime != "" {
+				runtime = a.ff.Runtime
+			}
 		}
-		a.ff = ff
-		fileExt = filepath.Ext(ffPath)
 	}
-	if a.ff.Runtime != "" {
-		runtime = a.ff.Runtime
-	}
+
 	err = a.BuildFuncFile(c, runtime, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
 	if err != nil {
 		return err
