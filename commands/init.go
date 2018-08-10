@@ -81,6 +81,10 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Usage:       "Specify the trigger type.",
 			Destination: &a.triggerType,
 		},
+		cli.BoolFlag{
+			Name:  "from-func-file",
+			Usage: "Use existing func.yml.",
+		},
 	}
 
 	return append(fgs, route.RouteFlags...)
@@ -133,14 +137,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	runtime := c.String("runtime")
 
-	runtimeSpecified := runtime != ""
-	if runtimeSpecified {
-		// go no further if the specified runtime is not supported
-		if runtime != common.FuncfileDockerRuntime && langs.GetLangHelper(runtime) == nil {
-			return fmt.Errorf("Init does not support the '%s' runtime", runtime)
-		}
-	}
-
 	path := c.Args().First()
 	if path != "" {
 		fmt.Printf("Creating function at: /%s\n", path)
@@ -166,18 +162,35 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	defer os.Chdir(dir) // todo: wrap this so we can log the error if changing back fails
 
+	useExistingFuncFile := c.Bool("from-func-file")
+	fileExt := ".yaml"
 	if !a.force {
-		_, ff, err := common.LoadFuncfile(dir)
+		ffPath, ff, err := common.LoadFuncfile(dir)
 		if _, ok := err.(*common.NotFoundError); !ok && err != nil {
 			return err
 		}
-		if ff != nil {
-			return errors.New("Function file already exists, aborting")
+		if !useExistingFuncFile {
+			if ff != nil {
+				return errors.New("Function file already exists, aborting")
+			}
 		}
+		a.ff = ff
+		fileExt = filepath.Ext(ffPath)
 	}
-	err = a.BuildFuncFile(c, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
+	if a.ff.Runtime != "" {
+		runtime = a.ff.Runtime
+	}
+	err = a.BuildFuncFile(c, runtime, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
 	if err != nil {
 		return err
+	}
+
+	runtimeSpecified := runtime != ""
+	if runtimeSpecified {
+		// go no further if the specified runtime is not supported
+		if runtime != common.FuncfileDockerRuntime && langs.GetLangHelper(runtime) == nil {
+			return fmt.Errorf("Init does not support the '%s' runtime", runtime)
+		}
 	}
 
 	// TODO: why don't we treat "docker" runtime as just another language helper? Then can get rid of several Docker
@@ -189,10 +202,12 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 	}
 
-	if err := common.EncodeFuncfileYAML("func.yaml", a.ff); err != nil {
+	if err := common.EncodeFuncfileYAML(
+		fmt.Sprintf("func%s", fileExt), a.ff,
+	); err != nil {
 		return err
 	}
-	fmt.Println("func.yaml created.")
+	fmt.Println(fmt.Sprintf("func%s", fileExt), " created.")
 	return nil
 }
 
@@ -346,7 +361,7 @@ func ValidateFuncName(name string) error {
 	return nil
 }
 
-func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
+func (a *initFnCmd) BuildFuncFile(c *cli.Context, runtime, path string) error {
 	var err error
 
 	if a.ff.Name == "" {
@@ -367,7 +382,6 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 		return nil
 	}
 
-	runtime := c.String("runtime")
 	if runtime == common.FuncfileDockerRuntime {
 		return errors.New("Function file runtime is 'docker', but no Dockerfile exists")
 	}
