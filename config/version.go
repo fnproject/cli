@@ -3,22 +3,14 @@ package config
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"path"
 	"strings"
 	"time"
 )
 
 // Version of Fn CLI
-var Version = "0.4.135"
+var Version = "0.4.144"
 
-// PrintLatestVersion to terminal
-func PrintLatestVersion() {
-	v := GetVersion("latest")
-	if v != "" {
-		fmt.Fprintln(os.Stderr, v)
-	}
-}
 
 func GetVersion(versionType string) string {
 	base := "https://github.com/fnproject/cli/releases"
