@@ -175,7 +175,7 @@ func unset(c *cli.Context) error {
 	return nil
 }
 
-func printContexts(c *cli.Context, contexts []*ContextInfo) error {
+func printContexts(c *cli.Context, contexts []*Info) error {
 	outputFormat := strings.ToLower(c.String("output"))
 	if outputFormat == "json" {
 		b, err := json.MarshalIndent(contexts, "", "    ")
@@ -192,7 +192,7 @@ func printContexts(c *cli.Context, contexts []*ContextInfo) error {
 			if ctx.Current {
 				current = "*"
 			}
-			fmt.Fprint(w, current, "\t", ctx.Name, "\t", ctx.Provider, "\t", ctx.APIURL, "\t", ctx.Registry, "\n")
+			fmt.Fprint(w, current, "\t", ctx.Name, "\t", ctx.ContextProvider, "\t", ctx.EnvFnAPIURL, "\t", ctx.EnvFnRegistry, "\n")
 		}
 		if err := w.Flush(); err != nil {
 			return err
@@ -235,22 +235,38 @@ func checkContextFileExists(filename string) (bool, error) {
 	return true, nil
 }
 
-func getAvailableContexts() ([]*ContextInfo, error) {
+func getAvailableContexts() ([]*Info, error) {
 	home := config.GetHomeDir()
 	files, err := ioutil.ReadDir(filepath.Join(home, contextsPath))
 	if err != nil {
 		return nil, err
 	}
 
-	var contexts []*ContextInfo
+	currentContext := viper.GetString(config.CurrentContext)
+	var contexts []*Info
 	for _, f := range files {
-		c, err := NewContextInfo(f)
+		fullPath := getContextFilePath(f.Name())
+		ctxFile, err := config.NewContextFile(fullPath)
 		if err != nil {
 			return nil, err
 		}
+
+		isCurrent := false
+		name := strings.Replace(f.Name(), fileExtension, "", 1)
+		if currentContext == name {
+			isCurrent = true
+		}
+		c := NewInfo(name, isCurrent, ctxFile)
 		contexts = append(contexts, c)
 	}
 	return contexts, err
+}
+
+// getContextFilePath returns the full path to
+// the context file
+func getContextFilePath(name string) string {
+	home := config.GetHomeDir()
+	return filepath.Join(home, contextsPath, name)
 }
 
 func ValidateAPIURL(apiURL string) error {
