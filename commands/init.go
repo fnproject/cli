@@ -61,7 +61,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Usage: "Choose an existing runtime - " + langsList(),
 		},
 		cli.StringFlag{
-			Name:  "image",
+			Name:  "init-image",
 			Usage: "A Docker image which will create a function template",
 		},
 		cli.StringFlag{
@@ -138,10 +138,10 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	a.bindRoute(&rt)
 
 	runtime := c.String("runtime")
-	image := c.String("image")
+	initImage := c.String("init-image")
 
-	if runtime != "" && image != "" {
-		return fmt.Errorf("You can't supply --runtime with --image")
+	if runtime != "" && initImage != "" {
+		return fmt.Errorf("You can't supply --runtime with --init-image")
 	}
 
 	runtimeSpecified := runtime != ""
@@ -192,14 +192,14 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	}
 
 
-	if (image != ""){
+	if (initImage != ""){
 
-		fmt.Println("Building from init image: " + image)
+		fmt.Println("Building from init-image: " + initImage)
 
-		// Run the image
+		// Run the initImage
 		var c1ErrB, c2ErrB bytes.Buffer
 
-		c1 := exec.Command("docker", "run", image)
+		c1 := exec.Command("docker", "run", "-e", "FN_FUNCTION_NAME="+a.ff.Name, initImage)
 		c1.Stderr = &c1ErrB
 
 		c2 := exec.Command("tar", "-x")
@@ -213,20 +213,19 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 		if c1_err != nil {
 			fmt.Println(c1ErrB.String())
-			return errors.New("Error running init image")
+			return errors.New("Error running init-image")
 		}
 
 		if c2_err != nil {
 			fmt.Println(c2ErrB.String())
-			return errors.New("Error un-tarring output from init image")
+			return errors.New("Error un-tarring output from init-image")
 		}
 
-
-		// Merge the func.yaml from the image with a.ff
+		// Merge the func.yaml from the initImage with a.ff
 		//     write out the new func file
 		var initFf, err = common.ParseFuncfile("func.yaml")
 		if err != nil {
-			return errors.New("Init image did not produce a valid func.yaml fragment")
+			return errors.New("init-image did not produce a valid func.yaml fragment")
 		}
 
 		initFf.Name = a.ff.Name
@@ -427,7 +426,7 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 		return err
 	}
 
-	if (c.String("image") != ""){
+	if (c.String("init-image") != ""){
 		// Building from an image only requires us to have
 		// Name and Version generated here.
 		return nil
