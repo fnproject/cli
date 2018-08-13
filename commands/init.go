@@ -223,7 +223,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 		// Merge the func.yaml from the initImage with a.ff
 		//     write out the new func file
-		var initFf, err = common.ParseFuncfile("func.yaml")
+		var initFf, err = common.ParseFuncfile("func.init.yaml")
 		if err != nil {
 			return errors.New("init-image did not produce a valid func.yaml fragment")
 		}
