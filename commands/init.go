@@ -20,9 +20,11 @@ it will print an error message then exit.
 */
 
 import (
+	"archive/tar"
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -197,35 +199,29 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		fmt.Println("Building from init-image: " + initImage)
 
 		// Run the initImage
-		var c1ErrB, c2ErrB bytes.Buffer
+		var c1ErrB bytes.Buffer
+		tarR, tarW := io.Pipe()
 
 		c1 := exec.Command("docker", "run", "-e", "FN_FUNCTION_NAME="+a.ff.Name, initImage)
 		c1.Stderr = &c1ErrB
+		c1.Stdout = tarW
 
-		c2 := exec.Command("tar", "-x")
-		c2.Stderr = &c2ErrB
-		c2.Stdin, _ = c1.StdoutPipe()
-		c2.Stdout = os.Stdout
-
-		_ = c2.Start()
-		c1_err := c1.Run()
-		c2_err := c2.Wait()
-
+		c1_err := c1.Start()
 		if c1_err != nil {
 			fmt.Println(c1ErrB.String())
 			return errors.New("Error running init-image")
 		}
 
-		if c2_err != nil {
-			fmt.Println(c2ErrB.String())
-			return errors.New("Error un-tarring output from init-image")
+		err = untarStream(tarR)
+		if err != nil {
+			return errors.New("Error un-tarring the output of the init-image")
 		}
 
 		// Merge the func.yaml from the initImage with a.ff
 		//     write out the new func file
 		var initFf, err = common.ParseFuncfile("func.init.yaml")
 		if err != nil {
-			return errors.New("init-image did not produce a valid func.yaml fragment")
+			return errors.New("init-image did not produce a valid func.init.yaml")
 		}
 
 		initFf.Name = a.ff.Name
@@ -234,6 +230,8 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		if err := common.EncodeFuncfileYAML("func.yaml", initFf); err != nil {
 			return err
 		}
+
+		os.Remove("func.init.yaml")
 
 	} else {
 
@@ -252,10 +250,50 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	}
 
-
-
 	fmt.Println("func.yaml created.")
 	return nil
+}
+
+// Untars an io.Reader into the cwd
+func untarStream( r io.Reader ) error {
+
+	tr := tar.NewReader(r)
+	for {
+		header, err := tr.Next()
+
+		if err == io.EOF {
+			// if no more files are found we are finished
+			return nil
+		}
+
+		if (err != nil){
+			return err
+		}
+
+		switch header.Typeflag {
+			// if its a dir and it doesn't exist create it
+			case tar.TypeDir:
+				if _, err := os.Stat(header.Name); err != nil {
+					if err := os.MkdirAll(header.Name, 0755); err != nil {
+						return err
+					}
+				}
+
+			// if it's a file create it
+			case tar.TypeReg:
+				f, err := os.OpenFile(header.Name, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+				if err != nil {
+					return err
+				}
+
+				// copy over contents
+				if _, err := io.Copy(f, tr); err != nil {
+					return err
+				}
+
+			f.Close()
+		}
+	}
 }
 
 func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
