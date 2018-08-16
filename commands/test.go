@@ -29,10 +29,11 @@ func TestCommand() cli.Command {
 	cmd := testcmd{}
 	return cli.Command{
 		Name:        "test",
-		Usage:       "Run functions test if present",
+		Usage:       "\tRun functions test",
 		Aliases:     []string{"t"},
 		Category:    "DEVELOPMENT COMMANDS",
-		Description: "This is the description",
+		Description: "This commmand runs fn tests if present.",
+		ArgsUsage:   "[function-subdirectory]",
 		Flags:       cmd.flags(),
 		Action:      cmd.test,
 		Before: func(cxt *cli.Context) error {
@@ -276,7 +277,7 @@ func (t *testcmd) runremotetest(ff *common.FuncFile, in *common.InputMap, expect
 	}
 	var stdout bytes.Buffer
 
-	if err := client.CallFN(t.provider, t.remote, ff.Path, stdin, &stdout, "", envVars, "application/json", false); err != nil {
+	if err := client.CallRoute(t.provider, t.remote, ff.Path, stdin, &stdout, "", envVars, "application/json", false); err != nil {
 		return fmt.Errorf("%v\nstdout:%s", err, stdout.String())
 	}
 

@@ -9,11 +9,11 @@ func ListCommand() cli.Command {
 	return cli.Command{
 		Name:        "list",
 		Aliases:     []string{"ls"},
-		Usage:       "Return a list of created objects",
+		Usage:       "\tReturn a list of created objects",
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
-		Description: "This is the description",
+		Description: "This command returns a list of created objects ('app', 'call', 'context', 'function', 'route' or 'trigger') or configurations.",
 		Subcommands: GetCommands(ListCmds),
 	}
 }

@@ -14,7 +14,7 @@ func StopCommand() cli.Command {
 		Name:        "stop",
 		Usage:       "Stop a function server",
 		Category:    "SERVER COMMANDS",
-		Description: "This is the description",
+		Description: "This command stops a Fn server.",
 		Action:      stop,
 	}
 }

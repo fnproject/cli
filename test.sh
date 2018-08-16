@@ -34,7 +34,7 @@ mkdir data
 touch data/fn.db data/fn.mq
 
 # start fn
-CONTAINER_ID=$($fn start -d)
+CONTAINER_ID=$($fn start -d | tail -1)
 
 FN_API_URL="localhost:8080"
 

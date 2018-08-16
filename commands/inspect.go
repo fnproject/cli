@@ -8,12 +8,13 @@ import (
 func InspectCommand() cli.Command {
 	return cli.Command{
 		Name:        "inspect",
+		UsageText:   "inspect",
 		Aliases:     []string{"i"},
-		Usage:       "Retrieve properties of an object",
+		Usage:       "\tRetrieve properties of an object",
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
-		Description: "This is the description",
+		Description: "This command allows to inspect the properties of an object ('app', 'context', function', 'route' or 'trigger').",
 		Subcommands: GetCommands(InspectCmds),
 	}
 }

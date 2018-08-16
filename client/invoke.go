@@ -7,53 +7,16 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"os"
-	"strings"
 
 	"github.com/fnproject/fn_go/provider"
+	"github.com/go-openapi/runtime/logger"
 )
 
-const (
-	FN_CALL_ID             = "Fn_call_id"
-	MaximumRequestBodySize = 5 * 1024 * 1024 // bytes
-)
+func Invoke(provider provider.Provider, invokeUrl string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
 
-func EnvAsHeader(req *http.Request, selectedEnv []string) {
-	detectedEnv := os.Environ()
-	if len(selectedEnv) > 0 {
-		detectedEnv = selectedEnv
-	}
-
-	for _, e := range detectedEnv {
-		kv := strings.Split(e, "=")
-		name := kv[0]
-		req.Header.Set(name, os.Getenv(name))
-	}
-}
-
-type apiErr struct {
-	Message string `json:"message"`
-}
-
-type callID struct {
-	CallID string `json:"call_id"`
-	Error  apiErr `json:"error"`
-}
-
-func CallFN(provider provider.Provider, appName string, route string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
-	u, err := provider.CallURL(appName)
-	if err != nil {
-		return err
-	}
-	u.Path = strings.Join([]string{"r", appName, route}, "/")
-
-	if method == "" {
-		if content == nil {
-			method = "GET"
-		} else {
-			method = "POST"
-		}
-	}
+	method = "POST"
 
 	// Read the request body (up to the maximum size), as this is used in the
 	// authentication signature
@@ -61,13 +24,13 @@ func CallFN(provider provider.Provider, appName string, route string, content io
 	if content != nil {
 		b, err := ioutil.ReadAll(io.LimitReader(content, MaximumRequestBodySize))
 		buffer := bytes.NewBuffer(b)
-		req, err = http.NewRequest(method, u.String(), buffer)
+		req, err = http.NewRequest(method, invokeUrl, buffer)
 		if err != nil {
 			return fmt.Errorf("Error creating request to service: %s", err)
 		}
 	} else {
 		var err error
-		req, err = http.NewRequest(method, u.String(), nil)
+		req, err = http.NewRequest(method, invokeUrl, nil)
 		if err != nil {
 			return fmt.Errorf("Error creating request to service: %s", err)
 		}
@@ -86,10 +49,28 @@ func CallFN(provider provider.Provider, appName string, route string, content io
 	transport := provider.WrapCallTransport(http.DefaultTransport)
 	httpClient := http.Client{Transport: transport}
 
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("Error running route: %s", err)
+	if logger.DebugEnabled() {
+		b, err := httputil.DumpRequestOut(req, content != nil)
+		if err != nil {
+			return err
+		}
+		fmt.Printf(string(b) + "\n")
 	}
+
+	resp, err := httpClient.Do(req)
+
+	if err != nil {
+		return fmt.Errorf("Error invoking fn: %s", err)
+	}
+
+	if logger.DebugEnabled() {
+		b, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			return err
+		}
+		fmt.Printf(string(b) + "\n")
+	}
+
 	// for sync calls
 	if call_id, found := resp.Header[FN_CALL_ID]; found {
 		if includeCallID {

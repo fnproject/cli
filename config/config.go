@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
 	"github.com/fnproject/fn_go/provider"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
@@ -22,18 +23,19 @@ const (
 
 	ReadWritePerms = os.FileMode(0755)
 
-	CurrentContext  = "current-context"
-	ContextProvider = "provider"
+	CurrentContext    = "current-context"
+	ContextProvider   = "provider"
+	CurrentCliVersion = "cli-version"
 
 	EnvFnRegistry = "registry"
 	EnvFnContext  = "context"
 )
 
-var defaultRootConfigContents = &ContextMap{CurrentContext: ""}
+var defaultRootConfigContents = &ContextMap{CurrentContext: "", CurrentCliVersion: ""}
 var DefaultContextConfigContents = &ContextMap{
-	ContextProvider: DefaultProvider,
-	provider.CfgFnAPIURL:     defaultLocalAPIURL,
-	EnvFnRegistry:   "",
+	ContextProvider:      DefaultProvider,
+	provider.CfgFnAPIURL: defaultLocalAPIURL,
+	EnvFnRegistry:        "",
 }
 
 type ContextMap map[string]string
@@ -128,12 +130,22 @@ func LoadConfiguration(c *cli.Context) error {
 	viper.AddConfigPath(filepath.Join(home, rootConfigPathName, contextsPathName))
 	viper.SetConfigName(context)
 
+	if viper.GetString("cli-version") != Version {
+		fmt.Printf("Welcome to Fn CLI %s - please check the release notes at:\n%s \n\n", Version, "https://github.com/fnproject/cli/blob/master/README.md")
+	}
+	WriteConfigValueToConfigFile(CurrentCliVersion, Version)
+
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Printf("%v \n", err)
-		err := WriteCurrentContextToConfigFile("default")
+		err := WriteConfigValueToConfigFile(CurrentContext, "default")
 		if err != nil {
 			return err
 		}
+		WriteConfigValueToConfigFile(CurrentCliVersion, Version)
+		if err != nil {
+			return err
+		}
+
 		fmt.Println("current context has been set to default")
 		return nil
 	}
@@ -142,7 +154,7 @@ func LoadConfiguration(c *cli.Context) error {
 	return nil
 }
 
-func WriteCurrentContextToConfigFile(value string) error {
+func WriteConfigValueToConfigFile(key, value string) error {
 	home := GetHomeDir()
 
 	configFilePath := filepath.Join(home, rootConfigPathName, contextConfigFileName)
@@ -159,12 +171,13 @@ func WriteCurrentContextToConfigFile(value string) error {
 
 	configValues := ContextMap{}
 	for k, v := range *file {
-		if k == CurrentContext {
+		if k == key {
 			configValues[k] = value
 		} else {
 			configValues[k] = v
 		}
 	}
+	configValues[key] = value
 
 	err = WriteYamlFile(f.Name(), &configValues)
 	if err != nil {

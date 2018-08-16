@@ -9,10 +9,12 @@ import (
 func Create() cli.Command {
 	t := triggersCmd{}
 	return cli.Command{
-		Name:      "trigger",
-		ShortName: "trig",
-		Aliases:   []string{"t", "tr"},
-		Usage:     "Create a new trigger",
+		Name:        "trigger",
+		ShortName:   "trig",
+		Category:    "MANAGEMENT COMMAND",
+		Aliases:     []string{"t", "tr"},
+		Usage:       "Create a new trigger",
+		Description: "This command creates a new trigger.",
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
@@ -22,7 +24,7 @@ func Create() cli.Command {
 			t.client = t.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <function> <trigger>",
+		ArgsUsage: "<app-name> <function-name> <trigger-name>",
 		Action:    t.create,
 		Flags:     TriggerFlags,
 	}
@@ -32,10 +34,12 @@ func Create() cli.Command {
 func List() cli.Command {
 	t := triggersCmd{}
 	return cli.Command{
-		Name:      "triggers",
-		ShortName: "trigs",
-		Aliases:   []string{"t", "tr"},
-		Usage:     "List all triggers",
+		Name:        "triggers",
+		ShortName:   "trigs",
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This command returns a list of all created triggers for an 'app' or for a specific 'function' of an application.",
+		Aliases:     []string{"t", "tr"},
+		Usage:       "List all triggers",
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
@@ -45,7 +49,7 @@ func List() cli.Command {
 			t.client = t.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <function>",
+		ArgsUsage: "<app-name> [function-name]",
 		Action:    t.list,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -65,10 +69,12 @@ func List() cli.Command {
 func Update() cli.Command {
 	t := triggersCmd{}
 	return cli.Command{
-		Name:      "trigger",
-		ShortName: "trig",
-		Aliases:   []string{"t", "tr"},
-		Usage:     "Update a trigger",
+		Name:        "trigger",
+		ShortName:   "trig",
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This command updates a created trigger.",
+		Aliases:     []string{"t", "tr"},
+		Usage:       "Update a trigger",
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
@@ -78,7 +84,7 @@ func Update() cli.Command {
 			t.client = t.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <function> <trigger>",
+		ArgsUsage: "<app-name> <function-name> <trigger-name>",
 		Action:    t.update,
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
@@ -93,10 +99,12 @@ func Update() cli.Command {
 func Delete() cli.Command {
 	t := triggersCmd{}
 	return cli.Command{
-		Name:      "trigger",
-		ShortName: "trig",
-		Aliases:   []string{"t", "tr"},
-		Usage:     "Delete a Trigger",
+		Name:        "trigger",
+		ShortName:   "trig",
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This command deletes a created trigger.",
+		Aliases:     []string{"t", "tr"},
+		Usage:       "Delete a trigger",
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
@@ -106,7 +114,7 @@ func Delete() cli.Command {
 			t.client = t.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <function> <trigger>",
+		ArgsUsage: "<app-name> <function-name> <trigger-name>",
 		Action:    t.delete,
 	}
 }
@@ -115,10 +123,12 @@ func Delete() cli.Command {
 func Inspect() cli.Command {
 	t := triggersCmd{}
 	return cli.Command{
-		Name:      "trigger",
-		ShortName: "trig",
-		Aliases:   []string{"t", "tr"},
-		Usage:     "Retrieve one or all trigger properties",
+		Name:        "trigger",
+		ShortName:   "trig",
+		Category:    "MANAGEMENT COMMAND",
+		Aliases:     []string{"t", "tr"},
+		Description: "This command gets one of all trigger properties.",
+		Usage:       "Retrieve one or all trigger properties",
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()
@@ -128,7 +138,7 @@ func Inspect() cli.Command {
 			t.client = t.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <function> <trigger>",
+		ArgsUsage: "<app-name> <function-name> <trigger-name>",
 		Action:    t.inspect,
 	}
 }

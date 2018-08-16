@@ -9,10 +9,12 @@ import (
 func Create() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "function",
-		ShortName: "func",
-		Aliases:   []string{"f", "fn"},
-		Usage:     "Create a function in an application",
+		Name:        "function",
+		ShortName:   "func",
+		Aliases:     []string{"f", "fn"},
+		Category:    "MANAGEMENT COMMAND",
+		Usage:       "Create a function within an application",
+		Description: "This command creates a new function within an application.",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -22,7 +24,7 @@ func Create() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <fnname> <image>",
+		ArgsUsage: "<app-name> <function-name> <image>",
 		Action:    f.create,
 		Flags:     FnFlags,
 	}
@@ -32,10 +34,12 @@ func Create() cli.Command {
 func List() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "functions",
-		ShortName: "funcs",
-		Aliases:   []string{"f", "fn"},
-		Usage:     "List functions for `app`",
+		Name:        "functions",
+		ShortName:   "funcs",
+		Aliases:     []string{"f", "fn"},
+		Usage:       "List functions for an application",
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This command returns a list of functions for a created application.",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -45,7 +49,7 @@ func List() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app>",
+		ArgsUsage: "<app-name>",
 		Action:    f.list,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -65,10 +69,12 @@ func List() cli.Command {
 func Delete() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "function",
-		ShortName: "func",
-		Aliases:   []string{"f", "fn"},
-		Usage:     "Delete a function from an application `app`",
+		Name:        "function",
+		ShortName:   "func",
+		Aliases:     []string{"f", "fn"},
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This command deletes an existing function from an application.",
+		Usage:       "Delete a function from an application",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -78,7 +84,7 @@ func Delete() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> </path>",
+		ArgsUsage: "<app-name> <function-name>",
 		Action:    f.delete,
 	}
 }
@@ -87,10 +93,12 @@ func Delete() cli.Command {
 func Inspect() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "function",
-		ShortName: "func",
-		Aliases:   []string{"f", "fn"},
-		Usage:     "Retrieve one or all functions properties",
+		Name:        "function",
+		ShortName:   "func",
+		Aliases:     []string{"f", "fn"},
+		Category:    "MANAGEMENT COMMAND",
+		Usage:       "Retrieve one or all properties for a function",
+		Description: "This command inspects properties of a function.",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -100,7 +108,7 @@ func Inspect() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <fn> [property.[key]]",
+		ArgsUsage: "<app-name> <function-name> [property.[key]]",
 		Action:    f.inspect,
 	}
 }
@@ -109,10 +117,12 @@ func Inspect() cli.Command {
 func Update() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "function",
-		ShortName: "func",
-		Aliases:   []string{"f", "fn"},
-		Usage:     "Update a function in an `app`",
+		Name:        "function",
+		ShortName:   "func",
+		Aliases:     []string{"f", "fn"},
+		Category:    "MANAGEMENT COMMAND",
+		Usage:       "Update a function in application",
+		Description: "This command updates a function in an application.",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -122,7 +132,7 @@ func Update() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> </path>",
+		ArgsUsage: "<app-name>",
 		Action:    f.update,
 		Flags:     updateFnFlags,
 	}
@@ -132,10 +142,12 @@ func Update() cli.Command {
 func GetConfig() cli.Command {
 	r := fnsCmd{}
 	return cli.Command{
-		Name:      "function",
-		ShortName: "func",
-		Aliases:   []string{"f", "fn"},
-		Usage:     "Inspect configuration key for this function",
+		Name:        "function",
+		ShortName:   "func",
+		Aliases:     []string{"f", "fn"},
+		Category:    "MANAGEMENT COMMAND",
+		Usage:       "Inspect configuration key for this function",
+		Description: "This command gets the configuration of a specific function for an application.",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -145,7 +157,7 @@ func GetConfig() cli.Command {
 			r.client = r.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <funct> <key>",
+		ArgsUsage: "<app-name> <funct> <key>",
 		Action:    r.getConfig,
 	}
 }
@@ -154,10 +166,12 @@ func GetConfig() cli.Command {
 func SetConfig() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "function",
-		ShortName: "func",
-		Aliases:   []string{"f", "fn"},
-		Usage:     "Store a configuration key for this function",
+		Name:        "function",
+		ShortName:   "func",
+		Aliases:     []string{"f", "fn"},
+		Category:    "MANAGEMENT COMMAND",
+		Usage:       "Store a configuration key for this function",
+		Description: "This command sets the configuration of a specific function for an application.",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -167,7 +181,7 @@ func SetConfig() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <fn> <key> <value>",
+		ArgsUsage: "<app-name> <function-name> <key> <value>",
 		Action:    f.setConfig,
 	}
 }
@@ -176,10 +190,12 @@ func SetConfig() cli.Command {
 func ListConfig() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "function",
-		ShortName: "func",
-		Aliases:   []string{"f", "fn"},
-		Usage:     "List configuration key/value pairs for this function",
+		Name:        "function",
+		ShortName:   "func",
+		Aliases:     []string{"f", "fn"},
+		Category:    "MANAGEMENT COMMAND",
+		Usage:       "List configuration key/value pairs for this function",
+		Description: "This command returns a list of configurations for a specific function.",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -189,7 +205,7 @@ func ListConfig() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> <fnname>",
+		ArgsUsage: "<app-name> <function-name>",
 		Action:    f.listConfig,
 	}
 }
@@ -198,10 +214,12 @@ func ListConfig() cli.Command {
 func UnsetConfig() cli.Command {
 	f := fnsCmd{}
 	return cli.Command{
-		Name:      "function",
-		ShortName: "func",
-		Aliases:   []string{"f", "fn"},
-		Usage:     "Remove a configuration key for this function",
+		Name:        "function",
+		ShortName:   "func",
+		Aliases:     []string{"f", "fn"},
+		Category:    "MANAGEMENT COMMAND",
+		Usage:       "Remove a configuration key for this function",
+		Description: "This command removes a configuration of a specific function.",
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
@@ -211,7 +229,7 @@ func UnsetConfig() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app> </path> <key>",
+		ArgsUsage: "<app-name> </path> <key>",
 		Action:    f.unsetConfig,
 	}
 }

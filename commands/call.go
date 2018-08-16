@@ -22,7 +22,7 @@ func CallCommand() cli.Command {
 	cl := callCmd{}
 	return cli.Command{
 		Name:    "call",
-		Usage:   "Invoke a remote function",
+		Usage:   "\tInvoke a remote function",
 		Aliases: []string{"cl"},
 		Before: func(c *cli.Context) error {
 			var err error
@@ -33,10 +33,10 @@ func CallCommand() cli.Command {
 			cl.client = cl.provider.APIClient()
 			return nil
 		},
-		ArgsUsage:   "<app> </path>",
+		ArgsUsage:   "<app-name> </path>",
 		Flags:       route.CallFnFlags,
 		Category:    "DEVELOPMENT COMMANDS",
-		Description: "This is the description",
+		Description: "This command calls explicitly a function.",
 		Action:      cl.Call,
 	}
 }
@@ -58,5 +58,5 @@ func (cl *callCmd) Call(c *cli.Context) error {
 		}
 	}
 
-	return client.CallFN(cl.provider, appName, route, content, os.Stdout, c.String("method"), c.StringSlice("e"), contentType, c.Bool("display-call-id"))
+	return client.CallRoute(cl.provider, appName, route, content, os.Stdout, c.String("method"), c.StringSlice("e"), contentType, c.Bool("display-call-id"))
 }

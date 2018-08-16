@@ -22,8 +22,8 @@ func Create() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage:   "<app_name> </path> <image>",
-		Description: "This command creates a new route for a created application.",
+		ArgsUsage:   "<app-name> </path> <image>",
+		Description: "This command creates a new route within an application.",
 		Action:      r.create,
 		Flags:       RouteFlags,
 	}
@@ -33,10 +33,11 @@ func Create() cli.Command {
 func List() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "routes",
-		Usage:    "list routes for `app`",
-		Aliases:  []string{"route", "r"},
-		Category: "MANAGEMENT COMMAND",
+		Name:        "routes",
+		Usage:       "list routes for an application",
+		Aliases:     []string{"route", "r"},
+		Description: "This command provides a list of defined routes for a specific application.",
+		Category:    "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -46,7 +47,7 @@ func List() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name>",
+		ArgsUsage: "<app-name>",
 		Action:    r.list,
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -66,10 +67,11 @@ func List() cli.Command {
 func Delete() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "Delete a route from an application `app`",
-		Category: "MANAGEMENT COMMAND",
-		Aliases:  []string{"routes", "r"},
+		Name:        "route",
+		Usage:       "Delete a route",
+		Description: "This command deletes a route from an application `app`.",
+		Category:    "MANAGEMENT COMMAND",
+		Aliases:     []string{"routes", "r"},
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -79,7 +81,7 @@ func Delete() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path>",
+		ArgsUsage: "<app-name> </path>",
 		Action:    r.delete,
 	}
 }
@@ -88,10 +90,11 @@ func Delete() cli.Command {
 func Inspect() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "Retrieve one or all routes properties",
-		Aliases:  []string{"routes", "r"},
-		Category: "MANAGEMENT COMMAND",
+		Name:        "route",
+		Usage:       "Retrieve one or all routes properties",
+		Description: "This command gets one or all routes properties.",
+		Aliases:     []string{"routes", "r"},
+		Category:    "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -101,7 +104,7 @@ func Inspect() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path> [property.[key]]",
+		ArgsUsage: "<app-name> </path> [property.[key]]",
 		Action:    r.inspect,
 	}
 }
@@ -110,10 +113,11 @@ func Inspect() cli.Command {
 func Update() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "Update a route in an `app`",
-		Aliases:  []string{"routes", "r"},
-		Category: "MANAGEMENT COMMAND",
+		Name:        "route",
+		Usage:       "Update a route in application",
+		Aliases:     []string{"routes", "r"},
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This command updates a route in an application `app`.",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -123,7 +127,7 @@ func Update() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path>",
+		ArgsUsage: "<app-name> </path>",
 		Action:    r.update,
 		Flags:     updateRouteFlags,
 	}
@@ -133,10 +137,11 @@ func Update() cli.Command {
 func GetConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "Inspect configuration key for this route",
-		Aliases:  []string{"routes", "r"},
-		Category: "MANAGEMENT COMMAND",
+		Name:        "route",
+		Usage:       "Inspect configuration key for this route",
+		Description: "This command gets the configurations for a route.",
+		Aliases:     []string{"routes", "r"},
+		Category:    "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -146,7 +151,7 @@ func GetConfig() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path> <key>",
+		ArgsUsage: "<app-name> </path> <key>",
 		Action:    r.getConfig,
 	}
 }
@@ -155,10 +160,11 @@ func GetConfig() cli.Command {
 func SetConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "Store a configuration key for this route",
-		Category: "MANAGEMENT COMMAND",
-		Aliases:  []string{"routes", "r"},
+		Name:        "route",
+		Usage:       "Store a configuration key for this route",
+		Description: "This command sets configurations for a route.",
+		Category:    "MANAGEMENT COMMAND",
+		Aliases:     []string{"routes", "r"},
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -168,7 +174,7 @@ func SetConfig() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path> <key> <value>",
+		ArgsUsage: "<app-name> </path> <key> <value>",
 		Action:    r.setConfig,
 	}
 }
@@ -177,10 +183,11 @@ func SetConfig() cli.Command {
 func ListConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "List configuration key/value pairs for this route",
-		Aliases:  []string{"routes", "r"},
-		Category: "MANAGEMENT COMMAND",
+		Name:        "route",
+		Usage:       "List configuration key/value pairs for this route",
+		Description: "This command returs a list of configurations for a route.",
+		Aliases:     []string{"routes", "r"},
+		Category:    "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -190,7 +197,7 @@ func ListConfig() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path>",
+		ArgsUsage: "<app-name> </path>",
 		Action:    r.listConfig,
 	}
 }
@@ -199,10 +206,11 @@ func ListConfig() cli.Command {
 func UnsetConfig() cli.Command {
 	r := routesCmd{}
 	return cli.Command{
-		Name:     "route",
-		Usage:    "Remove a configuration key for this route",
-		Aliases:  []string{"routes", "r"},
-		Category: "MANAGEMENT COMMAND",
+		Name:        "route",
+		Usage:       "Remove a configuration key for this route",
+		Description: "This command unsets configurations for a route.",
+		Aliases:     []string{"routes", "r"},
+		Category:    "MANAGEMENT COMMAND",
 		Before: func(c *cli.Context) error {
 			var err error
 			r.provider, err = client.CurrentProvider()
@@ -212,7 +220,7 @@ func UnsetConfig() cli.Command {
 			r.client = r.provider.APIClient()
 			return nil
 		},
-		ArgsUsage: "<app_name> </path> <key>",
+		ArgsUsage: "<app-name> </path> <key>",
 		Action:    r.unsetConfig,
 	}
 }

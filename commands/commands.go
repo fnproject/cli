@@ -24,6 +24,7 @@ var Commands = cmd{
 	"build-server": BuildServerCommand(),
 	"bump":         common.BumpCommand(),
 	"call":         CallCommand(),
+	"invoke":       InvokeCommand(),
 	"configure":    ConfigureCommand(),
 	"create":       CreateCommand(),
 	"delete":       DeleteCommand(),
@@ -32,6 +33,7 @@ var Commands = cmd{
 	"init":         InitCommand(),
 	"inspect":      InspectCommand(),
 	"list":         ListCommand(),
+	"migrate":      MigrateCommand(),
 	"push":         PushCommand(),
 	"run":          run.RunCommand(),
 	"start":        StartCommand(),
@@ -96,6 +98,7 @@ var GetCmds = cmd{
 
 var InspectCmds = cmd{
 	"apps":      app.Inspect(),
+	"context":   context.Inspect(),
 	"functions": fn.Inspect(),
 	"routes":    route.Inspect(),
 	"triggers":  trigger.Inspect(),

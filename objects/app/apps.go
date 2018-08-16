@@ -12,7 +12,7 @@ import (
 
 	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
-	fnlcient "github.com/fnproject/fn_go/client"
+	fnclient "github.com/fnproject/fn_go/client"
 	apiapps "github.com/fnproject/fn_go/client/apps"
 	"github.com/fnproject/fn_go/models"
 	"github.com/fnproject/fn_go/provider"
@@ -22,7 +22,7 @@ import (
 
 type appsCmd struct {
 	provider provider.Provider
-	client   *fnlcient.Fn
+	client   *fnclient.Fn
 }
 
 func (a *appsCmd) list(c *cli.Context) error {
@@ -70,6 +70,9 @@ func (a *appsCmd) list(c *cli.Context) error {
 }
 
 func appWithFlags(c *cli.Context, app *models.App) {
+	if app.SyslogURL == "" {
+		app.SyslogURL = c.String("syslog-url")
+	}
 	if len(app.Config) == 0 {
 		app.Config = common.ExtractEnvConfig(c.StringSlice("config"))
 	}
@@ -87,9 +90,13 @@ func (a *appsCmd) create(c *cli.Context) error {
 
 	appWithFlags(c, app)
 
+	return CreateApp(a.client, app)
+}
+
+func CreateApp(a *fnclient.Fn, app *models.App) error {
 	body := &models.AppWrapper{App: app}
 
-	resp, err := a.client.Apps.PostApps(&apiapps.PostAppsParams{
+	resp, err := a.Apps.PostApps(&apiapps.PostAppsParams{
 		Context: context.Background(),
 		Body:    body,
 	})
@@ -288,7 +295,7 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 func (a *appsCmd) delete(c *cli.Context) error {
 	appName := c.Args().First()
 	if appName == "" {
-		return errors.New("App name required to delete")
+		//return errors.New("App name required to delete")
 	}
 
 	_, err := a.client.Apps.DeleteAppsApp(&apiapps.DeleteAppsAppParams{

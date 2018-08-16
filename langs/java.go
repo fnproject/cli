@@ -264,7 +264,13 @@ const (
         </dependency>
         <dependency>
             <groupId>com.fnproject.fn</groupId>
-            <artifactId>testing</artifactId>
+            <artifactId>testing-core</artifactId>
+            <version>${fdk.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fnproject.fn</groupId>
+            <artifactId>testing-junit4</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>

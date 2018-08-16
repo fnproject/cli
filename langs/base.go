@@ -10,14 +10,12 @@ import (
 var helpers = []LangHelper{}
 
 func init() {
-	registerHelper(&DotNetLangHelper{})
 	registerHelper(&GoLangHelper{})
 	registerHelper(&JavaLangHelper{version: "1.8"})
 	registerHelper(&JavaLangHelper{version: "9"})
-	registerHelper(&LambdaNodeHelper{})
 	registerHelper(&NodeLangHelper{})
-	registerHelper(&PhpLangHelper{})
 	registerHelper(&PythonLangHelper{Version: "3.6"})
+	registerHelper(&PythonLangHelper{Version: "3.7"})
 	registerHelper(&RubyLangHelper{})
 	registerHelper(&RustLangHelper{})
 	registerHelper(&KotlinLangHelper{})

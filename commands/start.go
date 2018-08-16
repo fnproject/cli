@@ -18,9 +18,9 @@ import (
 func StartCommand() cli.Command {
 	return cli.Command{
 		Name:        "start",
-		Usage:       "Start a local Fn server by downloading its docker image",
+		Usage:       "Start a local Fn server",
 		Category:    "SERVER COMMANDS",
-		Description: "This is the description",
+		Description: "This command starts a local Fn server by downloading its docker image.",
 		Action:      start,
 		Flags: []cli.Flag{
 			cli.StringFlag{
