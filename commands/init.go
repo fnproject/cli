@@ -349,6 +349,10 @@ func ValidateFuncName(name string) error {
 func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 	var err error
 
+	if c.String("name") != "" {
+		a.ff.Name = strings.ToLower(c.String("name"))
+	}
+
 	if a.ff.Name == "" {
 		// then defaults to current directory for name, the name must be lowercase
 		a.ff.Name = strings.ToLower(filepath.Base(path))
@@ -444,6 +448,10 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 
 func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
 	var err error
+
+	if c.String("name") != "" {
+		a.ffV20180707.Name = strings.ToLower(c.String("name"))
+	}
 
 	if a.ffV20180707.Name == "" {
 		// then defaults to current directory for name, the name must be lowercase
