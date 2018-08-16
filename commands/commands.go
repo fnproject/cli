@@ -24,6 +24,7 @@ var Commands = cmd{
 	"build-server": BuildServerCommand(),
 	"bump":         common.BumpCommand(),
 	"call":         CallCommand(),
+	"invoke":       InvokeCommand(),
 	"configure":    ConfigureCommand(),
 	"create":       CreateCommand(),
 	"delete":       DeleteCommand(),
