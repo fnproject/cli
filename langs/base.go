@@ -19,6 +19,7 @@ func init() {
 	registerHelper(&RubyLangHelper{})
 	registerHelper(&RustLangHelper{})
 	registerHelper(&KotlinLangHelper{})
+	registerHelper(&ClojureLangHelper{version: "1.9.0"})
 
 }
 
