@@ -141,63 +141,80 @@ func (r *routesCmd) list(c *cli.Context) error {
 	return nil
 }
 
+func WithFlagsContext(c *cli.Context, rt *fnmodels.Route) {
+	image := c.String("image")
+	format := c.String("format")
+	fType := c.String("type")
+	mem := c.Uint64("memory")
+	cpus := c.String("cpus")
+	timeout := c.Int("timeout")
+	idleTimeout := c.Int("idle-timeout")
+	headers := c.StringSlice("headers")
+	cfg := c.StringSlice("config")
+	ann := c.StringSlice("annotation")
+	WithAttributes(image, format, fType, cpus, mem, timeout,
+		idleTimeout, headers, cfg, ann, rt)
+
+}
+
 // WithFlags returns a route with specified flags
-func WithFlags(c *cli.Context, rt *fnmodels.Route) {
+func WithAttributes(image, format, fType, cpus string, mem uint64,
+	timeout, idleTimeout int, headers, cfg, ann []string, rt *fnmodels.Route) {
 	if rt.Image == "" {
-		if i := c.String("image"); i != "" {
-			rt.Image = i
+		if image != "" {
+			rt.Image = image
 		}
 	}
 	if rt.Format == "" {
-		if f := c.String("format"); f != "" {
-			rt.Format = f
+		if format != "" {
+			rt.Format = format
 		}
 	}
 	if rt.Type == "" {
-		if t := c.String("type"); t != "" {
-			rt.Type = t
+		if fType != "" {
+			rt.Type = fType
 		}
 	}
 	if rt.Memory == 0 {
-		if m := c.Uint64("memory"); m > 0 {
-			rt.Memory = m
+		if mem > 0 {
+			rt.Memory = mem
 		}
 	}
 	if rt.Cpus == "" {
-		if m := c.String("cpus"); m != "" {
-			rt.Cpus = m
+		if cpus != "" {
+			rt.Cpus = cpus
 		}
 	}
 	if rt.Timeout == nil {
-		if t := c.Int("timeout"); t > 0 {
-			to := int32(t)
+		if timeout > 0 {
+			to := int32(timeout)
 			rt.Timeout = &to
 		}
 	}
 	if rt.IDLETimeout == nil {
-		if t := c.Int("idle-timeout"); t > 0 {
-			to := int32(t)
+		if idleTimeout > 0 {
+			to := int32(idleTimeout)
 			rt.IDLETimeout = &to
 		}
 	}
 	if len(rt.Headers) == 0 {
-		if len(c.StringSlice("headers")) > 0 {
-			headers := map[string][]string{}
-			for _, header := range c.StringSlice("headers") {
+		if len(headers) > 0 {
+			hs := map[string][]string{}
+			for _, header := range headers {
 				parts := strings.Split(header, "=")
-				headers[parts[0]] = strings.Split(parts[1], ";")
+				hs[parts[0]] = strings.Split(parts[1], ";")
 			}
-			rt.Headers = headers
+			rt.Headers = hs
 		}
 	}
 	if len(rt.Config) == 0 {
-		if len(c.StringSlice("config")) > 0 {
-			rt.Config = common.ExtractEnvConfig(c.StringSlice("config"))
+		if len(cfg) > 0 {
+			rt.Config = common.ExtractEnvConfig(cfg)
 		}
 	}
 	if len(rt.Annotations) == 0 {
-		if len(c.StringSlice("annotation")) > 0 {
-			rt.Annotations = common.ExtractAnnotations(c)
+		if len(ann) > 0 {
+			rt.Annotations = common.ExtractAnnotations(ann)
 		}
 	}
 }
@@ -256,7 +273,7 @@ func (r *routesCmd) create(c *cli.Context) error {
 	rt.Path = route
 	rt.Image = c.Args().Get(2)
 
-	WithFlags(c, rt)
+	WithFlagsContext(c, rt)
 
 	if rt.Path == "" {
 		return errors.New("Route path is missing")
@@ -356,7 +373,7 @@ func (r *routesCmd) update(c *cli.Context) error {
 
 	rt := &fnmodels.Route{}
 
-	WithFlags(c, rt)
+	WithFlagsContext(c, rt)
 
 	err := PatchRoute(r.client, appName, route, rt)
 	if err != nil {

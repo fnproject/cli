@@ -128,34 +128,39 @@ func (f *fnsCmd) list(c *cli.Context) error {
 	return nil
 }
 
-// WithFlags returns a function with specified flags
-func FnWithFlags(c *cli.Context, fn *models.Fn) {
-	if i := c.String("image"); i != "" {
-		fn.Image = i
+func FnWithFlags(image, format string, mem uint64, timeout, idleTimeout int, cfg, ann []string, fn *models.Fn) {
+	if image != "" {
+		fn.Image = image
 	}
-	if f := c.String("format"); f != "" {
-		fn.Format = f
+	if format != "" {
+		fn.Format = format
 	}
-
-	if m := c.Uint64("memory"); m > 0 {
-		fn.Mem = m
+	if mem > 0 {
+		fn.Mem = mem
 	}
 	if len(fn.Config) == 0 {
-		fn.Config = common.ExtractEnvConfig(c.StringSlice("config"))
+		fn.Config = common.ExtractEnvConfig(cfg)
 	}
 	if len(fn.Annotations) == 0 {
-		if len(c.StringSlice("annotation")) > 0 {
-			fn.Annotations = common.ExtractAnnotations(c)
+		if len(ann) > 0 {
+			fn.Annotations = common.ExtractAnnotations(ann)
 		}
 	}
-	if t := c.Int("timeout"); t > 0 {
-		to := int32(t)
+	if timeout > 0 {
+		to := int32(timeout)
 		fn.Timeout = &to
 	}
-	if t := c.Int("idle-timeout"); t > 0 {
-		to := int32(t)
+	if idleTimeout > 0 {
+		to := int32(idleTimeout)
 		fn.IDLETimeout = &to
 	}
+}
+
+// WithFlags returns a function with specified flags
+func FnWithFlagsContext(c *cli.Context, fn *models.Fn) {
+	FnWithFlags(c.String("image"), c.String("format"), c.Uint64("memory"),
+		c.Int("timeout"), c.Int("idle-timeout"),
+		c.StringSlice("config"), c.StringSlice("annotation"), fn)
 }
 
 // WithFuncFile used when creating a function from a funcfile
@@ -204,7 +209,7 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	fn.Name = fnName
 	fn.Image = c.Args().Get(2)
 
-	FnWithFlags(c, fn)
+	FnWithFlagsContext(c, fn)
 
 	if fn.Name == "" {
 		return errors.New("fnName path is missing")
@@ -313,7 +318,7 @@ func (f *fnsCmd) update(c *cli.Context) error {
 		return err
 	}
 
-	FnWithFlags(c, fn)
+	FnWithFlagsContext(c, fn)
 
 	err = PutFn(f.client, fn.ID, fn)
 	if err != nil {
