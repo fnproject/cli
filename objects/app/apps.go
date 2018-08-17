@@ -12,11 +12,12 @@ import (
 
 	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
-	fnclient "github.com/fnproject/fn_go/client"
+	fnclient "github.com/fnproject/fn_go/client"	
 	apiapps "github.com/fnproject/fn_go/client/apps"
 	"github.com/fnproject/fn_go/models"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/jmoiron/jsonq"
+	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
 
@@ -26,7 +27,8 @@ type appsCmd struct {
 }
 
 func (a *appsCmd) list(c *cli.Context) error {
-	params := &apiapps.GetAppsParams{Context: context.Background()}
+	ctx :=  provider.WithRequestID(context.Background(), viper.GetString("request-id"))
+	params := &apiapps.GetAppsParams{Context: ctx}
 	var resApps []*models.App
 	for {
 		resp, err := a.client.Apps.GetApps(params)
