@@ -207,14 +207,37 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			return errors.New("init-image did not produce a valid func.init.yaml")
 		}
 
-		// Copy fields provided by init-image
-		// TODO: also allow CLI args to override here?
-		a.ff.Runtime = initFf.Runtime
-		a.ff.Cmd = initFf.Cmd
+		// Build up a combined func.yaml (in a.ff) from the init-image and defaults and route and cli-args
+		//     The following fields are already in a.ff:
+		//         config, cpus, idle_timeout, memory, name, path, timeout, type, triggers, version
+		//     Add the following from the init-image:
+		//         build, build_image, cmd, content_type, entrypoint, expects, format, headers, run_image, runtime, tests
+		a.ff.Build = initFf.Build
 		a.ff.BuildImage = initFf.BuildImage
-		a.ff.RunImage = initFf.RunImage
+		a.ff.Cmd = initFf.Cmd
+		a.ff.ContentType = initFf.ContentType
+		a.ff.Entrypoint = initFf.Entrypoint
+		a.ff.Expects = initFf.Expects
 		a.ff.Format = initFf.Format
+		a.ff.Headers = initFf.Headers
+		a.ff.RunImage = initFf.RunImage
+		a.ff.Runtime = initFf.Runtime
+		a.ff.Tests = initFf.Tests
 
+		// Then CLI args can override some init-image options (TODO: remove this with #383)
+		if c.String("cmd") != "" {
+			a.ff.Cmd = c.String("cmd")
+		}
+
+		if c.String("entrypoint") != "" {
+			a.ff.Entrypoint = c.String("entrypoint")
+		}
+
+		if c.String("format") != "" {
+			a.ff.Format = c.String("format")
+		}
+
+		// Done - write it out to func.yaml
 		if err := common.EncodeFuncfileYAML("func.yaml", a.ff); err != nil {
 			return err
 		}
@@ -402,13 +425,33 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 			return errors.New("init-image did not produce a valid func.init.yaml")
 		}
 
-		// Copy fields provided by init-image
-		// TODO: also allow CLI args to override here?
-		a.ffV20180707.Runtime = initFf.Runtime
-		a.ffV20180707.Cmd = initFf.Cmd
+		// Build up a combined func.yaml (in a.ff) from the init-image and defaults and route and cli-args
+		//     The following fields are already in a.ff:
+		//         config, cpus, idle_timeout, memory, name, path, timeout, type, triggers, version
+		//     Add the following from the init-image:
+		//         build, build_image, cmd, content_type, entrypoint, expects, format, headers, run_image, runtime
+		a.ffV20180707.Build = initFf.Build
 		a.ffV20180707.Build_image = initFf.BuildImage
-		a.ffV20180707.Run_image = initFf.RunImage
+		a.ffV20180707.Cmd = initFf.Cmd
+		a.ffV20180707.Content_type = initFf.ContentType
+		a.ffV20180707.Entrypoint = initFf.Entrypoint
+		a.ffV20180707.Expects = initFf.Expects
 		a.ffV20180707.Format = initFf.Format
+		a.ffV20180707.Run_image = initFf.RunImage
+		a.ffV20180707.Runtime = initFf.Runtime
+
+		// Then CLI args can override some init-image options (TODO: remove this with #383)
+		if c.String("cmd") != "" {
+			a.ffV20180707.Cmd = c.String("cmd")
+		}
+
+		if c.String("entrypoint") != "" {
+			a.ffV20180707.Entrypoint = c.String("entrypoint")
+		}
+
+		if c.String("format") != "" {
+			a.ffV20180707.Format = c.String("format")
+		}
 
 		if err := common.EncodeFuncFileV20180707YAML("func.yaml", a.ffV20180707); err != nil {
 			return err
