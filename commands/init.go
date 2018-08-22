@@ -514,8 +514,8 @@ func (a *initFnCmd) bindFn(fn *modelsV2.Fn) {
 	if fn.Format != "" {
 		ff.Format = fn.Format
 	}
-	if fn.Mem > 0 {
-		ff.Memory = fn.Mem
+	if fn.Memory > 0 {
+		ff.Memory = fn.Memory
 	}
 	if fn.Timeout != nil {
 		ff.Timeout = fn.Timeout

@@ -51,8 +51,8 @@
     "provider/defaultprovider",
     "provider/oracle"
   ]
-  revision = "48652bf7061ea6b9592c48dc7452f3f275a83ef3"
-  version = "0.2.11"
+  revision = "7dcd97e916893d9ae1f3ab865d526338c425dc78"
+  version = "0.2.13"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -387,6 +387,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "50fbe27a6e7d101d509b451dc57c2497d0cea634bfc619b055d69da74ae40681"
+  inputs-digest = "2d276dbfa471aa0a88ffc6cedd5a048c83591d7d34008238aca15f623d441239"
   solver-name = "gps-cdcl"
   solver-version = 1
