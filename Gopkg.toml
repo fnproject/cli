@@ -31,7 +31,7 @@ ignored = ["github.com/Azure/go-ansiterm*"]
 
 [[constraint]]
   name = "github.com/fnproject/fn_go"
-  version = "0.2.11"
+  version = "0.2.12"
 
 [[constraint]]
   name = "github.com/giantswarm/semver-bump"

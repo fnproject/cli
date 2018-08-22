@@ -11,8 +11,10 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"encoding/base32"
 	"os/signal"
 	"path/filepath"
+	"crypto/rand"
 	"strings"
 	"time"
 	"unicode"
@@ -32,6 +34,8 @@ const (
 	FunctionsDockerImage     = "fnproject/fnserver"
 	FuncfileDockerRuntime    = "docker"
 	MinRequiredDockerVersion = "17.5.0"
+	RequestID = "request-id"
+	RequestedLength = 16
 )
 
 // GetWd returns working directory.
@@ -53,6 +57,16 @@ func GetDir(c *cli.Context) string {
 	}
 
 	return dir
+}
+
+func GetRequestID() string {
+	byteArr := make([]byte, RequestedLength)
+	_, err := rand.Read(byteArr)
+	if err != nil {
+		log.Fatalf("failed to generate random number for requestID")
+	}
+
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(byteArr)
 }
 
 // BuildFunc bumps version and builds function.

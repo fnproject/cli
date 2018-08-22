@@ -2,8 +2,11 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/base32"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"sort"
 	"strings"
@@ -11,11 +14,22 @@ import (
 	"text/template"
 
 	"github.com/fnproject/cli/commands"
+	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/common/color"
 	"github.com/fnproject/cli/config"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
+
+func getRequestID() string {
+	byteArr := make([]byte, 16)
+	_, err := rand.Read(byteArr)
+	if err != nil {
+		log.Fatalf("failed to generate random number for requestID")
+	}
+
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(byteArr)
+}
 
 func newFn() *cli.App {
 	app := cli.NewApp()
@@ -29,6 +43,8 @@ func newFn() *cli.App {
 		if err != nil {
 			return err
 		}
+
+		viper.Set(common.RequestID, common.GetRequestID())
 		commandArgOverrides(c)
 		return nil
 	}
