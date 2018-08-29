@@ -9,7 +9,7 @@ import (
 )
 
 // Version of Fn CLI
-var Version = "0.4.150"
+var Version = "0.4.151"
 
 
 func GetVersion(versionType string) string {
