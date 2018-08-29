@@ -436,6 +436,16 @@ func (h *CLIHarness) MkDir(dir string) {
 
 }
 
+func (h *CLIHarness) Exec(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	cmd.Dir = h.cwd
+	err := cmd.Run()
+	//	out, err := cmd.CombinedOutput()
+	//	fmt.Printf("STDOUT: %s", out)
+	//	fmt.Printf("STDERR: %s", err)
+	return err
+}
+
 //FileAppend appends val to  an existing file
 func (h *CLIHarness) FileAppend(file string, val string) {
 	filePath := h.relativeToCwd(file)
@@ -462,7 +472,10 @@ func (h *CLIHarness) GetFile(s string) string {
 		h.t.Fatalf("File %s is not readable %v", s, err)
 	}
 	return string(v)
+}
 
+func (h *CLIHarness) RemoveFile(s string) error {
+	return os.Remove(h.relativeToCwd(s))
 }
 
 func (h *CLIHarness) GetYamlFile(s string) common.FuncFileV20180707 {
@@ -474,8 +487,15 @@ func (h *CLIHarness) GetYamlFile(s string) common.FuncFileV20180707 {
 	err = yaml.Unmarshal(b, &ff)
 
 	return ff
+}
+
+func (h *CLIHarness) WriteYamlFile(s string, ff common.FuncFileV20180707) {
+
+	ffContent, _ := yaml.Marshal(ff)
+	h.WithFile(s, string(ffContent), 0600)
 
 }
+
 func (cr *CmdResult) AssertStdoutContainsJSON(query []string, value interface{}) {
 	routeObj := map[string]interface{}{}
 	err := json.Unmarshal([]byte(cr.Stdout), &routeObj)

@@ -20,9 +20,13 @@ it will print an error message then exit.
 */
 
 import (
+	"archive/tar"
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -57,6 +61,10 @@ func initFlags(a *initFnCmd) []cli.Flag {
 		cli.StringFlag{
 			Name:  "runtime",
 			Usage: "Choose an existing runtime - " + langsList(),
+		},
+		cli.StringFlag{
+			Name:  "init-image",
+			Usage: "A Docker image which will create a function template",
 		},
 		cli.StringFlag{
 			Name:  "entrypoint",
@@ -132,6 +140,11 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	a.bindRoute(&rt)
 
 	runtime := c.String("runtime")
+	initImage := c.String("init-image")
+
+	if runtime != "" && initImage != "" {
+		return fmt.Errorf("You can't supply --runtime with --init-image")
+	}
 
 	runtimeSpecified := runtime != ""
 	if runtimeSpecified {
@@ -180,20 +193,143 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		return err
 	}
 
-	// TODO: why don't we treat "docker" runtime as just another language helper? Then can get rid of several Docker
-	// specific if/else's like this one.
-	if runtimeSpecified && runtime != common.FuncfileDockerRuntime {
-		err := a.generateBoilerplate(dir, runtime)
+	if initImage != "" {
+
+		err = runInitImage(initImage, a)
 		if err != nil {
 			return err
 		}
+
+		// Merge the func.init.yaml from the initImage with a.ff
+		//     write out the new func file
+		var initFf, err = common.ParseFuncfile("func.init.yaml")
+		if err != nil {
+			return errors.New("init-image did not produce a valid func.init.yaml")
+		}
+
+		// Build up a combined func.yaml (in a.ff) from the init-image and defaults and route and cli-args
+		//     The following fields are already in a.ff:
+		//         config, cpus, idle_timeout, memory, name, path, timeout, type, triggers, version
+		//     Add the following from the init-image:
+		//         build, build_image, cmd, content_type, entrypoint, expects, format, headers, run_image, runtime, tests
+		a.ff.Build = initFf.Build
+		a.ff.BuildImage = initFf.BuildImage
+		a.ff.Cmd = initFf.Cmd
+		a.ff.ContentType = initFf.ContentType
+		a.ff.Entrypoint = initFf.Entrypoint
+		a.ff.Expects = initFf.Expects
+		a.ff.Format = initFf.Format
+		a.ff.Headers = initFf.Headers
+		a.ff.RunImage = initFf.RunImage
+		a.ff.Runtime = initFf.Runtime
+		a.ff.Tests = initFf.Tests
+
+		// Then CLI args can override some init-image options (TODO: remove this with #383)
+		if c.String("cmd") != "" {
+			a.ff.Cmd = c.String("cmd")
+		}
+
+		if c.String("entrypoint") != "" {
+			a.ff.Entrypoint = c.String("entrypoint")
+		}
+
+		if c.String("format") != "" {
+			a.ff.Format = c.String("format")
+		}
+
+		// Done - write it out to func.yaml
+		if err := common.EncodeFuncfileYAML("func.yaml", a.ff); err != nil {
+			return err
+		}
+
+		os.Remove("func.init.yaml")
+
+	} else {
+
+		// TODO: why don't we treat "docker" runtime as just another language helper? Then can get rid of several Docker
+		// specific if/else's like this one.
+		if runtimeSpecified && runtime != common.FuncfileDockerRuntime {
+			err := a.generateBoilerplate(dir, runtime)
+			if err != nil {
+				return err
+			}
+		}
+
+		if err := common.EncodeFuncfileYAML("func.yaml", a.ff); err != nil {
+			return err
+		}
+
 	}
 
-	if err := common.EncodeFuncfileYAML("func.yaml", a.ff); err != nil {
-		return err
-	}
 	fmt.Println("func.yaml created.")
 	return nil
+}
+
+func runInitImage(initImage string, a *initFnCmd) error {
+	fmt.Println("Building from init-image: " + initImage)
+
+	// Run the initImage
+	var c1ErrB bytes.Buffer
+	tarR, tarW := io.Pipe()
+
+	c1 := exec.Command("docker", "run", "-e", "FN_FUNCTION_NAME="+a.ff.Name, initImage)
+	c1.Stderr = &c1ErrB
+	c1.Stdout = tarW
+
+	c1_err := c1.Start()
+	if c1_err != nil {
+		fmt.Println(c1ErrB.String())
+		return errors.New("Error running init-image")
+	}
+
+	err := untarStream(tarR)
+	if err != nil {
+		return errors.New("Error un-tarring the output of the init-image")
+	}
+
+	return nil
+}
+
+// Untars an io.Reader into the cwd
+func untarStream(r io.Reader) error {
+
+	tr := tar.NewReader(r)
+	for {
+		header, err := tr.Next()
+
+		if err == io.EOF {
+			// if no more files are found we are finished
+			return nil
+		}
+
+		if err != nil {
+			return err
+		}
+
+		switch header.Typeflag {
+		// if its a dir and it doesn't exist create it
+		case tar.TypeDir:
+			if _, err := os.Stat(header.Name); err != nil {
+				if err := os.MkdirAll(header.Name, 0755); err != nil {
+					return err
+				}
+			}
+
+		// if it's a file create it
+		case tar.TypeReg:
+			f, err := os.OpenFile(header.Name, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+
+			// copy over contents
+			if _, err := io.Copy(f, tr); err != nil {
+				return err
+			}
+
+			f.Close()
+		}
+	}
 }
 
 func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
@@ -218,6 +354,11 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 	}
 
 	runtime := c.String("runtime")
+	initImage := c.String("init-image")
+
+	if runtime != "" && initImage != "" {
+		return fmt.Errorf("You can't supply --runtime with --init-image")
+	}
 
 	runtimeSpecified := runtime != ""
 
@@ -270,17 +411,67 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 
 	a.ffV20180707.Schema_version = common.LatestYamlVersion
 
-	// TODO: why don't we treat "docker" runtime as just another language helper? Then can get rid of several Docker
-	// specific if/else's like this one.
-	if runtimeSpecified && runtime != common.FuncfileDockerRuntime {
-		err := a.generateBoilerplate(dir, runtime)
+	if initImage != "" {
+
+		err = runInitImage(initImage, a)
 		if err != nil {
 			return err
 		}
-	}
 
-	if err := common.EncodeFuncFileV20180707YAML("func.yaml", a.ffV20180707); err != nil {
-		return err
+		// Merge the func.init.yaml from the initImage with a.ff
+		//     write out the new func file
+		var initFf, err = common.ParseFuncfile("func.init.yaml")
+		if err != nil {
+			return errors.New("init-image did not produce a valid func.init.yaml")
+		}
+
+		// Build up a combined func.yaml (in a.ff) from the init-image and defaults and route and cli-args
+		//     The following fields are already in a.ff:
+		//         config, cpus, idle_timeout, memory, name, path, timeout, type, triggers, version
+		//     Add the following from the init-image:
+		//         build, build_image, cmd, content_type, entrypoint, expects, format, headers, run_image, runtime
+		a.ffV20180707.Build = initFf.Build
+		a.ffV20180707.Build_image = initFf.BuildImage
+		a.ffV20180707.Cmd = initFf.Cmd
+		a.ffV20180707.Content_type = initFf.ContentType
+		a.ffV20180707.Entrypoint = initFf.Entrypoint
+		a.ffV20180707.Expects = initFf.Expects
+		a.ffV20180707.Format = initFf.Format
+		a.ffV20180707.Run_image = initFf.RunImage
+		a.ffV20180707.Runtime = initFf.Runtime
+
+		// Then CLI args can override some init-image options (TODO: remove this with #383)
+		if c.String("cmd") != "" {
+			a.ffV20180707.Cmd = c.String("cmd")
+		}
+
+		if c.String("entrypoint") != "" {
+			a.ffV20180707.Entrypoint = c.String("entrypoint")
+		}
+
+		if c.String("format") != "" {
+			a.ffV20180707.Format = c.String("format")
+		}
+
+		if err := common.EncodeFuncFileV20180707YAML("func.yaml", a.ffV20180707); err != nil {
+			return err
+		}
+
+		os.Remove("func.init.yaml")
+
+	} else {
+		// TODO: why don't we treat "docker" runtime as just another language helper?
+		// Then can get rid of several Docker specific if/else's like this one.
+		if runtimeSpecified && runtime != common.FuncfileDockerRuntime {
+			err := a.generateBoilerplate(dir, runtime)
+			if err != nil {
+				return err
+			}
+		}
+
+		if err := common.EncodeFuncFileV20180707YAML("func.yaml", a.ffV20180707); err != nil {
+			return err
+		}
 	}
 
 	fmt.Println("func.yaml created.")
@@ -323,8 +514,8 @@ func (a *initFnCmd) bindFn(fn *modelsV2.Fn) {
 	if fn.Format != "" {
 		ff.Format = fn.Format
 	}
-	if fn.Mem > 0 {
-		ff.Memory = fn.Mem
+	if fn.Memory > 0 {
+		ff.Memory = fn.Memory
 	}
 	if fn.Timeout != nil {
 		ff.Timeout = fn.Timeout
@@ -348,6 +539,10 @@ func ValidateFuncName(name string) error {
 
 func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 	var err error
+
+	if c.String("name") != "" {
+		a.ff.Name = strings.ToLower(c.String("name"))
+	}
 
 	if a.ff.Name == "" {
 		// then defaults to current directory for name, the name must be lowercase
@@ -373,6 +568,13 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 	}
 
 	var helper langs.LangHelper
+
+	if c.String("init-image") != "" {
+		// Building from an image only requires us to have
+		// Name and Version generated here.
+		return nil
+	}
+
 	if runtime == "" {
 		helper, err = detectRuntime(path)
 		if err != nil {
@@ -387,6 +589,7 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 		fmt.Println("Runtime:", runtime)
 		helper = langs.GetLangHelper(runtime)
 	}
+
 	if helper == nil {
 		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function.\n", a.ff.Runtime)
 	} else {
@@ -445,6 +648,10 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
 	var err error
 
+	if c.String("name") != "" {
+		a.ffV20180707.Name = strings.ToLower(c.String("name"))
+	}
+
 	if a.ffV20180707.Name == "" {
 		// then defaults to current directory for name, the name must be lowercase
 		a.ffV20180707.Name = strings.ToLower(filepath.Base(path))
@@ -464,6 +671,10 @@ func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
 	runtime := c.String("runtime")
 	if runtime == common.FuncfileDockerRuntime {
 		return errors.New("Function file runtime is 'docker', but no Dockerfile exists")
+	}
+
+	if c.String("init-image") != "" {
+		return nil
 	}
 
 	var helper langs.LangHelper

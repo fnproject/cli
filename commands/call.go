@@ -58,5 +58,5 @@ func (cl *callCmd) Call(c *cli.Context) error {
 		}
 	}
 
-	return client.CallFN(cl.provider, appName, route, content, os.Stdout, c.String("method"), c.StringSlice("e"), contentType, c.Bool("display-call-id"))
+	return client.CallRoute(cl.provider, appName, route, content, os.Stdout, c.String("method"), c.StringSlice("e"), contentType, c.Bool("display-call-id"))
 }

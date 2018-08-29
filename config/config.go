@@ -110,13 +110,15 @@ func LoadConfiguration(c *cli.Context) error {
 	// Find home directory.
 	home := GetHomeDir()
 	context := ""
-	if context = c.String(EnvFnContext); context == "" {
-		viper.AddConfigPath(filepath.Join(home, rootConfigPathName))
-		viper.SetConfigName(configName)
 
-		if err := viper.ReadInConfig(); err != nil {
-			return err
-		}
+	viper.AddConfigPath(filepath.Join(home, rootConfigPathName))
+	viper.SetConfigName(configName)
+
+	if err := viper.ReadInConfig(); err != nil {
+		return err
+	}
+
+	if context = c.String(EnvFnContext); context == "" {
 		context = viper.GetString(CurrentContext)
 	}
 

@@ -163,7 +163,7 @@ func FnWithFlags(c *cli.Context, fn *models.Fn) {
 	}
 
 	if m := c.Uint64("memory"); m > 0 {
-		fn.Mem = m
+		fn.Memory = m
 	}
 	if len(fn.Config) == 0 {
 		fn.Config = common.ExtractEnvConfig(c.StringSlice("config"))
@@ -204,7 +204,7 @@ func WithFuncFileV20180707(ff *common.FuncFileV20180707, fn *models.Fn) error {
 		fn.Timeout = ff.Timeout
 	}
 	if ff.Memory != 0 {
-		fn.Mem = ff.Memory
+		fn.Memory = ff.Memory
 	}
 	if ff.IDLE_timeout != nil {
 		fn.IDLETimeout = ff.IDLE_timeout
