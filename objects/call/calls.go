@@ -2,13 +2,17 @@ package call
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
 	fnclient "github.com/fnproject/fn_go/client"
 	apicall "github.com/fnproject/fn_go/client/call"
 	"github.com/fnproject/fn_go/models"
+	"github.com/go-openapi/strfmt"
 	"github.com/urfave/cli"
 )
 
@@ -16,22 +20,80 @@ type callsCmd struct {
 	client *fnclient.Fn
 }
 
-func printCalls(calls []*models.Call) {
-	for _, call := range calls {
-		fmt.Println(fmt.Sprintf(
-			"ID: %v\n"+
-				"App Id: %v\n"+
-				"Route: %v\n"+
-				"Created At: %v\n"+
-				"Started At: %v\n"+
-				"Completed At: %v\n"+
-				"Status: %v\n",
-			call.ID, call.AppID, call.Path, call.CreatedAt,
-			call.StartedAt, call.CompletedAt, call.Status))
-		if call.Error != "" {
-			fmt.Println(fmt.Sprintf("Error reason: %v\n", call.Error))
+// getMarshalableCall returns a call struct that we can marshal to JSON and output
+func getMarshalableCall(call *models.Call) interface{} {
+	if call.Error != "" {
+		return struct {
+			ID          string          `json:"id"`
+			AppID       string          `json:"appId"`
+			Path        string          `json:"path"`
+			CreatedAt   strfmt.DateTime `json:"createdAt"`
+			StartedAt   strfmt.DateTime `json:"startedAt"`
+			CompletedAt strfmt.DateTime `json:"completedAt"`
+			Status      string          `json:"status"`
+			ErrorReason string          `json:"errorReason"`
+		}{
+			call.ID,
+			call.AppID,
+			call.Path,
+			call.CreatedAt,
+			call.StartedAt,
+			call.CompletedAt,
+			call.Status,
+			call.Error,
 		}
 	}
+
+	return struct {
+		ID          string          `json:"id"`
+		AppID       string          `json:"appId"`
+		Path        string          `json:"path"`
+		CreatedAt   strfmt.DateTime `json:"createdAt"`
+		StartedAt   strfmt.DateTime `json:"startedAt"`
+		CompletedAt strfmt.DateTime `json:"completedAt"`
+		Status      string          `json:"status"`
+	}{
+		call.ID,
+		call.AppID,
+		call.Path,
+		call.CreatedAt,
+		call.StartedAt,
+		call.CompletedAt,
+		call.Status,
+	}
+}
+
+func printCalls(c *cli.Context, calls []*models.Call) error {
+	outputFormat := strings.ToLower(c.String("output"))
+	if outputFormat == "json" {
+		var allCalls []interface{}
+		for _, call := range calls {
+			c := getMarshalableCall(call)
+			allCalls = append(allCalls, c)
+		}
+		b, err := json.MarshalIndent(allCalls, "", "    ")
+		if err != nil {
+			return err
+		}
+		fmt.Fprint(os.Stdout, string(b))
+	} else {
+		for _, call := range calls {
+			fmt.Println(fmt.Sprintf(
+				"ID: %v\n"+
+					"App Id: %v\n"+
+					"Route: %v\n"+
+					"Created At: %v\n"+
+					"Started At: %v\n"+
+					"Completed At: %v\n"+
+					"Status: %v\n",
+				call.ID, call.AppID, call.Path, call.CreatedAt,
+				call.StartedAt, call.CompletedAt, call.Status))
+			if call.Error != "" {
+				fmt.Println(fmt.Sprintf("Error reason: %v\n", call.Error))
+			}
+		}
+	}
+	return nil
 }
 
 func (c *callsCmd) get(ctx *cli.Context) error {
@@ -50,7 +112,7 @@ func (c *callsCmd) get(ctx *cli.Context) error {
 			return err
 		}
 	}
-	printCalls([]*models.Call{resp.Payload.Call})
+	printCalls(ctx, []*models.Call{resp.Payload.Call})
 	return nil
 }
 
@@ -115,6 +177,6 @@ func (c *callsCmd) list(ctx *cli.Context) error {
 		params.Cursor = &resp.Payload.NextCursor
 	}
 
-	printCalls(resCalls)
+	printCalls(ctx, resCalls)
 	return nil
 }

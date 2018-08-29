@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -87,6 +88,42 @@ func WithoutSlash(p string) string {
 	return p
 }
 
+func printRoutes(c *cli.Context, callURL *url.URL, appName string, routes []*fnmodels.Route) error {
+	outputFormat := strings.ToLower(c.String("output"))
+	if outputFormat == "json" {
+		var allRoutes []interface{}
+		for _, route := range routes {
+			endpoint := path.Join(callURL.Host, "r", appName, route.Path)
+			r := struct {
+				Path     string `json:"path"`
+				Image    string `json:"image"`
+				Endpoint string `json:"endpoint"`
+			}{
+				route.Path,
+				route.Image,
+				endpoint,
+			}
+			allRoutes = append(allRoutes, r)
+		}
+		b, err := json.MarshalIndent(allRoutes, "", "    ")
+		if err != nil {
+			return err
+		}
+		fmt.Fprint(os.Stdout, string(b))
+	} else {
+		w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
+		fmt.Fprint(w, "PATH", "\t", "IMAGE", "\t", "ENDPOINT", "\n")
+		for _, route := range routes {
+			endpoint := path.Join(callURL.Host, "r", appName, route.Path)
+			fmt.Fprint(w, route.Path, "\t", route.Image, "\t", endpoint, "\n")
+		}
+		if err := w.Flush(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (r *routesCmd) list(c *cli.Context) error {
 	appName := c.Args().Get(0)
 
@@ -121,24 +158,16 @@ func (r *routesCmd) list(c *cli.Context) error {
 		params.Cursor = &resp.Payload.NextCursor
 	}
 
-	callURL, err := r.provider.CallURL(appName)
-	if err != nil {
-		return err
-	}
-
 	if len(resRoutes) == 0 {
 		fmt.Fprintf(os.Stderr, "No routes found for app: %s\n", appName)
 		return nil
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprint(w, "PATH", "\t", "IMAGE", "\t", "ENDPOINT", "\n")
-	for _, route := range resRoutes {
-		endpoint := path.Join(callURL.Host, "r", appName, route.Path)
-		fmt.Fprint(w, route.Path, "\t", route.Image, "\t", endpoint, "\n")
+	callURL, err := r.provider.CallURL(appName)
+	if err != nil {
+		return err
 	}
-	w.Flush()
-	return nil
+	return printRoutes(c, callURL, appName, resRoutes)
 }
 
 // WithFlags returns a route with specified flags

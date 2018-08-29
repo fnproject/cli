@@ -1,6 +1,7 @@
 package context
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -15,7 +16,6 @@ import (
 	"github.com/fnproject/fn_go/provider"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
-	yaml "gopkg.in/yaml.v2"
 )
 
 var contextsPath = config.GetContextsPath()
@@ -115,10 +115,10 @@ func inspect(c *cli.Context) error {
 			return errors.New("no context is set, please provider a context to inspect.")
 		}
 	}
-	return PrintContext(context)
+	return printContext(context)
 }
 
-func PrintContext(context string) error {
+func printContext(context string) error {
 	if check, err := checkContextFileExists(context); !check {
 		if err != nil {
 			return err
@@ -175,44 +175,38 @@ func unset(c *cli.Context) error {
 	return nil
 }
 
+func printContexts(c *cli.Context, contexts []*Info) error {
+	outputFormat := strings.ToLower(c.String("output"))
+	if outputFormat == "json" {
+		b, err := json.MarshalIndent(contexts, "", "    ")
+		if err != nil {
+			return err
+		}
+		fmt.Fprint(os.Stdout, string(b))
+	} else {
+		w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
+		fmt.Fprint(w, "CURRENT", "\t", "NAME", "\t", "PROVIDER", "\t", "API URL", "\t", "REGISTRY", "\n")
+
+		for _, ctx := range contexts {
+			current := ""
+			if ctx.Current {
+				current = "*"
+			}
+			fmt.Fprint(w, current, "\t", ctx.Name, "\t", ctx.ContextProvider, "\t", ctx.EnvFnAPIURL, "\t", ctx.EnvFnRegistry, "\n")
+		}
+		if err := w.Flush(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func list(c *cli.Context) error {
-	currentContext := viper.GetString(config.CurrentContext)
-	files, err := getAvailableContexts()
+	contexts, err := getAvailableContexts()
 	if err != nil {
 		return err
 	}
-
-	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprint(w, "CURRENT", "\t", "NAME", "\t", "PROVIDER", "\t", "API URL", "\t", "REGISTRY", "\n")
-
-	for _, f := range files {
-		current := ""
-		fileName := f.Name()
-		yamlFile, err := getFileBytes(fileName)
-		if err != nil {
-			return err
-		}
-
-		v := config.ContextFile{}
-		err = yaml.Unmarshal(yamlFile, &v)
-		if err != nil {
-			return err
-		}
-
-		name := strings.Replace(f.Name(), fileExtension, "", 1)
-		if currentContext == name {
-			current = "*"
-		}
-		fmt.Fprint(w, current, "\t", name, "\t", v.ContextProvider, "\t", v.EnvFnAPIURL, "\t", v.EnvFnRegistry, "\n")
-	}
-	return w.Flush()
-}
-
-func getFileBytes(name string) ([]byte, error) {
-	home := config.GetHomeDir()
-	path := filepath.Join(home, contextsPath, name)
-	yamlFile, err := ioutil.ReadFile(path)
-	return yamlFile, err
+	return printContexts(c, contexts)
 }
 
 func (ctxMap *ContextMap) update(c *cli.Context) error {
@@ -241,10 +235,38 @@ func checkContextFileExists(filename string) (bool, error) {
 	return true, nil
 }
 
-func getAvailableContexts() ([]os.FileInfo, error) {
+func getAvailableContexts() ([]*Info, error) {
 	home := config.GetHomeDir()
 	files, err := ioutil.ReadDir(filepath.Join(home, contextsPath))
-	return files, err
+	if err != nil {
+		return nil, err
+	}
+
+	currentContext := viper.GetString(config.CurrentContext)
+	var contexts []*Info
+	for _, f := range files {
+		fullPath := getContextFilePath(f.Name())
+		ctxFile, err := config.NewContextFile(fullPath)
+		if err != nil {
+			return nil, err
+		}
+
+		isCurrent := false
+		name := strings.Replace(f.Name(), fileExtension, "", 1)
+		if currentContext == name {
+			isCurrent = true
+		}
+		c := NewInfo(name, isCurrent, ctxFile)
+		contexts = append(contexts, c)
+	}
+	return contexts, err
+}
+
+// getContextFilePath returns the full path to
+// the context file
+func getContextFilePath(name string) string {
+	home := config.GetHomeDir()
+	return filepath.Join(home, contextsPath, name)
 }
 
 func ValidateAPIURL(apiURL string) error {

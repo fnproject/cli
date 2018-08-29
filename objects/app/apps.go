@@ -25,6 +25,35 @@ type appsCmd struct {
 	client   *fnclient.Fn
 }
 
+func printApps(c *cli.Context, apps []*models.App) error {
+	outputFormat := strings.ToLower(c.String("output"))
+	if outputFormat == "json" {
+		var allApps []interface{}
+		for _, app := range apps {
+			a := struct {
+				Name string `json:"name"`
+			}{app.Name}
+			allApps = append(allApps, a)
+		}
+		b, err := json.MarshalIndent(allApps, "", "    ")
+		if err != nil {
+			return err
+		}
+		fmt.Fprint(os.Stdout, string(b))
+	} else {
+		w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
+		fmt.Fprint(w, "NAME", "\n")
+		for _, app := range apps {
+			fmt.Fprint(w, app.Name, "\n")
+
+		}
+		if err := w.Flush(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (a *appsCmd) list(c *cli.Context) error {
 	params := &apiapps.GetAppsParams{Context: context.Background()}
 	var resApps []*models.App
@@ -59,13 +88,9 @@ func (a *appsCmd) list(c *cli.Context) error {
 		return nil
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-	fmt.Fprint(w, "NAME", "\n")
-	for _, app := range resApps {
-		fmt.Fprint(w, app.Name, "\n")
+	if err := printApps(c, resApps); err != nil {
+		return err
 	}
-	w.Flush()
-
 	return nil
 }
 

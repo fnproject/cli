@@ -40,13 +40,6 @@ var DefaultContextConfigContents = &ContextMap{
 
 type ContextMap map[string]string
 
-// ContextFile defines the internal structure of a default context
-type ContextFile struct {
-	ContextProvider string `yaml:"provider"`
-	EnvFnAPIURL     string `yaml:"api-url"`
-	EnvFnRegistry   string `yaml:"registry"`
-}
-
 // Init : Initialise/load config direc
 func Init() error {
 	viper.AutomaticEnv() // read in environment variables that match
