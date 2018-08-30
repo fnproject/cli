@@ -91,47 +91,47 @@ func (t *testcmd) test(c *cli.Context) error {
 func (t *testcmd) testAll(c *cli.Context, wd string) error {
 	testCount := 0
 	errorCount := 0
-	err := common.WalkFuncs(wd, func(path string, ff *common.FuncFile, err error) error {
-		if err != nil { // probably some issue with funcfile parsing, can decide to handle this differently if we'd like
-			return err
-		}
-		dir := filepath.Dir(path)
-		if dir == wd {
-			// TODO: needed for tests?
-			// setRootFuncInfo(ff, appName)
-		} else {
-			// change dirs
-			err = os.Chdir(dir)
-			if err != nil {
-				return err
-			}
-			p2 := strings.TrimPrefix(dir, wd)
-			if ff.Name == "" {
-				ff.Name = strings.Replace(p2, "/", "-", -1)
-				if strings.HasPrefix(ff.Name, "-") {
-					ff.Name = ff.Name[1:]
-				}
-				// todo: should we prefix appname too?
-			}
-			if ff.Path == "" {
-				ff.Path = p2
-			}
-		}
-		tc, ec, err := t.testSingle(c, dir)
-		if err != nil {
-			fmt.Printf("Test error on %s: %v\n", path, err)
-			// TOOD: store these logs and print them at the end?
-		}
-		testCount += tc
-		errorCount += ec
-		now := time.Now()
-		os.Chtimes(path, now, now)
-		// funcFound = true
-		return nil
-	})
-	if err != nil {
-		return err
-	}
+	// err := common.WalkFuncs(wd, func(path string, ff *common.FuncFile, err error) error {
+	// 	if err != nil { // probably some issue with funcfile parsing, can decide to handle this differently if we'd like
+	// 		return err
+	// 	}
+	// 	dir := filepath.Dir(path)
+	// 	if dir == wd {
+	// 		// TODO: needed for tests?
+	// 		// setRootFuncInfo(ff, appName)
+	// 	} else {
+	// 		// change dirs
+	// 		err = os.Chdir(dir)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		p2 := strings.TrimPrefix(dir, wd)
+	// 		if ff.Name == "" {
+	// 			ff.Name = strings.Replace(p2, "/", "-", -1)
+	// 			if strings.HasPrefix(ff.Name, "-") {
+	// 				ff.Name = ff.Name[1:]
+	// 			}
+	// 			// todo: should we prefix appname too?
+	// 		}
+	// 		if ff.Path == "" {
+	// 			ff.Path = p2
+	// 		}
+	// 	}
+	// 	tc, ec, err := t.testSingle(c, dir)
+	// 	if err != nil {
+	// 		fmt.Printf("Test error on %s: %v\n", path, err)
+	// 		// TOOD: store these logs and print them at the end?
+	// 	}
+	// 	testCount += tc
+	// 	errorCount += ec
+	// 	now := time.Now()
+	// 	os.Chtimes(path, now, now)
+	// 	// funcFound = true
+	// 	return nil
+	// })
+	// if err != nil {
+	// 	return err
+	// }
 	errmsg := "0 FAILED"
 	if errorCount > 0 {
 		errmsg = color.RedString(fmt.Sprintf("%v FAILED", errorCount))

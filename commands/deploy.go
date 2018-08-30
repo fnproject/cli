@@ -176,7 +176,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 	}
 	defer os.Chdir(wd)
 
-	ffV, err := common.ReadInFuncFile()
+	ffV, err := common.ReadInFuncFile("")
 	if err != nil {
 		return err
 	}
@@ -242,42 +242,86 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFi
 	}
 
 	var funcFound bool
-	err := common.WalkFuncs(dir, func(path string, ff *common.FuncFile, err error) error {
+	err := common.WalkFuncs(dir, func(path string, version int, err error) error {
 		if err != nil { // probably some issue with funcfile parsing, can decide to handle this differently if we'd like
 			return err
 		}
-		dir := filepath.Dir(path)
-		if dir == wd {
-			setRootFuncInfo(ff, appName)
-		} else {
-			// change dirs
-			err = os.Chdir(dir)
+
+		switch version {
+		case common.LatestYamlVersion:
+			ff, err := common.ParseFuncFileV20180707(path)
 			if err != nil {
 				return err
 			}
-			p2 := strings.TrimPrefix(dir, wd)
-			if ff.Name == "" {
-				ff.Name = strings.Replace(p2, "/", "-", -1)
-				if strings.HasPrefix(ff.Name, "-") {
-					ff.Name = ff.Name[1:]
+
+			dir := filepath.Dir(path)
+			if dir == wd {
+				setFuncInfoV20180707(ff, appName)
+			} else {
+				// change dirs
+				err = os.Chdir(dir)
+				if err != nil {
+					return err
 				}
-				// todo: should we prefix appname too?
+				p2 := strings.TrimPrefix(dir, wd)
+				if ff.Name == "" {
+					ff.Name = strings.Replace(p2, "/", "-", -1)
+					if strings.HasPrefix(ff.Name, "-") {
+						ff.Name = ff.Name[1:]
+					}
+					// todo: should we prefix appname too?
+				}
 			}
-			if ff.Path == "" {
-				ff.Path = p2
+
+			err = p.deployFuncV20180707(c, appName, wd, path, ff)
+			if err != nil {
+				return fmt.Errorf("deploy error on %s: %v", path, err)
 			}
+
+			now := time.Now()
+			os.Chtimes(path, now, now)
+			funcFound = true
+			return nil
+
+		default:
+			ff, err := common.ParseFuncfile(path)
+			if err != nil {
+				return err
+			}
+
+			dir := filepath.Dir(path)
+			if dir == wd {
+				setRootFuncInfo(ff, appName)
+			} else {
+				// change dirs
+				err = os.Chdir(dir)
+				if err != nil {
+					return err
+				}
+				p2 := strings.TrimPrefix(dir, wd)
+				if ff.Name == "" {
+					ff.Name = strings.Replace(p2, "/", "-", -1)
+					if strings.HasPrefix(ff.Name, "-") {
+						ff.Name = ff.Name[1:]
+					}
+					// todo: should we prefix appname too?
+				}
+			}
+
+			err = p.deployFunc(c, appName, wd, path, ff)
+			if err != nil {
+				return fmt.Errorf("deploy error on %s: %v", path, err)
+			}
+
+			now := time.Now()
+			os.Chtimes(path, now, now)
+			funcFound = true
+			return nil
 		}
 
-		err = p.deployFunc(c, appName, wd, path, ff)
-		if err != nil {
-			return fmt.Errorf("deploy error on %s: %v", path, err)
-		}
-
-		now := time.Now()
-		os.Chtimes(path, now, now)
-		funcFound = true
 		return nil
 	})
+
 	if err != nil {
 		return err
 	}

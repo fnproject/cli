@@ -227,7 +227,7 @@ func getEnvValue(n string, envVars []string) string {
 }
 
 func (r *runCmd) run(c *cli.Context) error {
-	ffV, err := common.ReadInFuncFile()
+	ffV, err := common.ReadInFuncFile("")
 	version := common.GetFuncYamlVersion(ffV)
 
 	if version == common.LatestYamlVersion {

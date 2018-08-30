@@ -85,7 +85,7 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 
 	dir = GetDir(c)
 
-	ff, err := ReadInFuncFile()
+	ff, err := ReadInFuncFile("")
 	version := GetFuncYamlVersion(ff)
 	if version == LatestYamlVersion {
 		_, err = bumpItWdV20180707(dir, t)

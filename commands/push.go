@@ -49,7 +49,7 @@ func (p *pushcmd) flags() []cli.Flag {
 // push the container, and finally it will update function's route. Optionally,
 // the route can be overriden inside the functions file.
 func (p *pushcmd) push(c *cli.Context) error {
-	ffV, err := common.ReadInFuncFile()
+	ffV, err := common.ReadInFuncFile("")
 	version := common.GetFuncYamlVersion(ffV)
 	if version == common.LatestYamlVersion {
 		_, ff, err := common.LoadFuncFileV20180707(".")
