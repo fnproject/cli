@@ -30,27 +30,27 @@ type fnsCmd struct {
 var FnFlags = []cli.Flag{
 	cli.Uint64Flag{
 		Name:  "memory,m",
-		Usage: "memory in MiB",
+		Usage: "Memory in MiB",
 	},
 	cli.StringSliceFlag{
 		Name:  "config,c",
-		Usage: "fn configuration",
+		Usage: "Function configuration",
 	},
 	cli.StringFlag{
 		Name:  "format,f",
-		Usage: "hot container IO format - can be one of: default, http, json or cloudevent (check FDK docs to see which are supported for the FDK in use.)",
+		Usage: "Hot container IO format - can be one of: default, http, json or cloudevent (check FDK docs to see which are supported for the FDK in use.)",
 	},
 	cli.IntFlag{
 		Name:  "timeout",
-		Usage: "fn timeout (eg. 30)",
+		Usage: "Function timeout (eg. 30)",
 	},
 	cli.IntFlag{
 		Name:  "idle-timeout",
-		Usage: "fn idle timeout (eg. 30)",
+		Usage: "Function idle timeout (eg. 30)",
 	},
 	cli.StringSliceFlag{
 		Name:  "annotation",
-		Usage: "fn annotation (can be specified multiple times)",
+		Usage: "Function annotation (can be specified multiple times)",
 	},
 }
 var updateFnFlags = FnFlags

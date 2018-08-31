@@ -91,7 +91,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 		},
 	}
 
-	return append(fgs, route.RouteFlags...)
+	return append(fgs, function.FnFlags...)
 }
 
 func langsList() string {
