@@ -34,7 +34,7 @@ func MigrateCommand() cli.Command {
 
 func (m *migrateFnCmd) migrate(c *cli.Context) error {
 	var err error
-	oldFF, err := common.ReadInFuncFile()
+	oldFF, err := common.ReadInFuncFile("")
 	if err != nil {
 		return err
 	}

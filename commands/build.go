@@ -69,7 +69,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 	}
 	defer os.Chdir(dir)
 
-	ffV, err := common.ReadInFuncFile()
+	ffV, err := common.ReadInFuncFile("")
 	if err != nil {
 		return err
 	}

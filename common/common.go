@@ -548,12 +548,16 @@ func ExtractAnnotations(c *cli.Context) map[string]interface{} {
 	return annotations
 }
 
-func ReadInFuncFile() (map[string]interface{}, error) {
-	wd := GetWd()
-
-	fpath, err := FindFuncfile(wd)
-	if err != nil {
-		return nil, err
+func ReadInFuncFile(path string) (map[string]interface{}, error) {
+	var fpath string
+	if path != "" {
+		fpath = path
+	} else {
+		var err error
+		fpath, err = FindFuncfile(GetWd())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	b, err := ioutil.ReadFile(fpath)
