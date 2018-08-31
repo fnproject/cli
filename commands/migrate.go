@@ -16,11 +16,11 @@ import (
 )
 
 type migrateFnCmd struct {
-	newFF *common.FuncFileV20180707
+	newFF *common.FuncFileV20180708
 }
 
 func MigrateCommand() cli.Command {
-	m := &migrateFnCmd{newFF: &common.FuncFileV20180707{}}
+	m := &migrateFnCmd{newFF: &common.FuncFileV20180708{}}
 
 	return cli.Command{
 		Name:        "migrate",
@@ -127,7 +127,7 @@ func vaidateFuncFileSchema(b []byte) error {
 	}
 	defer os.Remove("temp.json")
 
-	err = common.ValidateFileAgainstSchema("temp.json", common.V20180707Schema)
+	err = common.ValidateFileAgainstSchema("temp.json", common.V20180708Schema)
 	if err != nil {
 		return err
 	}

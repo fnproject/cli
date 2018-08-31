@@ -83,8 +83,8 @@ type FuncFile struct {
 	Expects Expects `yaml:"expects,omitempty" json:"expects,omitempty"`
 }
 
-// FuncFileV20180707 defines the latest internal structure of a func.yaml/json/yml
-type FuncFileV20180707 struct {
+// FuncFileV20180708 defines the latest internal structure of a func.yaml/json/yml
+type FuncFileV20180708 struct {
 	Schema_version int `yaml:"schema_version,omitempty" json:"schema_version,omitempty"`
 
 	Name         string `yaml:"name,omitempty" json:"name,omitempty"`
@@ -110,7 +110,7 @@ type FuncFileV20180707 struct {
 	Triggers []Trigger `yaml:"triggers,omitempty" json:"triggers,omitempty"`
 }
 
-// Trigger represents a trigger for a FuncFileV20180707
+// Trigger represents a trigger for a FuncFileV20180708
 type Trigger struct {
 	Name   string `yaml:"name,omitempty" json:"name,omitempty"`
 	Type   string `yaml:"type,omitempty" json:"type,omitempty"`
@@ -258,59 +258,59 @@ func IsFuncFile(path string, info os.FileInfo) bool {
 	return false
 }
 
-// --------- FuncFileV20180707 -------------
+// --------- FuncFileV20180708 -------------
 
-func FindAndParseFuncFileV20180707(path string) (fpath string, ff *FuncFileV20180707, err error) {
+func FindAndParseFuncFileV20180708(path string) (fpath string, ff *FuncFileV20180708, err error) {
 	fpath, err = FindFuncfile(path)
 	if err != nil {
 		return "", nil, err
 	}
-	ff, err = ParseFuncFileV20180707(fpath)
+	ff, err = ParseFuncFileV20180708(fpath)
 	if err != nil {
 		return "", nil, err
 	}
 	return fpath, ff, err
 }
 
-func LoadFuncFileV20180707(path string) (string, *FuncFileV20180707, error) {
-	return FindAndParseFuncFileV20180707(path)
+func LoadFuncFileV20180708(path string) (string, *FuncFileV20180708, error) {
+	return FindAndParseFuncFileV20180708(path)
 }
 
-func ParseFuncFileV20180707(path string) (*FuncFileV20180707, error) {
+func ParseFuncFileV20180708(path string) (*FuncFileV20180708, error) {
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json":
-		return decodeFuncFileV20180707JSON(path)
+		return decodeFuncFileV20180708JSON(path)
 	case ".yaml", ".yml":
-		return decodeFuncFileV20180707YAML(path)
+		return decodeFuncFileV20180708YAML(path)
 	}
 	return nil, errUnexpectedFileFormat
 }
 
-func decodeFuncFileV20180707JSON(path string) (*FuncFileV20180707, error) {
+func decodeFuncFileV20180708JSON(path string) (*FuncFileV20180708, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", path, err)
 	}
-	ff := &FuncFileV20180707{}
+	ff := &FuncFileV20180708{}
 	// ff.Route = &fnmodels.Route{}
 	err = json.NewDecoder(f).Decode(ff)
 	// ff := fff.MakeFuncFile()
 	return ff, err
 }
 
-func decodeFuncFileV20180707YAML(path string) (*FuncFileV20180707, error) {
+func decodeFuncFileV20180708YAML(path string) (*FuncFileV20180708, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", path, err)
 	}
-	ff := &FuncFileV20180707{}
+	ff := &FuncFileV20180708{}
 	err = yaml.Unmarshal(b, ff)
 	// ff := fff.MakeFuncFile()
 	return ff, err
 }
 
-func encodeFuncFileV20180707JSON(path string, ff *FuncFileV20180707) error {
+func encodeFuncFileV20180708JSON(path string, ff *FuncFileV20180708) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return fmt.Errorf("could not open %s for encoding. Error: %v", path, err)
@@ -319,7 +319,7 @@ func encodeFuncFileV20180707JSON(path string, ff *FuncFileV20180707) error {
 }
 
 // EncodeFuncfileYAML encodes function file.
-func EncodeFuncFileV20180707YAML(path string, ff *FuncFileV20180707) error {
+func EncodeFuncFileV20180708YAML(path string, ff *FuncFileV20180708) error {
 	b, err := yaml.Marshal(ff)
 	if err != nil {
 		return fmt.Errorf("could not encode function file. Error: %v", err)
@@ -327,19 +327,19 @@ func EncodeFuncFileV20180707YAML(path string, ff *FuncFileV20180707) error {
 	return ioutil.WriteFile(path, b, os.FileMode(0644))
 }
 
-func storeFuncFileV20180707(path string, ff *FuncFileV20180707) error {
+func storeFuncFileV20180708(path string, ff *FuncFileV20180708) error {
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json":
-		return encodeFuncFileV20180707JSON(path, ff)
+		return encodeFuncFileV20180708JSON(path, ff)
 	case ".yaml", ".yml":
-		return EncodeFuncFileV20180707YAML(path, ff)
+		return EncodeFuncFileV20180708YAML(path, ff)
 	}
 	return errUnexpectedFileFormat
 }
 
 // ImageName returns the name of a funcfile image
-func (ff *FuncFileV20180707) ImageNameV20180707() string {
+func (ff *FuncFileV20180708) ImageNameV20180708() string {
 	fname := ff.Name
 	if !strings.Contains(fname, "/") {
 

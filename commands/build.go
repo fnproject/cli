@@ -76,18 +76,18 @@ func (b *buildcmd) build(c *cli.Context) error {
 
 	switch common.GetFuncYamlVersion(ffV) {
 	case common.LatestYamlVersion:
-		fpath, ff, err := common.FindAndParseFuncFileV20180707(dir)
+		fpath, ff, err := common.FindAndParseFuncFileV20180708(dir)
 		if err != nil {
 			return err
 		}
 
 		buildArgs := c.StringSlice("build-arg")
-		ff, err = common.BuildFuncV20180707(c, fpath, ff, buildArgs, b.noCache)
+		ff, err = common.BuildFuncV20180708(c, fpath, ff, buildArgs, b.noCache)
 		if err != nil {
 			return err
 		}
 
-		fmt.Printf("Function %v built successfully.\n", ff.ImageNameV20180707())
+		fmt.Printf("Function %v built successfully.\n", ff.ImageNameV20180708())
 		return nil
 
 	default:

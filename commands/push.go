@@ -52,7 +52,7 @@ func (p *pushcmd) push(c *cli.Context) error {
 	ffV, err := common.ReadInFuncFile()
 	version := common.GetFuncYamlVersion(ffV)
 	if version == common.LatestYamlVersion {
-		_, ff, err := common.LoadFuncFileV20180707(".")
+		_, ff, err := common.LoadFuncFileV20180708(".")
 		if err != nil {
 			if _, ok := err.(*common.NotFoundError); ok {
 				return errors.New("Image name is missing or no function file found")
@@ -60,13 +60,13 @@ func (p *pushcmd) push(c *cli.Context) error {
 			return err
 		}
 
-		fmt.Println("pushing", ff.ImageNameV20180707())
+		fmt.Println("pushing", ff.ImageNameV20180708())
 
-		if err := common.DockerPushV20180707(ff); err != nil {
+		if err := common.DockerPushV20180708(ff); err != nil {
 			return err
 		}
 
-		fmt.Printf("Function %v pushed successfully to Docker Hub.\n", ff.ImageNameV20180707())
+		fmt.Printf("Function %v pushed successfully to Docker Hub.\n", ff.ImageNameV20180708())
 		return nil
 	}
 

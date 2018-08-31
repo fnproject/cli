@@ -77,11 +77,11 @@ func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []stri
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFuncV20180707(c *cli.Context, fpath string, funcfile *FuncFileV20180707, buildArg []string, noCache bool) (*FuncFileV20180707, error) {
+func BuildFuncV20180708(c *cli.Context, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool) (*FuncFileV20180708, error) {
 	var err error
 
 	if funcfile.Version == "" {
-		funcfile, err = BumpItV20180707(fpath, Patch)
+		funcfile, err = BumpItV20180708(fpath, Patch)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +91,7 @@ func BuildFuncV20180707(c *cli.Context, fpath string, funcfile *FuncFileV2018070
 		return nil, err
 	}
 
-	if err := dockerBuildV20180707(c, fpath, funcfile, buildArg, noCache); err != nil {
+	if err := dockerBuildV20180708(c, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
 	}
 
@@ -169,7 +169,7 @@ func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string,
 	return nil
 }
 
-func dockerBuildV20180707(c *cli.Context, fpath string, ff *FuncFileV20180707, buildArgs []string, noCache bool) error {
+func dockerBuildV20180708(c *cli.Context, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
@@ -187,7 +187,7 @@ func dockerBuildV20180707(c *cli.Context, fpath string, ff *FuncFileV20180707, b
 		if helper == nil {
 			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
 		}
-		dockerfile, err = writeTmpDockerfileV20180707(helper, dir, ff)
+		dockerfile, err = writeTmpDockerfileV20180708(helper, dir, ff)
 		if err != nil {
 			return err
 		}
@@ -199,7 +199,7 @@ func dockerBuildV20180707(c *cli.Context, fpath string, ff *FuncFileV20180707, b
 			}
 		}
 	}
-	err = RunBuild(c, dir, ff.ImageNameV20180707(), dockerfile, buildArgs, noCache)
+	err = RunBuild(c, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
 	}
@@ -375,7 +375,7 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 	return fd.Name(), err
 }
 
-func writeTmpDockerfileV20180707(helper langs.LangHelper, dir string, ff *FuncFileV20180707) (string, error) {
+func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFileV20180708) (string, error) {
 	if ff.Entrypoint == "" && ff.Cmd == "" {
 		return "", errors.New("entrypoint and cmd are missing, you must provide one or the other")
 	}
@@ -484,13 +484,13 @@ func DockerPush(ff *FuncFile) error {
 }
 
 // DockerPush pushes to docker registry.
-func DockerPushV20180707(ff *FuncFileV20180707) error {
-	_, err := ValidateImageName(ff.ImageNameV20180707())
+func DockerPushV20180708(ff *FuncFileV20180708) error {
+	_, err := ValidateImageName(ff.ImageNameV20180708())
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Pushing %v to docker registry...", ff.ImageNameV20180707())
-	cmd := exec.Command("docker", "push", ff.ImageNameV20180707())
+	fmt.Printf("Pushing %v to docker registry...", ff.ImageNameV20180708())
+	cmd := exec.Command("docker", "push", ff.ImageNameV20180708())
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {

@@ -44,7 +44,7 @@ type initFnCmd struct {
 	triggerType string
 	wd          string
 	ff          *common.FuncFile
-	ffV20180707 *common.FuncFileV20180707
+	ffV20180708 *common.FuncFileV20180708
 }
 
 func initFlags(a *initFnCmd) []cli.Flag {
@@ -104,7 +104,7 @@ func langsList() string {
 
 // InitCommand returns init cli.command
 func InitCommand() cli.Command {
-	a := &initFnCmd{ff: &common.FuncFile{}, ffV20180707: &common.FuncFileV20180707{}}
+	a := &initFnCmd{ff: &common.FuncFile{}, ffV20180708: &common.FuncFileV20180708{}}
 
 	return cli.Command{
 		Name:        "init",
@@ -341,16 +341,16 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 		dir = a.wd
 	}
 
-	a.ffV20180707.Name = c.Args().First()
+	a.ffV20180708.Name = c.Args().First()
 
 	if a.triggerType == "http" {
 		trig := make([]common.Trigger, 1)
 		trig[0] = common.Trigger{
-			a.ffV20180707.Name + "-trigger",
+			a.ffV20180708.Name + "-trigger",
 			a.triggerType,
-			"/" + a.ffV20180707.Name + "-trigger",
+			"/" + a.ffV20180708.Name + "-trigger",
 		}
-		a.ffV20180707.Triggers = trig
+		a.ffV20180708.Triggers = trig
 	}
 
 	runtime := c.String("runtime")
@@ -362,7 +362,7 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 
 	runtimeSpecified := runtime != ""
 
-	a.ffV20180707.Schema_version = common.LatestYamlVersion
+	a.ffV20180708.Schema_version = common.LatestYamlVersion
 	if runtimeSpecified {
 		// go no further if the specified runtime is not supported
 		if runtime != common.FuncfileDockerRuntime && langs.GetLangHelper(runtime) == nil {
@@ -404,12 +404,12 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 			return errors.New("Function file already exists, aborting")
 		}
 	}
-	err = a.BuildFuncFileV20180707(c, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
+	err = a.BuildFuncFileV20180708(c, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
 	if err != nil {
 		return err
 	}
 
-	a.ffV20180707.Schema_version = common.LatestYamlVersion
+	a.ffV20180708.Schema_version = common.LatestYamlVersion
 
 	if initImage != "" {
 
@@ -430,30 +430,30 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 		//         config, cpus, idle_timeout, memory, name, path, timeout, type, triggers, version
 		//     Add the following from the init-image:
 		//         build, build_image, cmd, content_type, entrypoint, expects, format, headers, run_image, runtime
-		a.ffV20180707.Build = initFf.Build
-		a.ffV20180707.Build_image = initFf.BuildImage
-		a.ffV20180707.Cmd = initFf.Cmd
-		a.ffV20180707.Content_type = initFf.ContentType
-		a.ffV20180707.Entrypoint = initFf.Entrypoint
-		a.ffV20180707.Expects = initFf.Expects
-		a.ffV20180707.Format = initFf.Format
-		a.ffV20180707.Run_image = initFf.RunImage
-		a.ffV20180707.Runtime = initFf.Runtime
+		a.ffV20180708.Build = initFf.Build
+		a.ffV20180708.Build_image = initFf.BuildImage
+		a.ffV20180708.Cmd = initFf.Cmd
+		a.ffV20180708.Content_type = initFf.ContentType
+		a.ffV20180708.Entrypoint = initFf.Entrypoint
+		a.ffV20180708.Expects = initFf.Expects
+		a.ffV20180708.Format = initFf.Format
+		a.ffV20180708.Run_image = initFf.RunImage
+		a.ffV20180708.Runtime = initFf.Runtime
 
 		// Then CLI args can override some init-image options (TODO: remove this with #383)
 		if c.String("cmd") != "" {
-			a.ffV20180707.Cmd = c.String("cmd")
+			a.ffV20180708.Cmd = c.String("cmd")
 		}
 
 		if c.String("entrypoint") != "" {
-			a.ffV20180707.Entrypoint = c.String("entrypoint")
+			a.ffV20180708.Entrypoint = c.String("entrypoint")
 		}
 
 		if c.String("format") != "" {
-			a.ffV20180707.Format = c.String("format")
+			a.ffV20180708.Format = c.String("format")
 		}
 
-		if err := common.EncodeFuncFileV20180707YAML("func.yaml", a.ffV20180707); err != nil {
+		if err := common.EncodeFuncFileV20180708YAML("func.yaml", a.ffV20180708); err != nil {
 			return err
 		}
 
@@ -469,7 +469,7 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 			}
 		}
 
-		if err := common.EncodeFuncFileV20180707YAML("func.yaml", a.ffV20180707); err != nil {
+		if err := common.EncodeFuncFileV20180708YAML("func.yaml", a.ffV20180708); err != nil {
 			return err
 		}
 	}
@@ -510,7 +510,7 @@ func (a *initFnCmd) bindRoute(fn *models.Route) {
 }
 
 func (a *initFnCmd) bindFn(fn *modelsV2.Fn) {
-	ff := a.ffV20180707
+	ff := a.ffV20180708
 	if fn.Format != "" {
 		ff.Format = fn.Format
 	}
@@ -645,20 +645,20 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 	return nil
 }
 
-func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
+func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 	var err error
 
 	if c.String("name") != "" {
-		a.ffV20180707.Name = strings.ToLower(c.String("name"))
+		a.ffV20180708.Name = strings.ToLower(c.String("name"))
 	}
 
-	if a.ffV20180707.Name == "" {
+	if a.ffV20180708.Name == "" {
 		// then defaults to current directory for name, the name must be lowercase
-		a.ffV20180707.Name = strings.ToLower(filepath.Base(path))
+		a.ffV20180708.Name = strings.ToLower(filepath.Base(path))
 	}
 
-	a.ffV20180707.Version = c.String("version")
-	if err = ValidateFuncName(a.ffV20180707.Name); err != nil {
+	a.ffV20180708.Version = c.String("version")
+	if err = ValidateFuncName(a.ffV20180708.Name); err != nil {
 		return err
 	}
 
@@ -686,7 +686,7 @@ func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
 		fmt.Printf("Found %v function, assuming %v runtime.\n", helper.Runtime(), helper.Runtime())
 		//need to default this to default format to be backwards compatible. Might want to just not allow this anymore, fail here.
 		if c.String("format") == "" {
-			a.ffV20180707.Format = "default"
+			a.ffV20180708.Format = "default"
 		}
 	} else {
 		fmt.Println("Runtime:", runtime)
@@ -696,20 +696,20 @@ func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
 		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function.\n", runtime)
 	} else {
 		if c.String("entrypoint") == "" {
-			a.ffV20180707.Entrypoint, err = helper.Entrypoint()
+			a.ffV20180708.Entrypoint, err = helper.Entrypoint()
 			if err != nil {
 				return err
 			}
 		}
 
 		if runtime == "" {
-			a.ffV20180707.Runtime = helper.Runtime()
+			a.ffV20180708.Runtime = helper.Runtime()
 		}
 
-		a.ffV20180707.Runtime = runtime
+		a.ffV20180708.Runtime = runtime
 
 		if c.String("format") == "" {
-			a.ffV20180707.Format = helper.DefaultFormat()
+			a.ffV20180708.Format = helper.DefaultFormat()
 		}
 
 		if c.String("cmd") == "" {
@@ -717,31 +717,31 @@ func (a *initFnCmd) BuildFuncFileV20180707(c *cli.Context, path string) error {
 			if err != nil {
 				return err
 			}
-			a.ffV20180707.Cmd = cmd
+			a.ffV20180708.Cmd = cmd
 		}
 
 		if helper.FixImagesOnInit() {
-			if a.ffV20180707.Build_image == "" {
+			if a.ffV20180708.Build_image == "" {
 				buildImage, err := helper.BuildFromImage()
 				if err != nil {
 					return err
 				}
-				a.ffV20180707.Build_image = buildImage
+				a.ffV20180708.Build_image = buildImage
 			}
 			if helper.IsMultiStage() {
-				if a.ffV20180707.Run_image == "" {
+				if a.ffV20180708.Run_image == "" {
 					runImage, err := helper.RunFromImage()
 					if err != nil {
 						return err
 					}
-					a.ffV20180707.Run_image = runImage
+					a.ffV20180708.Run_image = runImage
 				}
 			}
 		}
 	}
 
-	if a.ffV20180707.Entrypoint == "" && a.ffV20180707.Cmd == "" {
-		return fmt.Errorf("Could not detect entrypoint or cmd for %v, use --entrypoint and/or --cmd to set them explicitly", a.ffV20180707.Runtime)
+	if a.ffV20180708.Entrypoint == "" && a.ffV20180708.Cmd == "" {
+		return fmt.Errorf("Could not detect entrypoint or cmd for %v, use --entrypoint and/or --cmd to set them explicitly", a.ffV20180708.Runtime)
 	}
 
 	return nil
