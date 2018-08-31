@@ -478,18 +478,18 @@ func (h *CLIHarness) RemoveFile(s string) error {
 	return os.Remove(h.relativeToCwd(s))
 }
 
-func (h *CLIHarness) GetYamlFile(s string) common.FuncFileV20180707 {
+func (h *CLIHarness) GetYamlFile(s string) common.FuncFileV20180708 {
 	b, err := ioutil.ReadFile(h.relativeToCwd(s))
 	if err != nil {
 		h.t.Fatalf("could not open func file for parsing. Error: %v", err)
 	}
-	var ff common.FuncFileV20180707
+	var ff common.FuncFileV20180708
 	err = yaml.Unmarshal(b, &ff)
 
 	return ff
 }
 
-func (h *CLIHarness) WriteYamlFile(s string, ff common.FuncFileV20180707) {
+func (h *CLIHarness) WriteYamlFile(s string, ff common.FuncFileV20180708) {
 
 	ffContent, _ := yaml.Marshal(ff)
 	h.WithFile(s, string(ffContent), 0600)

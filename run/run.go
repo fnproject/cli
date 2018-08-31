@@ -153,9 +153,9 @@ func PreRun(c *cli.Context) (string, *common.FuncFile, []string, error) {
 	return fpath, ff, envVars, nil
 }
 
-func PreRunV20180707(c *cli.Context) (string, *common.FuncFileV20180707, []string, error) {
+func PreRunV20180708(c *cli.Context) (string, *common.FuncFileV20180708, []string, error) {
 	var dir string
-	var ff *common.FuncFileV20180707
+	var ff *common.FuncFileV20180708
 	var fpath string
 
 	dir = common.GetWd()
@@ -177,7 +177,7 @@ func PreRunV20180707(c *cli.Context) (string, *common.FuncFileV20180707, []strin
 	}
 	defer os.Chdir(dir) // todo: wrap this so we can log the error if changing back fails
 
-	fpath, ff, err = common.FindAndParseFuncFileV20180707(dir)
+	fpath, ff, err = common.FindAndParseFuncFileV20180708(dir)
 	if err != nil {
 		return fpath, nil, nil, err
 	}
@@ -207,7 +207,7 @@ func PreRunV20180707(c *cli.Context) (string, *common.FuncFileV20180707, []strin
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	_, err = common.BuildFuncV20180707(c, fpath, ff, buildArgs, c.Bool("no-cache"))
+	_, err = common.BuildFuncV20180708(c, fpath, ff, buildArgs, c.Bool("no-cache"))
 	if err != nil {
 		return fpath, nil, nil, err
 	}
@@ -231,7 +231,7 @@ func (r *runCmd) run(c *cli.Context) error {
 	version := common.GetFuncYamlVersion(ffV)
 
 	if version == common.LatestYamlVersion {
-		_, ff, envVars, err := PreRunV20180707(c)
+		_, ff, envVars, err := PreRunV20180708(c)
 		if err != nil {
 			return err
 		}
@@ -241,7 +241,7 @@ func (r *runCmd) run(c *cli.Context) error {
 			ff.Memory = c.Uint64("memory")
 		}
 
-		return RunFFV20180707(ff, Stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"), c.String("content-type"))
+		return RunFFV20180708(ff, Stdin(), os.Stdout, os.Stderr, c.String("method"), envVars, c.StringSlice("link"), c.String("format"), c.Int("runs"), c.String("content-type"))
 	}
 
 	_, ff, envVars, err := PreRun(c)
@@ -369,7 +369,7 @@ func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, metho
 }
 
 // TODO: share all this stuff with the Docker driver in server or better yet, actually use the Docker driver
-func RunFFV20180707(ff *common.FuncFileV20180707, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int, contentType string) error {
+func RunFFV20180708(ff *common.FuncFileV20180708, stdin io.Reader, stdout, stderr io.Writer, method string, envVars []string, links []string, format string, runs int, contentType string) error {
 	sh := []string{"docker", "run", "--rm", "-i", fmt.Sprintf("--memory=%dm", ff.Memory)}
 
 	var env []string    // env for the shelled out docker run command
@@ -470,7 +470,7 @@ func RunFFV20180707(ff *common.FuncFileV20180707, stdin io.Reader, stdout, stder
 		sh = append(sh, "-e", e)
 	}
 
-	sh = append(sh, ff.ImageNameV20180707())
+	sh = append(sh, ff.ImageNameV20180708())
 	cmd := exec.Command(sh[0], sh[1:]...)
 	cmd.Stdin = stdin
 	cmd.Stdout = stdout

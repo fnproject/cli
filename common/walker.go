@@ -9,7 +9,7 @@ import (
 
 // WalkFuncsFunc good name huh?
 type walkFuncsFunc func(path string, ff *FuncFile, err error) error
-type walkFuncsFuncV20180707 func(path string, ff *FuncFileV20180707, err error) error
+type walkFuncsFuncV20180708 func(path string, ff *FuncFileV20180708, err error) error
 
 // WalkFuncs is similar to filepath.Walk except only returns func.yaml's (so on per function)
 func WalkFuncs(root string, walkFn walkFuncsFunc) error {
@@ -42,7 +42,7 @@ func WalkFuncs(root string, walkFn walkFuncsFunc) error {
 }
 
 // WalkFuncs is similar to filepath.Walk except only returns func.yaml's (so on per function)
-func WalkFuncsV20180707(root string, walkFn walkFuncsFunc) error {
+func WalkFuncsV20180708(root string, walkFn walkFuncsFunc) error {
 	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			// logging this so we can figure out any common issues

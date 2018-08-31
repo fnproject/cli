@@ -88,7 +88,7 @@ func (b *bumpcmd) bump(c *cli.Context) error {
 	ff, err := ReadInFuncFile()
 	version := GetFuncYamlVersion(ff)
 	if version == LatestYamlVersion {
-		_, err = bumpItWdV20180707(dir, t)
+		_, err = bumpItWdV20180708(dir, t)
 	} else {
 		_, err = bumpItWd(dir, t)
 	}
@@ -165,37 +165,37 @@ func cleanImageName(name string) string {
 	return strings.Join(slashParts, "/")
 }
 
-// --------- FuncFileV20180707 -------------
+// --------- FuncFileV20180708 -------------
 
-func bumpItWdV20180707(wd string, vtype VType) (*FuncFileV20180707, error) {
+func bumpItWdV20180708(wd string, vtype VType) (*FuncFileV20180708, error) {
 	fn, err := FindFuncfile(wd)
 	if err != nil {
 		return nil, err
 	}
-	return BumpItV20180707(fn, vtype)
+	return BumpItV20180708(fn, vtype)
 }
 
 // BumpIt returns updated funcfile
-func BumpItV20180707(fpath string, vtype VType) (*FuncFileV20180707, error) {
+func BumpItV20180708(fpath string, vtype VType) (*FuncFileV20180708, error) {
 	// fmt.Println("Bumping version in func file at: ", fpath)
-	funcfile, err := ParseFuncFileV20180707(fpath)
+	funcfile, err := ParseFuncFileV20180708(fpath)
 	if err != nil {
 		return nil, err
 	}
 
-	funcfile, err = bumpVersionV20180707(funcfile, vtype)
+	funcfile, err = bumpVersionV20180708(funcfile, vtype)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := storeFuncFileV20180707(fpath, funcfile); err != nil {
+	if err := storeFuncFileV20180708(fpath, funcfile); err != nil {
 		return nil, err
 	}
 	fmt.Println("Bumped to version", funcfile.Version)
 	return funcfile, nil
 }
 
-func bumpVersionV20180707(funcfile *FuncFileV20180707, t VType) (*FuncFileV20180707, error) {
+func bumpVersionV20180708(funcfile *FuncFileV20180708, t VType) (*FuncFileV20180708, error) {
 	funcfile.Name = cleanImageName(funcfile.Name)
 	if funcfile.Version == "" {
 		funcfile.Version = InitialVersion

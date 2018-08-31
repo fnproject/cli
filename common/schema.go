@@ -10,8 +10,8 @@ import (
 
 const LatestYamlVersion = 20180708
 
-const V20180707Schema = `{
-    "title": "V20180707 func file schema",
+const V20180708Schema = `{
+    "title": "V20180708 func file schema",
     "type": "object",
     "properties": {
         "name": {

@@ -183,13 +183,13 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 
 	switch common.GetFuncYamlVersion(ffV) {
 	case common.LatestYamlVersion:
-		fpath, ff, err := common.FindAndParseFuncFileV20180707(dir)
+		fpath, ff, err := common.FindAndParseFuncFileV20180708(dir)
 		if err != nil {
 			return err
 		}
 		if appf != nil {
 			if dir == wd {
-				setFuncInfoV20180707(ff, appf.Name)
+				setFuncInfoV20180708(ff, appf.Name)
 			}
 		}
 
@@ -200,7 +200,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 			}
 		}
 
-		return p.deployFuncV20180707(c, appName, wd, fpath, ff)
+		return p.deployFuncV20180708(c, appName, wd, fpath, ff)
 	default:
 		fpath, ff, err := common.FindAndParseFuncfile(dir)
 		if err != nil {
@@ -337,7 +337,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	return p.updateRoute(c, appName, funcfile)
 }
 
-func (p *deploycmd) deployFuncV20180707(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *common.FuncFileV20180707) error {
+func (p *deploycmd) deployFuncV20180708(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *common.FuncFileV20180708) error {
 	if appName == "" {
 		return errors.New("App name must be provided, try `--app APP_NAME`")
 	}
@@ -349,7 +349,7 @@ func (p *deploycmd) deployFuncV20180707(c *cli.Context, appName, baseDir, funcfi
 
 	var err error
 	if !p.noBump {
-		funcfile2, err := common.BumpItV20180707(funcfilePath, common.Patch)
+		funcfile2, err := common.BumpItV20180708(funcfilePath, common.Patch)
 		if err != nil {
 			return err
 		}
@@ -358,13 +358,13 @@ func (p *deploycmd) deployFuncV20180707(c *cli.Context, appName, baseDir, funcfi
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	_, err = common.BuildFuncV20180707(c, funcfilePath, funcfile, buildArgs, p.noCache)
+	_, err = common.BuildFuncV20180708(c, funcfilePath, funcfile, buildArgs, p.noCache)
 	if err != nil {
 		return err
 	}
 
 	if !p.local {
-		if err := common.DockerPushV20180707(funcfile); err != nil {
+		if err := common.DockerPushV20180708(funcfile); err != nil {
 			return err
 		}
 	}
@@ -383,7 +383,7 @@ func setRootFuncInfo(ff *common.FuncFile, appName string) {
 	}
 }
 
-func setFuncInfoV20180707(ff *common.FuncFileV20180707, appName string) {
+func setFuncInfoV20180708(ff *common.FuncFileV20180708, appName string) {
 	if ff.Name == "" {
 		fmt.Println("Setting name")
 		ff.Name = fmt.Sprintf("%s-root", appName)
@@ -399,10 +399,10 @@ func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *common.FuncF
 	return route.PutRoute(p.client, appName, ff.Path, rt)
 }
 
-func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.FuncFileV20180707) error {
-	fmt.Printf("Updating function %s using image %s...\n", ff.Name, ff.ImageNameV20180707())
+func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.FuncFileV20180708) error {
+	fmt.Printf("Updating function %s using image %s...\n", ff.Name, ff.ImageNameV20180708())
 	fn := &modelsV2.Fn{}
-	if err := function.WithFuncFileV20180707(ff, fn); err != nil {
+	if err := function.WithFuncFileV20180708(ff, fn); err != nil {
 		return fmt.Errorf("Error getting route with funcfile: %s", err)
 	}
 

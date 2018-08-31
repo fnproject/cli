@@ -184,16 +184,16 @@ func FnWithFlags(c *cli.Context, fn *models.Fn) {
 }
 
 // WithFuncFile used when creating a function from a funcfile
-func WithFuncFileV20180707(ff *common.FuncFileV20180707, fn *models.Fn) error {
+func WithFuncFileV20180708(ff *common.FuncFileV20180708, fn *models.Fn) error {
 	var err error
 	if ff == nil {
-		_, ff, err = common.LoadFuncFileV20180707(".")
+		_, ff, err = common.LoadFuncFileV20180708(".")
 		if err != nil {
 			return err
 		}
 	}
-	if ff.ImageNameV20180707() != "" { // args take precedence
-		fn.Image = ff.ImageNameV20180707()
+	if ff.ImageNameV20180708() != "" { // args take precedence
+		fn.Image = ff.ImageNameV20180708()
 	}
 
 	if ff.Format != "" {
