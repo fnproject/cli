@@ -485,7 +485,7 @@ func DockerPush(ff *FuncFile) error {
 
 // DockerPush pushes to docker registry.
 func DockerPushV20180708(ff *FuncFileV20180708) error {
-	_, err := ValidateImageName(ff.ImageNameV20180708())
+	err := ValidateImageName(ff.ImageNameV20180708())
 	if err != nil {
 		return err
 	}
