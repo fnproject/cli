@@ -502,7 +502,6 @@ func DockerPushV20180708(ff *FuncFileV20180708) error {
 // ValidateFullImageName validates that the full image name (REGISTRY/name:tag) is allowed for push
 // remember that private registries must be supported here
 func ValidateFullImageName(n string) error {
-	fmt.Println("N: ", n)
 	parts := strings.Split(n, "/")
 	fmt.Println("Parts: ", parts)
 	if len(parts) < 2 {
@@ -512,8 +511,7 @@ func ValidateFullImageName(n string) error {
 	return ValidateTagImageName(n)
 }
 
-// ValidateTagImageName validates that the full image name (REGISTRY/name:tag) is allowed for push
-// remember that private registries must be supported here
+// ValidateTagImageName validates that the last part of the image name (name:tag) is allowed for create/update
 func ValidateTagImageName(n string) error {
 	parts := strings.Split(n, "/")
 	lastParts := strings.Split(parts[len(parts)-1], ":")
