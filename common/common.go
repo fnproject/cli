@@ -469,7 +469,7 @@ func ExtractEnvConfig(configs []string) map[string]string {
 
 // DockerPush pushes to docker registry.
 func DockerPush(ff *FuncFile) error {
-	_, err := ValidateImageName(ff.ImageName())
+	err := ValidateFullImageName(ff.ImageName())
 	if err != nil {
 		return err
 	}
@@ -485,7 +485,7 @@ func DockerPush(ff *FuncFile) error {
 
 // DockerPush pushes to docker registry.
 func DockerPushV20180708(ff *FuncFileV20180708) error {
-	_, err := ValidateImageName(ff.ImageNameV20180708())
+	err := ValidateFullImageName(ff.ImageNameV20180708())
 	if err != nil {
 		return err
 	}
@@ -499,21 +499,26 @@ func DockerPushV20180708(ff *FuncFileV20180708) error {
 	return nil
 }
 
-// ValidateImageName validates that the full image name (REGISTRY/name:tag) is allowed for push
+// ValidateFullImageName validates that the full image name (REGISTRY/name:tag) is allowed for push
 // remember that private registries must be supported here
-func ValidateImageName(n string) (string, error) {
+func ValidateFullImageName(n string) error {
 	parts := strings.Split(n, "/")
+	fmt.Println("Parts: ", parts)
 	if len(parts) < 2 {
-		if viper.GetString("registry") == "" {
-			return "", errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var, pass in --registry or configure your context file")
-		}
-		n = viper.GetString("registry") + "/" + n
+		return errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var, pass in --registry or configure your context file")
+
 	}
+	return ValidateTagImageName(n)
+}
+
+// ValidateTagImageName validates that the last part of the image name (name:tag) is allowed for create/update
+func ValidateTagImageName(n string) error {
+	parts := strings.Split(n, "/")
 	lastParts := strings.Split(parts[len(parts)-1], ":")
 	if len(lastParts) != 2 {
-		return "", errors.New("image name must have a tag")
+		return errors.New("image name must have a tag")
 	}
-	return n, nil
+	return nil
 }
 
 func appNamePath(img string) (string, string) {
