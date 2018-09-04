@@ -249,7 +249,7 @@ func CreateFn(r *clientv2.Fn, appName string, fn *models.Fn) error {
 	}
 
 	fn.AppID = a.ID
-	err = common.ValidateImageName(fn.Image)
+	err = common.ValidateTagImageName(fn.Image)
 	if err != nil {
 		return err
 	}
@@ -276,7 +276,7 @@ func CreateFn(r *clientv2.Fn, appName string, fn *models.Fn) error {
 
 func PutFn(f *clientv2.Fn, fnID string, fn *models.Fn) error {
 	if fn.Image != "" {
-		err := common.ValidateImageName(fn.Image)
+		err := common.ValidateTagImageName(fn.Image)
 		if err != nil {
 			return err
 		}

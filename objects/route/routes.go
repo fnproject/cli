@@ -299,7 +299,7 @@ func (r *routesCmd) create(c *cli.Context) error {
 
 // PostRoute request
 func PostRoute(r *fnclient.Fn, appName string, rt *fnmodels.Route) error {
-	err := common.ValidateImageName(rt.Image)
+	err := common.ValidateTagImageName(rt.Image)
 	if err != nil {
 		return err
 	}
@@ -332,7 +332,7 @@ func PostRoute(r *fnclient.Fn, appName string, rt *fnmodels.Route) error {
 // PatchRoute request
 func PatchRoute(r *fnclient.Fn, appName, routePath string, rt *fnmodels.Route) error {
 	if rt.Image != "" {
-		err := common.ValidateImageName(rt.Image)
+		err := common.ValidateTagImageName(rt.Image)
 		if err != nil {
 			return err
 		}
