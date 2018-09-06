@@ -155,7 +155,7 @@ func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string,
 			}
 		}
 	}
-	err = RunBuild(c, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
+	err = RunBuild(c.GlobalBool("verbose"), dir, ff.ImageName(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
 	}
@@ -199,7 +199,7 @@ func dockerBuildV20180708(c *cli.Context, fpath string, ff *FuncFileV20180708, b
 			}
 		}
 	}
-	err = RunBuild(c, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache)
+	err = RunBuild(c.GlobalBool("verbose"), dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func dockerBuildV20180708(c *cli.Context, fpath string, ff *FuncFileV20180708, b
 }
 
 // RunBuild runs function from func.yaml/json/yml.
-func RunBuild(c *cli.Context, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
+func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -226,7 +226,7 @@ func RunBuild(c *cli.Context, dir, imageName, dockerfile string, buildArgs []str
 
 	quit := make(chan struct{})
 	fmt.Fprintf(os.Stderr, "Building image %v ", imageName)
-	if c.GlobalBool("verbose") {
+	if verbose {
 		fmt.Println()
 		buildOut = os.Stdout
 		buildErr = os.Stderr
