@@ -323,7 +323,7 @@ func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath st
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	_, err = common.BuildFunc(c, funcfilePath, funcfile, buildArgs, p.noCache)
+	_, err = common.BuildFunc(c.GlobalBool("verbose"), funcfilePath, funcfile, buildArgs, p.noCache)
 	if err != nil {
 		return err
 	}

@@ -146,7 +146,7 @@ func PreRun(c *cli.Context) (string, *common.FuncFile, []string, error) {
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	_, err = common.BuildFunc(c, fpath, ff, buildArgs, c.Bool("no-cache"))
+	_, err = common.BuildFunc(c.GlobalBool("verbose"), fpath, ff, buildArgs, c.Bool("no-cache"))
 	if err != nil {
 		return fpath, nil, nil, err
 	}

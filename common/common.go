@@ -56,7 +56,7 @@ func GetDir(c *cli.Context) string {
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
+func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
 	var err error
 	if funcfile.Version == "" {
 		funcfile, err = BumpIt(fpath, Patch)
@@ -69,7 +69,7 @@ func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []stri
 		return nil, err
 	}
 
-	if err := dockerBuild(c.GlobalBool("verbose"), fpath, funcfile, buildArg, noCache); err != nil {
+	if err := dockerBuild(verbose, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
 	}
 
