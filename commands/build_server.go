@@ -98,7 +98,7 @@ func (b *BuildServerCmd) buildServer(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	err = common.RunBuild(c, dir, c.String("tag"), "Dockerfile", nil, b.noCache)
+	err = common.RunBuild(c.GlobalBool("verbose"), dir, c.String("tag"), "Dockerfile", nil, b.noCache)
 	if err != nil {
 		return err
 	}

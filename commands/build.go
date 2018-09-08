@@ -82,7 +82,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 		}
 
 		buildArgs := c.StringSlice("build-arg")
-		ff, err = common.BuildFuncV20180708(c, fpath, ff, buildArgs, b.noCache)
+		ff, err = common.BuildFuncV20180708(c.GlobalBool("verbose"), fpath, ff, buildArgs, b.noCache)
 		if err != nil {
 			return err
 		}
@@ -97,7 +97,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 		}
 
 		buildArgs := c.StringSlice("build-arg")
-		ff, err = common.BuildFunc(c, fpath, ff, buildArgs, b.noCache)
+		ff, err = common.BuildFunc(c.GlobalBool("verbose"), fpath, ff, buildArgs, b.noCache)
 		if err != nil {
 			return err
 		}

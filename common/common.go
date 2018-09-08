@@ -56,7 +56,7 @@ func GetDir(c *cli.Context) string {
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
+func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
 	var err error
 	if funcfile.Version == "" {
 		funcfile, err = BumpIt(fpath, Patch)
@@ -69,7 +69,7 @@ func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []stri
 		return nil, err
 	}
 
-	if err := dockerBuild(c, fpath, funcfile, buildArg, noCache); err != nil {
+	if err := dockerBuild(verbose, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
 	}
 
@@ -77,7 +77,7 @@ func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []stri
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFuncV20180708(c *cli.Context, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool) (*FuncFileV20180708, error) {
+func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool) (*FuncFileV20180708, error) {
 	var err error
 
 	if funcfile.Version == "" {
@@ -91,7 +91,7 @@ func BuildFuncV20180708(c *cli.Context, fpath string, funcfile *FuncFileV2018070
 		return nil, err
 	}
 
-	if err := dockerBuildV20180708(c, fpath, funcfile, buildArg, noCache); err != nil {
+	if err := dockerBuildV20180708(verbose, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
 	}
 
@@ -125,7 +125,7 @@ func PrintContextualInfo() {
 	fmt.Println("Current Context: ", currentContext)
 }
 
-func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string, noCache bool) error {
+func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
@@ -155,7 +155,7 @@ func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string,
 			}
 		}
 	}
-	err = RunBuild(c, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
+	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string,
 	return nil
 }
 
-func dockerBuildV20180708(c *cli.Context, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool) error {
+func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
@@ -199,7 +199,7 @@ func dockerBuildV20180708(c *cli.Context, fpath string, ff *FuncFileV20180708, b
 			}
 		}
 	}
-	err = RunBuild(c, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache)
+	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func dockerBuildV20180708(c *cli.Context, fpath string, ff *FuncFileV20180708, b
 }
 
 // RunBuild runs function from func.yaml/json/yml.
-func RunBuild(c *cli.Context, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
+func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -226,7 +226,7 @@ func RunBuild(c *cli.Context, dir, imageName, dockerfile string, buildArgs []str
 
 	quit := make(chan struct{})
 	fmt.Fprintf(os.Stderr, "Building image %v ", imageName)
-	if c.GlobalBool("verbose") {
+	if verbose {
 		fmt.Println()
 		buildOut = os.Stdout
 		buildErr = os.Stderr
