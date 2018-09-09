@@ -139,26 +139,33 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 		return errors.New("App name must be provided, try `--app APP_NAME`")
 	}
 
-	buildArgs := c.StringSlice("build-arg")
-	verbose := c.GlobalBool("verbose")
-	noBump := p.noBump
-	isLocal := p.local
-	noCache := p.noCache
+	deployConfig := &DeployConfig{
+		c.StringSlice("build-arg"),
+		c.GlobalBool("verbose"),
+		p.noBump,
+		p.local,
+		p.noCache}
+
 	appDir := c.String("dir")
 
 	if p.all {
-		return DeployAll(
-			p.client, buildArgs,
-			verbose, noBump,
-			isLocal, noCache,
-			appDir, appName, appf)
+		return DeployAll(p.client, deployConfig, appDir, appName, appf)
 	}
-	return p.deploySingle(c, appName, appf)
+
+	return p.deploySingle(c, deployConfig, appName, appf)
+}
+
+type DeployConfig struct {
+	BuildArgs []string
+	Verbose   bool
+	NoBump    bool
+	IsLocal   bool
+	NoCache   bool
 }
 
 // deploySingle deploys a single function, either the current directory or if in the context
 // of an app and user provides relative path as the first arg, it will deploy that function.
-func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.AppFile) error {
+func (p *deploycmd) deploySingle(c *cli.Context, deployConfig *DeployConfig, appName string, appf *common.AppFile) error {
 	var dir string
 	wd := common.GetWd()
 
@@ -175,14 +182,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 		dir = filepath.Join(wd, fpath)
 	}
 
-	buildArgs := c.StringSlice("build-arg")
-	verbose := c.GlobalBool("verbose")
-	noBump := p.noBump
-	isLocal := p.local
-	noCache := p.noCache
-
-	return DeploySingle(p.client, p.clientV2, buildArgs, verbose,
-		noBump, isLocal, noCache, dir, appName, appf)
+	return DeploySingle(p.client, p.clientV2, deployConfig, dir, appName, appf)
 }
 
 func setRootFuncInfo(ff *common.FuncFile, appName string) {

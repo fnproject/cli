@@ -146,7 +146,10 @@ func PreRun(c *cli.Context) (string, *common.FuncFile, []string, error) {
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	_, err = common.BuildFunc(c.GlobalBool("verbose"), fpath, ff, buildArgs, c.Bool("no-cache"))
+	verbose := c.GlobalBool("verbose")
+	noCache := c.Bool("no-cache")
+
+	_, err = common.BuildFunc(buildArgs, verbose, noCache, fpath, ff)
 	if err != nil {
 		return fpath, nil, nil, err
 	}
@@ -207,7 +210,10 @@ func PreRunV20180708(c *cli.Context) (string, *common.FuncFileV20180708, []strin
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	_, err = common.BuildFuncV20180708(c.GlobalBool("verbose"), fpath, ff, buildArgs, c.Bool("no-cache"))
+	verbose := c.GlobalBool("verbose")
+	noCache := c.Bool("no-cache")
+
+	_, err = common.BuildFuncV20180708(buildArgs, verbose, noCache, fpath, ff)
 	if err != nil {
 		return fpath, nil, nil, err
 	}

@@ -12,7 +12,7 @@ import (
 	v2Client "github.com/fnproject/fn_go/clientv2"
 )
 
-func DeploySingle(clientV1 *fnclient.Fn, clientV2 *v2Client.Fn, buildArgs []string, verbose bool, noBump, isLocal, noCache bool, dir, appName string, appf *common.AppFile) error {
+func DeploySingle(clientV1 *fnclient.Fn, clientV2 *v2Client.Fn, deployConfig *DeployConfig, dir, appName string, appf *common.AppFile) error {
 	wd := common.GetWd()
 
 	err := os.Chdir(dir)
@@ -45,8 +45,7 @@ func DeploySingle(clientV1 *fnclient.Fn, clientV2 *v2Client.Fn, buildArgs []stri
 			}
 		}
 
-		return DeployFuncV20180708(clientV1, clientV2, buildArgs, verbose, noBump,
-			isLocal, noCache, appName, fpath, ff)
+		return DeployFuncV20180708(clientV1, clientV2, deployConfig, appName, fpath, ff)
 	default:
 		fpath, ff, err := common.FindAndParseFuncfile(dir)
 		if err != nil {
@@ -65,11 +64,11 @@ func DeploySingle(clientV1 *fnclient.Fn, clientV2 *v2Client.Fn, buildArgs []stri
 			}
 		}
 
-		return DeployFunc(clientV1, buildArgs, verbose, noBump, isLocal, noCache, appName, fpath, ff)
+		return DeployFunc(clientV1, deployConfig, appName, fpath, ff)
 	}
 }
 
-func DeployAll(client *fnclient.Fn, buildArgs []string, verbose bool, noBump, isLocal, noCache bool, appDir, appName string, appf *common.AppFile) error {
+func DeployAll(client *fnclient.Fn, deployConfig *DeployConfig, appDir, appName string, appf *common.AppFile) error {
 	if appf != nil {
 		err := UpdateAppConfig(client, appf)
 		if err != nil {
@@ -111,7 +110,7 @@ func DeployAll(client *fnclient.Fn, buildArgs []string, verbose bool, noBump, is
 			}
 		}
 
-		err = DeployFunc(client, buildArgs, verbose, noBump, isLocal, noCache, appName, path, ff)
+		err = DeployFunc(client, deployConfig, appName, path, ff)
 		if err != nil {
 			return fmt.Errorf("deploy error on %s: %v", path, err)
 		}
@@ -132,7 +131,7 @@ func DeployAll(client *fnclient.Fn, buildArgs []string, verbose bool, noBump, is
 // Parse func.yaml file, bump version, build image, push to registry, and
 // finally it will update function's route. Optionally,
 // the route can be overriden inside the func.yaml file.
-func DeployFunc(client *fnclient.Fn, buildArgs []string, verbose bool, noBump, isLocal, noCache bool, appName, funcfilePath string, funcfile *common.FuncFile) error {
+func DeployFunc(client *fnclient.Fn, deployConfig *DeployConfig, appName, funcfilePath string, funcfile *common.FuncFile) error {
 	dir := filepath.Dir(funcfilePath)
 	// get name from directory if it's not defined
 	if funcfile.Name == "" {
@@ -148,7 +147,7 @@ func DeployFunc(client *fnclient.Fn, buildArgs []string, verbose bool, noBump, i
 	}
 
 	var err error
-	if !noBump {
+	if !deployConfig.NoBump {
 		funcfile2, err := common.BumpIt(funcfilePath, common.Patch)
 		if err != nil {
 			return err
@@ -158,13 +157,13 @@ func DeployFunc(client *fnclient.Fn, buildArgs []string, verbose bool, noBump, i
 	}
 
 	// p.noCache
-	_, err = common.BuildFunc(verbose, funcfilePath, funcfile, buildArgs, noCache)
+	_, err = common.BuildFunc(deployConfig.BuildArgs, deployConfig.Verbose, deployConfig.NoCache, funcfilePath, funcfile)
 	if err != nil {
 		return err
 	}
 
 	// p.local
-	if !isLocal {
+	if !deployConfig.IsLocal {
 		if err := common.DockerPush(funcfile); err != nil {
 			return err
 		}
@@ -173,13 +172,13 @@ func DeployFunc(client *fnclient.Fn, buildArgs []string, verbose bool, noBump, i
 	return updateRoute(client, appName, funcfile)
 }
 
-func DeployFuncV20180708(clientV1 *fnclient.Fn, clientV2 *v2Client.Fn, buildArgs []string, verbose bool, noBump, isLocal, noCache bool, appName, funcfilePath string, funcfile *common.FuncFileV20180708) error {
+func DeployFuncV20180708(clientV1 *fnclient.Fn, clientV2 *v2Client.Fn, deployConfig *DeployConfig, appName, funcfilePath string, funcfile *common.FuncFileV20180708) error {
 	if funcfile.Name == "" {
 		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
 	}
 
 	var err error
-	if !noBump {
+	if !deployConfig.NoBump {
 		funcfile2, err := common.BumpItV20180708(funcfilePath, common.Patch)
 		if err != nil {
 			return err
@@ -188,12 +187,13 @@ func DeployFuncV20180708(clientV1 *fnclient.Fn, clientV2 *v2Client.Fn, buildArgs
 		// TODO: this whole funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
 	}
 
-	_, err = common.BuildFuncV20180708(verbose, funcfilePath, funcfile, buildArgs, noCache)
+	_, err = common.BuildFuncV20180708(deployConfig.BuildArgs, deployConfig.Verbose,
+		deployConfig.NoCache, funcfilePath, funcfile)
 	if err != nil {
 		return err
 	}
 
-	if !isLocal {
+	if !deployConfig.IsLocal {
 		if err := common.DockerPushV20180708(funcfile); err != nil {
 			return err
 		}
