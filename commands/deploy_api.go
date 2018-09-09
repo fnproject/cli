@@ -12,6 +12,14 @@ import (
 	v2Client "github.com/fnproject/fn_go/clientv2"
 )
 
+type DeployConfig struct {
+	BuildArgs []string
+	Verbose   bool
+	NoBump    bool
+	IsLocal   bool
+	NoCache   bool
+}
+
 func DeploySingle(clientV1 *fnclient.Fn, clientV2 *v2Client.Fn, deployConfig *DeployConfig, dir, appName string, appf *common.AppFile) error {
 	wd := common.GetWd()
 

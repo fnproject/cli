@@ -155,14 +155,6 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	return p.deploySingle(c, deployConfig, appName, appf)
 }
 
-type DeployConfig struct {
-	BuildArgs []string
-	Verbose   bool
-	NoBump    bool
-	IsLocal   bool
-	NoCache   bool
-}
-
 // deploySingle deploys a single function, either the current directory or if in the context
 // of an app and user provides relative path as the first arg, it will deploy that function.
 func (p *deploycmd) deploySingle(c *cli.Context, deployConfig *DeployConfig, appName string, appf *common.AppFile) error {
