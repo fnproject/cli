@@ -74,6 +74,9 @@ func (b *buildcmd) build(c *cli.Context) error {
 		return err
 	}
 
+	buildArgs := c.StringSlice("build-arg")
+	verbose := c.GlobalBool("verbose")
+
 	switch common.GetFuncYamlVersion(ffV) {
 	case common.LatestYamlVersion:
 		fpath, ff, err := common.FindAndParseFuncFileV20180708(dir)
@@ -81,8 +84,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 			return err
 		}
 
-		buildArgs := c.StringSlice("build-arg")
-		ff, err = common.BuildFuncV20180708(c.GlobalBool("verbose"), fpath, ff, buildArgs, b.noCache)
+		ff, err = common.BuildFuncV20180708(buildArgs, verbose, b.noCache, fpath, ff)
 		if err != nil {
 			return err
 		}
@@ -96,8 +98,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 			return err
 		}
 
-		buildArgs := c.StringSlice("build-arg")
-		ff, err = common.BuildFunc(c.GlobalBool("verbose"), fpath, ff, buildArgs, b.noCache)
+		ff, err = common.BuildFunc(buildArgs, verbose, b.noCache, fpath, ff)
 		if err != nil {
 			return err
 		}
