@@ -199,8 +199,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	a.ff.Schema_version = common.LatestYamlVersion
 
-	fmt.Println("Runtime: ", a.ff.Runtime)
-
 	if initImage != "" {
 
 		err = runInitImage(initImage, a)
@@ -421,7 +419,6 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 			a.ff.Format = "default"
 		}
 	} else {
-		fmt.Println("Runtime:", runtime)
 		helper = langs.GetLangHelper(runtime)
 	}
 	if helper == nil {
@@ -436,9 +433,9 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 
 		if runtime == "" {
 			a.ff.Runtime = helper.Runtime()
+		} else {
+			helper.Runtime()
 		}
-
-		a.ff.Runtime = runtime
 
 		if c.String("format") == "" {
 			a.ff.Format = helper.DefaultFormat()
