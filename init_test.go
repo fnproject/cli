@@ -1,48 +1,46 @@
 package main
 
 import (
-	"flag"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/fnproject/cli/commands"
 	"github.com/fnproject/cli/common"
-	"github.com/fnproject/cli/langs"
-	"github.com/urfave/cli"
+	"github.com/fnproject/cli/testharness"
 	yaml "gopkg.in/yaml.v2"
 )
 
 func TestInit(t *testing.T) {
+	h := testharness.Create(t)
+	defer h.Cleanup()
 
 	testname := "test-init"
 	testdir, err := ioutil.TempDir("", testname)
 	if err != nil {
 		t.Fatalf("ERROR: Failed to make tmp test directory: err: %v", err)
 	}
-	defer os.RemoveAll(testdir)
 
+	defer os.RemoveAll(testdir)
 	err = os.Chdir(testdir)
 	if err != nil {
 		t.Fatalf("ERROR: Failed to cd to tmp test directory: err: %v", err)
 	}
 
-	helper := &langs.GoLangHelper{}
-	helper.GenerateBoilerplate(testdir)
-
-	app := newFn()
-	err = app.Command("init").Run(cli.NewContext(app, &flag.FlagSet{}, nil))
-	if err != nil {
-		t.Fatalf("ERROR: Failed run `init` command: err: %v", err)
-	}
+	funcName := h.NewFuncName()
+	h.Fn("init", "--runtime", "go").AssertSuccess()
+	fmt.Println("ffName: ", funcName)
 
 	ffname := "func.yaml"
 	b, err := ioutil.ReadFile(ffname)
 	if err != nil {
 		t.Fatalf("Could not open %s for parsing. Error: %v", ffname, err)
 	}
-	ff := &common.FuncFile{}
+	ff := &common.FuncFileV20180708{}
 	err = yaml.Unmarshal(b, ff)
+
+	fmt.Println("FF.Runtime: ", ff.Runtime)
 	if err != nil {
 		t.Fatalf("Could not parse %s. Error: %v", ffname, err)
 	}

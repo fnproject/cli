@@ -33,18 +33,15 @@ import (
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/langs"
 	function "github.com/fnproject/cli/objects/fn"
-	"github.com/fnproject/cli/objects/route"
-	models "github.com/fnproject/fn_go/models"
 	modelsV2 "github.com/fnproject/fn_go/modelsv2"
 	"github.com/urfave/cli"
 )
 
 type initFnCmd struct {
-	force       bool
-	triggerType string
-	wd          string
-	ff          *common.FuncFile
-	ffV20180708 *common.FuncFileV20180708
+	force   bool
+	trigger bool
+	wd      string
+	ff      *common.FuncFileV20180708
 }
 
 func initFlags(a *initFnCmd) []cli.Flag {
@@ -84,10 +81,10 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Usage:       "Specify the working directory to initialise a function, must be the full path.",
 			Destination: &a.wd,
 		},
-		cli.StringFlag{
+		cli.BoolFlag{
 			Name:        "trigger",
 			Usage:       "Specify the trigger type.",
-			Destination: &a.triggerType,
+			Destination: &a.trigger,
 		},
 	}
 
@@ -104,7 +101,7 @@ func langsList() string {
 
 // InitCommand returns init cli.command
 func InitCommand() cli.Command {
-	a := &initFnCmd{ff: &common.FuncFile{}, ffV20180708: &common.FuncFileV20180708{}}
+	a := &initFnCmd{ff: &common.FuncFileV20180708{}}
 
 	return cli.Command{
 		Name:        "init",
@@ -121,23 +118,28 @@ func InitCommand() cli.Command {
 func (a *initFnCmd) init(c *cli.Context) error {
 	var err error
 	var dir string
+	var fn modelsV2.Fn
 
 	dir = common.GetWd()
 	if a.wd != "" {
 		dir = a.wd
 	}
 
-	if a.triggerType != "" {
-		var fn modelsV2.Fn
-		function.FnWithFlags(c, &fn)
-		a.bindFn(&fn)
+	function.FnWithFlags(c, &fn)
+	a.bindFn(&fn)
 
-		return a.initV2(c, fn)
+	a.ff.Name = c.Args().First()
+
+	if a.trigger {
+		trig := make([]common.Trigger, 1)
+		trig[0] = common.Trigger{
+			a.ff.Name + "-trigger",
+			"http",
+			"/" + a.ff.Name + "-trigger",
+		}
+
+		a.ff.Triggers = trig
 	}
-
-	var rt models.Route
-	route.WithFlags(c, &rt)
-	a.bindRoute(&rt)
 
 	runtime := c.String("runtime")
 	initImage := c.String("init-image")
@@ -147,6 +149,8 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	}
 
 	runtimeSpecified := runtime != ""
+
+	a.ff.Schema_version = common.LatestYamlVersion
 	if runtimeSpecified {
 		// go no further if the specified runtime is not supported
 		if runtime != common.FuncfileDockerRuntime && langs.GetLangHelper(runtime) == nil {
@@ -188,10 +192,14 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			return errors.New("Function file already exists, aborting")
 		}
 	}
-	err = a.BuildFuncFile(c, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
+	err = a.BuildFuncFileV20180708(c, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
 	if err != nil {
 		return err
 	}
+
+	a.ff.Schema_version = common.LatestYamlVersion
+
+	fmt.Println("Runtime: ", a.ff.Runtime)
 
 	if initImage != "" {
 
@@ -211,18 +219,16 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		//     The following fields are already in a.ff:
 		//         config, cpus, idle_timeout, memory, name, path, timeout, type, triggers, version
 		//     Add the following from the init-image:
-		//         build, build_image, cmd, content_type, entrypoint, expects, format, headers, run_image, runtime, tests
+		//         build, build_image, cmd, content_type, entrypoint, expects, format, headers, run_image, runtime
 		a.ff.Build = initFf.Build
-		a.ff.BuildImage = initFf.BuildImage
+		a.ff.Build_image = initFf.BuildImage
 		a.ff.Cmd = initFf.Cmd
-		a.ff.ContentType = initFf.ContentType
+		a.ff.Content_type = initFf.ContentType
 		a.ff.Entrypoint = initFf.Entrypoint
 		a.ff.Expects = initFf.Expects
 		a.ff.Format = initFf.Format
-		a.ff.Headers = initFf.Headers
-		a.ff.RunImage = initFf.RunImage
+		a.ff.Run_image = initFf.RunImage
 		a.ff.Runtime = initFf.Runtime
-		a.ff.Tests = initFf.Tests
 
 		// Then CLI args can override some init-image options (TODO: remove this with #383)
 		if c.String("cmd") != "" {
@@ -237,17 +243,15 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			a.ff.Format = c.String("format")
 		}
 
-		// Done - write it out to func.yaml
-		if err := common.EncodeFuncfileYAML("func.yaml", a.ff); err != nil {
+		if err := common.EncodeFuncFileV20180708YAML("func.yaml", a.ff); err != nil {
 			return err
 		}
 
 		os.Remove("func.init.yaml")
 
 	} else {
-
-		// TODO: why don't we treat "docker" runtime as just another language helper? Then can get rid of several Docker
-		// specific if/else's like this one.
+		// TODO: why don't we treat "docker" runtime as just another language helper?
+		// Then can get rid of several Docker specific if/else's like this one.
 		if runtimeSpecified && runtime != common.FuncfileDockerRuntime {
 			err := a.generateBoilerplate(dir, runtime)
 			if err != nil {
@@ -255,10 +259,9 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			}
 		}
 
-		if err := common.EncodeFuncfileYAML("func.yaml", a.ff); err != nil {
+		if err := common.EncodeFuncFileV20180708YAML("func.yaml", a.ff); err != nil {
 			return err
 		}
-
 	}
 
 	fmt.Println("func.yaml created.")
@@ -332,153 +335,6 @@ func untarStream(r io.Reader) error {
 	}
 }
 
-func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
-	var err error
-	var dir string
-
-	dir = common.GetWd()
-	if a.wd != "" {
-		dir = a.wd
-	}
-
-	a.ffV20180708.Name = c.Args().First()
-
-	if a.triggerType == "http" {
-		trig := make([]common.Trigger, 1)
-		trig[0] = common.Trigger{
-			a.ffV20180708.Name + "-trigger",
-			a.triggerType,
-			"/" + a.ffV20180708.Name + "-trigger",
-		}
-		a.ffV20180708.Triggers = trig
-	}
-
-	runtime := c.String("runtime")
-	initImage := c.String("init-image")
-
-	if runtime != "" && initImage != "" {
-		return fmt.Errorf("You can't supply --runtime with --init-image")
-	}
-
-	runtimeSpecified := runtime != ""
-
-	a.ffV20180708.Schema_version = common.LatestYamlVersion
-	if runtimeSpecified {
-		// go no further if the specified runtime is not supported
-		if runtime != common.FuncfileDockerRuntime && langs.GetLangHelper(runtime) == nil {
-			return fmt.Errorf("Init does not support the '%s' runtime", runtime)
-		}
-	}
-
-	path := c.Args().First()
-	if path != "" {
-		fmt.Printf("Creating function at: /%s\n", path)
-		dir = filepath.Join(dir, path)
-
-		// check if dir exists, if it does, then we can't create function
-		if common.Exists(dir) {
-			if !a.force {
-				return fmt.Errorf("directory %s already exists, cannot init function", dir)
-			}
-		} else {
-			err = os.MkdirAll(dir, 0755)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	err = os.Chdir(dir)
-	if err != nil {
-		return err
-	}
-
-	defer os.Chdir(dir) // todo: wrap this so we can log the error if changing back fails
-
-	if !a.force {
-		_, ff, err := common.LoadFuncfile(dir)
-		if _, ok := err.(*common.NotFoundError); !ok && err != nil {
-			return err
-		}
-		if ff != nil {
-			return errors.New("Function file already exists, aborting")
-		}
-	}
-	err = a.BuildFuncFileV20180708(c, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
-	if err != nil {
-		return err
-	}
-
-	a.ffV20180708.Schema_version = common.LatestYamlVersion
-
-	if initImage != "" {
-
-		err = runInitImage(initImage, a)
-		if err != nil {
-			return err
-		}
-
-		// Merge the func.init.yaml from the initImage with a.ff
-		//     write out the new func file
-		var initFf, err = common.ParseFuncfile("func.init.yaml")
-		if err != nil {
-			return errors.New("init-image did not produce a valid func.init.yaml")
-		}
-
-		// Build up a combined func.yaml (in a.ff) from the init-image and defaults and route and cli-args
-		//     The following fields are already in a.ff:
-		//         config, cpus, idle_timeout, memory, name, path, timeout, type, triggers, version
-		//     Add the following from the init-image:
-		//         build, build_image, cmd, content_type, entrypoint, expects, format, headers, run_image, runtime
-		a.ffV20180708.Build = initFf.Build
-		a.ffV20180708.Build_image = initFf.BuildImage
-		a.ffV20180708.Cmd = initFf.Cmd
-		a.ffV20180708.Content_type = initFf.ContentType
-		a.ffV20180708.Entrypoint = initFf.Entrypoint
-		a.ffV20180708.Expects = initFf.Expects
-		a.ffV20180708.Format = initFf.Format
-		a.ffV20180708.Run_image = initFf.RunImage
-		a.ffV20180708.Runtime = initFf.Runtime
-
-		// Then CLI args can override some init-image options (TODO: remove this with #383)
-		if c.String("cmd") != "" {
-			a.ffV20180708.Cmd = c.String("cmd")
-		}
-
-		if c.String("entrypoint") != "" {
-			a.ffV20180708.Entrypoint = c.String("entrypoint")
-		}
-
-		if c.String("format") != "" {
-			a.ffV20180708.Format = c.String("format")
-		}
-
-		if err := common.EncodeFuncFileV20180708YAML("func.yaml", a.ffV20180708); err != nil {
-			return err
-		}
-
-		os.Remove("func.init.yaml")
-
-	} else {
-		// TODO: why don't we treat "docker" runtime as just another language helper?
-		// Then can get rid of several Docker specific if/else's like this one.
-		if runtimeSpecified && runtime != common.FuncfileDockerRuntime {
-			err := a.generateBoilerplate(dir, runtime)
-			if err != nil {
-				return err
-			}
-		}
-
-		if err := common.EncodeFuncFileV20180708YAML("func.yaml", a.ffV20180708); err != nil {
-			return err
-		}
-	}
-
-	fmt.Println("func.yaml created.")
-	return nil
-
-}
-
 func (a *initFnCmd) generateBoilerplate(path, runtime string) error {
 	helper := langs.GetLangHelper(runtime)
 	if helper != nil && helper.HasBoilerplate() {
@@ -493,24 +349,8 @@ func (a *initFnCmd) generateBoilerplate(path, runtime string) error {
 	return nil
 }
 
-func (a *initFnCmd) bindRoute(fn *models.Route) {
-	ff := a.ff
-	if fn.Format != "" {
-		ff.Format = fn.Format
-	}
-	if fn.Memory > 0 {
-		ff.Memory = fn.Memory
-	}
-	if fn.Timeout != nil {
-		ff.Timeout = fn.Timeout
-	}
-	if fn.IDLETimeout != nil {
-		ff.IDLETimeout = fn.IDLETimeout
-	}
-}
-
 func (a *initFnCmd) bindFn(fn *modelsV2.Fn) {
-	ff := a.ffV20180708
+	ff := a.ff
 	if fn.Format != "" {
 		ff.Format = fn.Format
 	}
@@ -537,7 +377,7 @@ func ValidateFuncName(name string) error {
 	return nil
 }
 
-func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
+func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 	var err error
 
 	if c.String("name") != "" {
@@ -550,7 +390,6 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 	}
 
 	a.ff.Version = c.String("version")
-
 	if err = ValidateFuncName(a.ff.Name); err != nil {
 		return err
 	}
@@ -561,20 +400,16 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 		a.ff.Runtime = common.FuncfileDockerRuntime
 		return nil
 	}
-
 	runtime := c.String("runtime")
 	if runtime == common.FuncfileDockerRuntime {
 		return errors.New("Function file runtime is 'docker', but no Dockerfile exists")
 	}
 
-	var helper langs.LangHelper
-
 	if c.String("init-image") != "" {
-		// Building from an image only requires us to have
-		// Name and Version generated here.
 		return nil
 	}
 
+	var helper langs.LangHelper
 	if runtime == "" {
 		helper, err = detectRuntime(path)
 		if err != nil {
@@ -582,16 +417,15 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 		}
 		fmt.Printf("Found %v function, assuming %v runtime.\n", helper.Runtime(), helper.Runtime())
 		//need to default this to default format to be backwards compatible. Might want to just not allow this anymore, fail here.
-		if a.ff.Format == "" {
+		if c.String("format") == "" {
 			a.ff.Format = "default"
 		}
 	} else {
 		fmt.Println("Runtime:", runtime)
 		helper = langs.GetLangHelper(runtime)
 	}
-
 	if helper == nil {
-		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function.\n", a.ff.Runtime)
+		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function.\n", runtime)
 	} else {
 		if c.String("entrypoint") == "" {
 			a.ff.Entrypoint, err = helper.Entrypoint()
@@ -601,7 +435,7 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 		}
 
 		if runtime == "" {
-			runtime = helper.Runtime()
+			a.ff.Runtime = helper.Runtime()
 		}
 
 		a.ff.Runtime = runtime
@@ -619,129 +453,27 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 		}
 
 		if helper.FixImagesOnInit() {
-			if a.ff.BuildImage == "" {
+			if a.ff.Build_image == "" {
 				buildImage, err := helper.BuildFromImage()
 				if err != nil {
 					return err
 				}
-				a.ff.BuildImage = buildImage
+				a.ff.Build_image = buildImage
 			}
 			if helper.IsMultiStage() {
-				if a.ff.RunImage == "" {
+				if a.ff.Run_image == "" {
 					runImage, err := helper.RunFromImage()
 					if err != nil {
 						return err
 					}
-					a.ff.RunImage = runImage
+					a.ff.Run_image = runImage
 				}
 			}
 		}
 	}
 
 	if a.ff.Entrypoint == "" && a.ff.Cmd == "" {
-		return fmt.Errorf("Could not detect entrypoint or cmd for %v, use --entrypoint and/or --cmd to set them explicitly", runtime)
-	}
-
-	return nil
-}
-
-func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
-	var err error
-
-	if c.String("name") != "" {
-		a.ffV20180708.Name = strings.ToLower(c.String("name"))
-	}
-
-	if a.ffV20180708.Name == "" {
-		// then defaults to current directory for name, the name must be lowercase
-		a.ffV20180708.Name = strings.ToLower(filepath.Base(path))
-	}
-
-	a.ffV20180708.Version = c.String("version")
-	if err = ValidateFuncName(a.ffV20180708.Name); err != nil {
-		return err
-	}
-
-	//if Dockerfile present, use 'docker' as 'runtime'
-	if common.Exists("Dockerfile") {
-		fmt.Println("Dockerfile found. Using runtime 'docker'.")
-		a.ff.Runtime = common.FuncfileDockerRuntime
-		return nil
-	}
-	runtime := c.String("runtime")
-	if runtime == common.FuncfileDockerRuntime {
-		return errors.New("Function file runtime is 'docker', but no Dockerfile exists")
-	}
-
-	if c.String("init-image") != "" {
-		return nil
-	}
-
-	var helper langs.LangHelper
-	if runtime == "" {
-		helper, err = detectRuntime(path)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("Found %v function, assuming %v runtime.\n", helper.Runtime(), helper.Runtime())
-		//need to default this to default format to be backwards compatible. Might want to just not allow this anymore, fail here.
-		if c.String("format") == "" {
-			a.ffV20180708.Format = "default"
-		}
-	} else {
-		fmt.Println("Runtime:", runtime)
-		helper = langs.GetLangHelper(runtime)
-	}
-	if helper == nil {
-		fmt.Printf("Init does not support the %s runtime, you'll have to create your own Dockerfile for this function.\n", runtime)
-	} else {
-		if c.String("entrypoint") == "" {
-			a.ffV20180708.Entrypoint, err = helper.Entrypoint()
-			if err != nil {
-				return err
-			}
-		}
-
-		if runtime == "" {
-			a.ffV20180708.Runtime = helper.Runtime()
-		}
-
-		a.ffV20180708.Runtime = runtime
-
-		if c.String("format") == "" {
-			a.ffV20180708.Format = helper.DefaultFormat()
-		}
-
-		if c.String("cmd") == "" {
-			cmd, err := helper.Cmd()
-			if err != nil {
-				return err
-			}
-			a.ffV20180708.Cmd = cmd
-		}
-
-		if helper.FixImagesOnInit() {
-			if a.ffV20180708.Build_image == "" {
-				buildImage, err := helper.BuildFromImage()
-				if err != nil {
-					return err
-				}
-				a.ffV20180708.Build_image = buildImage
-			}
-			if helper.IsMultiStage() {
-				if a.ffV20180708.Run_image == "" {
-					runImage, err := helper.RunFromImage()
-					if err != nil {
-						return err
-					}
-					a.ffV20180708.Run_image = runImage
-				}
-			}
-		}
-	}
-
-	if a.ffV20180708.Entrypoint == "" && a.ffV20180708.Cmd == "" {
-		return fmt.Errorf("Could not detect entrypoint or cmd for %v, use --entrypoint and/or --cmd to set them explicitly", a.ffV20180708.Runtime)
+		return fmt.Errorf("Could not detect entrypoint or cmd for %v, use --entrypoint and/or --cmd to set them explicitly", a.ff.Runtime)
 	}
 
 	return nil

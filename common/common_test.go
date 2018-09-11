@@ -17,7 +17,7 @@ func TestValidateImageName(t *testing.T) {
 	for _, c := range testCases {
 		t.Run(c.name, func(t *testing.T) {
 			errString := ""
-			if err := ValidateImageName(c.name); err != nil {
+			if err := ValidateFullImageName(c.name); err != nil {
 				errString = err.Error()
 			}
 			if c.expectedErr != errString {
