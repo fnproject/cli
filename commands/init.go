@@ -432,10 +432,10 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 		}
 
 		if runtime == "" {
-			a.ff.Runtime = helper.Runtime()
-		} else {
-			helper.Runtime()
+			runtime = helper.Runtime()
 		}
+
+		a.ff.Runtime = runtime
 
 		if c.String("format") == "" {
 			a.ff.Format = helper.DefaultFormat()
