@@ -341,18 +341,6 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 		dir = a.wd
 	}
 
-	a.ffV20180708.Name = c.Args().First()
-
-	if a.triggerType == "http" {
-		trig := make([]common.Trigger, 1)
-		trig[0] = common.Trigger{
-			a.ffV20180708.Name + "-trigger",
-			a.triggerType,
-			"/" + a.ffV20180708.Name + "-trigger",
-		}
-		a.ffV20180708.Triggers = trig
-	}
-
 	runtime := c.String("runtime")
 	initImage := c.String("init-image")
 
@@ -371,6 +359,7 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 	}
 
 	path := c.Args().First()
+
 	if path != "" {
 		fmt.Printf("Creating function at: /%s\n", path)
 		dir = filepath.Join(dir, path)
@@ -386,6 +375,23 @@ func (a *initFnCmd) initV2(c *cli.Context, fn modelsV2.Fn) error {
 				return err
 			}
 		}
+	}
+
+	if c.String("name") != "" {
+		a.ffV20180708.Name = strings.ToLower(c.String("name"))
+	} else {
+		// then defaults to current directory for name, the name must be lowercase
+		a.ffV20180708.Name = strings.ToLower(filepath.Base(dir))
+	}
+
+	if a.triggerType == "http" {
+		trig := make([]common.Trigger, 1)
+		trig[0] = common.Trigger{
+			a.ffV20180708.Name + "-trigger",
+			a.triggerType,
+			"/" + a.ffV20180708.Name + "-trigger",
+		}
+		a.ffV20180708.Triggers = trig
 	}
 
 	err = os.Chdir(dir)
@@ -647,15 +653,6 @@ func (a *initFnCmd) BuildFuncFile(c *cli.Context, path string) error {
 
 func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 	var err error
-
-	if c.String("name") != "" {
-		a.ffV20180708.Name = strings.ToLower(c.String("name"))
-	}
-
-	if a.ffV20180708.Name == "" {
-		// then defaults to current directory for name, the name must be lowercase
-		a.ffV20180708.Name = strings.ToLower(filepath.Base(path))
-	}
 
 	a.ffV20180708.Version = c.String("version")
 	if err = ValidateFuncName(a.ffV20180708.Name); err != nil {
