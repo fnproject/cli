@@ -39,7 +39,7 @@ import (
 
 type initFnCmd struct {
 	force   bool
-	trigger bool
+	trigger string
 	wd      string
 	ff      *common.FuncFileV20180708
 }
@@ -81,7 +81,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Usage:       "Specify the working directory to initialise a function, must be the full path.",
 			Destination: &a.wd,
 		},
-		cli.BoolFlag{
+		cli.StringFlag{
 			Name:        "trigger",
 			Usage:       "Specify the trigger type.",
 			Destination: &a.trigger,
@@ -130,11 +130,11 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	a.ff.Name = c.Args().First()
 
-	if a.trigger {
+	if a.trigger != "" {
 		trig := make([]common.Trigger, 1)
 		trig[0] = common.Trigger{
 			a.ff.Name + "-trigger",
-			"http",
+			a.trigger,
 			"/" + a.ff.Name + "-trigger",
 		}
 
