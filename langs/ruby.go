@@ -91,7 +91,7 @@ func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
 const (
 	rubySrcBoilerplate = `require 'fdk'
 
-def myhandler(context, input)
+def myhandler(context:, input:)
 	STDERR.puts "call_id: " + context.call_id
 	name = "World"
 	if input != nil
