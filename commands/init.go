@@ -38,10 +38,10 @@ import (
 )
 
 type initFnCmd struct {
-	force   bool
-	trigger string
-	wd      string
-	ff      *common.FuncFileV20180708
+	force       bool
+	triggerType string
+	wd          string
+	ff          *common.FuncFileV20180708
 }
 
 func initFlags(a *initFnCmd) []cli.Flag {
@@ -84,7 +84,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 		cli.StringFlag{
 			Name:        "trigger",
 			Usage:       "Specify the trigger type.",
-			Destination: &a.trigger,
+			Destination: &a.triggerType,
 		},
 	}
 
@@ -130,11 +130,11 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	a.ff.Name = c.Args().First()
 
-	if a.trigger != "" {
+	if a.triggerType != "" {
 		trig := make([]common.Trigger, 1)
 		trig[0] = common.Trigger{
 			a.ff.Name + "-trigger",
-			a.trigger,
+			a.triggerType,
 			"/" + a.ff.Name + "-trigger",
 		}
 
