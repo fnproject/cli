@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fnproject/cli/commands"
 	"github.com/fnproject/cli/testharness"
 )
 
