@@ -51,7 +51,7 @@ const V20180708Schema = `{
             "type": "integer"
         },
         "config": {
-            "type": "integer"
+            "type": "object"
         },
         "triggers": {
             "type": "array",
