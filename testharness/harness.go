@@ -25,14 +25,24 @@ import (
 // Max duration a command can run for before being killed
 var commandTimeout = 5 * time.Minute
 
+type funcRef struct {
+	appName, funcName string
+}
+
+type triggerRef struct {
+	appName, funcName, triggerName string
+}
+
 //CLIHarness encapsulates a single CLI session
 type CLIHarness struct {
-	t        *testing.T
-	cliPath  string
-	appNames []string
-	testDir  string
-	homeDir  string
-	cwd      string
+	t           *testing.T
+	cliPath     string
+	appNames    []string
+	funcRefs    []funcRef
+	triggerRefs []triggerRef
+	testDir     string
+	homeDir     string
+	cwd         string
 
 	env     map[string]string
 	history []string
@@ -164,6 +174,12 @@ func Create(t *testing.T) *CLIHarness {
 func (h *CLIHarness) Cleanup() {
 
 	h.Cd("")
+	for _, trigger := range h.triggerRefs {
+		h.Fn("delete", "triggers", trigger.appName, trigger.funcName, trigger.triggerName)
+	}
+	for _, fn := range h.funcRefs {
+		h.Fn("delete", "functions", fn.appName, fn.funcName)
+	}
 	for _, app := range h.appNames {
 		h.Fn("delete", "apps", app)
 	}
@@ -384,9 +400,18 @@ runtime: docker
 	return h
 }
 
-//NewFuncName creates a valid function name
-func (h *CLIHarness) NewFuncName() string {
-	return randString(8)
+//NewFuncName creates a valid function name and registers it for deletion
+func (h *CLIHarness) NewFuncName(appName string) string {
+	funcName := randString(8)
+	h.funcRefs = append(h.funcRefs, funcRef{appName, funcName})
+	return funcName
+}
+
+//NewTriggerName creates a valid trigger name and registers it for deletioneanup
+func (h *CLIHarness) NewTriggerName(appName, funcName string) string {
+	triggerName := randString(8)
+	h.triggerRefs = append(h.triggerRefs, triggerRef{appName, funcName, triggerName})
+	return triggerName
 }
 
 func (h *CLIHarness) relativeToTestDir(dir string) string {

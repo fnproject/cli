@@ -101,10 +101,8 @@ func appWithFlags(c *cli.Context, app *models.App) {
 	if len(app.Config) == 0 {
 		app.Config = common.ExtractEnvConfig(c.StringSlice("config"))
 	}
-	if len(app.Annotations) == 0 {
-		if len(c.StringSlice("annotation")) > 0 {
-			app.Annotations = common.ExtractAnnotations(c)
-		}
+	if len(c.StringSlice("annotation")) > 0 {
+		app.Annotations = common.ExtractAnnotations(c)
 	}
 }
 

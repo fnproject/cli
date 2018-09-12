@@ -15,7 +15,8 @@ func TestPythonCall(t *testing.T) {
 	h := testharness.Create(t)
 	defer h.Cleanup()
 
-	funcName := h.NewFuncName()
+	appName := h.NewAppName()
+	funcName := h.NewFuncName(appName)
 
 	h.MkDir(funcName)
 	h.Cd(funcName)

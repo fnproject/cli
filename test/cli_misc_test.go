@@ -83,7 +83,7 @@ func TestSettingTimeoutWorks(t *testing.T) {
 		t.Fatalf("Expecting list apps to contain app name , got %v", res)
 	}
 
-	funcName := h.NewFuncName()
+	funcName := h.NewFuncName(appName)
 
 	h.MkDir(funcName)
 	h.Cd(funcName)
@@ -119,7 +119,7 @@ func TestSettingMemoryWorks(t *testing.T) {
 		t.Fatalf("Expecting list apps to contain app name , got %v", res)
 	}
 
-	funcName := h.NewFuncName()
+	funcName := h.NewFuncName(appName)
 
 	h.MkDir(funcName)
 	h.Cd(funcName)
@@ -182,7 +182,7 @@ func TestAppYamlDeploy(t *testing.T) {
 	defer h.Cleanup()
 
 	appName := h.NewAppName()
-	fnName := h.NewFuncName()
+	fnName := h.NewFuncName(appName)
 	h.WithFile("app.yaml", fmt.Sprintf(`name: %s`, appName), 0644)
 	h.MkDir(fnName)
 	h.Cd(fnName)
@@ -209,7 +209,7 @@ func TestBump(t *testing.T) {
 	}
 
 	appName := h.NewAppName()
-	fnName := h.NewFuncName()
+	fnName := h.NewFuncName(appName)
 	h.MkDir(fnName)
 	h.Cd(fnName)
 	h.WithMinimalFunctionSource()

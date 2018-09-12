@@ -16,7 +16,8 @@ func TestMigrateFuncYaml(t *testing.T) {
 			h := testharness.Create(t)
 			defer h.Cleanup()
 
-			funcName := h.NewFuncName()
+			appName := h.NewAppName()
+			funcName := h.NewFuncName(appName)
 			h.MkDir(funcName)
 			h.Cd(funcName)
 
@@ -46,7 +47,8 @@ func TestMigrateFuncYamlV20180708(t *testing.T) {
 			h := testharness.Create(t)
 			defer h.Cleanup()
 
-			funcName := h.NewFuncName()
+			appName := h.NewAppName()
+			funcName := h.NewFuncName(appName)
 			h.Fn("init", "--runtime", rt.runtime, funcName)
 			h.Cd(funcName)
 			h.Fn("migrate").AssertFailed().AssertStderrContains(commands.MigrateFailureMessage)

@@ -168,10 +168,8 @@ func FnWithFlags(c *cli.Context, fn *models.Fn) {
 	if len(fn.Config) == 0 {
 		fn.Config = common.ExtractEnvConfig(c.StringSlice("config"))
 	}
-	if len(fn.Annotations) == 0 {
-		if len(c.StringSlice("annotation")) > 0 {
-			fn.Annotations = common.ExtractAnnotations(c)
-		}
+	if len(c.StringSlice("annotation")) > 0 {
+		fn.Annotations = common.ExtractAnnotations(c)
 	}
 	if t := c.Int("timeout"); t > 0 {
 		to := int32(t)
