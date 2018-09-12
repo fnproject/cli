@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	MigrateSuccessMessage = "Successfully migrated func.yaml and created a back up func.yaml.bak."
-	MigrateFailureMessage = "you have an up to date func.yaml file and do not need to migrate."
+	MigrateSuccessMessage = "Successfully migrated func.yaml and created a back up func.yaml.bak"
+	MigrateFailureMessage = "you have an up to date func.yaml file and do not need to migrate"
 )
 
 type migrateFnCmd struct {

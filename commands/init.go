@@ -86,9 +86,41 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Usage:       "Specify the trigger type.",
 			Destination: &a.triggerType,
 		},
+		cli.Uint64Flag{
+			Name:  "memory,m",
+			Usage: "Memory in MiB",
+		},
+		cli.StringFlag{
+			Name:  "type,t",
+			Usage: "Function type - sync or async",
+		},
+		cli.StringSliceFlag{
+			Name:  "config,c",
+			Usage: "Function configuration",
+		},
+		cli.StringSliceFlag{
+			Name:  "headers",
+			Usage: "Function response headers",
+		},
+		cli.StringFlag{
+			Name:  "format,f",
+			Usage: "Hot container IO format - default or http",
+		},
+		cli.IntFlag{
+			Name:  "timeout",
+			Usage: "Function timeout (eg. 30)",
+		},
+		cli.IntFlag{
+			Name:  "idle-timeout",
+			Usage: "Function idle timeout (eg. 30)",
+		},
+		cli.StringSliceFlag{
+			Name:  "annotation",
+			Usage: "Function annotation (can be specified multiple times)",
+		},
 	}
 
-	return append(fgs, function.FnFlags...)
+	return fgs
 }
 
 func langsList() string {
@@ -220,7 +252,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			return errors.New("init-image did not produce a valid func.init.yaml")
 		}
 
-		// Build up a combined func.yaml (in a.ff) from the init-image and defaults and route and cli-args
+		// Build up a combined func.yaml (in a.ff) from the init-image and defaults and cli-args
 		//     The following fields are already in a.ff:
 		//         config, cpus, idle_timeout, memory, name, path, timeout, type, triggers, version
 		//     Add the following from the init-image:

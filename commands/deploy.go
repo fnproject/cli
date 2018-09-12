@@ -12,7 +12,6 @@ import (
 	common "github.com/fnproject/cli/common"
 	apps "github.com/fnproject/cli/objects/app"
 	function "github.com/fnproject/cli/objects/fn"
-	route "github.com/fnproject/cli/objects/route"
 	trigger "github.com/fnproject/cli/objects/trigger"
 	fnclient "github.com/fnproject/fn_go/client"
 	clientApps "github.com/fnproject/fn_go/client/apps"
@@ -29,7 +28,7 @@ func DeployCommand() cli.Command {
 	flags = append(flags, cmd.flags()...)
 	return cli.Command{
 		Name:    "deploy",
-		Usage:   "\tDeploys a function to the functions server (bumps, build, pushes and updates route).",
+		Usage:   "\tDeploys a function to the functions server (bumps, build, pushes and updates functions and/or triggers).",
 		Aliases: []string{"dp"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
@@ -134,7 +133,6 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 		} else {
 			return err
 		}
-
 	} else {
 		appName = appf.Name
 	}
@@ -202,24 +200,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 
 		return p.deployFuncV20180708(c, appName, wd, fpath, ff)
 	default:
-		fpath, ff, err := common.FindAndParseFuncfile(dir)
-		if err != nil {
-			return err
-		}
-		if appf != nil {
-			if dir == wd {
-				setRootFuncInfo(ff, appf.Name)
-			}
-		}
-
-		if appf != nil {
-			err = p.updateAppConfig(appf)
-			if err != nil {
-				return fmt.Errorf("Failed to update app config: %v", err)
-			}
-		}
-
-		return p.deployFunc(c, appName, wd, fpath, ff)
+		return fmt.Errorf("routes are no longer supported, please use the migrate command to update your metadata\n")
 	}
 }
 
@@ -242,13 +223,13 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFi
 	}
 
 	var funcFound bool
-	err := common.WalkFuncs(dir, func(path string, ff *common.FuncFile, err error) error {
+	err := common.WalkFuncsV20180708(dir, func(path string, ff *common.FuncFileV20180708, err error) error {
 		if err != nil { // probably some issue with funcfile parsing, can decide to handle this differently if we'd like
 			return err
 		}
 		dir := filepath.Dir(path)
 		if dir == wd {
-			setRootFuncInfo(ff, appName)
+			setFuncInfoV20180708(ff, appName)
 		} else {
 			// change dirs
 			err = os.Chdir(dir)
@@ -263,12 +244,9 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFi
 				}
 				// todo: should we prefix appname too?
 			}
-			if ff.Path == "" {
-				ff.Path = p2
-			}
 		}
 
-		err = p.deployFunc(c, appName, wd, path, ff)
+		err = p.deployFuncV20180708(c, appName, wd, path, ff)
 		if err != nil {
 			return fmt.Errorf("deploy error on %s: %v", path, err)
 		}
@@ -287,54 +265,6 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFi
 	}
 
 	return nil
-}
-
-// deployFunc performs several actions to deploy to a functions server.
-// Parse func.yaml file, bump version, build image, push to registry, and
-// finally it will update function's route. Optionally,
-// the route can be overriden inside the func.yaml file.
-func (p *deploycmd) deployFunc(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *common.FuncFile) error {
-	if appName == "" {
-		return errors.New("App name must be provided, try `--app APP_NAME`")
-	}
-	dir := filepath.Dir(funcfilePath)
-	// get name from directory if it's not defined
-	if funcfile.Name == "" {
-		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
-	}
-	if funcfile.Path == "" {
-		if dir == "." {
-			funcfile.Path = "/"
-		} else {
-			funcfile.Path = "/" + filepath.Base(dir)
-		}
-
-	}
-	fmt.Printf("Deploying %s to app: %s at path: %s\n", funcfile.Name, appName, funcfile.Path)
-
-	var err error
-	if !p.noBump {
-		funcfile2, err := common.BumpIt(funcfilePath, common.Patch)
-		if err != nil {
-			return err
-		}
-		funcfile.Version = funcfile2.Version
-		// TODO: this whole funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
-	}
-
-	buildArgs := c.StringSlice("build-arg")
-	_, err = common.BuildFunc(c.GlobalBool("verbose"), funcfilePath, funcfile, buildArgs, p.noCache)
-	if err != nil {
-		return err
-	}
-
-	if !p.local {
-		if err := common.DockerPush(funcfile); err != nil {
-			return err
-		}
-	}
-
-	return p.updateRoute(c, appName, funcfile)
 }
 
 func (p *deploycmd) deployFuncV20180708(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *common.FuncFileV20180708) error {
@@ -390,20 +320,12 @@ func setFuncInfoV20180708(ff *common.FuncFileV20180708, appName string) {
 	}
 }
 
-func (p *deploycmd) updateRoute(c *cli.Context, appName string, ff *common.FuncFile) error {
-	fmt.Printf("Updating route %s using image %s...\n", ff.Path, ff.ImageName())
-	rt := &models.Route{}
-	if err := route.WithFuncFile(ff, rt); err != nil {
-		return fmt.Errorf("Error getting route with funcfile: %s", err)
-	}
-	return route.PutRoute(p.client, appName, ff.Path, rt)
-}
-
 func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.FuncFileV20180708) error {
 	fmt.Printf("Updating function %s using image %s...\n", ff.Name, ff.ImageNameV20180708())
+
 	fn := &modelsV2.Fn{}
 	if err := function.WithFuncFileV20180708(ff, fn); err != nil {
-		return fmt.Errorf("Error getting route with funcfile: %s", err)
+		return fmt.Errorf("Error getting function with funcfile: %s", err)
 	}
 
 	app, err := apps.GetAppByName(appName)

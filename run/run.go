@@ -23,7 +23,7 @@ const (
 	JSONFormat       = "json"
 	CloudEventFormat = "cloudevent"
 	TestApp          = "myapp"
-	TestRoute        = "/hello"
+	TestFunction     = "/hello"
 	LocalTestURL     = "http://localhost:8080"
 )
 
@@ -299,7 +299,7 @@ func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, metho
 	// Full set here: https://github.com/fnproject/fn/pull/660#issuecomment-356157279
 	runEnv = append(runEnv, kvEq("FN_TYPE", "sync"))
 	runEnv = append(runEnv, kvEq("FN_FORMAT", format))
-	runEnv = append(runEnv, kvEq("FN_PATH", TestRoute))
+	runEnv = append(runEnv, kvEq("FN_PATH", TestFunction))
 	runEnv = append(runEnv, kvEq("FN_MEMORY", fmt.Sprintf("%d", ff.Memory)))
 	runEnv = append(runEnv, kvEq("FN_APP_NAME", TestApp))
 
@@ -311,7 +311,7 @@ func RunFF(ff *common.FuncFile, stdin io.Reader, stdout, stderr io.Writer, metho
 		requestURL = LocalTestURL
 	}
 
-	requestURL = requestURL + "/" + TestApp + TestRoute
+	requestURL = requestURL + "/" + TestApp + TestFunction
 
 	if format == DefaultFormat {
 		runEnv = append(runEnv, kvEq("FN_REQUEST_URL", requestURL))
@@ -410,7 +410,7 @@ func RunFFV20180708(ff *common.FuncFileV20180708, stdin io.Reader, stdout, stder
 	// Full set here: https://github.com/fnproject/fn/pull/660#issuecomment-356157279
 	runEnv = append(runEnv, kvEq("FN_TYPE", "sync"))
 	runEnv = append(runEnv, kvEq("FN_FORMAT", format))
-	runEnv = append(runEnv, kvEq("FN_PATH", TestRoute))
+	runEnv = append(runEnv, kvEq("FN_PATH", TestFunction))
 	runEnv = append(runEnv, kvEq("FN_MEMORY", fmt.Sprintf("%d", ff.Memory)))
 	runEnv = append(runEnv, kvEq("FN_APP_NAME", TestApp))
 
@@ -422,7 +422,7 @@ func RunFFV20180708(ff *common.FuncFileV20180708, stdin io.Reader, stdout, stder
 		requestURL = LocalTestURL
 	}
 
-	requestURL = requestURL + "/" + TestApp + TestRoute
+	requestURL = requestURL + "/" + TestApp + TestFunction
 
 	if format == DefaultFormat {
 		runEnv = append(runEnv, kvEq("FN_REQUEST_URL", requestURL))

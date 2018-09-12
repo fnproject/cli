@@ -138,7 +138,7 @@ func Update() cli.Command {
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
 				Name:  "config,c",
-				Usage: "Route configuration",
+				Usage: "Application configuration",
 			},
 			cli.StringSliceFlag{
 				Name:  "annotation",

@@ -46,8 +46,8 @@ func (p *pushcmd) flags() []cli.Flag {
 
 // push will take the found function and check for the presence of a
 // Dockerfile, and run a three step process: parse functions file,
-// push the container, and finally it will update function's route. Optionally,
-// the route can be overriden inside the functions file.
+// push the container, and finally it will update the function. Optionally,
+// the function can be overriden inside the functions file.
 func (p *pushcmd) push(c *cli.Context) error {
 	ffV, err := common.ReadInFuncFile()
 	version := common.GetFuncYamlVersion(ffV)

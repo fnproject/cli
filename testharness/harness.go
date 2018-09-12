@@ -258,6 +258,7 @@ func (h *CLIHarness) WithFile(rPath string, content string, perm os.FileMode) {
 
 	err := ioutil.WriteFile(fullPath, []byte(content), perm)
 	if err != nil {
+		fmt.Println("ERR: ", err)
 		h.t.Fatalf("Failed to create file %s", fullPath)
 	}
 	h.pushHistoryf("echo `%s` > %s", content, fullPath)
@@ -372,6 +373,7 @@ echo "hello world";
 `
 
 	const funcYaml = `version: 0.0.1
+schema_version: 20180708
 runtime: docker
 `
 
@@ -496,6 +498,13 @@ func (h *CLIHarness) WriteYamlFile(s string, ff common.FuncFileV20180708) {
 
 }
 
+func (h *CLIHarness) WriteYamlFileV1(s string, ff common.FuncFile) {
+
+	ffContent, _ := yaml.Marshal(ff)
+	h.WithFile(s, string(ffContent), 0600)
+
+}
+
 func (cr *CmdResult) AssertStdoutContainsJSON(query []string, value interface{}) {
 	routeObj := map[string]interface{}{}
 	err := json.Unmarshal([]byte(cr.Stdout), &routeObj)
@@ -536,6 +545,7 @@ runtime: ` + runtime + `
 entrypoint: ./func
 format: json
 `
+
 	h.WithFile("func.yaml", funcYaml, 0644)
 	return h
 }

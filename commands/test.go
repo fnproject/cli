@@ -277,7 +277,7 @@ func (t *testcmd) runremotetest(ff *common.FuncFile, in *common.InputMap, expect
 	}
 	var stdout bytes.Buffer
 
-	if err := client.CallRoute(t.provider, t.remote, ff.Path, stdin, &stdout, "", envVars, "application/json", false); err != nil {
+	if err := client.Invoke(t.provider, t.remote, stdin, &stdout, "", envVars, "application/json", false); err != nil {
 		return fmt.Errorf("%v\nstdout:%s", err, stdout.String())
 	}
 

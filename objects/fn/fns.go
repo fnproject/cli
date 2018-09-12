@@ -73,7 +73,7 @@ func WithSlash(p string) string {
 	return p
 }
 
-// WithoutSlash removes "/" from route path
+// WithoutSlash removes "/" from function path
 func WithoutSlash(p string) string {
 	p = path.Clean(p)
 	p = strings.TrimPrefix(p, "/")

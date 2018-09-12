@@ -10,6 +10,7 @@ import (
 )
 
 func TestMigrateFuncYaml(t *testing.T) {
+
 	for _, rt := range Runtimes {
 		t.Run(fmt.Sprintf("%s migrating V1 func file with runtime", rt.runtime), func(t *testing.T) {
 			h := testharness.Create(t)
@@ -34,6 +35,22 @@ func TestMigrateFuncYaml(t *testing.T) {
 			if yamlFile.Triggers[0].Type != "http" {
 				t.Fatalf("Exepected type to be 'http' in %s", yamlFile.Triggers[0].Type)
 			}
+		})
+	}
+}
+
+func TestMigrateFuncYamlV20180708(t *testing.T) {
+
+	for _, rt := range Runtimes {
+		t.Run(fmt.Sprintf("%s migrating runtime", rt.runtime), func(t *testing.T) {
+			h := testharness.Create(t)
+			defer h.Cleanup()
+
+			funcName := h.NewFuncName()
+			h.Fn("init", "--runtime", rt.runtime, funcName)
+			h.Cd(funcName)
+			h.Fn("migrate").AssertFailed().AssertStderrContains(commands.MigrateFailureMessage)
+			h.Cd("")
 		})
 	}
 }
