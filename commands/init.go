@@ -128,19 +128,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	function.FnWithFlags(c, &fn)
 	a.bindFn(&fn)
 
-	a.ff.Name = c.Args().First()
-
-	if a.triggerType != "" {
-		trig := make([]common.Trigger, 1)
-		trig[0] = common.Trigger{
-			a.ff.Name + "-trigger",
-			a.triggerType,
-			"/" + a.ff.Name + "-trigger",
-		}
-
-		a.ff.Triggers = trig
-	}
-
 	runtime := c.String("runtime")
 	initImage := c.String("init-image")
 
@@ -174,6 +161,26 @@ func (a *initFnCmd) init(c *cli.Context) error {
 				return err
 			}
 		}
+	}
+
+	if c.String("name") != "" {
+		a.ff.Name = strings.ToLower(c.String("name"))
+	}
+
+	if a.ff.Name == "" {
+		// then defaults to current directory for name, the name must be lowercase
+		a.ff.Name = strings.ToLower(filepath.Base(dir))
+	}
+
+	if a.triggerType != "" {
+		trig := make([]common.Trigger, 1)
+		trig[0] = common.Trigger{
+			a.ff.Name + "-trigger",
+			a.triggerType,
+			"/" + a.ff.Name + "-trigger",
+		}
+
+		a.ff.Triggers = trig
 	}
 
 	err = os.Chdir(dir)
@@ -377,15 +384,6 @@ func ValidateFuncName(name string) error {
 
 func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 	var err error
-
-	if c.String("name") != "" {
-		a.ff.Name = strings.ToLower(c.String("name"))
-	}
-
-	if a.ff.Name == "" {
-		// then defaults to current directory for name, the name must be lowercase
-		a.ff.Name = strings.ToLower(filepath.Base(path))
-	}
 
 	a.ff.Version = c.String("version")
 	if err = ValidateFuncName(a.ff.Name); err != nil {
