@@ -13,7 +13,7 @@ func GetCommand() cli.Command {
 		Category:    "MANAGEMENT COMMANDS",
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
-		Description: "This commands gets a 'call', 'configuration' or 'log' to retrieve information for an object ('app' or 'function').",
+		Description: "This command gets a 'call', 'configuration' or 'log' to retrieve information for an object ('app' or 'function').",
 		Subcommands: GetCommands(GetCmds),
 	}
 }
