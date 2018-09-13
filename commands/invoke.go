@@ -23,12 +23,20 @@ type invokeCmd struct {
 }
 
 // InvokeFnFlags used to invoke and fn
-var InvokeFnFlags = append(run.RunFlags,
+var InvokeFnFlags = []cli.Flag{
+	cli.StringFlag{
+		Name:  "method",
+		Usage: "Http method for function",
+	},
+	cli.StringFlag{
+		Name:  "content-type",
+		Usage: "The payload Content-Type for the function invocation.",
+	},
 	cli.BoolFlag{
 		Name:  "display-call-id",
 		Usage: "whether display call ID or not",
 	},
-)
+}
 
 // InvokeCommand returns call cli.command
 func InvokeCommand() cli.Command {
@@ -75,7 +83,7 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 	if c.String("content-type") != "" {
 		contentType = c.String("content-type")
 	} else {
-		_, ff, err := common.FindAndParseFuncFileV20180707(wd)
+		_, ff, err := common.FindAndParseFuncFileV20180708(wd)
 		if err == nil && ff.Content_type != "" {
 			contentType = ff.Content_type
 		}

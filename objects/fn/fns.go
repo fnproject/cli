@@ -30,27 +30,27 @@ type fnsCmd struct {
 var FnFlags = []cli.Flag{
 	cli.Uint64Flag{
 		Name:  "memory,m",
-		Usage: "memory in MiB",
+		Usage: "Memory in MiB",
 	},
 	cli.StringSliceFlag{
 		Name:  "config,c",
-		Usage: "fn configuration",
+		Usage: "Function configuration",
 	},
 	cli.StringFlag{
 		Name:  "format,f",
-		Usage: "hot container IO format - can be one of: default, http, json or cloudevent (check FDK docs to see which are supported for the FDK in use.)",
+		Usage: "Hot container IO format - can be one of: default, http, json or cloudevent (check FDK docs to see which are supported for the FDK in use.)",
 	},
 	cli.IntFlag{
 		Name:  "timeout",
-		Usage: "fn timeout (eg. 30)",
+		Usage: "Function timeout (eg. 30)",
 	},
 	cli.IntFlag{
 		Name:  "idle-timeout",
-		Usage: "fn idle timeout (eg. 30)",
+		Usage: "Function idle timeout (eg. 30)",
 	},
 	cli.StringSliceFlag{
 		Name:  "annotation",
-		Usage: "fn annotation (can be specified multiple times)",
+		Usage: "Function annotation (can be specified multiple times)",
 	},
 }
 var updateFnFlags = FnFlags
@@ -184,16 +184,16 @@ func FnWithFlags(c *cli.Context, fn *models.Fn) {
 }
 
 // WithFuncFile used when creating a function from a funcfile
-func WithFuncFileV20180707(ff *common.FuncFileV20180707, fn *models.Fn) error {
+func WithFuncFileV20180708(ff *common.FuncFileV20180708, fn *models.Fn) error {
 	var err error
 	if ff == nil {
-		_, ff, err = common.LoadFuncFileV20180707(".")
+		_, ff, err = common.LoadFuncFileV20180708(".")
 		if err != nil {
 			return err
 		}
 	}
-	if ff.ImageNameV20180707() != "" { // args take precedence
-		fn.Image = ff.ImageNameV20180707()
+	if ff.ImageNameV20180708() != "" { // args take precedence
+		fn.Image = ff.ImageNameV20180708()
 	}
 
 	if ff.Format != "" {
@@ -249,12 +249,11 @@ func CreateFn(r *clientv2.Fn, appName string, fn *models.Fn) error {
 	}
 
 	fn.AppID = a.ID
-	image, err := common.ValidateImageName(fn.Image)
+	err = common.ValidateTagImageName(fn.Image)
 	if err != nil {
 		return err
 	}
 
-	fn.Image = image
 	resp, err := r.Fns.CreateFn(&apifns.CreateFnParams{
 		Context: context.Background(),
 		Body:    fn,
@@ -277,7 +276,7 @@ func CreateFn(r *clientv2.Fn, appName string, fn *models.Fn) error {
 
 func PutFn(f *clientv2.Fn, fnID string, fn *models.Fn) error {
 	if fn.Image != "" {
-		_, err := common.ValidateImageName(fn.Image)
+		err := common.ValidateTagImageName(fn.Image)
 		if err != nil {
 			return err
 		}

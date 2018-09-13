@@ -56,7 +56,7 @@ func GetDir(c *cli.Context) string {
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
+func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
 	var err error
 	if funcfile.Version == "" {
 		funcfile, err = BumpIt(fpath, Patch)
@@ -69,7 +69,7 @@ func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []stri
 		return nil, err
 	}
 
-	if err := dockerBuild(c, fpath, funcfile, buildArg, noCache); err != nil {
+	if err := dockerBuild(verbose, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
 	}
 
@@ -77,11 +77,11 @@ func BuildFunc(c *cli.Context, fpath string, funcfile *FuncFile, buildArg []stri
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFuncV20180707(c *cli.Context, fpath string, funcfile *FuncFileV20180707, buildArg []string, noCache bool) (*FuncFileV20180707, error) {
+func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool) (*FuncFileV20180708, error) {
 	var err error
 
 	if funcfile.Version == "" {
-		funcfile, err = BumpItV20180707(fpath, Patch)
+		funcfile, err = BumpItV20180708(fpath, Patch)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +91,7 @@ func BuildFuncV20180707(c *cli.Context, fpath string, funcfile *FuncFileV2018070
 		return nil, err
 	}
 
-	if err := dockerBuildV20180707(c, fpath, funcfile, buildArg, noCache); err != nil {
+	if err := dockerBuildV20180708(verbose, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
 	}
 
@@ -125,7 +125,7 @@ func PrintContextualInfo() {
 	fmt.Println("Current Context: ", currentContext)
 }
 
-func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string, noCache bool) error {
+func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
@@ -155,7 +155,7 @@ func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string,
 			}
 		}
 	}
-	err = RunBuild(c, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
+	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func dockerBuild(c *cli.Context, fpath string, ff *FuncFile, buildArgs []string,
 	return nil
 }
 
-func dockerBuildV20180707(c *cli.Context, fpath string, ff *FuncFileV20180707, buildArgs []string, noCache bool) error {
+func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
@@ -187,7 +187,7 @@ func dockerBuildV20180707(c *cli.Context, fpath string, ff *FuncFileV20180707, b
 		if helper == nil {
 			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
 		}
-		dockerfile, err = writeTmpDockerfileV20180707(helper, dir, ff)
+		dockerfile, err = writeTmpDockerfileV20180708(helper, dir, ff)
 		if err != nil {
 			return err
 		}
@@ -199,7 +199,7 @@ func dockerBuildV20180707(c *cli.Context, fpath string, ff *FuncFileV20180707, b
 			}
 		}
 	}
-	err = RunBuild(c, dir, ff.ImageNameV20180707(), dockerfile, buildArgs, noCache)
+	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func dockerBuildV20180707(c *cli.Context, fpath string, ff *FuncFileV20180707, b
 }
 
 // RunBuild runs function from func.yaml/json/yml.
-func RunBuild(c *cli.Context, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
+func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -226,7 +226,7 @@ func RunBuild(c *cli.Context, dir, imageName, dockerfile string, buildArgs []str
 
 	quit := make(chan struct{})
 	fmt.Fprintf(os.Stderr, "Building image %v ", imageName)
-	if c.GlobalBool("verbose") {
+	if verbose {
 		fmt.Println()
 		buildOut = os.Stdout
 		buildErr = os.Stderr
@@ -375,7 +375,7 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 	return fd.Name(), err
 }
 
-func writeTmpDockerfileV20180707(helper langs.LangHelper, dir string, ff *FuncFileV20180707) (string, error) {
+func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFileV20180708) (string, error) {
 	if ff.Entrypoint == "" && ff.Cmd == "" {
 		return "", errors.New("entrypoint and cmd are missing, you must provide one or the other")
 	}
@@ -469,7 +469,7 @@ func ExtractEnvConfig(configs []string) map[string]string {
 
 // DockerPush pushes to docker registry.
 func DockerPush(ff *FuncFile) error {
-	_, err := ValidateImageName(ff.ImageName())
+	err := ValidateFullImageName(ff.ImageName())
 	if err != nil {
 		return err
 	}
@@ -484,13 +484,13 @@ func DockerPush(ff *FuncFile) error {
 }
 
 // DockerPush pushes to docker registry.
-func DockerPushV20180707(ff *FuncFileV20180707) error {
-	_, err := ValidateImageName(ff.ImageNameV20180707())
+func DockerPushV20180708(ff *FuncFileV20180708) error {
+	err := ValidateFullImageName(ff.ImageNameV20180708())
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Pushing %v to docker registry...", ff.ImageNameV20180707())
-	cmd := exec.Command("docker", "push", ff.ImageNameV20180707())
+	fmt.Printf("Pushing %v to docker registry...", ff.ImageNameV20180708())
+	cmd := exec.Command("docker", "push", ff.ImageNameV20180708())
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
@@ -499,21 +499,26 @@ func DockerPushV20180707(ff *FuncFileV20180707) error {
 	return nil
 }
 
-// ValidateImageName validates that the full image name (REGISTRY/name:tag) is allowed for push
+// ValidateFullImageName validates that the full image name (REGISTRY/name:tag) is allowed for push
 // remember that private registries must be supported here
-func ValidateImageName(n string) (string, error) {
+func ValidateFullImageName(n string) error {
 	parts := strings.Split(n, "/")
+	fmt.Println("Parts: ", parts)
 	if len(parts) < 2 {
-		if viper.GetString("registry") == "" {
-			return "", errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var, pass in --registry or configure your context file")
-		}
-		n = viper.GetString("registry") + "/" + n
+		return errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var, pass in --registry or configure your context file")
+
 	}
+	return ValidateTagImageName(n)
+}
+
+// ValidateTagImageName validates that the last part of the image name (name:tag) is allowed for create/update
+func ValidateTagImageName(n string) error {
+	parts := strings.Split(n, "/")
 	lastParts := strings.Split(parts[len(parts)-1], ":")
 	if len(lastParts) != 2 {
-		return "", errors.New("image name must have a tag")
+		return errors.New("image name must have a tag")
 	}
-	return n, nil
+	return nil
 }
 
 func appNamePath(img string) (string, string) {

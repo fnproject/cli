@@ -5,27 +5,22 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fnproject/cli/commands"
 	"github.com/fnproject/cli/testharness"
 )
 
 func TestMigrateFuncYaml(t *testing.T) {
-	t.Parallel()
-
 	for _, rt := range Runtimes {
-		t.Run(fmt.Sprintf("%s migrating runtime", rt.runtime), func(t *testing.T) {
-			t.Parallel()
+		t.Run(fmt.Sprintf("%s migrating V1 func file with runtime", rt.runtime), func(t *testing.T) {
 			h := testharness.Create(t)
 			defer h.Cleanup()
 
 			funcName := h.NewFuncName()
-			h.Fn("init", "--runtime", "java", funcName).AssertSuccess()
-
+			h.MkDir(funcName)
 			h.Cd(funcName)
-			h.Fn("build").AssertSuccess()
 
-			h.FnWithInput("", "run").AssertSuccess()
-
-			h.Fn("migrate").AssertSuccess().AssertStdoutContains("Successfully migrated func.yaml and created a back up func.yaml.bak")
+			h.CreateFuncfile(funcName, rt.runtime)
+			h.Fn("migrate").AssertSuccess().AssertStdoutContains(commands.MigrateSuccessMessage)
 
 			funcYaml := h.GetFile("func.yaml")
 			if !strings.Contains(funcYaml, "schema_version") {
@@ -39,10 +34,6 @@ func TestMigrateFuncYaml(t *testing.T) {
 			if yamlFile.Triggers[0].Type != "http" {
 				t.Fatalf("Exepected type to be 'http' in %s", yamlFile.Triggers[0].Type)
 			}
-
-			h.Fn("build").AssertSuccess()
-
-			h.FnWithInput("", "run").AssertSuccess()
 		})
 	}
 }
