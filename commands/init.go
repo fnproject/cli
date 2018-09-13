@@ -157,7 +157,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		dir = a.wd
 	}
 
-	function.FnWithFlags(c, &fn)
+	function.WithFlags(c, &fn)
 	a.bindFn(&fn)
 
 	runtime := c.String("runtime")
@@ -207,9 +207,9 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	if a.triggerType != "" {
 		trig := make([]common.Trigger, 1)
 		trig[0] = common.Trigger{
-			a.ff.Name + "-trigger",
-			a.triggerType,
-			"/" + a.ff.Name + "-trigger",
+			Name:   a.ff.Name + "-trigger",
+			Type:   a.triggerType,
+			Source: "/" + a.ff.Name + "-trigger",
 		}
 
 		a.ff.Triggers = trig
@@ -316,8 +316,8 @@ func runInitImage(initImage string, a *initFnCmd) error {
 	c1.Stderr = &c1ErrB
 	c1.Stdout = tarW
 
-	c1_err := c1.Start()
-	if c1_err != nil {
+	c1Err := c1.Start()
+	if c1Err != nil {
 		fmt.Println(c1ErrB.String())
 		return errors.New("Error running init-image")
 	}

@@ -42,15 +42,10 @@
   revision = "5df930a27be2502f99b292b7cc09ebad4d0891f4"
 
 [[projects]]
-  digest = "1:4864207df200f783b100762386a342641315c57e53defead92484d1b36d46b11"
+  digest = "1:273f86faaf9d5394294d766c77e92c406510e1c42c9c14d2afc1c09a2d598a57"
   name = "github.com/fnproject/fn_go"
   packages = [
     ".",
-    "client",
-    "client/apps",
-    "client/call",
-    "client/operations",
-    "client/routes",
     "client/version",
     "clientv2",
     "clientv2/apps",
@@ -65,8 +60,8 @@
     "provider/oracle",
   ]
   pruneopts = ""
-  revision = "228fdc94d42d7763e4c031e684e02b630c208d62"
-  version = "0.2.14"
+  revision = "089332e36d4fbb7611421b4567fab5c93d3a6ab2"
+  version = "0.3.0"
 
 [[projects]]
   digest = "1:eb53021a8aa3f599d29c7102e65026242bdedce998a54837dc67f14b6a97c5fd"
@@ -487,14 +482,12 @@
     "github.com/coreos/go-semver/semver",
     "github.com/fatih/color",
     "github.com/fnproject/fn_go",
-    "github.com/fnproject/fn_go/client",
-    "github.com/fnproject/fn_go/client/apps",
-    "github.com/fnproject/fn_go/client/call",
-    "github.com/fnproject/fn_go/client/operations",
     "github.com/fnproject/fn_go/clientv2",
+    "github.com/fnproject/fn_go/clientv2/apps",
+    "github.com/fnproject/fn_go/clientv2/call",
     "github.com/fnproject/fn_go/clientv2/fns",
+    "github.com/fnproject/fn_go/clientv2/operations",
     "github.com/fnproject/fn_go/clientv2/triggers",
-    "github.com/fnproject/fn_go/models",
     "github.com/fnproject/fn_go/modelsv2",
     "github.com/fnproject/fn_go/provider",
     "github.com/ghodss/yaml",

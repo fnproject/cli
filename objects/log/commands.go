@@ -5,6 +5,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Get logs command
 func Get() cli.Command {
 	l := logsCmd{}
 	return cli.Command{
@@ -18,7 +19,7 @@ func Get() cli.Command {
 			if err != nil {
 				return err
 			}
-			l.client = provider.APIClient()
+			l.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app-name> <call-id>",

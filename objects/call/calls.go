@@ -9,9 +9,11 @@ import (
 	"strings"
 	"time"
 
-	fnclient "github.com/fnproject/fn_go/client"
-	apicall "github.com/fnproject/fn_go/client/call"
-	"github.com/fnproject/fn_go/models"
+	apps "github.com/fnproject/cli/objects/app"
+	fns "github.com/fnproject/cli/objects/fn"
+	fnclient "github.com/fnproject/fn_go/clientv2"
+	apicall "github.com/fnproject/fn_go/clientv2/call"
+	"github.com/fnproject/fn_go/modelsv2"
 	"github.com/go-openapi/strfmt"
 	"github.com/urfave/cli"
 )
@@ -21,12 +23,12 @@ type callsCmd struct {
 }
 
 // getMarshalableCall returns a call struct that we can marshal to JSON and output
-func getMarshalableCall(call *models.Call) interface{} {
+func getMarshalableCall(call *modelsv2.Call) interface{} {
 	if call.Error != "" {
 		return struct {
 			ID          string          `json:"id"`
 			AppID       string          `json:"appId"`
-			Path        string          `json:"path"`
+			FnID        string          `json:"fnId"`
 			CreatedAt   strfmt.DateTime `json:"createdAt"`
 			StartedAt   strfmt.DateTime `json:"startedAt"`
 			CompletedAt strfmt.DateTime `json:"completedAt"`
@@ -35,7 +37,7 @@ func getMarshalableCall(call *models.Call) interface{} {
 		}{
 			call.ID,
 			call.AppID,
-			call.Path,
+			call.FnID,
 			call.CreatedAt,
 			call.StartedAt,
 			call.CompletedAt,
@@ -47,7 +49,7 @@ func getMarshalableCall(call *models.Call) interface{} {
 	return struct {
 		ID          string          `json:"id"`
 		AppID       string          `json:"appId"`
-		Path        string          `json:"path"`
+		FnID        string          `json:"fnId"`
 		CreatedAt   strfmt.DateTime `json:"createdAt"`
 		StartedAt   strfmt.DateTime `json:"startedAt"`
 		CompletedAt strfmt.DateTime `json:"completedAt"`
@@ -55,7 +57,7 @@ func getMarshalableCall(call *models.Call) interface{} {
 	}{
 		call.ID,
 		call.AppID,
-		call.Path,
+		call.FnID,
 		call.CreatedAt,
 		call.StartedAt,
 		call.CompletedAt,
@@ -63,7 +65,7 @@ func getMarshalableCall(call *models.Call) interface{} {
 	}
 }
 
-func printCalls(c *cli.Context, calls []*models.Call) error {
+func printCalls(c *cli.Context, calls []*modelsv2.Call) error {
 	outputFormat := strings.ToLower(c.String("output"))
 	if outputFormat == "json" {
 		var allCalls []interface{}
@@ -81,12 +83,12 @@ func printCalls(c *cli.Context, calls []*models.Call) error {
 			fmt.Println(fmt.Sprintf(
 				"ID: %v\n"+
 					"App Id: %v\n"+
-					"Route: %v\n"+
+					"Fn Id: %v\n"+
 					"Created At: %v\n"+
 					"Started At: %v\n"+
 					"Completed At: %v\n"+
 					"Status: %v\n",
-				call.ID, call.AppID, call.Path, call.CreatedAt,
+				call.ID, call.AppID, call.FnID, call.CreatedAt,
 				call.StartedAt, call.CompletedAt, call.Status))
 			if call.Error != "" {
 				fmt.Println(fmt.Sprintf("Error reason: %v\n", call.Error))
@@ -97,57 +99,71 @@ func printCalls(c *cli.Context, calls []*models.Call) error {
 }
 
 func (c *callsCmd) get(ctx *cli.Context) error {
-	app, callID := ctx.Args().Get(0), ctx.Args().Get(1)
-	params := apicall.GetAppsAppCallsCallParams{
-		Call:    callID,
-		App:     app,
+	appName, fnName, callID := ctx.Args().Get(0), ctx.Args().Get(1), ctx.Args().Get(2)
+
+	app, err := apps.GetAppByName(c.client, appName)
+	if err != nil {
+		return err
+	}
+	fn, err := fns.GetFnByName(c.client, app.ID, fnName)
+	if err != nil {
+		return err
+	}
+	params := apicall.GetFnsFnIDCallsCallIDParams{
+		CallID:  callID,
+		FnID:    fn.ID,
 		Context: context.Background(),
 	}
-	resp, err := c.client.Call.GetAppsAppCallsCall(&params)
+	resp, err := c.client.Call.GetFnsFnIDCallsCallID(&params)
 	if err != nil {
 		switch e := err.(type) {
-		case *apicall.GetAppsAppCallsCallNotFound:
-			return errors.New(e.Payload.Error.Message)
+		case *apicall.GetFnsFnIDCallsCallIDNotFound:
+			return errors.New(e.Payload.Message)
 		default:
 			return err
 		}
 	}
-	printCalls(ctx, []*models.Call{resp.Payload.Call})
+	printCalls(ctx, []*modelsv2.Call{resp.Payload})
 	return nil
 }
 
 func (c *callsCmd) list(ctx *cli.Context) error {
-	app := ctx.Args().Get(0)
-	params := apicall.GetAppsAppCallsParams{
-		App:     app,
+	appName, fnName := ctx.Args().Get(0), ctx.Args().Get(1)
+
+	app, err := apps.GetAppByName(c.client, appName)
+	if err != nil {
+		return err
+	}
+	fn, err := fns.GetFnByName(c.client, app.ID, fnName)
+	if err != nil {
+		return err
+	}
+	params := apicall.GetFnsFnIDCallsParams{
+		FnID:    fn.ID,
 		Context: context.Background(),
 	}
 	if ctx.String("cursor") != "" {
 		cursor := ctx.String("cursor")
 		params.Cursor = &cursor
 	}
-	if ctx.String("path") != "" {
-		route := ctx.String("path")
-		params.Path = &route
-	}
 	if ctx.String("from-time") != "" {
 		fromTime := ctx.String("from-time")
-		fromTime_int64, err := time.Parse(time.RFC3339, fromTime)
+		fromTimeInt64, err := time.Parse(time.RFC3339, fromTime)
 		if err != nil {
 			return err
 		}
-		res := fromTime_int64.Unix()
+		res := fromTimeInt64.Unix()
 		params.FromTime = &res
 
 	}
 
 	if ctx.String("to-time") != "" {
 		toTime := ctx.String("to-time")
-		toTime_int64, err := time.Parse(time.RFC3339, toTime)
+		toTimeInt64, err := time.Parse(time.RFC3339, toTime)
 		if err != nil {
 			return err
 		}
-		res := toTime_int64.Unix()
+		res := toTimeInt64.Unix()
 		params.ToTime = &res
 	}
 
@@ -156,20 +172,20 @@ func (c *callsCmd) list(ctx *cli.Context) error {
 		return errors.New("Number of calls: negative value not allowed")
 	}
 
-	var resCalls []*models.Call
+	var resCalls []*modelsv2.Call
 	for {
-		resp, err := c.client.Call.GetAppsAppCalls(&params)
+		resp, err := c.client.Call.GetFnsFnIDCalls(&params)
 		if err != nil {
 			switch e := err.(type) {
-			case *apicall.GetAppsAppCallsNotFound:
-				return errors.New(e.Payload.Error.Message)
+			case *apicall.GetFnsFnIDCallsNotFound:
+				return errors.New(e.Payload.Message)
 			default:
 				return err
 			}
 		}
 
-		resCalls = append(resCalls, resp.Payload.Calls...)
-		howManyMore := n - int64(len(resCalls)+len(resp.Payload.Calls))
+		resCalls = append(resCalls, resp.Payload.Items...)
+		howManyMore := n - int64(len(resCalls)+len(resp.Payload.Items))
 		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
 			break
 		}

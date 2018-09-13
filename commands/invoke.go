@@ -68,7 +68,7 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
-	app, err := app.GetAppByName(appName)
+	app, err := app.GetAppByName(cl.client, appName)
 	if err != nil {
 		return err
 	}
@@ -89,10 +89,10 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 		}
 	}
 
-	invokeUrl := fn.Annotations[FnInvokeEndpointAnnotation]
-	if invokeUrl == nil {
+	invokeURL := fn.Annotations[FnInvokeEndpointAnnotation]
+	if invokeURL == nil {
 		return fmt.Errorf("Fn invoke url annotation not present, %s", FnInvokeEndpointAnnotation)
 	}
 
-	return client.Invoke(cl.provider, invokeUrl.(string), content, os.Stdout, c.String("method"), c.StringSlice("e"), contentType, c.Bool("display-call-id"))
+	return client.Invoke(cl.provider, invokeURL.(string), content, os.Stdout, c.String("method"), c.StringSlice("e"), contentType, c.Bool("display-call-id"))
 }

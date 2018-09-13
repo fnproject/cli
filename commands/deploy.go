@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,10 +14,8 @@ import (
 	apps "github.com/fnproject/cli/objects/app"
 	function "github.com/fnproject/cli/objects/fn"
 	trigger "github.com/fnproject/cli/objects/trigger"
-	fnclient "github.com/fnproject/fn_go/client"
-	clientApps "github.com/fnproject/fn_go/client/apps"
 	v2Client "github.com/fnproject/fn_go/clientv2"
-	models "github.com/fnproject/fn_go/models"
+	clientApps "github.com/fnproject/fn_go/clientv2/apps"
 	modelsV2 "github.com/fnproject/fn_go/modelsv2"
 	"github.com/urfave/cli"
 )
@@ -35,7 +34,6 @@ func DeployCommand() cli.Command {
 			if err != nil {
 				return err
 			}
-			cmd.client = provider.APIClient()
 			cmd.clientV2 = provider.APIClientv2()
 			return nil
 		},
@@ -49,7 +47,6 @@ func DeployCommand() cli.Command {
 
 type deploycmd struct {
 	appName  string
-	client   *fnclient.Fn
 	clientV2 *v2Client.Fn
 
 	wd       string
@@ -200,7 +197,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 
 		return p.deployFuncV20180708(c, appName, wd, fpath, ff)
 	default:
-		return fmt.Errorf("routes are no longer supported, please use the migrate command to update your metadata\n")
+		return fmt.Errorf("routes are no longer supported, please use the migrate command to update your metadata")
 	}
 }
 
@@ -328,17 +325,17 @@ func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.Fu
 		return fmt.Errorf("Error getting function with funcfile: %s", err)
 	}
 
-	app, err := apps.GetAppByName(appName)
+	app, err := apps.GetAppByName(p.clientV2, appName)
 	if err != nil {
-		app = &models.App{
+		app = &modelsV2.App{
 			Name: appName,
 		}
 
-		err = apps.CreateApp(p.client, app)
+		err = apps.CreateApp(p.clientV2, app)
 		if err != nil {
 			return err
 		}
-		app, err = apps.GetAppByName(appName)
+		app, err = apps.GetAppByName(p.clientV2, appName)
 		if err != nil {
 			return err
 		}
@@ -402,30 +399,37 @@ func expandEnvConfig(configs map[string]string) map[string]string {
 }
 
 func (p *deploycmd) updateAppConfig(appf *common.AppFile) error {
-	param := clientApps.NewPatchAppsAppParams()
-	param.App = appf.Name
-	param.Body = &models.AppWrapper{
-		App: &models.App{
-			Config:      appf.Config,
-			Annotations: appf.Annotations,
-		},
-	}
-
-	_, err := p.client.Apps.PatchAppsApp(param)
+	app, err := apps.GetAppByName(p.clientV2, appf.Name)
 	if err != nil {
-		postParams := clientApps.NewPostAppsParams() //XXX switch to put when v2.0 Fn
-		postParams.Body = &models.AppWrapper{
-			App: &models.App{
+		l := log.New(os.Stderr, "", 0)
+		l.Printf("%T", err)
+		switch err.(type) {
+		case apps.NameNotFoundError:
+			l.Println("THIS IS HAPPENING")
+			param := clientApps.NewCreateAppParams()
+			param.Body = &modelsV2.App{
 				Name:        appf.Name,
 				Config:      appf.Config,
 				Annotations: appf.Annotations,
-			},
-		}
-
-		_, err = p.client.Apps.PostApps(postParams)
-		if err != nil {
+			}
+			if _, err = p.clientV2.Apps.CreateApp(param); err != nil {
+				return err
+			}
+			return nil
+		default:
 			return err
 		}
 	}
+	param := clientApps.NewUpdateAppParams()
+	param.AppID = app.ID
+	param.Body = &modelsV2.App{
+		Config:      appf.Config,
+		Annotations: appf.Annotations,
+	}
+
+	if _, err = p.clientV2.Apps.UpdateApp(param); err != nil {
+		return err
+	}
 	return nil
+
 }
