@@ -9,7 +9,6 @@ import (
 	"github.com/fnproject/cli/objects/context"
 	"github.com/fnproject/cli/objects/fn"
 	"github.com/fnproject/cli/objects/log"
-	"github.com/fnproject/cli/objects/route"
 	"github.com/fnproject/cli/objects/server"
 	"github.com/fnproject/cli/objects/trigger"
 	"github.com/fnproject/cli/run"
@@ -46,7 +45,6 @@ var Commands = cmd{
 
 var CreateCmds = cmd{
 	"apps":      app.Create(),
-	"routes":    route.Create(),
 	"functions": fn.Create(),
 	"triggers":  trigger.Create(),
 	"context":   context.Create(),
@@ -55,36 +53,30 @@ var CreateCmds = cmd{
 var ConfigCmds = cmd{
 	"apps":      app.SetConfig(),
 	"functions": fn.SetConfig(),
-	"routes":    route.SetConfig(),
 }
 
 var ConfigListCmds = cmd{
 	"apps":      app.ListConfig(),
 	"functions": fn.ListConfig(),
-	"routes":    route.ListConfig(),
 }
 
 var ConfigGetCmds = cmd{
 	"apps":      app.GetConfig(),
 	"functions": fn.GetConfig(),
-	"routes":    route.GetConfig(),
 }
 
 var ConfigSetCmds = cmd{
 	"apps":      app.SetConfig(),
 	"functions": fn.SetConfig(),
-	"routes":    route.SetConfig(),
 }
 
 var ConfigUnsetCmds = cmd{
 	"apps":      app.UnsetConfig(),
 	"functions": fn.UnsetConfig(),
-	"routes":    route.UnsetConfig(),
 }
 
 var DeleteCmds = cmd{
 	"apps":      app.Delete(),
-	"routes":    route.Delete(),
 	"functions": fn.Delete(),
 	"context":   context.Delete(),
 	"triggers":  trigger.Delete(),
@@ -100,7 +92,6 @@ var InspectCmds = cmd{
 	"apps":      app.Inspect(),
 	"context":   context.Inspect(),
 	"functions": fn.Inspect(),
-	"routes":    route.Inspect(),
 	"triggers":  trigger.Inspect(),
 }
 
@@ -109,7 +100,6 @@ var ListCmds = cmd{
 	"apps":      app.List(),
 	"functions": fn.List(),
 	"triggers":  trigger.List(),
-	"routes":    route.List(),
 	"calls":     call.List(),
 	"contexts":  context.List(),
 }
@@ -121,7 +111,6 @@ var UnsetCmds = cmd{
 
 var UpdateCmds = cmd{
 	"apps":      app.Update(),
-	"routes":    route.Update(),
 	"functions": fn.Update(),
 	"context":   context.Update(),
 	"server":    server.Update(),

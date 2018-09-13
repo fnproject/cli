@@ -5,6 +5,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Get call command
 func Get() cli.Command {
 	c := callsCmd{}
 	return cli.Command{
@@ -18,7 +19,7 @@ func Get() cli.Command {
 			if err != nil {
 				return err
 			}
-			c.client = provider.APIClient()
+			c.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app-name> <call-id>",
@@ -26,6 +27,7 @@ func Get() cli.Command {
 	}
 }
 
+// List calls command
 func List() cli.Command {
 	c := callsCmd{}
 	return cli.Command{
@@ -39,7 +41,7 @@ func List() cli.Command {
 			if err != nil {
 				return err
 			}
-			c.client = provider.APIClient()
+			c.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app-name>",

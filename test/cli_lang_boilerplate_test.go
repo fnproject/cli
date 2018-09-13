@@ -33,7 +33,8 @@ func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 			h := testharness.Create(t)
 			defer h.Cleanup()
 
-			funcName := h.NewFuncName()
+			appName := h.NewAppName()
+			funcName := h.NewFuncName(appName)
 
 			h.Fn("init", "--runtime", rt.runtime, funcName).AssertSuccess()
 
@@ -46,7 +47,6 @@ func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 				h.Fn("test").AssertSuccess()
 			}
 
-			appName := h.NewAppName()
 			h.Fn("--registry", "test", "deploy", "--local", "--app", appName).AssertSuccess()
 
 			h.FnWithInput(rt.callInput, "call", appName, funcName)

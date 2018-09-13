@@ -15,14 +15,15 @@ func TestPythonCall(t *testing.T) {
 	h := testharness.Create(t)
 	defer h.Cleanup()
 
-	funcName := h.NewFuncName()
+	appName := h.NewAppName()
+	funcName := h.NewFuncName(appName)
 
 	h.MkDir(funcName)
 	h.Cd(funcName)
 	h.Fn("init", "--name", funcName, "--runtime", "python3.6").AssertSuccess()
 	appName := h.NewAppName()
 	h.Fn("deploy", "--local", appName).AssertSuccess()
-	h.Fn("call", appName, funcName).AssertSuccess()
+	h.Fn("invoke", appName, funcName).AssertSuccess()
 	h.FnWithInput(`{"name": "John"}`, "call", appName, funcName).AssertSuccess()
 
 }
@@ -36,4 +37,3 @@ The test harness runs a specified CLI  binary(either "../fn" or "TEST_CLI_BINARY
 * Don't be spammy : You shouldn't log excessively in tests as this will impact diagnosability when a test fails.  Instead, always log the `CmdResult` you got from the last command that failed - this should include enough diagnostic history to work out what went wrong (including previous commands)
 * Write parallelizable tests: Tests are slow so sequencing them will make the test package slow - the harness includes tools to help make tests isolated (e.g. any app names created with `h.NewFuncName()` will be deleted after a test is done )  - remember to defer `h.Cleanup()` to ensure test state is cleaned up
 * Watch out for the Environment: The CLI package will pass on the surrounding environment to the CLI when its called - (primarily to allow easily overriding local  configuration like FN_API_URL and other env vars)
-

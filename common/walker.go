@@ -42,7 +42,7 @@ func WalkFuncs(root string, walkFn walkFuncsFunc) error {
 }
 
 // WalkFuncs is similar to filepath.Walk except only returns func.yaml's (so on per function)
-func WalkFuncsV20180708(root string, walkFn walkFuncsFunc) error {
+func WalkFuncsV20180708(root string, walkFn walkFuncsFuncV20180708) error {
 	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			// logging this so we can figure out any common issues
@@ -63,7 +63,7 @@ func WalkFuncsV20180708(root string, walkFn walkFuncsFunc) error {
 			return nil
 		}
 		// Then we found a func file, so let's deploy it:
-		ff, err := ParseFuncfile(path)
+		ff, err := ParseFuncFileV20180708(path)
 		// if err != nil {
 		// return err
 		// }
