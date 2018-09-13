@@ -26,5 +26,5 @@ func CallCommand() cli.Command {
 }
 
 func (cl *callCmd) Call(c *cli.Context) {
-	fmt.Printf("Routes are no longer supported, please use the migrate command to update your metadata.\n")
+	fmt.Println("Using `fn call` to call Routes is no longer supported, please use `fn invoke` to invoke a Function.")
 }
