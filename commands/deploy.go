@@ -3,7 +3,6 @@ package commands
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -401,11 +400,8 @@ func expandEnvConfig(configs map[string]string) map[string]string {
 func (p *deploycmd) updateAppConfig(appf *common.AppFile) error {
 	app, err := apps.GetAppByName(p.clientV2, appf.Name)
 	if err != nil {
-		l := log.New(os.Stderr, "", 0)
-		l.Printf("%T", err)
 		switch err.(type) {
 		case apps.NameNotFoundError:
-			l.Println("THIS IS HAPPENING")
 			param := clientApps.NewCreateAppParams()
 			param.Body = &modelsV2.App{
 				Name:        appf.Name,
