@@ -528,3 +528,14 @@ func (cr *CmdResult) AssertStdoutMissingJSONPath(query []string) {
 		log.Fatalf("Found path %v in json body %v when it was supposed to be missing", query, cr.Stdout)
 	}
 }
+
+func (h *CLIHarness) CreateFuncfile(funcName, runtime string) *CLIHarness {
+	funcYaml := `version: 0.0.1
+name: ` + funcName + `
+runtime: ` + runtime + `
+entrypoint: ./func
+format: json
+`
+	h.WithFile("func.yaml", funcYaml, 0644)
+	return h
+}

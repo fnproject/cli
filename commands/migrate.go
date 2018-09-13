@@ -15,6 +15,11 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+const (
+	MigrateSuccessMessage = "Successfully migrated func.yaml and created a back up func.yaml.bak."
+	MigrateFailureMessage = "you have an up to date func.yaml file and do not need to migrate."
+)
+
 type migrateFnCmd struct {
 	newFF *common.FuncFileV20180708
 }
@@ -41,7 +46,7 @@ func (m *migrateFnCmd) migrate(c *cli.Context) error {
 
 	version := common.GetFuncYamlVersion(oldFF)
 	if version == common.LatestYamlVersion {
-		return errors.New("you have an up to date func.yaml file and do not need to migrate.")
+		return errors.New(MigrateFailureMessage)
 	}
 
 	err = backUpYamlFile(oldFF)
@@ -64,7 +69,7 @@ func (m *migrateFnCmd) migrate(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Println("Successfully migrated func.yaml and created a back up func.yaml.bak")
+	fmt.Println(MigrateSuccessMessage)
 	return nil
 }
 
