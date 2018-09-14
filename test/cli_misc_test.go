@@ -68,7 +68,7 @@ func TestFnApiUrlSupportsDifferentFormats(t *testing.T) {
 }
 
 // Not sure what this test was intending (copied from old test.sh)
-func TestSettingMillisWorks(t *testing.T) {
+func TestSettingTimeoutWorks(t *testing.T) {
 	t.Parallel()
 
 	h := testharness.Create(t)
@@ -83,24 +83,60 @@ func TestSettingMillisWorks(t *testing.T) {
 		t.Fatalf("Expecting list apps to contain app name , got %v", res)
 	}
 
-	funcName := h.NewFuncName()
+	funcName := h.NewFuncName(appName)
 
 	h.MkDir(funcName)
 	h.Cd(funcName)
 	h.WithMinimalFunctionSource()
-	h.FileAppend("func.yaml", "\ncpus: 50m\n")
-
+	h.FileAppend("func.yaml", "\ntimeout: 50\n\nschema_version: 20180708\n")
 	h.Fn("--verbose", "deploy", "--app", appName, "--local").AssertSuccess()
-	h.Fn("call", appName, funcName).AssertSuccess()
-	inspectRes := h.Fn("inspect", "route", appName, funcName)
+	h.Fn("invoke", appName, funcName).AssertSuccess()
+
+	inspectRes := h.Fn("inspect", "fn", appName, funcName)
 	inspectRes.AssertSuccess()
-	if !strings.Contains(inspectRes.Stdout, `"cpus": "50m"`) {
+	if !strings.Contains(inspectRes.Stdout, `"timeout": 50`) {
 		t.Errorf("Expecting fn inspect to contain CPU %v", inspectRes)
 	}
 
-	h.Fn("create", "route", appName, "/another", "some_random_registry/"+funcName+":0.0.2").AssertSuccess()
+	h.Fn("create", "fn", appName, "another", "some_random_registry/"+funcName+":0.0.2").AssertSuccess()
 
-	h.Fn("call", appName, "/another").AssertSuccess()
+	h.Fn("invoke", appName, "another").AssertSuccess()
+}
+
+//Memory doesn't seem to get persisted/returned
+func TestSettingMemoryWorks(t *testing.T) {
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+	h.WithEnv("FN_REGISTRY", "some_random_registry")
+
+	appName := h.NewAppName()
+	h.Fn("create", "app", appName).AssertSuccess()
+	res := h.Fn("list", "apps")
+
+	if !strings.Contains(res.Stdout, fmt.Sprintf("%s\n", appName)) {
+		t.Fatalf("Expecting list apps to contain app name , got %v", res)
+	}
+
+	funcName := h.NewFuncName(appName)
+
+	h.MkDir(funcName)
+	h.Cd(funcName)
+	h.WithMinimalFunctionSource()
+	h.FileAppend("func.yaml", "memory: 100\nschema_version: 20180708\n")
+	h.Fn("--verbose", "deploy", "--app", appName, "--local").AssertSuccess()
+	h.Fn("invoke", appName, funcName).AssertSuccess()
+
+	inspectRes := h.Fn("inspect", "fn", appName, funcName)
+	inspectRes.AssertSuccess()
+	if !strings.Contains(inspectRes.Stdout, `"memory": 100`) {
+		t.Errorf("Expecting fn inspect to contain CPU %v", inspectRes)
+	}
+
+	h.Fn("create", "fn", appName, "another", "some_random_registry/"+funcName+":0.0.2").AssertSuccess()
+
+	h.Fn("invoke", appName, "another").AssertSuccess()
 }
 
 func TestAllMainCommandsExist(t *testing.T) {
@@ -146,17 +182,16 @@ func TestAppYamlDeploy(t *testing.T) {
 	defer h.Cleanup()
 
 	appName := h.NewAppName()
-	fnName := h.NewFuncName()
+	fnName := h.NewFuncName(appName)
 	h.WithFile("app.yaml", fmt.Sprintf(`name: %s`, appName), 0644)
 	h.MkDir(fnName)
 	h.Cd(fnName)
 	h.WithMinimalFunctionSource()
 	h.Cd("")
 	h.Fn("deploy", "--all", "--local").AssertSuccess()
-	h.Fn("call", appName, fnName).AssertSuccess()
+	h.Fn("invoke", appName, fnName).AssertSuccess()
 	h.Fn("deploy", "--all", "--local").AssertSuccess()
-	h.Fn("call", appName, fnName).AssertSuccess()
-
+	h.Fn("invoke", appName, fnName).AssertSuccess()
 }
 
 func TestBump(t *testing.T) {
@@ -174,7 +209,7 @@ func TestBump(t *testing.T) {
 	}
 
 	appName := h.NewAppName()
-	fnName := h.NewFuncName()
+	fnName := h.NewFuncName(appName)
 	h.MkDir(fnName)
 	h.Cd(fnName)
 	h.WithMinimalFunctionSource()
@@ -196,11 +231,11 @@ func TestBump(t *testing.T) {
 	h.Fn("deploy", "--local", "--app", appName).AssertSuccess()
 	expectFuncYamlVersion("1.1.1")
 
-	h.Fn("i", "route", appName, fnName).AssertSuccess().AssertStdoutContains(fmt.Sprintf(`%s:1.1.1`, fnName))
+	h.Fn("i", "function", appName, fnName).AssertSuccess().AssertStdoutContains(fmt.Sprintf(`%s:1.1.1`, fnName))
 
 	h.Fn("deploy", "--local", "--no-bump", "--app", appName).AssertSuccess()
 	expectFuncYamlVersion("1.1.1")
 
-	h.Fn("i", "route", appName, fnName).AssertSuccess().AssertStdoutContains(fmt.Sprintf(`%s:1.1.1`, fnName))
+	h.Fn("i", "function", appName, fnName).AssertSuccess().AssertStdoutContains(fmt.Sprintf(`%s:1.1.1`, fnName))
 
 }

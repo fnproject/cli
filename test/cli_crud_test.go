@@ -30,23 +30,6 @@ func TestFnAppUpdateCycle(t *testing.T) {
 	h.Fn("delete", "app", appName).AssertSuccess()
 }
 
-func TestSimpleFnRouteUpdateCycle(t *testing.T) {
-	t.Parallel()
-
-	h := testharness.Create(t)
-	defer h.Cleanup()
-	appName1 := h.NewAppName()
-	h.Fn("create", "route", appName1, "myroute", "foo/duffimage:0.0.1").AssertSuccess()
-	h.Fn("create", "route", appName1, "myroute", "foo/duffimage:0.0.1").AssertFailed()
-	h.Fn("inspect", "route", appName1, "myroute").AssertSuccess().AssertStdoutContains(`"path": "/myroute"`)
-	h.Fn("update", "route", appName1, "myroute", "bar/duffbeer:0.1.2").AssertSuccess()
-	h.Fn("config", "route", appName1, "myroute", "confA", "valB").AssertSuccess()
-	h.Fn("get", "config", "route", appName1, "myroute", "confA").AssertSuccess().AssertStdoutContains("valB")
-	h.Fn("list", "config", "route", appName1, "myroute").AssertSuccess().AssertStdoutContains("valB")
-	h.Fn("unset", "config", "route", appName1, "myroute", "confA").AssertSuccess()
-	h.Fn("get", "config", "route", appName1, "myroute", "confA").AssertFailed()
-}
-
 // func
 func TestSimpleFnFunctionUpdateCycle(t *testing.T) {
 	t.Parallel()
@@ -54,7 +37,7 @@ func TestSimpleFnFunctionUpdateCycle(t *testing.T) {
 	h := testharness.Create(t)
 	defer h.Cleanup()
 	appName1 := h.NewAppName()
-	funcName1 := h.NewFuncName()
+	funcName1 := h.NewFuncName(appName1)
 	h.Fn("create", "app", appName1).AssertSuccess()
 	h.Fn("create", "function", appName1, funcName1, "foo/duffimage:0.0.1").AssertSuccess()
 	h.Fn("create", "function", appName1, funcName1, "foo/duffimage:0.0.1").AssertFailed()
@@ -74,40 +57,45 @@ func TestSimpleFnTriggerUpdateCycle(t *testing.T) {
 	h := testharness.Create(t)
 	defer h.Cleanup()
 	appName1 := h.NewAppName()
-	funcName1 := h.NewFuncName()
+	funcName1 := h.NewFuncName(appName1)
+	triggerName1 := h.NewTriggerName(appName1, funcName1)
 	h.Fn("create", "app", appName1).AssertSuccess()
 	h.Fn("create", "function", appName1, funcName1, "foo/duffimage:0.0.1").AssertSuccess()
-	h.Fn("create", "trigger", appName1, funcName1, "mytrigger", "--type", "http", "--source", "/mytrigger").AssertSuccess()
-	h.Fn("create", "trigger", appName1, funcName1, "mytrigger", "--type", "http", "--source", "/mytrigger").AssertFailed()
-	h.Fn("inspect", "trigger", appName1, funcName1, "mytrigger").AssertSuccess().AssertStdoutContains(`"source": "/mytrigger`)
-	h.Fn("update", "trigger", appName1, funcName1, "mytrigger", "--annotation", `"val1='["val2"]'"`).AssertSuccess()
-	h.Fn("config", "trigger", appName1, funcName1, "mytrigger", "confA", "valB").AssertSuccess()
+	h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/mytrigger").AssertSuccess()
+	h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/mytrigger").AssertFailed()
+	h.Fn("inspect", "trigger", appName1, funcName1, triggerName1).AssertSuccess().AssertStdoutContains(`"source": "/mytrigger`)
+	h.Fn("update", "trigger", appName1, funcName1, triggerName1, "--annotation", `"val1='["val2"]'"`).AssertSuccess()
+	h.Fn("config", "trigger", appName1, funcName1, triggerName1, "confA", "valB").AssertSuccess()
 }
-func TestRemovingRouteAnnotation(t *testing.T) {
+
+func TestRemovingFnAnnotation(t *testing.T) {
 	t.Parallel()
 
 	h := testharness.Create(t)
 	defer h.Cleanup()
 	appName1 := h.NewAppName()
-	h.Fn("create", "route", appName1, "myroute", "foo/duffimage:0.0.1", "--annotation", "test=1").AssertSuccess()
-	h.Fn("inspect", "route", appName1, "myroute").AssertSuccess().AssertStdoutContainsJSON([]string{"annotations", "test"}, 1.0)
-	h.Fn("update", "route", appName1, "myroute", "foo/duffimage:0.0.1", "--annotation", `test=""`).AssertSuccess()
-	h.Fn("inspect", "route", appName1, "myroute").AssertSuccess().AssertStdoutMissingJSONPath([]string{"annotations", "test"})
+	funcName1 := h.NewFuncName(appName1)
+	h.Fn("create", "app", appName1).AssertSuccess()
+	h.Fn("create", "fn", appName1, funcName1, "foo/duffimage:0.0.1", "--annotation", "test=1").AssertSuccess()
+	h.Fn("inspect", "fn", appName1, funcName1).AssertSuccess().AssertStdoutContainsJSON([]string{"annotations", "test"}, 1.0)
+	h.Fn("update", "fn", appName1, funcName1, "foo/duffimage:0.0.1", "--annotation", `test=""`).AssertSuccess()
+	h.Fn("inspect", "fn", appName1, funcName1).AssertSuccess().AssertStdoutMissingJSONPath([]string{"annotations", "test"})
 }
 
-func TestInvalidAnnotationValue(t *testing.T) {
+func TestInvalidFnAnnotationValue(t *testing.T) {
 	t.Parallel()
 
 	h := testharness.Create(t)
 	defer h.Cleanup()
 	appName1 := h.NewAppName()
+	funcName1 := h.NewFuncName(appName1)
 
-	// The route should still be created, but without the invalid annotation
-	h.Fn("create", "route", appName1, "myroute", "foo/duffimage:0.0.1", "--annotation", "test=value").AssertSuccess().AssertStderrContains("Unable to parse annotation value 'value'. Annotations values must be valid JSON strings.")
-	h.Fn("inspect", "route", appName1, "myroute").AssertSuccess().AssertStdoutMissingJSONPath([]string{"annotations", "test"})
+	h.Fn("create", "app", appName1).AssertSuccess()
+	h.Fn("create", "fn", appName1, funcName1, "foo/duffimage:0.0.1", "--annotation", "test=value").AssertSuccess().AssertStderrContains("Unable to parse annotation value 'value'. Annotations values must be valid JSON strings.")
+	h.Fn("inspect", "fn", appName1, funcName1).AssertSuccess().AssertStdoutMissingJSONPath([]string{"annotations", "test"})
 }
 
-func TestRouteUpdateValues(t *testing.T) {
+func TestFnUpdateValues(t *testing.T) {
 	t.Parallel()
 
 	validCases := []struct {
@@ -116,11 +104,10 @@ func TestRouteUpdateValues(t *testing.T) {
 		result interface{}
 	}{
 		{[]string{"--memory", "129"}, []string{"memory"}, 129.0},
-		{[]string{"--type", "async"}, []string{"type"}, "async"},
-		{[]string{"--headers", "foo=bar"}, []string{"headers", "foo", "0"}, "bar"},
 		{[]string{"--format", "default"}, []string{"format"}, "default"},
 		{[]string{"--timeout", "111"}, []string{"timeout"}, 111.0},
 		{[]string{"--idle-timeout", "128"}, []string{"idle_timeout"}, 128.0},
+		{[]string{"--config", "test=val"}, []string{"config", "test"}, "val"},
 		{[]string{"--annotation", "test=1"}, []string{"annotations", "test"}, 1.0},
 	}
 
@@ -131,10 +118,12 @@ func TestRouteUpdateValues(t *testing.T) {
 			h := testharness.Create(t)
 			defer h.Cleanup()
 			appName1 := h.NewAppName()
-			h.Fn("create", "route", appName1, "myroute", "foo/someimage:0.0.1").AssertSuccess()
+			funcName1 := h.NewFuncName(appName1)
+			h.Fn("create", "app", appName1)
+			h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
 
-			h.Fn(append([]string{"update", "route", appName1, "myroute", "baz/fooimage:1.0.0"}, tc.args...)...).AssertSuccess()
-			h.Fn("inspect", "route", appName1, "myroute").AssertSuccess().AssertStdoutContainsJSON(tc.query, tc.result)
+			h.Fn(append([]string{"update", "fn", appName1, funcName1, "baz/fooimage:1.0.0"}, tc.args...)...).AssertSuccess()
+			h.Fn("inspect", "fn", appName1, funcName1).AssertSuccess().AssertStdoutContainsJSON(tc.query, tc.result)
 		})
 	}
 
@@ -158,22 +147,12 @@ func TestRouteUpdateValues(t *testing.T) {
 			h := testharness.Create(t)
 			defer h.Cleanup()
 			appName1 := h.NewAppName()
-			h.Fn("create", "route", appName1, "myroute", "foo/someimage:0.0.1").AssertSuccess()
+			funcName1 := h.NewFuncName(appName1)
+			h.Fn("create", "app", appName1)
+			h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
 
-			h.Fn(append([]string{"update", "route", appName1, "myroute"}, tc...)...).AssertFailed()
+			h.Fn(append([]string{"update", "fn", appName1, funcName1}, tc...)...).AssertFailed()
 		})
 	}
-
-}
-
-func TestRoutesInspectWithPrefix(t *testing.T) {
-	t.Parallel()
-
-	h := testharness.Create(t)
-	defer h.Cleanup()
-	appName := h.NewAppName()
-	h.Fn("routes", "create", appName, "myroute", "--image", "foo/someimage:0.0.1").AssertSuccess()
-	h.Fn("routes", "inspect", appName, "myroute").AssertSuccess()
-	h.Fn("routes", "inspect", appName, "/myroute").AssertSuccess()
 
 }

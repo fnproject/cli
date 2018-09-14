@@ -13,7 +13,8 @@ func TestSettingFuncName(t *testing.T) {
 		h := testharness.Create(t)
 		defer h.Cleanup()
 
-		funcName := h.NewFuncName()
+		appName := h.NewAppName()
+		funcName := h.NewFuncName(appName)
 		dirName := funcName + "_dir"
 		h.Fn("init", "--runtime", "java", "--name", funcName, dirName).AssertSuccess()
 
@@ -36,7 +37,8 @@ func TestInitImage(t *testing.T) {
 		var err error
 
 		// Create the init-image
-		origFuncName := h.NewFuncName()
+		appName := h.NewAppName()
+		origFuncName := h.NewFuncName(appName)
 		h.Fn("init", "--runtime", "go", origFuncName)
 		h.Cd(origFuncName)
 
@@ -66,7 +68,7 @@ func TestInitImage(t *testing.T) {
 		// Hooray we have an init-image!!
 		// Lets use it
 		h.Cd("")
-		newFuncName := h.NewFuncName()
+		newFuncName := h.NewFuncName(appName)
 
 		h.Fn("init", "--init-image", origFuncName+"-init", newFuncName)
 		h.Cd(newFuncName)

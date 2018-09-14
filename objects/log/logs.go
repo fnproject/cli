@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	fnclient "github.com/fnproject/fn_go/client"
-	ccall "github.com/fnproject/fn_go/client/call"
-	apicall "github.com/fnproject/fn_go/client/operations"
+	apps "github.com/fnproject/cli/objects/app"
+	fns "github.com/fnproject/cli/objects/fn"
+	fnclient "github.com/fnproject/fn_go/clientv2"
+	ccall "github.com/fnproject/fn_go/clientv2/call"
+	apicall "github.com/fnproject/fn_go/clientv2/operations"
 	"github.com/urfave/cli"
 )
 
@@ -16,42 +18,52 @@ type logsCmd struct {
 }
 
 func (l *logsCmd) get(ctx *cli.Context) error {
-	app, callID := ctx.Args().Get(0), ctx.Args().Get(1)
+	appName, fnName, callID := ctx.Args().Get(0), ctx.Args().Get(1), ctx.Args().Get(2)
+
+	app, err := apps.GetAppByName(l.client, appName)
+	if err != nil {
+		return err
+	}
+	fn, err := fns.GetFnByName(l.client, app.ID, fnName)
+	if err != nil {
+		return nil
+	}
+
 	if callID == "last" || callID == "l" {
-		params := ccall.GetAppsAppCallsParams{
-			App:     app,
+		params := ccall.GetFnsFnIDCallsParams{
+			FnID:    fn.ID,
 			Context: context.Background(),
 		}
-		resp, err := l.client.Call.GetAppsAppCalls(&params)
+		resp, err := l.client.Call.GetFnsFnIDCalls(&params)
 		if err != nil {
 			switch e := err.(type) {
-			case *ccall.GetAppsAppCallsNotFound:
-				return errors.New(e.Payload.Error.Message)
+			case *ccall.GetFnsFnIDCallsNotFound:
+				return errors.New(e.Payload.Message)
 			default:
 				return err
 			}
 		}
-		calls := resp.Payload.Calls
+		calls := resp.Payload.Items
 		if len(calls) > 0 {
 			callID = calls[0].ID
 		} else {
-			return errors.New("No previous calls found.")
+			return errors.New("no previous calls found")
 		}
 	}
-	params := apicall.GetAppsAppCallsCallLogParams{
-		Call:    callID,
-		App:     app,
+	params := apicall.GetCallLogsParams{
+		CallID:  callID,
+		FnID:    fn.ID,
 		Context: context.Background(),
 	}
-	resp, err := l.client.Operations.GetAppsAppCallsCallLog(&params)
+	resp, err := l.client.Operations.GetCallLogs(&params)
 	if err != nil {
 		switch e := err.(type) {
-		case *apicall.GetAppsAppCallsCallLogNotFound:
-			return fmt.Errorf("%v", e.Payload.Error.Message)
+		case *apicall.GetCallLogsNotFound:
+			return fmt.Errorf("%v", e.Payload.Message)
 		default:
 			return err
 		}
 	}
-	fmt.Print(resp.Payload.Log.Log)
+	fmt.Print(resp.Payload.Log)
 	return nil
 }

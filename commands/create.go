@@ -10,7 +10,7 @@ func CreateCommand() cli.Command {
 		Name:        "create",
 		Aliases:     []string{"c"},
 		Usage:       "\tCreate a new object",
-		Description: "This command creates a new object ('app', 'context', 'function', 'route' or 'trigger').",
+		Description: "This command creates a new object ('app', 'context', 'function', or 'trigger').",
 		Hidden:      false,
 		ArgsUsage:   "<object-type>",
 		Category:    "MANAGEMENT COMMANDS",
