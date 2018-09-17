@@ -56,6 +56,9 @@ func start(c *cli.Context) error {
 
 	args := []string{"run", "--rm", "-i",
 		"--name", "fnserver",
+		"-v", fmt.Sprintf("%s/iofs:/iofs", fnDir),
+		"-e", fmt.Sprintf("FN_IOFS_DOCKER_PATH=%s/iofs", fnDir),
+		"-e", "FN_IOFS_PATH=/iofs",
 		"-v", fmt.Sprintf("%s/data:/app/data", fnDir),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"--privileged",
