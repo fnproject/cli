@@ -18,7 +18,7 @@ The `config.yaml` contains the name of currently selected context, when first cr
 
 Within the `default.yaml` default values are set: 
 ```
-api-url: http://localhost:8080/v1
+api-url: http://localhost:8080
 provider: default
 registry: ""
 ```

@@ -43,10 +43,8 @@ func fnApiUrlVariations(t *testing.T) []string {
 		cases = append(cases, "http://"+parsed.Host+parsed.Path)
 		cases = append(cases, parsed.Host+parsed.Path)
 		cases = append(cases, parsed.Host)
-		cases = append(cases, parsed.Host+"/v1")
 	} else if parsed.Scheme == "https" {
 		cases = append(cases, "https://"+parsed.Host+parsed.Path)
-		cases = append(cases, "https://"+parsed.Host+"/v1")
 		cases = append(cases, "https://"+parsed.Host)
 	} else {
 		log.Fatalf("Unsupported url scheme for testing %s: %s", srcUrl, parsed.Scheme)
