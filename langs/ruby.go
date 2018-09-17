@@ -89,34 +89,22 @@ func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
 }
 
 const (
-	rubySrcBoilerplate = `require 'fdk'
+	rubySrcBoilerplate = `
+	  require 'fdk'
 
-def myhandler(context:, input:)
-	STDERR.puts "call_id: " + context.call_id
-	name = "World"
-	if input != nil
-		if context.content_type == "application/json"
-			nin = input['name']
-			if nin && nin != ""
-				name = nin
-			end
-		elsif context.content_type == "text/plain"
-			name = input
-		else
-			raise "Invalid input, expecting JSON!"
-		end
-	end
-	return {message: "Hello " + name.to_s + "!"}
-end
+	  def myfunction(context:, input:)
+	    input_value = input.respond_to?(:fetch) ? input.fetch('name') : input
+	    name = input_value.to_s.strip.empty? ? 'World' : input_value
+	    { message: "Hello #{name}!" }
+	  end
 
-FDK.handle(:myhandler)
+	  FDK.handle(:myfunction)
 `
 
-	rubyGemfileBoilerplate = `source 'https://rubygems.org'
-
-gem 'json', '~> 2.0'
-gem 'fdk', '>= 0.0.11', '< 2.0.0'
-gem 'yajl-ruby', require: 'yajl'
+	rubyGemfileBoilerplate = `
+  	source 'https://rubygems.org' do
+      gem 'fdk', '~> 0.0.13'
+		end
 `
 
 	// Could use same test for most langs
