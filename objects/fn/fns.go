@@ -26,7 +26,7 @@ type fnsCmd struct {
 	client   *clientv2.Fn
 }
 
-/// FnFlags use to create/update functions
+// FnFlags used to create/update functions
 var FnFlags = []cli.Flag{
 	cli.Uint64Flag{
 		Name:  "memory,m",
@@ -73,7 +73,7 @@ func WithSlash(p string) string {
 	return p
 }
 
-// WithoutSlash removes "/" from route path
+// WithoutSlash removes "/" from function path
 func WithoutSlash(p string) string {
 	p = path.Clean(p)
 	p = strings.TrimPrefix(p, "/")
@@ -115,7 +115,7 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 func (f *fnsCmd) list(c *cli.Context) error {
 	appName := c.Args().Get(0)
 
-	a, err := app.GetAppByName(appName)
+	a, err := app.GetAppByName(f.client, appName)
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func (f *fnsCmd) list(c *cli.Context) error {
 }
 
 // WithFlags returns a function with specified flags
-func FnWithFlags(c *cli.Context, fn *models.Fn) {
+func WithFlags(c *cli.Context, fn *models.Fn) {
 	if i := c.String("image"); i != "" {
 		fn.Image = i
 	}
@@ -168,10 +168,8 @@ func FnWithFlags(c *cli.Context, fn *models.Fn) {
 	if len(fn.Config) == 0 {
 		fn.Config = common.ExtractEnvConfig(c.StringSlice("config"))
 	}
-	if len(fn.Annotations) == 0 {
-		if len(c.StringSlice("annotation")) > 0 {
-			fn.Annotations = common.ExtractAnnotations(c)
-		}
+	if len(c.StringSlice("annotation")) > 0 {
+		fn.Annotations = common.ExtractAnnotations(c)
 	}
 	if t := c.Int("timeout"); t > 0 {
 		to := int32(t)
@@ -183,7 +181,7 @@ func FnWithFlags(c *cli.Context, fn *models.Fn) {
 	}
 }
 
-// WithFuncFile used when creating a function from a funcfile
+// WithFuncFileV20180708 used when creating a function from a funcfile
 func WithFuncFileV20180708(ff *common.FuncFileV20180708, fn *models.Fn) error {
 	var err error
 	if ff == nil {
@@ -229,7 +227,7 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	fn.Name = fnName
 	fn.Image = c.Args().Get(2)
 
-	FnWithFlags(c, fn)
+	WithFlags(c, fn)
 
 	if fn.Name == "" {
 		return errors.New("fnName path is missing")
@@ -243,7 +241,7 @@ func (f *fnsCmd) create(c *cli.Context) error {
 
 // CreateFn request
 func CreateFn(r *clientv2.Fn, appName string, fn *models.Fn) error {
-	a, err := app.GetAppByName(appName)
+	a, err := app.GetAppByName(r, appName)
 	if err != nil {
 		return err
 	}
@@ -274,6 +272,7 @@ func CreateFn(r *clientv2.Fn, appName string, fn *models.Fn) error {
 	return nil
 }
 
+// PutFn updates the fn with the given ID using the content of the provided fn
 func PutFn(f *clientv2.Fn, fnID string, fn *models.Fn) error {
 	if fn.Image != "" {
 		err := common.ValidateTagImageName(fn.Image)
@@ -301,6 +300,7 @@ func PutFn(f *clientv2.Fn, fnID string, fn *models.Fn) error {
 	return nil
 }
 
+// GetFnByName looks up a fn by name using the given client
 func GetFnByName(client *clientv2.Fn, appID, fnName string) (*models.Fn, error) {
 	resp, err := client.Fns.ListFns(&apifns.ListFnsParams{
 		Context: context.Background(),
@@ -328,7 +328,7 @@ func (f *fnsCmd) update(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
-	app, err := app.GetAppByName(appName)
+	app, err := app.GetAppByName(f.client, appName)
 	if err != nil {
 		return err
 	}
@@ -337,7 +337,7 @@ func (f *fnsCmd) update(c *cli.Context) error {
 		return err
 	}
 
-	FnWithFlags(c, fn)
+	WithFlags(c, fn)
 
 	err = PutFn(f.client, fn.ID, fn)
 	if err != nil {
@@ -354,7 +354,7 @@ func (f *fnsCmd) setConfig(c *cli.Context) error {
 	key := c.Args().Get(2)
 	value := c.Args().Get(3)
 
-	app, err := app.GetAppByName(appName)
+	app, err := app.GetAppByName(f.client, appName)
 	if err != nil {
 		return err
 	}
@@ -379,7 +379,7 @@ func (f *fnsCmd) getConfig(c *cli.Context) error {
 	fnName := c.Args().Get(1)
 	key := c.Args().Get(2)
 
-	app, err := app.GetAppByName(appName)
+	app, err := app.GetAppByName(f.client, appName)
 	if err != nil {
 		return err
 	}
@@ -402,7 +402,7 @@ func (f *fnsCmd) listConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
-	app, err := app.GetAppByName(appName)
+	app, err := app.GetAppByName(f.client, appName)
 	if err != nil {
 		return err
 	}
@@ -431,7 +431,7 @@ func (f *fnsCmd) unsetConfig(c *cli.Context) error {
 	fnName := WithoutSlash(c.Args().Get(1))
 	key := c.Args().Get(2)
 
-	app, err := app.GetAppByName(appName)
+	app, err := app.GetAppByName(f.client, appName)
 	if err != nil {
 		return err
 	}
@@ -455,7 +455,7 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	fnName := WithoutSlash(c.Args().Get(1))
 	prop := c.Args().Get(2)
 
-	app, err := app.GetAppByName(appName)
+	app, err := app.GetAppByName(f.client, appName)
 	if err != nil {
 		return err
 	}
@@ -496,7 +496,7 @@ func (f *fnsCmd) delete(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
-	app, err := app.GetAppByName(appName)
+	app, err := app.GetAppByName(f.client, appName)
 	if err != nil {
 		return err
 	}

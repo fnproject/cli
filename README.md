@@ -46,7 +46,6 @@ stop
 _These nouns are now second-level commands._
 ```
 apps
-routes
 calls
 logs
 context
@@ -72,19 +71,24 @@ images
 As mention in [CLI Proposal](https://github.com/fnproject/cli/wiki/CLI-Proposal:--verb--noun--structure) 'All subcommands of 'fn images' exist as top-level commands, this makes the use of images redundant and will be deprecated'
 
 
+```
+routes
+```
+Routes have been replaced by functions and triggers
+
 ### Examples:
 
 ```
 fn [verb] [noun] <subcommand>
 
 fn config app <app-name> <key> <value>
-fn create route <app-name> <route> <image>
-fn delete route <app-name> <route>
+fn create function <app-name> <function> <image>
+fn delete function <app-name> <function>
 fn get log <app-name> <call-id>
-fn inspect route <app-name> <route>
+fn inspect function <app-name> <function>
 fn list calls
 fn unset config app <app-name> <key>
-fn update route <app-name> <route>
+fn update function <app-name> <function>
 fn use conetxt <context>
 ```
 

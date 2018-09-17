@@ -32,7 +32,9 @@ func TestDockerRuntimeInit(t *testing.T) {
 	t.Parallel()
 	tctx := testharness.Create(t)
 	defer tctx.Cleanup()
-	fnName := tctx.NewFuncName()
+
+	appName := tctx.NewAppName()
+	fnName := tctx.NewFuncName(appName)
 	tctx.MkDir(fnName)
 	tctx.Cd(fnName)
 
@@ -50,7 +52,8 @@ func TestDockerRuntimeBuildFailsWithNoDockerfile(t *testing.T) {
 	tctx := testharness.Create(t)
 	defer tctx.Cleanup()
 
-	fnName := tctx.NewFuncName()
+	appName := tctx.NewAppName()
+	fnName := tctx.NewFuncName(appName)
 	tctx.MkDir(fnName)
 	tctx.Cd(fnName)
 

@@ -5,6 +5,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Create app command
 func Create() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
@@ -18,7 +19,7 @@ func Create() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app-name>",
@@ -40,6 +41,7 @@ func Create() cli.Command {
 	}
 }
 
+// List apps command
 func List() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
@@ -53,7 +55,7 @@ func List() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		Action: a.list,
@@ -75,6 +77,7 @@ func List() cli.Command {
 	}
 }
 
+// Delete app command
 func Delete() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
@@ -89,13 +92,14 @@ func Delete() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		Action: a.delete,
 	}
 }
 
+// Inspect app command
 func Inspect() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
@@ -109,7 +113,7 @@ func Inspect() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app-name> [property.[key]]",
@@ -117,6 +121,7 @@ func Inspect() cli.Command {
 	}
 }
 
+// Update app command
 func Update() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
@@ -130,7 +135,7 @@ func Update() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app-name>",
@@ -138,7 +143,7 @@ func Update() cli.Command {
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
 				Name:  "config,c",
-				Usage: "Route configuration",
+				Usage: "Application configuration",
 			},
 			cli.StringSliceFlag{
 				Name:  "annotation",
@@ -152,6 +157,7 @@ func Update() cli.Command {
 	}
 }
 
+// SetConfig for function command
 func SetConfig() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
@@ -165,7 +171,7 @@ func SetConfig() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app-name> <key> <value>",
@@ -173,6 +179,7 @@ func SetConfig() cli.Command {
 	}
 }
 
+// ListConfig for app command
 func ListConfig() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
@@ -186,7 +193,7 @@ func ListConfig() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app-name>",
@@ -194,6 +201,7 @@ func ListConfig() cli.Command {
 	}
 }
 
+// GetConfig for function command
 func GetConfig() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
@@ -207,7 +215,7 @@ func GetConfig() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app-name> <key>",
@@ -215,6 +223,7 @@ func GetConfig() cli.Command {
 	}
 }
 
+// UnsetConfig for app command
 func UnsetConfig() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
@@ -228,7 +237,7 @@ func UnsetConfig() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClient()
+			a.client = provider.APIClientv2()
 			return nil
 		},
 		ArgsUsage: "<app-name> <key>",

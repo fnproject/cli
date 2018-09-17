@@ -28,6 +28,7 @@ type triggersCmd struct {
 	client   *clientv2.Fn
 }
 
+// TriggerFlags used to create/update triggers
 var TriggerFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:  "source,s",
@@ -48,7 +49,7 @@ func (t *triggersCmd) create(c *cli.Context) error {
 	fnName := c.Args().Get(1)
 	triggerName := c.Args().Get(2)
 
-	app, err := app.GetAppByName(appName)
+	app, err := app.GetAppByName(t.client, appName)
 	if err != nil {
 		return err
 	}
@@ -89,6 +90,7 @@ func validateTriggerSource(ts string) string {
 	return ts
 }
 
+// CreateTrigger request
 func CreateTrigger(client *clientv2.Fn, trigger *models.Trigger) error {
 	resp, err := client.Triggers.CreateTrigger(&apiTriggers.CreateTriggerParams{
 		Context: context.Background(),
@@ -116,7 +118,7 @@ func (t *triggersCmd) list(c *cli.Context) error {
 	fnName := c.Args().Get(1)
 	var params *apiTriggers.ListTriggersParams
 
-	app, err := app.GetAppByName(appName)
+	app, err := app.GetAppByName(t.client, appName)
 	if err != nil {
 		return err
 	}
@@ -219,6 +221,7 @@ func (t *triggersCmd) update(c *cli.Context) error {
 	return nil
 }
 
+// PutTrigger updates the provided trigger with new values
 func PutTrigger(t *clientv2.Fn, trigger *models.Trigger) error {
 	_, err := t.Triggers.UpdateTrigger(&apiTriggers.UpdateTriggerParams{
 		Context:   context.Background(),
@@ -300,8 +303,9 @@ func (t *triggersCmd) delete(c *cli.Context) error {
 	return nil
 }
 
+// GetTrigger looks up a trigger using the provided client by app, function and trigger name
 func GetTrigger(client *clientv2.Fn, appName, fnName, triggerName string) (*models.Trigger, error) {
-	app, err := app.GetAppByName(appName)
+	app, err := app.GetAppByName(client, appName)
 	if err != nil {
 		return nil, err
 	}
@@ -319,11 +323,12 @@ func GetTrigger(client *clientv2.Fn, appName, fnName, triggerName string) (*mode
 	return trigger, nil
 }
 
-func GetTriggerByName(client *clientv2.Fn, appId string, fnId string, triggerName string) (*models.Trigger, error) {
+// GetTriggerByName looks up a trigger using the provided client by app and function ID and trigger name
+func GetTriggerByName(client *clientv2.Fn, appID string, fnID string, triggerName string) (*models.Trigger, error) {
 	triggerList, err := client.Triggers.ListTriggers(&apiTriggers.ListTriggersParams{
 		Context: context.Background(),
-		AppID:   &appId,
-		FnID:    &fnId,
+		AppID:   &appID,
+		FnID:    &fnID,
 		Name:    &triggerName,
 	})
 
@@ -337,6 +342,7 @@ func GetTriggerByName(client *clientv2.Fn, appId string, fnId string, triggerNam
 	return triggerList.Payload.Items[0], nil
 }
 
+// WithFlags returns a trigger with the specified flags
 func WithFlags(c *cli.Context, t *models.Trigger) {
 	if len(c.StringSlice("annotation")) > 0 {
 		t.Annotations = common.ExtractAnnotations(c)
