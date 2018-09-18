@@ -205,9 +205,10 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	}
 
 	if a.triggerType != "" {
+		a.triggerType = strings.ToLower(a.triggerType)
 		ok := validateTriggerType(a.triggerType)
 		if !ok {
-			return fmt.Errorf("Init does not support the trigger type: '%s'.", a.triggerType)
+			return fmt.Errorf("Init does not support the trigger type: '%s'.\n", a.triggerType)
 		}
 
 		trig := make([]common.Trigger, 1)
