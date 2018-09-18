@@ -55,12 +55,12 @@ func prepareTestFiles(folder string) ([]testCase, error) {
 			name: "Simple context file",
 			file: path.Join(folder, "default.yaml"),
 			contents: `
-api-url: http://localhost:8080/v1
+api-url: http://localhost:8080
 provider: default
 registry: "someregistry"`,
 			expected: &ContextFile{
 				ContextProvider: "default",
-				EnvFnAPIURL:     "http://localhost:8080/v1",
+				EnvFnAPIURL:     "http://localhost:8080",
 				EnvFnRegistry:   "someregistry",
 			},
 		},
