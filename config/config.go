@@ -18,7 +18,7 @@ const (
 	configName             = "config"
 	contextConfigFileName  = "config.yaml"
 	defaultContextFileName = "default.yaml"
-	defaultLocalAPIURL     = "http://localhost:8080/v1"
+	defaultLocalAPIURL     = "http://localhost:8080"
 	DefaultProvider        = "default"
 
 	ReadWritePerms = os.FileMode(0755)
