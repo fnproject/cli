@@ -22,7 +22,7 @@ func Get() cli.Command {
 			l.client = provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app-name> <call-id>",
+		ArgsUsage: "<app-name> <function-name> <call-id>",
 		Action:    l.get,
 	}
 }
