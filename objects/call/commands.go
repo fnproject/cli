@@ -32,8 +32,8 @@ func List() cli.Command {
 	c := callsCmd{}
 	return cli.Command{
 		Name:        "calls",
-		Usage:       "List all calls for the specific app (route is optional)",
-		Description: "This command provides a list of defined calls for a specific application.",
+		Usage:       "List all calls for a specific function",
+		Description: "This command provides a list of defined calls for a specific function.",
 		Aliases:     []string{"call", "cl"},
 		Category:    "MANAGEMENT COMMAND",
 		Before: func(cxt *cli.Context) error {
@@ -44,7 +44,7 @@ func List() cli.Command {
 			c.client = provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app-name>",
+		ArgsUsage: "<app-name> <function-name>",
 		Action:    c.list,
 		Flags: []cli.Flag{
 			cli.StringFlag{

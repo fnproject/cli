@@ -83,7 +83,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 		},
 		cli.StringFlag{
 			Name:        "trigger",
-			Usage:       "Specify the trigger type.",
+			Usage:       "Specify the trigger type - permitted values are 'http'.",
 			Destination: &a.triggerType,
 		},
 		cli.Uint64Flag{
@@ -205,6 +205,12 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	}
 
 	if a.triggerType != "" {
+		a.triggerType = strings.ToLower(a.triggerType)
+		ok := validateTriggerType(a.triggerType)
+		if !ok {
+			return fmt.Errorf("Init does not support the trigger type '%s'.\n", a.triggerType, " Permitted values are 'http'.")
+		}
+
 		trig := make([]common.Trigger, 1)
 		trig[0] = common.Trigger{
 			Name:   a.ff.Name + "-trigger",
@@ -213,6 +219,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 
 		a.ff.Triggers = trig
+
 	}
 
 	err = os.Chdir(dir)
@@ -523,4 +530,13 @@ func detectRuntime(path string) (langs.LangHelper, error) {
 		}
 	}
 	return nil, fmt.Errorf("No supported files found to guess runtime, please set runtime explicitly with --runtime flag")
+}
+
+func validateTriggerType(triggerType string) bool {
+	switch triggerType {
+	case "http":
+		return true
+	default:
+		return false
+	}
 }
