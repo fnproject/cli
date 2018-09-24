@@ -104,7 +104,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 		},
 		cli.StringFlag{
 			Name:  "format,f",
-			Usage: "Hot container IO format - default or http",
+			Usage: "Hot container IO format - default, http, json, cloudevent or http-stream",
 		},
 		cli.IntFlag{
 			Name:  "timeout",
@@ -446,7 +446,7 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 		fmt.Printf("Found %v function, assuming %v runtime.\n", helper.Runtime(), helper.Runtime())
 		//need to default this to default format to be backwards compatible. Might want to just not allow this anymore, fail here.
 		if c.String("format") == "" {
-			a.ff.Format = "default"
+			a.ff.Format = "http-stream"
 		}
 	} else {
 		helper = langs.GetLangHelper(runtime)
