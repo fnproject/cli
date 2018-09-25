@@ -503,7 +503,6 @@ func DockerPushV20180708(ff *FuncFileV20180708) error {
 // remember that private registries must be supported here
 func ValidateFullImageName(n string) error {
 	parts := strings.Split(n, "/")
-	fmt.Println("Parts: ", parts)
 	if len(parts) < 2 {
 		return errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var, pass in --registry or configure your context file")
 
