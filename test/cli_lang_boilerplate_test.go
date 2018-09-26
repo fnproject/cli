@@ -20,7 +20,7 @@ var Runtimes = []struct {
 	{"node", false, ""},
 	{"ruby", true, ""},
 	{"rust", false, ""},
-	{"python", true, `{"name": "John"}\n`},
+	{"python", true, `{"name": "John"}`},
 }
 
 func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
