@@ -8,7 +8,6 @@ import (
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/objects/app"
 	"github.com/fnproject/cli/objects/fn"
-	"github.com/fnproject/cli/run"
 	"github.com/fnproject/fn_go/clientv2"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/urfave/cli"
