@@ -12,7 +12,7 @@ var Runtimes = []struct {
 	generatesTests bool
 	callInput      string
 }{
-	{"go", true, ""},
+	{"go", false, ""},
 	{"java", false, ""},
 	{"java8", false, ""},
 	{"java9", false, ""},
@@ -20,7 +20,7 @@ var Runtimes = []struct {
 	{"node", false, ""},
 	{"ruby", true, ""},
 	{"rust", false, ""},
-	{"python", true, `{"name": "John"}\n`},
+	{"python", true, `{"name": "John"}`},
 }
 
 func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
@@ -41,15 +41,13 @@ func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 			h.Cd(funcName)
 			h.Fn("build").AssertSuccess()
 
-			h.FnWithInput(rt.callInput, "run").AssertSuccess()
-
 			if rt.generatesTests {
 				h.Fn("test").AssertSuccess()
 			}
 
 			h.Fn("--registry", "test", "deploy", "--local", "--app", appName).AssertSuccess()
 
-			h.FnWithInput(rt.callInput, "call", appName, funcName)
+			h.FnWithInput(rt.callInput, "invoke", appName, funcName).AssertSuccess()
 		})
 	}
 
