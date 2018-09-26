@@ -165,9 +165,9 @@ func WithFlags(c *cli.Context, fn *models.Fn) {
 	if m := c.Uint64("memory"); m > 0 {
 		fn.Memory = m
 	}
-	if len(fn.Config) == 0 {
-		fn.Config = common.ExtractEnvConfig(c.StringSlice("config"))
-	}
+	
+	fn.Config = common.ExtractEnvConfig(c.StringSlice("config"))
+	
 	if len(c.StringSlice("annotation")) > 0 {
 		fn.Annotations = common.ExtractAnnotations(c)
 	}
