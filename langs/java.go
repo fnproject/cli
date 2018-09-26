@@ -80,7 +80,7 @@ func (lh *JavaLangHelper) RunFromImage() (string, error) {
 func (lh *JavaLangHelper) HasBoilerplate() bool { return true }
 
 // Java defaults to http
-func (lh *JavaLangHelper) DefaultFormat() string { return "http" }
+func (lh *JavaLangHelper) DefaultFormat() string { return "http-stream" }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime. The default boilerplate is for a Maven
 // project.

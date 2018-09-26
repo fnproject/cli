@@ -20,7 +20,7 @@ func (h *GoLangHelper) Runtime() string {
 }
 
 func (h *GoLangHelper) DefaultFormat() string {
-	return "json"
+	return "http-stream"
 }
 
 func (lh *GoLangHelper) LangStrings() []string {
