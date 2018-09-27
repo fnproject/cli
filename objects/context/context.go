@@ -23,7 +23,7 @@ var fileExtension = ".yaml"
 
 type ContextMap config.ContextMap
 
-func create(c *cli.Context) error {
+func createCtx(c *cli.Context) error {
 	context := c.Args().Get(0)
 
 	err := ValidateContextName(context)
@@ -78,7 +78,7 @@ func create(c *cli.Context) error {
 	return nil
 }
 
-func delete(c *cli.Context) error {
+func deleteCtx(c *cli.Context) error {
 	context := c.Args().Get(0)
 
 	if check, err := checkContextFileExists(context); !check {
@@ -106,7 +106,7 @@ func delete(c *cli.Context) error {
 	return nil
 }
 
-func inspect(c *cli.Context) error {
+func inspectCtx(c *cli.Context) error {
 	context := c.Args().Get(0)
 	if context == "" {
 		if currentContext := viper.GetString(config.CurrentContext); currentContext != "" {
@@ -137,7 +137,7 @@ func printContext(context string) error {
 	return nil
 }
 
-func use(c *cli.Context) error {
+func useCtx(c *cli.Context) error {
 	context := c.Args().Get(0)
 
 	if check, err := checkContextFileExists(context); !check {
@@ -161,7 +161,7 @@ func use(c *cli.Context) error {
 	return nil
 }
 
-func unset(c *cli.Context) error {
+func unsetCtx(c *cli.Context) error {
 	if currentContext := viper.GetString(config.CurrentContext); currentContext == "" {
 		return errors.New("No context currently in use")
 	}
@@ -201,7 +201,7 @@ func printContexts(c *cli.Context, contexts []*Info) error {
 	return nil
 }
 
-func list(c *cli.Context) error {
+func listCtx(c *cli.Context) error {
 	contexts, err := getAvailableContexts()
 	if err != nil {
 		return err
@@ -209,9 +209,24 @@ func list(c *cli.Context) error {
 	return printContexts(c, contexts)
 }
 
-func (ctxMap *ContextMap) update(c *cli.Context) error {
+func (ctxMap *ContextMap) updateCtx(c *cli.Context) error {
 	key := c.Args().Get(0)
+
+	delete := c.Bool("delete")
+	if delete {
+		err := ctxMap.UnSet(key)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Current context deleted %v \n", key)
+		return nil
+	}
+
 	value := c.Args().Get(1)
+	if value == "" {
+		return errors.New("Please specify a value")
+	}
+
 	err := ctxMap.Set(key, value)
 	if err != nil {
 		return err
@@ -311,5 +326,26 @@ func (ctxMap *ContextMap) Set(key, value string) error {
 	}
 
 	(*file)[key] = value
+	return config.WriteYamlFile(f.Name(), file)
+}
+
+func (ctxMap *ContextMap) UnSet(key string) error {
+	contextFilePath := createFilePath(viper.GetString(config.CurrentContext) + fileExtension)
+	f, err := os.OpenFile(contextFilePath, os.O_RDWR, config.ReadWritePerms)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	file, err := config.DecodeYAMLFile(f.Name())
+	if err != nil {
+		return err
+	}
+
+	if _, ok := (*file)[key]; !ok {
+		return errors.New("Context file does not contain key: " + key)
+	}
+
+	delete((*file), key)
 	return config.WriteYamlFile(f.Name(), file)
 }
