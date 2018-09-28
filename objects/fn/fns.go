@@ -12,7 +12,6 @@ import (
 
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/objects/app"
-	"github.com/fnproject/cli/run"
 	"github.com/fnproject/fn_go/clientv2"
 	apifns "github.com/fnproject/fn_go/clientv2/fns"
 	models "github.com/fnproject/fn_go/modelsv2"
@@ -54,14 +53,6 @@ var FnFlags = []cli.Flag{
 	},
 }
 var updateFnFlags = FnFlags
-
-// CallFnFlags used to call a function
-var CallFnFlags = append(run.RunFlags,
-	cli.BoolFlag{
-		Name:  "display-call-id",
-		Usage: "whether display call ID or not",
-	},
-)
 
 // WithSlash appends "/" to function path
 func WithSlash(p string) string {
@@ -165,9 +156,9 @@ func WithFlags(c *cli.Context, fn *models.Fn) {
 	if m := c.Uint64("memory"); m > 0 {
 		fn.Memory = m
 	}
-	
+
 	fn.Config = common.ExtractEnvConfig(c.StringSlice("config"))
-	
+
 	if len(c.StringSlice("annotation")) > 0 {
 		fn.Annotations = common.ExtractAnnotations(c)
 	}
