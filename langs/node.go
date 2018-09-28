@@ -1,7 +1,6 @@
 package langs
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -61,7 +60,6 @@ const packageJsonContent = `{
 func (lh *NodeLangHelper) GenerateBoilerplate(path string) error {
 	pathToPackageJsonFile := filepath.Join(path, "package.json")
 	pathToFuncJs := filepath.Join(path, "func.js")
-	testFile := filepath.Join(path, "test.json")
 
 	if exists(pathToPackageJsonFile) || exists(pathToFuncJs) {
 		return ErrBoilerplateExists
@@ -76,13 +74,6 @@ func (lh *NodeLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	if exists(testFile) {
-		fmt.Println("test.json already exists, skipping")
-	} else {
-		if err := ioutil.WriteFile(testFile, []byte(goTestBoilerPlate), os.FileMode(0644)); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 

@@ -32,14 +32,6 @@ func (h *PythonLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	testFile := filepath.Join(path, "test.json")
-	if exists(testFile) {
-		fmt.Println("test.json already exists, skipping")
-	} else {
-		if err := ioutil.WriteFile(testFile, []byte(pythonTestBoilerPlate), os.FileMode(0644)); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -103,33 +95,6 @@ if __name__ == "__main__":
 
 `
 	reqsPythonSrcBoilerplate = `fdk`
-	pythonTestBoilerPlate    = `{
-    "tests": [
-        {
-            "input": {
-                "body": {
-                    "name": "Johnny"
-                }
-            },
-            "output": {
-                "body": {
-                    "message": "Hello Johnny"
-                }
-            }
-        },
-        {
-            "input": {
-                "body": ""
-            },
-            "output": {
-                "body": {
-                    "message": "Hello World"
-                }
-            }
-        }
-    ]
-}
-`
 )
 
 func (h *PythonLangHelper) DockerfileCopyCmds() []string {
