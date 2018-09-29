@@ -292,7 +292,7 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 func dockerVersionCheck() error {
 	out, err := exec.Command("docker", "version", "--format", "{{.Server.Version}}").Output()
 	if err != nil {
-		return fmt.Errorf("could not check Docker version: %v", err)
+		return fmt.Errorf("Cannot connect to the Docker daemon, make sure you have it installed and running: %v", err)
 	}
 	// dev / test builds append '-ce', trim this
 	trimmed := strings.TrimRightFunc(string(out), func(r rune) bool { return r != '.' && !unicode.IsDigit(r) })
