@@ -520,7 +520,6 @@ func detectRuntime(path string) (langs.LangHelper, error) {
 			filenames = append(filenames,
 				filepath.Join(path, fmt.Sprintf("func%s", ext)),
 				filepath.Join(path, fmt.Sprintf("Func%s", ext)),
-				filepath.Join(path, fmt.Sprintf("src/main%s", ext)), // rust
 			)
 		}
 		for _, filename := range filenames {
