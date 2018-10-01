@@ -5,6 +5,8 @@ package commands
 import (
 	"io"
 	"os"
+	"syscall"
+	"unsafe"
 )
 
 func stdin() io.Reader {
