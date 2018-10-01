@@ -14,7 +14,7 @@ type PythonLangHelper struct {
 }
 
 func (h *PythonLangHelper) DefaultFormat() string {
-	return "json"
+	return "http-stream"
 }
 
 func (h *PythonLangHelper) HasBoilerplate() bool { return true }
