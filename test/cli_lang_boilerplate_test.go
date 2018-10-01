@@ -18,7 +18,6 @@ var Runtimes = []struct {
 	{"kotlin", `{"name": "John"}`}, //  no arg fn run is broken https://github.com/fnproject/cli/issues/262
 	{"node", ""},
 	{"ruby", ""},
-	{"rust", ""},
 	{"python", `{"name": "John"}`},
 }
 
