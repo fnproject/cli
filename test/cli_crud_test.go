@@ -65,7 +65,6 @@ func TestSimpleFnTriggerUpdateCycle(t *testing.T) {
 	h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/mytrigger").AssertFailed()
 	h.Fn("inspect", "trigger", appName1, funcName1, triggerName1).AssertSuccess().AssertStdoutContains(`"source": "/mytrigger`)
 	h.Fn("update", "trigger", appName1, funcName1, triggerName1, "--annotation", `"val1='["val2"]'"`).AssertSuccess()
-	h.Fn("config", "trigger", appName1, funcName1, triggerName1, "confA", "valB").AssertSuccess()
 }
 
 func TestRemovingFnAnnotation(t *testing.T) {
