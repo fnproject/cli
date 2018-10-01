@@ -32,15 +32,14 @@ func (lh *NodeLangHelper) RunFromImage() (string, error) {
 	return "fnproject/node", nil
 }
 
-const funcJsContent = `var fdk=require('@fnproject/fdk');
+const funcJsContent = `const fdk=require('@fnproject/fdk');
 
 fdk.handle(function(input){
-  var name = 'World';
+  let name = 'World';
   if (input.name) {
     name = input.name;
   }
-  response = {'message': 'Hello ' + name}
-  return response
+  return {'message': 'Hello ' + name}
 })
 `
 
@@ -79,7 +78,7 @@ func (lh *NodeLangHelper) GenerateBoilerplate(path string) error {
 
 func (lh *NodeLangHelper) HasBoilerplate() bool { return true }
 
-func (lh *NodeLangHelper) DefaultFormat() string { return "json" }
+func (lh *NodeLangHelper) DefaultFormat() string { return "http-stream" }
 
 func (lh *NodeLangHelper) Entrypoint() (string, error) {
 	return "node func.js", nil

@@ -64,7 +64,7 @@ func (lh *KotlinLangHelper) RunFromImage() (string, error) {
 func (lh *KotlinLangHelper) HasBoilerplate() bool { return true }
 
 // Kotlin defaults to http
-func (lh *KotlinLangHelper) DefaultFormat() string { return "http" }
+func (lh *KotlinLangHelper) DefaultFormat() string { return "http-stream" }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime.
 // The default boilerplate is for a Maven project.
