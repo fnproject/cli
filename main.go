@@ -129,6 +129,7 @@ func newFn() *cli.App {
 		//fmt.Fprintf(os.Stderr, "\n\nNote the fn CLI command structure has changed, please change your command to use the new structure.\n")
 		fmt.Fprintf(os.Stderr, color.Italic("\n\nSee ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information."))
 		fmt.Fprintf(os.Stderr, color.BrightCyan(" Note ")+"the fn CLI command structure has changed, please change your command to use the new structure.\n")
+		os.Exit(1)
 	}
 
 	app.Commands = append(app.Commands, commands.GetCommands(commands.Commands)...)
