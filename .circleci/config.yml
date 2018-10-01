@@ -36,6 +36,16 @@ jobs:
           name: build and test
           command: make test
           no_output_timeout: 20m
+      - run:
+          name: test build macos
+          command: go build -o fn_mac
+          environment:
+            GOOS: darwin
+      - run:
+          name: test build windows
+          command: go build -o fn.exe
+          environment:
+            GOOS: windows
       - deploy:
           command: |
             if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
