@@ -32,10 +32,10 @@ func (lh *NodeLangHelper) RunFromImage() (string, error) {
 	return "fnproject/node", nil
 }
 
-const funcJsContent = `var fdk=require('@fnproject/fdk');
+const funcJsContent = `const fdk=require('@fnproject/fdk');
 
 fdk.handle(function(input){
-  var name = 'World';
+  let name = 'World';
   if (input.name) {
     name = input.name;
   }
