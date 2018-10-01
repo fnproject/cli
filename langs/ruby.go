@@ -69,10 +69,6 @@ func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
 	if exists(gemFile) {
 		return fmt.Errorf(msg, "Gemfile")
 	}
-	testFile := filepath.Join(path, "test.json")
-	if exists(testFile) {
-		return fmt.Errorf(msg, "test.json")
-	}
 
 	if err := ioutil.WriteFile(codeFile, []byte(rubySrcBoilerplate), os.FileMode(0644)); err != nil {
 		return err
@@ -82,9 +78,6 @@ func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(testFile, []byte(rubyTestBoilerPlate), os.FileMode(0644)); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -105,34 +98,5 @@ const (
   	source 'https://rubygems.org' do
       gem 'fdk', '~> 0.0.13'
 		end
-`
-
-	// Could use same test for most langs
-	rubyTestBoilerPlate = `{
-    "tests": [
-        {
-            "input": {
-                "body": {
-                    "name": "Johnny"
-                }
-            },
-            "output": {
-                "body": {
-                    "message": "Hello Johnny!"
-                }
-            }
-        },
-        {
-            "input": {
-                "body": ""
-            },
-            "output": {
-                "body": {
-                    "message": "Hello World!"
-                }
-            }
-        }
-    ]
-}
 `
 )

@@ -2,7 +2,6 @@ package langs
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -88,14 +87,6 @@ func (lh *GoLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	testFile := filepath.Join(path, "test.json")
-	if exists(testFile) {
-		fmt.Println("test.json already exists, skipping")
-	} else {
-		if err := ioutil.WriteFile(testFile, []byte(goTestBoilerPlate), os.FileMode(0644)); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -139,34 +130,5 @@ func myHandler(ctx context.Context, in io.Reader, out io.Writer) {
 [prune]
   go-tests = true
   unused-packages = true
-`
-
-	// Could use same test for most langs
-	goTestBoilerPlate = `{
-    "tests": [
-        {
-            "input": {
-                "body": {
-                    "name": "Johnny"
-                }
-            },
-            "output": {
-                "body": {
-                    "message": "Hello Johnny"
-                }
-            }
-        },
-        {
-            "input": {
-                "body": ""
-            },
-            "output": {
-                "body": {
-                    "message": "Hello World"
-                }
-            }
-        }
-    ]
-}
 `
 )
