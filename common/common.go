@@ -311,6 +311,7 @@ func dockerVersionCheck() error {
 	return nil
 }
 
+// foo
 // Exists check file exists.
 func Exists(name string) bool {
 	if _, err := os.Stat(name); err != nil {
