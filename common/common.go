@@ -297,14 +297,14 @@ func dockerVersionCheck() error {
 		if errString == "exit status 1" {
 			return fmt.Errorf("Cannot connect to the docker daemon. Is the docker daemon running?: %v", err)
 		}
-		return fmt.Errorf("could not check Docker version test1: %v", err)
+		return fmt.Errorf("could not check Docker version: %v", err)
 	}
 	// dev / test builds append '-ce', trim this
 	trimmed := strings.TrimRightFunc(string(out), func(r rune) bool { return r != '.' && !unicode.IsDigit(r) })
 
 	v, err := semver.NewVersion(trimmed)
 	if err != nil {
-		return fmt.Errorf("could not check Docker version test2: %v", err)
+		return fmt.Errorf("could not check Docker version: %v", err)
 	}
 	vMin, err := semver.NewVersion(MinRequiredDockerVersion)
 	if err != nil {
