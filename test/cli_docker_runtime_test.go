@@ -43,8 +43,8 @@ func TestDockerRuntimeInit(t *testing.T) {
 
 	tctx.Fn("init").AssertSuccess()
 	tctx.Fn("--verbose", "build").AssertSuccess()
-	tctx.Fn("run").AssertSuccess()
-
+	tctx.Fn("--registry", "test", "deploy", "--local", "--app", appName).AssertSuccess()
+	tctx.Fn("invoke", appName, fnName).AssertSuccess()
 }
 
 func TestDockerRuntimeBuildFailsWithNoDockerfile(t *testing.T) {

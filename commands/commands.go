@@ -11,7 +11,6 @@ import (
 	"github.com/fnproject/cli/objects/log"
 	"github.com/fnproject/cli/objects/server"
 	"github.com/fnproject/cli/objects/trigger"
-	"github.com/fnproject/cli/run"
 	"github.com/urfave/cli"
 )
 
@@ -34,10 +33,8 @@ var Commands = cmd{
 	"list":         ListCommand(),
 	"migrate":      MigrateCommand(),
 	"push":         PushCommand(),
-	"run":          run.RunCommand(),
 	"start":        StartCommand(),
 	"stop":         StopCommand(),
-	"test":         TestCommand(),
 	"unset":        UnsetCommand(),
 	"update":       UpdateCommand(),
 	"use":          UseCommand(),
