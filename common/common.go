@@ -290,16 +290,21 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 }
 
 func dockerVersionCheck() error {
-	out, err := exec.Command("docker", "version", "--format", "{{.Server.Version}}").Output()
-	if err != nil {
-		return fmt.Errorf("could not check Docker version: %v", err)
+	out, err := exec.Command("docker", "version", "--format", "{{.Server.Version}}").Output() //executes the "docker version" command and gets the output and error code
+	if err != nil {                                                                           //returns exit status 1 err if docker is not running
+		errString := err.Error() //converts the err to string
+		//fmt.Printf(errString)
+		if errString == "exit status 1" {
+			return fmt.Errorf("Cannot connect to the docker daemon. Is the docker daemon running?: %v", err)
+		}
+		return fmt.Errorf("could not check Docker version test1: %v", err)
 	}
 	// dev / test builds append '-ce', trim this
 	trimmed := strings.TrimRightFunc(string(out), func(r rune) bool { return r != '.' && !unicode.IsDigit(r) })
 
 	v, err := semver.NewVersion(trimmed)
 	if err != nil {
-		return fmt.Errorf("could not check Docker version: %v", err)
+		return fmt.Errorf("could not check Docker version test2: %v", err)
 	}
 	vMin, err := semver.NewVersion(MinRequiredDockerVersion)
 	if err != nil {
@@ -311,7 +316,6 @@ func dockerVersionCheck() error {
 	return nil
 }
 
-// foo
 // Exists check file exists.
 func Exists(name string) bool {
 	if _, err := os.Stat(name); err != nil {
