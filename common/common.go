@@ -278,7 +278,9 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 		close(quit)
 		fmt.Fprintln(os.Stderr)
 		if err != nil {
-			fmt.Printf("%v Run with `--verbose` flag to see what went wrong. eg: `fn --verbose CMD`\n", color.RedString("Error during build."))
+			if verbose == false {
+				fmt.Printf("%v Run with `--verbose` flag to see what went wrong. eg: `fn --verbose CMD`\n", color.RedString("Error during build."))
+			}
 			return fmt.Errorf("error running docker build: %v", err)
 		}
 	case signal := <-cancel:
