@@ -25,7 +25,7 @@ func (h *RubyLangHelper) Extensions() []string {
 	return []string{".rb"}
 }
 func (h *RubyLangHelper) DefaultFormat() string {
-	return "json"
+	return "http-stream"
 }
 func (h *RubyLangHelper) BuildFromImage() (string, error) {
 	return "fnproject/ruby:dev", nil
@@ -91,12 +91,12 @@ const (
 	    { message: "Hello #{name}!" }
 	  end
 
-	  FDK.handle(:myfunction)
+	  FDK.handle(target: :myfunction)
 `
 
 	rubyGemfileBoilerplate = `
   	source 'https://rubygems.org' do
-      gem 'fdk', '~> 0.0.13'
+      gem 'fdk', '~> 0.0.14'
 		end
 `
 )
