@@ -175,13 +175,13 @@ func (t *triggersCmd) list(c *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
 	if len(fnName) != 0 {
 
-		fmt.Fprint(w, "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
+		fmt.Fprint(w, "NAME", "\t", "ID", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
 		for _, trigger := range resTriggers {
 			endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
-			fmt.Fprint(w, trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
+			fmt.Fprint(w, trigger.Name, "\t", trigger.ID, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
 		}
 	} else {
-		fmt.Fprint(w, "FUNCTION", "\t", "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
+		fmt.Fprint(w, "FUNCTION", "\t", "NAME", "\t", "ID", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
 		for _, trigger := range resTriggers {
 			endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
 
@@ -193,7 +193,7 @@ func (t *triggersCmd) list(c *cli.Context) error {
 				return err
 			}
 			fnName = resp.Payload.Name
-			fmt.Fprint(w, fnName, "\t", trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
+			fmt.Fprint(w, fnName, "\t", trigger.Name, "\t", trigger.ID, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
 		}
 	}
 	w.Flush()

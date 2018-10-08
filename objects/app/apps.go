@@ -31,7 +31,10 @@ func printApps(c *cli.Context, apps []*modelsv2.App) error {
 		for _, app := range apps {
 			a := struct {
 				Name string `json:"name"`
-			}{app.Name}
+				ID string `json:"id"`
+			}{app.Name,
+				app.ID,
+			}
 			allApps = append(allApps, a)
 		}
 		b, err := json.MarshalIndent(allApps, "", "    ")
@@ -41,9 +44,9 @@ func printApps(c *cli.Context, apps []*modelsv2.App) error {
 		fmt.Fprint(os.Stdout, string(b))
 	} else {
 		w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-		fmt.Fprint(w, "NAME", "\n")
+		fmt.Fprint(w, "NAME", "\t", "ID", "\t", "\n")
 		for _, app := range apps {
-			fmt.Fprint(w, app.Name, "\n")
+			fmt.Fprint(w, app.Name, "\t", app.ID, "\t", "\n")
 
 		}
 		if err := w.Flush(); err != nil {
