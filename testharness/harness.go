@@ -403,6 +403,7 @@ runtime: docker
 //NewFuncName creates a valid function name and registers it for deletion
 func (h *CLIHarness) NewFuncName(appName string) string {
 	funcName := randString(8)
+	//funcID := randString(26)
 	h.funcRefs = append(h.funcRefs, funcRef{appName, funcName})
 	return funcName
 }
@@ -410,6 +411,7 @@ func (h *CLIHarness) NewFuncName(appName string) string {
 //NewTriggerName creates a valid trigger name and registers it for deletioneanup
 func (h *CLIHarness) NewTriggerName(appName, funcName string) string {
 	triggerName := randString(8)
+	//triggerID := randString(26)
 	h.triggerRefs = append(h.triggerRefs, triggerRef{appName, funcName, triggerName})
 	return triggerName
 }

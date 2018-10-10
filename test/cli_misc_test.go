@@ -77,7 +77,7 @@ func TestSettingTimeoutWorks(t *testing.T) {
 	h.Fn("create", "app", appName).AssertSuccess()
 	res := h.Fn("list", "apps")
 
-	if !strings.Contains(res.Stdout, fmt.Sprintf("%s\n", appName)) {
+	if !strings.Contains(res.Stdout, fmt.Sprintf("%s", appName)) {
 		t.Fatalf("Expecting list apps to contain app name , got %v", res)
 	}
 
@@ -113,7 +113,8 @@ func TestSettingMemoryWorks(t *testing.T) {
 	h.Fn("create", "app", appName).AssertSuccess()
 	res := h.Fn("list", "apps")
 
-	if !strings.Contains(res.Stdout, fmt.Sprintf("%s\n", appName)) {
+
+	if !strings.Contains(res.Stdout, fmt.Sprintf("%s", appName)) {
 		t.Fatalf("Expecting list apps to contain app name , got %v", res)
 	}
 
