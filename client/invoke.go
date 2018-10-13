@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	FN_CALL_ID             = "Fn_call_id"
+	FN_CALL_ID             = "Fn-Call-Id"
 	MaximumRequestBodySize = 5 * 1024 * 1024 // bytes
 )
 
