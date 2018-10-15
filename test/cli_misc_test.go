@@ -238,3 +238,25 @@ func TestBump(t *testing.T) {
 	h.Fn("i", "function", appName, fnName).AssertSuccess().AssertStdoutContains(fmt.Sprintf(`%s:1.1.1`, fnName))
 
 }
+
+// test fn list id value matches fn inspect id value for app, function & trigger
+func TestListID(t *testing.T) {
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+
+	// execute create app, func & trigger commands
+	appName := h.NewAppName()
+	funcName := h.NewFuncName(appName)
+	triggerName := h.NewTriggerName(appName, funcName)
+	h.Fn("create", "app", appName).AssertSuccess()
+	h.Fn("create", "function", appName, funcName, "foo/duffimage:0.0.1").AssertSuccess()
+	h.Fn("create", "trigger", appName, funcName, triggerName, "--type", "http", "--source", "/mytrigger").AssertSuccess()
+
+
+	h.Fn("list", "apps", appName).AssertSuccess().AssertStdoutContains("ID")
+	h.Fn("list", "fn", appName).AssertSuccess().AssertStdoutContains("ID")
+	h.Fn("list", "triggers", appName).AssertSuccess().AssertStdoutContains("ID")
+
+}
