@@ -79,9 +79,11 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 			newFns = append(newFns, struct {
 				Name  string `json:"name"`
 				Image string `json:"image"`
+				ID string `json:"id"`
 			}{
 				fn.Name,
 				fn.Image,
+				fn.ID,
 			})
 		}
 		b, err := json.MarshalIndent(newFns, "", "    ")
@@ -91,10 +93,10 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 		fmt.Fprint(os.Stdout, string(b))
 	} else {
 		w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-		fmt.Fprint(w, "NAME", "\t", "IMAGE", "\n")
+		fmt.Fprint(w, "NAME", "\t", "IMAGE", "\t", "ID", "\n")
 
 		for _, f := range fns {
-			fmt.Fprint(w, f.Name, "\t", f.Image, "\t", "\n")
+			fmt.Fprint(w, f.Name, "\t", f.Image, "\t", f.ID, "\t", "\n")
 		}
 		if err := w.Flush(); err != nil {
 			return err
