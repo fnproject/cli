@@ -79,7 +79,7 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 			newFns = append(newFns, struct {
 				Name  string `json:"name"`
 				Image string `json:"image"`
-				ID string `json:"id"`
+				ID    string `json:"id"`
 			}{
 				fn.Name,
 				fn.Image,
@@ -227,6 +227,9 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	}
 	if fn.Image == "" {
 		return errors.New("no image specified")
+	}
+	if fn.Format == "" {
+		fn.Format = "http-stream"
 	}
 
 	return CreateFn(f.client, appName, fn)
