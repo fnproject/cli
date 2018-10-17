@@ -2,6 +2,7 @@ package langs
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -186,7 +187,14 @@ func (lh *KotlinLangHelper) getFDKAPIVersion() (string, error) {
 	if version != "" {
 		return version, nil
 	}
-	resp, err := http.Get(versionURL)
+
+	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
+	transCfg := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
+	}
+	client := &http.Client{Transport: transCfg}
+
+	resp, err := client.Get(versionURL)
 	if err != nil || resp.StatusCode != 200 {
 		return "", fetchError
 	}
