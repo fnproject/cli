@@ -110,6 +110,9 @@ func CreateTrigger(client *clientv2.Fn, trigger *models.Trigger) error {
 	}
 
 	fmt.Println("Successfully created trigger:", resp.Payload.Name)
+	endpoint := resp.Payload.Annotations["fnproject.io/trigger/httpEndpoint"]
+	fmt.Println("Trigger Endpoint:", endpoint)
+
 	return nil
 }
 
