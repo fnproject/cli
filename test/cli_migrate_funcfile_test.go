@@ -49,7 +49,7 @@ func TestMigrateFuncYamlV20180708(t *testing.T) {
 
 			appName := h.NewAppName()
 			funcName := h.NewFuncName(appName)
-			h.Fn("init", "--runtime", rt.runtime, funcName)
+			h.Fn("init", "--runtime", rt.runtime, funcName).AssertSuccess()
 			h.Cd(funcName)
 			h.Fn("migrate").AssertFailed().AssertStderrContains(commands.MigrateFailureMessage)
 			h.Cd("")
