@@ -95,7 +95,7 @@ func appWithFlags(c *cli.Context, app *modelsv2.App) {
 	if app.SyslogURL == "" {
 		app.SyslogURL = c.String("syslog-url")
 	}
-	if len(app.Config) == 0 {
+	if len(c.StringSlice("config")) > 0 {
 		app.Config = common.ExtractEnvConfig(c.StringSlice("config"))
 	}
 	if len(c.StringSlice("annotation")) > 0 {
