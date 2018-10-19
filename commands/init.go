@@ -102,10 +102,6 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Name:  "headers",
 			Usage: "Function response headers",
 		},
-		cli.StringFlag{
-			Name:  "format,f",
-			Usage: "Hot container IO format - default or http",
-		},
 		cli.IntFlag{
 			Name:  "timeout",
 			Usage: "Function timeout (eg. 30)",
@@ -283,10 +279,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			a.ff.Entrypoint = c.String("entrypoint")
 		}
 
-		if c.String("format") != "" {
-			a.ff.Format = c.String("format")
-		}
-
 		if err := common.EncodeFuncFileV20180708YAML("func.yaml", a.ff); err != nil {
 			return err
 		}
@@ -395,9 +387,6 @@ func (a *initFnCmd) generateBoilerplate(path, runtime string) error {
 
 func (a *initFnCmd) bindFn(fn *modelsV2.Fn) {
 	ff := a.ff
-	if fn.Format != "" {
-		ff.Format = fn.Format
-	}
 	if fn.Memory > 0 {
 		ff.Memory = fn.Memory
 	}
@@ -451,10 +440,6 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 			return err
 		}
 		fmt.Printf("Found %v function, assuming %v runtime.\n", helper.Runtime(), helper.Runtime())
-		//need to default this to default format to be backwards compatible. Might want to just not allow this anymore, fail here.
-		if c.String("format") == "" {
-			a.ff.Format = "default"
-		}
 	} else {
 		helper = langs.GetLangHelper(runtime)
 	}
@@ -474,9 +459,7 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 
 		a.ff.Runtime = runtime
 
-		if c.String("format") == "" {
-			a.ff.Format = helper.DefaultFormat()
-		}
+		a.ff.Format = helper.DefaultFormat()
 
 		if c.String("cmd") == "" {
 			cmd, err := helper.Cmd()

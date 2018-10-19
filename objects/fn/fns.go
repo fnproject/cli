@@ -35,10 +35,6 @@ var FnFlags = []cli.Flag{
 		Name:  "config,c",
 		Usage: "Function configuration",
 	},
-	cli.StringFlag{
-		Name:  "format,f",
-		Usage: "Hot container IO format - can be one of: default, http, json or cloudevent (check FDK docs to see which are supported for the FDK in use.)",
-	},
 	cli.IntFlag{
 		Name:  "timeout",
 		Usage: "Function timeout (eg. 30)",
@@ -151,9 +147,6 @@ func WithFlags(c *cli.Context, fn *models.Fn) {
 	if i := c.String("image"); i != "" {
 		fn.Image = i
 	}
-	if f := c.String("format"); f != "" {
-		fn.Format = f
-	}
 
 	if m := c.Uint64("memory"); m > 0 {
 		fn.Memory = m
@@ -187,10 +180,6 @@ func WithFuncFileV20180708(ff *common.FuncFileV20180708, fn *models.Fn) error {
 		fn.Image = ff.ImageNameV20180708()
 	}
 
-	if ff.Format != "" {
-		fn.Format = ff.Format
-	}
-
 	if ff.Timeout != nil {
 		fn.Timeout = ff.Timeout
 	}
@@ -219,6 +208,7 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	fn := &models.Fn{}
 	fn.Name = fnName
 	fn.Image = c.Args().Get(2)
+	fn.Format = "http-stream"
 
 	WithFlags(c, fn)
 
@@ -227,9 +217,6 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	}
 	if fn.Image == "" {
 		return errors.New("no image specified")
-	}
-	if fn.Format == "" {
-		fn.Format = "http-stream"
 	}
 
 	return CreateFn(f.client, appName, fn)
