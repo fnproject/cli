@@ -137,7 +137,7 @@ func Update() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app-name>",
+		ArgsUsage: "<app-name> <function-name>",
 		Action:    f.update,
 		Flags:     updateFnFlags,
 	}
