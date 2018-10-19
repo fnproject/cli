@@ -208,7 +208,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		a.triggerType = strings.ToLower(a.triggerType)
 		ok := validateTriggerType(a.triggerType)
 		if !ok {
-			return fmt.Errorf("Init does not support the trigger type '%s'.\n", a.triggerType, " Permitted values are 'http'.")
+			return fmt.Errorf("Init does not support the trigger type '%s'.\n Permitted values are 'http'.", a.triggerType)
 		}
 
 		trig := make([]common.Trigger, 1)
@@ -520,7 +520,6 @@ func detectRuntime(path string) (langs.LangHelper, error) {
 			filenames = append(filenames,
 				filepath.Join(path, fmt.Sprintf("func%s", ext)),
 				filepath.Join(path, fmt.Sprintf("Func%s", ext)),
-				filepath.Join(path, fmt.Sprintf("src/main%s", ext)), // rust
 			)
 		}
 		for _, filename := range filenames {

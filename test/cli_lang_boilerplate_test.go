@@ -8,19 +8,17 @@ import (
 )
 
 var Runtimes = []struct {
-	runtime        string
-	generatesTests bool
-	callInput      string
+	runtime   string
+	callInput string
 }{
-	{"go", true, ""},
-	{"java", false, ""},
-	{"java8", false, ""},
-	{"java9", false, ""},
-	{"kotlin", false, `{"name": "John"}`}, //  no arg fn run is broken https://github.com/fnproject/cli/issues/262
-	{"node", false, ""},
-	{"ruby", true, ""},
-	{"rust", false, ""},
-	{"python", true, `{"name": "John"}\n`},
+	{"go", ""},
+	{"java", ""},
+	{"java8", ""},
+	{"java9", ""},
+	{"kotlin", `{"name": "John"}`}, //  no arg fn run is broken https://github.com/fnproject/cli/issues/262
+	{"node", ""},
+	{"ruby", ""},
+	{"python", `{"name": "John"}`},
 }
 
 func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
@@ -41,15 +39,9 @@ func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 			h.Cd(funcName)
 			h.Fn("build").AssertSuccess()
 
-			h.FnWithInput(rt.callInput, "run").AssertSuccess()
-
-			if rt.generatesTests {
-				h.Fn("test").AssertSuccess()
-			}
-
 			h.Fn("--registry", "test", "deploy", "--local", "--app", appName).AssertSuccess()
 
-			h.FnWithInput(rt.callInput, "call", appName, funcName)
+			h.FnWithInput(rt.callInput, "invoke", appName, funcName).AssertSuccess()
 		})
 	}
 

@@ -1,9 +1,8 @@
 package test
 
 import (
-	"testing"
-
 	"github.com/fnproject/cli/testharness"
+	"testing"
 )
 
 func TestFnInvokeInvalidImage(t *testing.T) {

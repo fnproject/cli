@@ -72,7 +72,8 @@ func TestInitImage(t *testing.T) {
 
 		h.Fn("init", "--init-image", origFuncName+"-init", newFuncName)
 		h.Cd(newFuncName)
-		h.Fn("run").AssertSuccess()
+		h.Fn("--registry", "test", "deploy", "--local", "--no-bump", "--app", appName).AssertSuccess()
+		h.Fn("invoke", appName, newFuncName).AssertSuccess()
 
 		newYaml := h.GetYamlFile("func.yaml")
 		if newYaml.Name != newFuncName {
