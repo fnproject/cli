@@ -113,6 +113,12 @@ func Inspect() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "endpoint",
+				Usage: "Output the function invoke endpoint if set",
+			},
+		},
 		ArgsUsage: "<app-name> <function-name> [property.[key]]",
 		Action:    f.inspect,
 	}
