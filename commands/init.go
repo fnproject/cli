@@ -440,6 +440,7 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 			return err
 		}
 		fmt.Printf("Found %v function, assuming %v runtime.\n", helper.Runtime(), helper.Runtime())
+		a.ff.Format = "default"
 	} else {
 		helper = langs.GetLangHelper(runtime)
 	}
