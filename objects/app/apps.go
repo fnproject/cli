@@ -31,7 +31,7 @@ func printApps(c *cli.Context, apps []*modelsv2.App) error {
 		for _, app := range apps {
 			a := struct {
 				Name string `json:"name"`
-				ID string `json:"id"`
+				ID   string `json:"id"`
 			}{app.Name,
 				app.ID,
 			}
@@ -92,10 +92,10 @@ func (a *appsCmd) list(c *cli.Context) error {
 }
 
 func appWithFlags(c *cli.Context, app *modelsv2.App) {
-	if app.SyslogURL == "" {
+	if len(c.String("syslog-url")) > 0 {
 		app.SyslogURL = c.String("syslog-url")
 	}
-	if len(app.Config) == 0 {
+	if len(c.StringSlice("config")) > 0 {
 		app.Config = common.ExtractEnvConfig(c.StringSlice("config"))
 	}
 	if len(c.StringSlice("annotation")) > 0 {
