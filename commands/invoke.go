@@ -11,6 +11,7 @@ import (
 	"github.com/fnproject/fn_go/clientv2"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/urfave/cli"
+	"errors"
 )
 
 // FnInvokeEndpointAnnotation is the annotation that exposes the fn invoke endpoint as defined in models/fn.go
@@ -23,6 +24,10 @@ type invokeCmd struct {
 
 // InvokeFnFlags used to invoke and fn
 var InvokeFnFlags = []cli.Flag{
+	cli.StringFlag{
+		Name:  "endpoint",
+		Usage: "Specify the function invoke endpoint for this function, the app-name and func-name parameters will be ignored",
+	},
 	cli.StringFlag{
 		Name:  "method",
 		Usage: "Http method for function",
@@ -53,7 +58,7 @@ func InvokeCommand() cli.Command {
 			cl.client = cl.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage:   "<app-name> <function-name>",
+		ArgsUsage:   "[app-name] [function-name]",
 		Flags:       InvokeFnFlags,
 		Category:    "DEVELOPMENT COMMANDS",
 		Description: "This command explicitly invokes a function.",
@@ -64,18 +69,31 @@ func InvokeCommand() cli.Command {
 func (cl *invokeCmd) Invoke(c *cli.Context) error {
 	var contentType string
 
-	appName := c.Args().Get(0)
-	fnName := c.Args().Get(1)
+	invokeURL := c.String("endpoint")
 
-	app, err := app.GetAppByName(cl.client, appName)
-	if err != nil {
-		return err
-	}
-	fn, err := fn.GetFnByName(cl.client, app.ID, fnName)
-	if err != nil {
-		return err
-	}
+	if invokeURL == "" {
 
+		appName := c.Args().Get(0)
+		fnName := c.Args().Get(1)
+
+		if appName == "" || fnName == "" {
+			return errors.New("missing app and function name")
+		}
+
+		app, err := app.GetAppByName(cl.client, appName)
+		if err != nil {
+			return err
+		}
+		fn, err := fn.GetFnByName(cl.client, app.ID, fnName)
+		if err != nil {
+			return err
+		}
+		var ok bool
+		invokeURL, ok = fn.Annotations[FnInvokeEndpointAnnotation].(string)
+		if !ok {
+			return fmt.Errorf("Fn invoke url annotation not present, %s", FnInvokeEndpointAnnotation)
+		}
+	}
 	content := stdin()
 	wd := common.GetWd()
 
@@ -88,10 +106,5 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 		}
 	}
 
-	invokeURL := fn.Annotations[FnInvokeEndpointAnnotation]
-	if invokeURL == nil {
-		return fmt.Errorf("Fn invoke url annotation not present, %s", FnInvokeEndpointAnnotation)
-	}
-
-	return client.Invoke(cl.provider, invokeURL.(string), content, os.Stdout, c.String("method"), c.StringSlice("e"), contentType, c.Bool("display-call-id"))
+	return client.Invoke(cl.provider, invokeURL, content, os.Stdout, c.String("method"), c.StringSlice("e"), contentType, c.Bool("display-call-id"))
 }

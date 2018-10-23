@@ -448,6 +448,7 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	fnName := WithoutSlash(c.Args().Get(1))
 	prop := c.Args().Get(2)
 
+
 	app, err := app.GetAppByName(f.client, appName)
 	if err != nil {
 		return err
@@ -455,6 +456,15 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	fn, err := GetFnByName(f.client, app.ID, fnName)
 	if err != nil {
 		return err
+	}
+
+	if c.Bool("endpoint") {
+		 endpoint,ok:= fn.Annotations["fnproject.io/fn/invokeEndpoint"].(string)
+		 if !ok {
+		 	return errors.New("missing or invalid endpoint on function")
+		 }
+		 fmt.Println(endpoint)
+		 return nil
 	}
 
 	enc := json.NewEncoder(os.Stdout)
@@ -478,7 +488,7 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	jq := jsonq.NewQuery(inspect)
 	field, err := jq.Interface(strings.Split(prop, ".")...)
 	if err != nil {
-		return errors.New("failed to inspect that fnName's field")
+		return errors.New("failed to inspect that function's field")
 	}
 	enc.Encode(field)
 

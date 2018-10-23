@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/fnproject/cli/testharness"
+	"strings"
+	"regexp"
 )
 
 // TODO: These are both  Super minimal
@@ -153,5 +155,43 @@ func TestFnUpdateValues(t *testing.T) {
 			h.Fn(append([]string{"update", "fn", appName1, funcName1}, tc...)...).AssertFailed()
 		})
 	}
+
+}
+
+
+
+func TestInspectEndpoints(t *testing.T) {
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+	appName1 := h.NewAppName()
+	funcName1 := h.NewFuncName(appName1)
+	h.Fn("create", "app", appName1)
+	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
+	h.Fn("create", "trigger", appName1, funcName1, "t1","--type","http","--source","/trig").AssertSuccess()
+
+
+	res:= h.Fn("inspect","function",appName1,funcName1,"id").AssertSuccess()
+	fnId := strings.Trim(strings.TrimSpace(res.Stdout),"\"")
+
+	res = h.Fn("inspect","function",appName1,funcName1,"--endpoint").AssertSuccess()
+	invokeUrl := strings.TrimSpace(res.Stdout)
+
+	invokePattern := regexp.MustCompile("^http://.*/invoke/" + regexp.QuoteMeta(fnId) + "$")
+
+	if !invokePattern.MatchString(invokeUrl){
+		t.Errorf("Expected invoke URL matching %s, got %s",invokePattern,invokeUrl)
+	}
+
+
+	res = h.Fn("inspect","trigger",appName1,funcName1,"t1", "--endpoint").AssertSuccess()
+
+	triggerUrl := strings.TrimSpace(res.Stdout)
+	triggerPattern := regexp.MustCompile("^http://.*/t/" + regexp.QuoteMeta(appName1) + "/trig$" )
+
+	if !triggerPattern.MatchString(triggerUrl) {
+		t.Errorf("Expected trigger URL matching %s, got %s",triggerPattern,triggerUrl)
+	}
+
 
 }
