@@ -105,7 +105,6 @@ func TestFnUpdateValues(t *testing.T) {
 		result interface{}
 	}{
 		{[]string{"--memory", "129"}, []string{"memory"}, 129.0},
-		{[]string{"--format", "default"}, []string{"format"}, "default"},
 		{[]string{"--timeout", "111"}, []string{"timeout"}, 111.0},
 		{[]string{"--idle-timeout", "128"}, []string{"idle_timeout"}, 128.0},
 		{[]string{"--config", "test=val"}, []string{"config", "test"}, "val"},
@@ -134,7 +133,6 @@ func TestFnUpdateValues(t *testing.T) {
 		{"--memory", "wibble"},
 		{"--type", "blancmange"},
 		{"--headers", "potatocakes"},
-		{"--format", "myharddisk"},
 		{"--timeout", "86400"},
 		{"--timeout", "sit_in_the_corner"},
 		{"--idle-timeout", "86000"},

@@ -259,7 +259,7 @@ func (h *CLIHarness) CopyFiles(files map[string]string) {
 
 	for src, dest := range files {
 		h.pushHistoryf("cp -r %s %s", src, dest)
-		err := copyAll(src, path.Join(h.testDir, dest))
+		err := copyAll(src, path.Join(h.cwd, dest))
 		if err != nil {
 			h.t.Fatalf("Failed to copy %s -> %s : %v", src, dest, err)
 		}
@@ -375,30 +375,6 @@ func (h *CLIHarness) Fn(args ...string) *CmdResult {
 	return h.FnWithInput("", args...)
 }
 
-// Writes the relevant files to the CWD to produce the smallest function that can be written
-func (h *CLIHarness) WithMinimalFunctionSource() *CLIHarness {
-
-	const dockerFile = `FROM busybox:1.28.3
-RUN	mkdir /app
-ADD	main.sh /app
-WORKDIR /app
-CMD ["./main.sh"]
-`
-	const mainSh = `#!/bin/sh
-echo "hello world";
-`
-
-	const funcYaml = `version: 0.0.1
-schema_version: 20180708
-runtime: docker
-`
-
-	h.WithFile("func.yaml", funcYaml, 0644)
-	h.WithFile("Dockerfile", dockerFile, 0644)
-	h.WithFile("main.sh", mainSh, 0755)
-
-	return h
-}
 
 //NewFuncName creates a valid function name and registers it for deletion
 func (h *CLIHarness) NewFuncName(appName string) string {
@@ -568,7 +544,6 @@ func (h *CLIHarness) CreateFuncfile(funcName, runtime string) *CLIHarness {
 name: ` + funcName + `
 runtime: ` + runtime + `
 entrypoint: ./func
-format: json
 `
 
 	h.WithFile("func.yaml", funcYaml, 0644)
