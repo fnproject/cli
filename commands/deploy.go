@@ -390,12 +390,7 @@ func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.Fu
 
 	return nil
 }
-func expandEnvConfig(configs map[string]string) map[string]string {
-	for k, v := range configs {
-		configs[k] = os.ExpandEnv(v)
-	}
-	return configs
-}
+
 
 func (p *deploycmd) updateAppConfig(appf *common.AppFile) error {
 	app, err := apps.GetAppByName(p.clientV2, appf.Name)
