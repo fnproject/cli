@@ -463,7 +463,7 @@ func ExtractConfig(configs []string) map[string]string {
 	for _, v := range configs {
 		kv := strings.SplitN(v, "=", 2)
 		if len(kv) == 2 {
-			c[kv[0]] =kv[1]
+			c[kv[0]] = kv[1]
 		}
 	}
 	return c
