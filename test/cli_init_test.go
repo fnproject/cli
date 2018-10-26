@@ -16,7 +16,7 @@ func TestSettingFuncName(t *testing.T) {
 		appName := h.NewAppName()
 		funcName := h.NewFuncName(appName)
 		dirName := funcName + "_dir"
-		h.Fn("init", "--runtime", "java", "--name", funcName, dirName).AssertSuccess()
+		h.Fn("init", "--runtime", "go", "--name", funcName, dirName).AssertSuccess()
 
 		h.Cd(dirName)
 

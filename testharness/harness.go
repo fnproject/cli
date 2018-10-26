@@ -375,7 +375,6 @@ func (h *CLIHarness) Fn(args ...string) *CmdResult {
 	return h.FnWithInput("", args...)
 }
 
-
 //NewFuncName creates a valid function name and registers it for deletion
 func (h *CLIHarness) NewFuncName(appName string) string {
 	funcName := randString(8)
@@ -548,4 +547,58 @@ entrypoint: ./func
 
 	h.WithFile("func.yaml", funcYaml, 0644)
 	return h
+}
+
+func (h *CLIHarness) Docker(args ...string) *CmdResult {
+	stdOut := bytes.Buffer{}
+	stdErr := bytes.Buffer{}
+
+	cmd := exec.Command("docker", args...)
+	cmd.Stderr = &stdErr
+	cmd.Stdout = &stdOut
+
+	cmd.Dir = h.cwd
+	cmd.Env = os.Environ()
+
+	cmdString := "docker " + strings.Join(args, " ")
+
+	h.pushHistoryf("%s", cmdString)
+	done := make(chan interface{})
+	timer := time.NewTimer(commandTimeout)
+
+	// If the CLI stalls for more than commandTimeout we send a SIQQUIT which should result in a stack trace in stderr
+	go func() {
+		select {
+		case <-done:
+			return
+		case <-timer.C:
+			h.t.Errorf("Command timed out - killing docker with SIGQUIT - see STDERR log for stack trace of where it was stalled")
+
+			cmd.Process.Signal(syscall.SIGQUIT)
+		}
+	}()
+
+	err := cmd.Run()
+	close(done)
+
+	cmdResult := &CmdResult{
+		OriginalCommand: cmdString,
+		Stdout:          stdOut.String(),
+		Stderr:          stdErr.String(),
+		Cwd:             h.cwd,
+		History:         h.history,
+		ExitState:       cmd.ProcessState,
+		t:               h.t,
+	}
+
+	if err, ok := err.(*exec.ExitError); ok {
+		cmdResult.Success = false
+	} else if err != nil {
+		h.t.Fatalf("Failed to run cmd %v :  %v", args, err)
+	} else {
+		cmdResult.Success = true
+	}
+
+	return cmdResult
+
 }

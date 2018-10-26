@@ -189,10 +189,17 @@ func (lh *KotlinLangHelper) getFDKAPIVersion() (string, error) {
 	}
 
 	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
-	transCfg := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
+	defaultTransport := http.DefaultTransport.(*http.Transport)
+	noVerifyTransport := &http.Transport{
+		Proxy:                 defaultTransport.Proxy,
+		DialContext:           defaultTransport.DialContext,
+		MaxIdleConns:          defaultTransport.MaxIdleConns,
+		IdleConnTimeout:       defaultTransport.IdleConnTimeout,
+		ExpectContinueTimeout: defaultTransport.ExpectContinueTimeout,
+		TLSHandshakeTimeout:   defaultTransport.TLSHandshakeTimeout,
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
 	}
-	client := &http.Client{Transport: transCfg}
+	client := &http.Client{Transport: noVerifyTransport}
 
 	resp, err := client.Get(versionURL)
 	if err != nil || resp.StatusCode != 200 {
