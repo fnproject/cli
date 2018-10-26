@@ -56,7 +56,7 @@ func (t *triggersCmd) create(c *cli.Context) error {
 
 	fn, err := fn.GetFnByName(t.client, app.ID, fnName)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	trigger := &models.Trigger{
@@ -256,8 +256,8 @@ func (t *triggersCmd) inspect(c *cli.Context) error {
 	}
 
 	if c.Bool("endpoint") {
-		endpoint,ok := trigger.Annotations["fnproject.io/trigger/httpEndpoint"].(string)
-		if !ok  {
+		endpoint, ok := trigger.Annotations["fnproject.io/trigger/httpEndpoint"].(string)
+		if !ok {
 			return errors.New("missing or invalid http endpoint on trigger")
 		}
 		fmt.Println(endpoint)
