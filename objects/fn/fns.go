@@ -152,7 +152,7 @@ func WithFlags(c *cli.Context, fn *models.Fn) {
 		fn.Memory = m
 	}
 
-	fn.Config = common.ExtractEnvConfig(c.StringSlice("config"))
+	fn.Config = common.ExtractConfig(c.StringSlice("config"))
 
 	if len(c.StringSlice("annotation")) > 0 {
 		fn.Annotations = common.ExtractAnnotations(c)

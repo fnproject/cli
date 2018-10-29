@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/fnproject/cli/testharness"
-	"strings"
 	"regexp"
+	"strings"
+
+	"github.com/fnproject/cli/testharness"
 )
 
 // TODO: These are both  Super minimal
@@ -40,6 +41,7 @@ func TestSimpleFnFunctionUpdateCycle(t *testing.T) {
 	defer h.Cleanup()
 	appName1 := h.NewAppName()
 	funcName1 := h.NewFuncName(appName1)
+	h.Fn("create", "function", appName1, funcName1, "foo/duffimage:0.0.1").AssertFailed()
 	h.Fn("create", "app", appName1).AssertSuccess()
 	h.Fn("create", "function", appName1, funcName1, "foo/duffimage:0.0.1").AssertSuccess()
 	h.Fn("create", "function", appName1, funcName1, "foo/duffimage:0.0.1").AssertFailed()
@@ -61,7 +63,9 @@ func TestSimpleFnTriggerUpdateCycle(t *testing.T) {
 	appName1 := h.NewAppName()
 	funcName1 := h.NewFuncName(appName1)
 	triggerName1 := h.NewTriggerName(appName1, funcName1)
+	h.Fn("create", "trigger", appName1, funcName1, triggerName1).AssertFailed()
 	h.Fn("create", "app", appName1).AssertSuccess()
+	h.Fn("create", "trigger", appName1, funcName1, triggerName1).AssertFailed()
 	h.Fn("create", "function", appName1, funcName1, "foo/duffimage:0.0.1").AssertSuccess()
 	h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/mytrigger").AssertSuccess()
 	h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/mytrigger").AssertFailed()
@@ -156,8 +160,6 @@ func TestFnUpdateValues(t *testing.T) {
 
 }
 
-
-
 func TestInspectEndpoints(t *testing.T) {
 
 	h := testharness.Create(t)
@@ -166,30 +168,27 @@ func TestInspectEndpoints(t *testing.T) {
 	funcName1 := h.NewFuncName(appName1)
 	h.Fn("create", "app", appName1)
 	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
-	h.Fn("create", "trigger", appName1, funcName1, "t1","--type","http","--source","/trig").AssertSuccess()
+	h.Fn("create", "trigger", appName1, funcName1, "t1", "--type", "http", "--source", "/trig").AssertSuccess()
 
+	res := h.Fn("inspect", "function", appName1, funcName1, "id").AssertSuccess()
+	fnId := strings.Trim(strings.TrimSpace(res.Stdout), "\"")
 
-	res:= h.Fn("inspect","function",appName1,funcName1,"id").AssertSuccess()
-	fnId := strings.Trim(strings.TrimSpace(res.Stdout),"\"")
-
-	res = h.Fn("inspect","function",appName1,funcName1,"--endpoint").AssertSuccess()
+	res = h.Fn("inspect", "function", appName1, funcName1, "--endpoint").AssertSuccess()
 	invokeUrl := strings.TrimSpace(res.Stdout)
 
 	invokePattern := regexp.MustCompile("^http://.*/invoke/" + regexp.QuoteMeta(fnId) + "$")
 
-	if !invokePattern.MatchString(invokeUrl){
-		t.Errorf("Expected invoke URL matching %s, got %s",invokePattern,invokeUrl)
+	if !invokePattern.MatchString(invokeUrl) {
+		t.Errorf("Expected invoke URL matching %s, got %s", invokePattern, invokeUrl)
 	}
 
-
-	res = h.Fn("inspect","trigger",appName1,funcName1,"t1", "--endpoint").AssertSuccess()
+	res = h.Fn("inspect", "trigger", appName1, funcName1, "t1", "--endpoint").AssertSuccess()
 
 	triggerUrl := strings.TrimSpace(res.Stdout)
-	triggerPattern := regexp.MustCompile("^http://.*/t/" + regexp.QuoteMeta(appName1) + "/trig$" )
+	triggerPattern := regexp.MustCompile("^http://.*/t/" + regexp.QuoteMeta(appName1) + "/trig$")
 
 	if !triggerPattern.MatchString(triggerUrl) {
-		t.Errorf("Expected trigger URL matching %s, got %s",triggerPattern,triggerUrl)
+		t.Errorf("Expected trigger URL matching %s, got %s", triggerPattern, triggerUrl)
 	}
-
 
 }
