@@ -19,6 +19,18 @@ func TestFnVersion(t *testing.T) {
 	res.AssertSuccess()
 }
 
+func withMinimalFunction(h *testharness.CLIHarness) {
+
+	h.CopyFiles(map[string]string{
+		"simplefunc/vendor":     "vendor",
+		"simplefunc/func.go":    "func.go",
+		"simplefunc/Gopkg.lock": "Gopkg.lock",
+		"simplefunc/Gopkg.toml": "Gopkg.toml",
+		"simplefunc/func.yaml":  "func.yaml",
+	})
+}
+
+
 // this is messy and nasty  as we generate different potential values for FN_API_URL based on its type
 func fnApiUrlVariations(t *testing.T) []string {
 
@@ -85,7 +97,7 @@ func TestSettingTimeoutWorks(t *testing.T) {
 
 	h.MkDir(funcName)
 	h.Cd(funcName)
-	h.WithMinimalFunctionSource()
+	withMinimalFunction(h)
 	h.FileAppend("func.yaml", "\ntimeout: 50\n\nschema_version: 20180708\n")
 	h.Fn("--verbose", "deploy", "--app", appName, "--local").AssertSuccess()
 	h.Fn("invoke", appName, funcName).AssertSuccess()
@@ -113,7 +125,6 @@ func TestSettingMemoryWorks(t *testing.T) {
 	h.Fn("create", "app", appName).AssertSuccess()
 	res := h.Fn("list", "apps")
 
-
 	if !strings.Contains(res.Stdout, fmt.Sprintf("%s", appName)) {
 		t.Fatalf("Expecting list apps to contain app name , got %v", res)
 	}
@@ -122,7 +133,7 @@ func TestSettingMemoryWorks(t *testing.T) {
 
 	h.MkDir(funcName)
 	h.Cd(funcName)
-	h.WithMinimalFunctionSource()
+	withMinimalFunction(h)
 	h.FileAppend("func.yaml", "memory: 100\nschema_version: 20180708\n")
 	h.Fn("--verbose", "deploy", "--app", appName, "--local").AssertSuccess()
 	h.Fn("invoke", appName, funcName).AssertSuccess()
@@ -185,7 +196,7 @@ func TestAppYamlDeploy(t *testing.T) {
 	h.WithFile("app.yaml", fmt.Sprintf(`name: %s`, appName), 0644)
 	h.MkDir(fnName)
 	h.Cd(fnName)
-	h.WithMinimalFunctionSource()
+	withMinimalFunction(h)
 	h.Cd("")
 	h.Fn("deploy", "--all", "--local").AssertSuccess()
 	h.Fn("invoke", appName, fnName).AssertSuccess()
@@ -211,7 +222,7 @@ func TestBump(t *testing.T) {
 	fnName := h.NewFuncName(appName)
 	h.MkDir(fnName)
 	h.Cd(fnName)
-	h.WithMinimalFunctionSource()
+	withMinimalFunction(h)
 
 	expectFuncYamlVersion("0.0.1")
 
@@ -253,7 +264,6 @@ func TestListID(t *testing.T) {
 	h.Fn("create", "app", appName).AssertSuccess()
 	h.Fn("create", "function", appName, funcName, "foo/duffimage:0.0.1").AssertSuccess()
 	h.Fn("create", "trigger", appName, funcName, triggerName, "--type", "http", "--source", "/mytrigger").AssertSuccess()
-
 
 	h.Fn("list", "apps", appName).AssertSuccess().AssertStdoutContains("ID")
 	h.Fn("list", "fn", appName).AssertSuccess().AssertStdoutContains("ID")

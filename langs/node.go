@@ -51,7 +51,7 @@ const packageJsonContent = `{
 	"author": "",
 	"license": "Apache-2.0",
 	"dependencies": {
-		"@fnproject/fdk": "0.x"
+		"@fnproject/fdk": ">=0.0.11"
 	}
 }
 `
