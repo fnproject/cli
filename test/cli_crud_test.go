@@ -23,6 +23,10 @@ func TestFnAppUpdateCycle(t *testing.T) {
 	h.Fn("create", "app", appName).AssertSuccess()
 	h.Fn("create", "app", appName).AssertFailed()
 	h.Fn("list", "apps", appName).AssertSuccess().AssertStdoutContains(appName)
+	// Test looking up app by name when multiple pages worth of apps exist
+	for i := 0; i < 50; i++ {
+		h.Fn("create", "app", fmt.Sprintf("%s%d", appName, i)).AssertSuccess()
+	}
 	h.Fn("inspect", "app", appName).AssertSuccess().AssertStdoutContains(fmt.Sprintf(`"name": "%s"`, appName))
 	h.Fn("config", "app", appName, "fooConfig", "barval").AssertSuccess()
 	h.Fn("get", "config", "app", appName, "fooConfig").AssertSuccess().AssertStdoutContains("barval")
