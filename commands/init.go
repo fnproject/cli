@@ -466,6 +466,9 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 			if err != nil {
 				return err
 			}
+
+		} else {
+			a.ff.Entrypoint = c.String("entrypoint")
 		}
 
 		if runtime == "" {
@@ -484,8 +487,9 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 				return err
 			}
 			a.ff.Cmd = cmd
+		} else {
+			a.ff.Cmd = c.String("cmd")
 		}
-
 		if helper.FixImagesOnInit() {
 			if a.ff.Build_image == "" {
 				buildImage, err := helper.BuildFromImage()
@@ -505,7 +509,6 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 			}
 		}
 	}
-
 	if a.ff.Entrypoint == "" && a.ff.Cmd == "" {
 		return fmt.Errorf("Could not detect entrypoint or cmd for %v, use --entrypoint and/or --cmd to set them explicitly", a.ff.Runtime)
 	}
