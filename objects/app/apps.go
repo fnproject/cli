@@ -340,18 +340,16 @@ func (n NameNotFoundError) Error() string {
 func GetAppByName(client *fnclient.Fn, appName string) (*modelsv2.App, error) {
 	appsResp, err := client.Apps.ListApps(&apiapps.ListAppsParams{
 		Context: context.Background(),
+		Name:    &appName,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	var app *modelsv2.App
-	for i := 0; i < len(appsResp.Payload.Items); i++ {
-		if appsResp.Payload.Items[i].Name == appName {
-			app = appsResp.Payload.Items[i]
-		}
-	}
-	if app == nil {
+	if len(appsResp.Payload.Items) > 0 {
+		app = appsResp.Payload.Items[0]
+	} else {
 		return nil, NameNotFoundError{appName}
 	}
 
