@@ -82,21 +82,19 @@ func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
 }
 
 const (
-	rubySrcBoilerplate = `
-	  require 'fdk'
+	rubySrcBoilerplate = `require 'fdk'
 
-	  def myfunction(context:, input:)
-	    input_value = input.respond_to?(:fetch) ? input.fetch('name') : input
-	    name = input_value.to_s.strip.empty? ? 'World' : input_value
-	    { message: "Hello #{name}!" }
-	  end
+def myfunction(context:, input:)
+  input_value = input.respond_to?(:fetch) ? input.fetch('name') : input
+  name = input_value.to_s.strip.empty? ? 'World' : input_value
+  { message: "Hello #{name}!" }
+end
 
-	  FDK.handle(target: :myfunction)
+FDK.handle(target: :myfunction)
 `
 
-	rubyGemfileBoilerplate = `
-  	source 'https://rubygems.org' do
-      gem 'fdk', '~> 0.0.14'
-		end
+	rubyGemfileBoilerplate = `source 'https://rubygems.org' do
+  gem 'fdk', '~> 0.0.16'
+end
 `
 )
