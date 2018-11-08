@@ -142,7 +142,8 @@ import (
 	"context"
 
 	"github.com/fnproject/fn/api/server"
-	
+	_ “github.com/fnproject/fn/api/server/defaultexts”
+
 	{{- range .Extensions }}
 		_ "{{ .Name }}"
 	{{- end}}
