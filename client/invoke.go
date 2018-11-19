@@ -3,11 +3,14 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"os"
 	"strings"
 
@@ -42,9 +45,25 @@ type callID struct {
 	Error  apiErr `json:"error"`
 }
 
-func Invoke(provider provider.Provider, invokeUrl string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
+func Invoke(provider provider.Provider, invokeUrl string, lbURL string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
 
 	method = "POST"
+
+	parsedInvokeURL, err := url.Parse(invokeUrl)
+	if err != nil {
+		err = errors.New("Error parsing invoke URL host")
+		return err
+	}
+
+	originalHost := parsedInvokeURL.Hostname()
+
+	// Remove the prefix if fakeDNS is true
+
+	lbParsed, err := url.Parse(lbURL)
+	if err != nil {
+		return errors.New("Error parsing lbURL")
+	}
+	parsedInvokeURL.Host = lbParsed.Host
 
 	// Read the request body (up to the maximum size), as this is used in the
 	// authentication signature
@@ -52,17 +71,21 @@ func Invoke(provider provider.Provider, invokeUrl string, content io.Reader, out
 	if content != nil {
 		b, err := ioutil.ReadAll(io.LimitReader(content, MaximumRequestBodySize))
 		buffer := bytes.NewBuffer(b)
-		req, err = http.NewRequest(method, invokeUrl, buffer)
+		req, err = http.NewRequest(method, parsedInvokeURL.String(), buffer)
 		if err != nil {
 			return fmt.Errorf("Error creating request to service: %s", err)
 		}
 	} else {
 		var err error
-		req, err = http.NewRequest(method, invokeUrl, nil)
+		req, err = http.NewRequest(method, parsedInvokeURL.String(), nil)
 		if err != nil {
 			return fmt.Errorf("Error creating request to service: %s", err)
 		}
 	}
+
+	// Reset Host to original value
+	req.Host = originalHost
+	req.Header.Set("Host", parsedInvokeURL.Hostname())
 
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
@@ -73,8 +96,15 @@ func Invoke(provider provider.Provider, invokeUrl string, content io.Reader, out
 	if len(env) > 0 {
 		EnvAsHeader(req, env)
 	}
+	log.Printf("Sending req u:%s H:%s headers[Host]:%s", req.URL.String(), req.Host, req.Header["Host"])
 
-	transport := provider.WrapCallTransport(http.DefaultTransport)
+	transport := http.DefaultTransport
+
+	if logger.DebugEnabled() {
+		transport = WrapDebugTransport(transport)
+	}
+
+	transport = provider.WrapCallTransport(transport)
 	httpClient := http.Client{Transport: transport}
 
 	if logger.DebugEnabled() {
@@ -89,14 +119,6 @@ func Invoke(provider provider.Provider, invokeUrl string, content io.Reader, out
 
 	if err != nil {
 		return fmt.Errorf("Error invoking fn: %s", err)
-	}
-
-	if logger.DebugEnabled() {
-		b, err := httputil.DumpResponse(resp, true)
-		if err != nil {
-			return err
-		}
-		fmt.Printf(string(b) + "\n")
 	}
 
 	// for sync calls

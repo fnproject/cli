@@ -1,9 +1,8 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
-	"os"
-
 	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/objects/app"
@@ -11,7 +10,7 @@ import (
 	"github.com/fnproject/fn_go/clientv2"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/urfave/cli"
-	"errors"
+	"os"
 )
 
 // FnInvokeEndpointAnnotation is the annotation that exposes the fn invoke endpoint as defined in models/fn.go
@@ -27,6 +26,12 @@ var InvokeFnFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:  "endpoint",
 		Usage: "Specify the function invoke endpoint for this function, the app-name and func-name parameters will be ignored",
+	},
+
+	cli.StringFlag{
+		Name:   "lbURL",
+		Usage:  "Specify the LB URL to send requests to ",
+		Hidden: true,
 	},
 	cli.StringFlag{
 		Name:  "method",
@@ -106,5 +111,11 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 		}
 	}
 
-	return client.Invoke(cl.provider, invokeURL, content, os.Stdout, c.String("method"), c.StringSlice("e"), contentType, c.Bool("display-call-id"))
+	lbUrl := invokeURL
+
+	if c.String("lbURL") != "" {
+		lbUrl = c.String("lbURL")
+	}
+
+	return client.Invoke(cl.provider, invokeURL, lbUrl, content, os.Stdout, c.String("method"), c.StringSlice("e"), contentType, c.Bool("display-call-id"))
 }
