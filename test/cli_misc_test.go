@@ -30,7 +30,6 @@ func withMinimalFunction(h *testharness.CLIHarness) {
 	})
 }
 
-
 // this is messy and nasty  as we generate different potential values for FN_API_URL based on its type
 func fnApiUrlVariations(t *testing.T) []string {
 

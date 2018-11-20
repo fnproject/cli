@@ -79,7 +79,7 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 			newFns = append(newFns, struct {
 				Name  string `json:"name"`
 				Image string `json:"image"`
-				ID string `json:"id"`
+				ID    string `json:"id"`
 			}{
 				fn.Name,
 				fn.Image,
@@ -448,7 +448,6 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	fnName := WithoutSlash(c.Args().Get(1))
 	prop := c.Args().Get(2)
 
-
 	app, err := app.GetAppByName(f.client, appName)
 	if err != nil {
 		return err
@@ -459,12 +458,12 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	}
 
 	if c.Bool("endpoint") {
-		 endpoint,ok:= fn.Annotations["fnproject.io/fn/invokeEndpoint"].(string)
-		 if !ok {
-		 	return errors.New("missing or invalid endpoint on function")
-		 }
-		 fmt.Println(endpoint)
-		 return nil
+		endpoint, ok := fn.Annotations["fnproject.io/fn/invokeEndpoint"].(string)
+		if !ok {
+			return errors.New("missing or invalid endpoint on function")
+		}
+		fmt.Println(endpoint)
+		return nil
 	}
 
 	enc := json.NewEncoder(os.Stdout)

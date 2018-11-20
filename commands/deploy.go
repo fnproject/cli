@@ -391,7 +391,6 @@ func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.Fu
 	return nil
 }
 
-
 func (p *deploycmd) updateAppConfig(appf *common.AppFile) error {
 	app, err := apps.GetAppByName(p.clientV2, appf.Name)
 	if err != nil {
