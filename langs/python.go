@@ -63,13 +63,15 @@ func (h *PythonLangHelper) Entrypoint() (string, error) {
 }
 
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
-	r := []string{}
-	r = append(r, "ADD . /function/")
+	var r []string
 	if exists("requirements.txt") {
+		r = append(r, "ADD requirements.txt /function/")
 		r = append(r, `
 RUN pip3 install --target /python/  --no-cache --no-cache-dir -r requirements.txt &&\
     rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv`)
+
 	}
+	r = append(r, "ADD . /function/")
 	return r
 }
 
@@ -79,12 +81,12 @@ func (h *PythonLangHelper) IsMultiStage() bool {
 
 const (
 	helloPythonSrcBoilerplate = `import fdk
-import json
+import ujson
 
 
 def handler(ctx, data=None, loop=None):
     name = "World"
-    if data and len(data) > 0:
+    if data is not None:
         body = json.loads(data)
         name = body.get("name")
     return {"message": "Hello {0}".format(name)}
