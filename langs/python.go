@@ -86,7 +86,7 @@ import ujson
 
 async def handler(ctx, data=None, loop=None):
     data = data if data else {}
-    body = json.loads(data)
+    body = ujson.loads(data)
     name = body.get("name", "World")
     return {"message": "Hello {0}".format(name)}
 
