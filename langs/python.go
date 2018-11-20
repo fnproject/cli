@@ -84,11 +84,10 @@ const (
 import ujson
 
 
-def handler(ctx, data=None, loop=None):
-    name = "World"
-    if data is not None:
-        body = json.loads(data)
-        name = body.get("name")
+async def handler(ctx, data=None, loop=None):
+    data = data if data else {}
+    body = json.loads(data)
+    name = body.get("name", "World")
     return {"message": "Hello {0}".format(name)}
 
 
