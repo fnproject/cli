@@ -315,6 +315,11 @@ func (a *initFnCmd) init(c *cli.Context) error {
 func runInitImage(initImage string, a *initFnCmd) error {
 	fmt.Println("Building from init-image: " + initImage)
 
+	cmdCheck := exec.Command("docker", "inspect", "--type=image", initImage)
+	if cmdCheck.Run() != nil {
+		return errors.New("Error, can't pull the init-image! Make sure that Docker is running and that the init-image exists.")
+	}
+
 	// Run the initImage
 	var c1ErrB bytes.Buffer
 	tarR, tarW := io.Pipe()
