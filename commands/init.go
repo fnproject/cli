@@ -98,10 +98,6 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Name:  "config,c",
 			Usage: "Function configuration",
 		},
-		cli.StringSliceFlag{
-			Name:  "headers",
-			Usage: "Function response headers",
-		},
 		cli.StringFlag{
 			Name:  "format,f",
 			Usage: "Hot container IO format - default or http",

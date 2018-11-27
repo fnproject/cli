@@ -75,7 +75,6 @@ type FuncFile struct {
 	Timeout     *int32                 `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 	Path        string                 `yaml:"path,omitempty" json:"path,omitempty"`
 	Config      map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
-	Headers     map[string][]string    `yaml:"headers,omitempty" json:"headers,omitempty"`
 	IDLETimeout *int32                 `yaml:"idle_timeout,omitempty" json:"idle_timeout,omitempty"`
 	Annotations map[string]interface{} `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 
