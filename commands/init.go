@@ -249,6 +249,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 		err = runInitImage(initImage, a)
 		if err != nil {
+			os.Remove(dir)
 			return err
 		}
 
