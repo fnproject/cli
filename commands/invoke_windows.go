@@ -1,6 +1,6 @@
 // +build windows
 
-package run
+package commands
 
 import (
 	"io"
@@ -9,7 +9,7 @@ import (
 	"unsafe"
 )
 
-func Stdin() io.Reader {
+func stdin() io.Reader {
 	if isTerminal(int(os.Stdin.Fd())) {
 		return nil
 	}

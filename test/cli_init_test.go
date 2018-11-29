@@ -16,7 +16,7 @@ func TestSettingFuncName(t *testing.T) {
 		appName := h.NewAppName()
 		funcName := h.NewFuncName(appName)
 		dirName := funcName + "_dir"
-		h.Fn("init", "--runtime", "java", "--name", funcName, dirName).AssertSuccess()
+		h.Fn("init", "--runtime", "go", "--name", funcName, dirName).AssertSuccess()
 
 		h.Cd(dirName)
 
@@ -72,7 +72,8 @@ func TestInitImage(t *testing.T) {
 
 		h.Fn("init", "--init-image", origFuncName+"-init", newFuncName)
 		h.Cd(newFuncName)
-		h.Fn("run").AssertSuccess()
+		h.Fn("--registry", "test", "deploy", "--local", "--no-bump", "--app", appName).AssertSuccess()
+		h.Fn("invoke", appName, newFuncName).AssertSuccess()
 
 		newYaml := h.GetYamlFile("func.yaml")
 		if newYaml.Name != newFuncName {

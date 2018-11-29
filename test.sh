@@ -20,6 +20,7 @@ export fn="${CUR_DIR}/fn"
 #on CI these can take a while
 go test -v $(go list ./... |  grep -pv "^github.com/fnproject/cli/test$")
 
+
 # Our test directory
 OS=$(uname -s)
 if [ $OS = "Darwin" ]; then

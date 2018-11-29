@@ -2,6 +2,7 @@ package langs
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -64,7 +65,7 @@ func (lh *KotlinLangHelper) RunFromImage() (string, error) {
 func (lh *KotlinLangHelper) HasBoilerplate() bool { return true }
 
 // Kotlin defaults to http
-func (lh *KotlinLangHelper) DefaultFormat() string { return "http" }
+func (lh *KotlinLangHelper) DefaultFormat() string { return "http-stream" }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime.
 // The default boilerplate is for a Maven project.
@@ -186,7 +187,21 @@ func (lh *KotlinLangHelper) getFDKAPIVersion() (string, error) {
 	if version != "" {
 		return version, nil
 	}
-	resp, err := http.Get(versionURL)
+
+	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
+	defaultTransport := http.DefaultTransport.(*http.Transport)
+	noVerifyTransport := &http.Transport{
+		Proxy:                 defaultTransport.Proxy,
+		DialContext:           defaultTransport.DialContext,
+		MaxIdleConns:          defaultTransport.MaxIdleConns,
+		IdleConnTimeout:       defaultTransport.IdleConnTimeout,
+		ExpectContinueTimeout: defaultTransport.ExpectContinueTimeout,
+		TLSHandshakeTimeout:   defaultTransport.TLSHandshakeTimeout,
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: noVerifyTransport}
+
+	resp, err := client.Get(versionURL)
 	if err != nil || resp.StatusCode != 200 {
 		return "", fetchError
 	}

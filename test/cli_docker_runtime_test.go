@@ -1,32 +1,34 @@
 package test
 
 import (
-	"testing"
-
 	"github.com/fnproject/cli/testharness"
+	"testing"
 )
 
 const dockerFile = `FROM golang:latest
-RUN mkdir /app
-ADD . /app
-WORKDIR /app
-RUN go build -o hello .
-CMD ["./hello"]
+FROM fnproject/go:dev as build-stage
+WORKDIR /function
+ADD . /go/src/func/
+RUN cd /go/src/func/ && go build -o func
+FROM fnproject/go
+WORKDIR /function
+COPY --from=build-stage /go/src/func/func /function/
+ENTRYPOINT ["./func"]
 `
-const goFuncDotGo = `package main
-
-import (
-	"fmt"
-)
-
-func main() {
-	fmt.Println("Hello from Fn for func file 'docker' runtime test !")
-}`
 
 const funcYaml = `name: fn_test_hello_docker_runtime
 version: 0.0.1
-runtime: docker
-path: /fn_test_hello_docker_runtime`
+runtime: docker`
+
+func withGoFunction(h *testharness.CLIHarness) {
+
+	h.CopyFiles(map[string]string{
+		"simplefunc/vendor":     "vendor",
+		"simplefunc/func.go":    "func.go",
+		"simplefunc/Gopkg.lock": "Gopkg.lock",
+		"simplefunc/Gopkg.toml": "Gopkg.toml",
+	})
+}
 
 func TestDockerRuntimeInit(t *testing.T) {
 	t.Parallel()
@@ -37,14 +39,13 @@ func TestDockerRuntimeInit(t *testing.T) {
 	fnName := tctx.NewFuncName(appName)
 	tctx.MkDir(fnName)
 	tctx.Cd(fnName)
-
+	withGoFunction(tctx)
 	tctx.WithFile("Dockerfile", dockerFile, 0644)
-	tctx.WithFile("func.go", goFuncDotGo, 0644)
 
 	tctx.Fn("init").AssertSuccess()
 	tctx.Fn("--verbose", "build").AssertSuccess()
-	tctx.Fn("run").AssertSuccess()
-
+	tctx.Fn("--registry", "test", "deploy", "--local", "--app", appName).AssertSuccess()
+	tctx.Fn("invoke", appName, fnName).AssertSuccess()
 }
 
 func TestDockerRuntimeBuildFailsWithNoDockerfile(t *testing.T) {
@@ -56,9 +57,8 @@ func TestDockerRuntimeBuildFailsWithNoDockerfile(t *testing.T) {
 	fnName := tctx.NewFuncName(appName)
 	tctx.MkDir(fnName)
 	tctx.Cd(fnName)
-
+	withGoFunction(tctx)
 	tctx.WithFile("func.yaml", funcYaml, 0644)
-	tctx.WithFile("func.go", goFuncDotGo, 0644)
 
 	tctx.Fn("--verbose", "build").AssertFailed().AssertStderrContains("Dockerfile does not exist")
 

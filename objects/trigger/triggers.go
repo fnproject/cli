@@ -56,7 +56,7 @@ func (t *triggersCmd) create(c *cli.Context) error {
 
 	fn, err := fn.GetFnByName(t.client, app.ID, fnName)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	trigger := &models.Trigger{
@@ -110,6 +110,9 @@ func CreateTrigger(client *clientv2.Fn, trigger *models.Trigger) error {
 	}
 
 	fmt.Println("Successfully created trigger:", resp.Payload.Name)
+	endpoint := resp.Payload.Annotations["fnproject.io/trigger/httpEndpoint"]
+	fmt.Println("Trigger Endpoint:", endpoint)
+
 	return nil
 }
 
@@ -175,13 +178,13 @@ func (t *triggersCmd) list(c *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
 	if len(fnName) != 0 {
 
-		fmt.Fprint(w, "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
+		fmt.Fprint(w, "NAME", "\t", "ID", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
 		for _, trigger := range resTriggers {
 			endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
-			fmt.Fprint(w, trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
+			fmt.Fprint(w, trigger.Name, "\t", trigger.ID, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
 		}
 	} else {
-		fmt.Fprint(w, "FUNCTION", "\t", "NAME", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
+		fmt.Fprint(w, "FUNCTION", "\t", "NAME", "\t", "ID", "\t", "TYPE", "\t", "SOURCE", "\t", "ENDPOINT", "\n")
 		for _, trigger := range resTriggers {
 			endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
 
@@ -193,7 +196,7 @@ func (t *triggersCmd) list(c *cli.Context) error {
 				return err
 			}
 			fnName = resp.Payload.Name
-			fmt.Fprint(w, fnName, "\t", trigger.Name, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
+			fmt.Fprint(w, fnName, "\t", trigger.Name, "\t", trigger.ID, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
 		}
 	}
 	w.Flush()
@@ -250,6 +253,15 @@ func (t *triggersCmd) inspect(c *cli.Context) error {
 	trigger, err := GetTrigger(t.client, appName, fnName, triggerName)
 	if err != nil {
 		return err
+	}
+
+	if c.Bool("endpoint") {
+		endpoint, ok := trigger.Annotations["fnproject.io/trigger/httpEndpoint"].(string)
+		if !ok {
+			return errors.New("missing or invalid http endpoint on trigger")
+		}
+		fmt.Println(endpoint)
+		return nil
 	}
 
 	enc := json.NewEncoder(os.Stdout)

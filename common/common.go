@@ -278,7 +278,9 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 		close(quit)
 		fmt.Fprintln(os.Stderr)
 		if err != nil {
-			fmt.Printf("%v Run with `--verbose` flag to see what went wrong. eg: `fn --verbose CMD`\n", color.RedString("Error during build."))
+			if verbose == false {
+				fmt.Printf("%v Run with `--verbose` flag to see what went wrong. eg: `fn --verbose CMD`\n", color.RedString("Error during build."))
+			}
 			return fmt.Errorf("error running docker build: %v", err)
 		}
 	case signal := <-cancel:
@@ -292,7 +294,7 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 func dockerVersionCheck() error {
 	out, err := exec.Command("docker", "version", "--format", "{{.Server.Version}}").Output()
 	if err != nil {
-		return fmt.Errorf("could not check Docker version: %v", err)
+		return fmt.Errorf("Cannot connect to the Docker daemon, make sure you have it installed and running: %v", err)
 	}
 	// dev / test builds append '-ce', trim this
 	trimmed := strings.TrimRightFunc(string(out), func(r rune) bool { return r != '.' && !unicode.IsDigit(r) })
@@ -455,13 +457,13 @@ func stringToSlice(in string) string {
 	return buffer.String()
 }
 
-// ExtractEnvConfig extract env vars from configuration.
-func ExtractEnvConfig(configs []string) map[string]string {
+// ExtractConfig parses key-value configuration into a map
+func ExtractConfig(configs []string) map[string]string {
 	c := make(map[string]string)
 	for _, v := range configs {
 		kv := strings.SplitN(v, "=", 2)
 		if len(kv) == 2 {
-			c[kv[0]] = os.ExpandEnv(kv[1])
+			c[kv[0]] = kv[1]
 		}
 	}
 	return c

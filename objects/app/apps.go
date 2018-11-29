@@ -31,7 +31,10 @@ func printApps(c *cli.Context, apps []*modelsv2.App) error {
 		for _, app := range apps {
 			a := struct {
 				Name string `json:"name"`
-			}{app.Name}
+				ID   string `json:"id"`
+			}{app.Name,
+				app.ID,
+			}
 			allApps = append(allApps, a)
 		}
 		b, err := json.MarshalIndent(allApps, "", "    ")
@@ -41,9 +44,9 @@ func printApps(c *cli.Context, apps []*modelsv2.App) error {
 		fmt.Fprint(os.Stdout, string(b))
 	} else {
 		w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-		fmt.Fprint(w, "NAME", "\n")
+		fmt.Fprint(w, "NAME", "\t", "ID", "\t", "\n")
 		for _, app := range apps {
-			fmt.Fprint(w, app.Name, "\n")
+			fmt.Fprint(w, app.Name, "\t", app.ID, "\t", "\n")
 
 		}
 		if err := w.Flush(); err != nil {
@@ -89,11 +92,11 @@ func (a *appsCmd) list(c *cli.Context) error {
 }
 
 func appWithFlags(c *cli.Context, app *modelsv2.App) {
-	if app.SyslogURL == "" {
+	if len(c.String("syslog-url")) > 0 {
 		app.SyslogURL = c.String("syslog-url")
 	}
-	if len(app.Config) == 0 {
-		app.Config = common.ExtractEnvConfig(c.StringSlice("config"))
+	if len(c.StringSlice("config")) > 0 {
+		app.Config = common.ExtractConfig(c.StringSlice("config"))
 	}
 	if len(c.StringSlice("annotation")) > 0 {
 		app.Annotations = common.ExtractAnnotations(c)
@@ -337,18 +340,16 @@ func (n NameNotFoundError) Error() string {
 func GetAppByName(client *fnclient.Fn, appName string) (*modelsv2.App, error) {
 	appsResp, err := client.Apps.ListApps(&apiapps.ListAppsParams{
 		Context: context.Background(),
+		Name:    &appName,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	var app *modelsv2.App
-	for i := 0; i < len(appsResp.Payload.Items); i++ {
-		if appsResp.Payload.Items[i].Name == appName {
-			app = appsResp.Payload.Items[i]
-		}
-	}
-	if app == nil {
+	if len(appsResp.Payload.Items) > 0 {
+		app = appsResp.Payload.Items[0]
+	} else {
 		return nil, NameNotFoundError{appName}
 	}
 

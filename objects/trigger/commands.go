@@ -129,6 +129,12 @@ func Inspect() cli.Command {
 		Aliases:     []string{"t", "tr"},
 		Description: "This command gets one of all trigger properties.",
 		Usage:       "Retrieve one or all trigger properties",
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "endpoint",
+				Usage: "Output the trigger HTTP endpoint if set",
+			},
+		},
 		Before: func(ctx *cli.Context) error {
 			var err error
 			t.provider, err = client.CurrentProvider()

@@ -1,7 +1,6 @@
 package langs
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -33,15 +32,14 @@ func (lh *NodeLangHelper) RunFromImage() (string, error) {
 	return "fnproject/node", nil
 }
 
-const funcJsContent = `var fdk=require('@fnproject/fdk');
+const funcJsContent = `const fdk=require('@fnproject/fdk');
 
 fdk.handle(function(input){
-  var name = 'World';
+  let name = 'World';
   if (input.name) {
     name = input.name;
   }
-  response = {'message': 'Hello ' + name}
-  return response
+  return {'message': 'Hello ' + name}
 })
 `
 
@@ -53,7 +51,7 @@ const packageJsonContent = `{
 	"author": "",
 	"license": "Apache-2.0",
 	"dependencies": {
-		"@fnproject/fdk": "0.x"
+		"@fnproject/fdk": ">=0.0.11"
 	}
 }
 `
@@ -61,7 +59,6 @@ const packageJsonContent = `{
 func (lh *NodeLangHelper) GenerateBoilerplate(path string) error {
 	pathToPackageJsonFile := filepath.Join(path, "package.json")
 	pathToFuncJs := filepath.Join(path, "func.js")
-	testFile := filepath.Join(path, "test.json")
 
 	if exists(pathToPackageJsonFile) || exists(pathToFuncJs) {
 		return ErrBoilerplateExists
@@ -76,19 +73,12 @@ func (lh *NodeLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	if exists(testFile) {
-		fmt.Println("test.json already exists, skipping")
-	} else {
-		if err := ioutil.WriteFile(testFile, []byte(goTestBoilerPlate), os.FileMode(0644)); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
 func (lh *NodeLangHelper) HasBoilerplate() bool { return true }
 
-func (lh *NodeLangHelper) DefaultFormat() string { return "json" }
+func (lh *NodeLangHelper) DefaultFormat() string { return "http-stream" }
 
 func (lh *NodeLangHelper) Entrypoint() (string, error) {
 	return "node func.js", nil

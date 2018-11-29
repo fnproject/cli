@@ -259,7 +259,7 @@ func (h *CLIHarness) CopyFiles(files map[string]string) {
 
 	for src, dest := range files {
 		h.pushHistoryf("cp -r %s %s", src, dest)
-		err := copyAll(src, path.Join(h.testDir, dest))
+		err := copyAll(src, path.Join(h.cwd, dest))
 		if err != nil {
 			h.t.Fatalf("Failed to copy %s -> %s : %v", src, dest, err)
 		}
@@ -373,31 +373,6 @@ func (h *CLIHarness) FnWithInput(input string, args ...string) *CmdResult {
 // Fn runs the Fn ClI with the specified arguments
 func (h *CLIHarness) Fn(args ...string) *CmdResult {
 	return h.FnWithInput("", args...)
-}
-
-// Writes the relevant files to the CWD to produce the smallest function that can be written
-func (h *CLIHarness) WithMinimalFunctionSource() *CLIHarness {
-
-	const dockerFile = `FROM busybox:1.28.3
-RUN	mkdir /app
-ADD	main.sh /app
-WORKDIR /app
-CMD ["./main.sh"]
-`
-	const mainSh = `#!/bin/sh
-echo "hello world";
-`
-
-	const funcYaml = `version: 0.0.1
-schema_version: 20180708
-runtime: docker
-`
-
-	h.WithFile("func.yaml", funcYaml, 0644)
-	h.WithFile("Dockerfile", dockerFile, 0644)
-	h.WithFile("main.sh", mainSh, 0755)
-
-	return h
 }
 
 //NewFuncName creates a valid function name and registers it for deletion
@@ -568,9 +543,62 @@ func (h *CLIHarness) CreateFuncfile(funcName, runtime string) *CLIHarness {
 name: ` + funcName + `
 runtime: ` + runtime + `
 entrypoint: ./func
-format: json
 `
 
 	h.WithFile("func.yaml", funcYaml, 0644)
 	return h
+}
+
+func (h *CLIHarness) Docker(args ...string) *CmdResult {
+	stdOut := bytes.Buffer{}
+	stdErr := bytes.Buffer{}
+
+	cmd := exec.Command("docker", args...)
+	cmd.Stderr = &stdErr
+	cmd.Stdout = &stdOut
+
+	cmd.Dir = h.cwd
+	cmd.Env = os.Environ()
+
+	cmdString := "docker " + strings.Join(args, " ")
+
+	h.pushHistoryf("%s", cmdString)
+	done := make(chan interface{})
+	timer := time.NewTimer(commandTimeout)
+
+	// If the CLI stalls for more than commandTimeout we send a SIQQUIT which should result in a stack trace in stderr
+	go func() {
+		select {
+		case <-done:
+			return
+		case <-timer.C:
+			h.t.Errorf("Command timed out - killing docker with SIGQUIT - see STDERR log for stack trace of where it was stalled")
+
+			cmd.Process.Signal(syscall.SIGQUIT)
+		}
+	}()
+
+	err := cmd.Run()
+	close(done)
+
+	cmdResult := &CmdResult{
+		OriginalCommand: cmdString,
+		Stdout:          stdOut.String(),
+		Stderr:          stdErr.String(),
+		Cwd:             h.cwd,
+		History:         h.history,
+		ExitState:       cmd.ProcessState,
+		t:               h.t,
+	}
+
+	if err, ok := err.(*exec.ExitError); ok {
+		cmdResult.Success = false
+	} else if err != nil {
+		h.t.Fatalf("Failed to run cmd %v :  %v", args, err)
+	} else {
+		cmdResult.Success = true
+	}
+
+	return cmdResult
+
 }

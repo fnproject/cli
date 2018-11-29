@@ -25,7 +25,7 @@ func (h *RubyLangHelper) Extensions() []string {
 	return []string{".rb"}
 }
 func (h *RubyLangHelper) DefaultFormat() string {
-	return "json"
+	return "http-stream"
 }
 func (h *RubyLangHelper) BuildFromImage() (string, error) {
 	return "fnproject/ruby:dev", nil
@@ -69,10 +69,6 @@ func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
 	if exists(gemFile) {
 		return fmt.Errorf(msg, "Gemfile")
 	}
-	testFile := filepath.Join(path, "test.json")
-	if exists(testFile) {
-		return fmt.Errorf(msg, "test.json")
-	}
 
 	if err := ioutil.WriteFile(codeFile, []byte(rubySrcBoilerplate), os.FileMode(0644)); err != nil {
 		return err
@@ -82,57 +78,23 @@ func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(testFile, []byte(rubyTestBoilerPlate), os.FileMode(0644)); err != nil {
-		return err
-	}
 	return nil
 }
 
 const (
-	rubySrcBoilerplate = `
-	  require 'fdk'
+	rubySrcBoilerplate = `require 'fdk'
 
-	  def myfunction(context:, input:)
-	    input_value = input.respond_to?(:fetch) ? input.fetch('name') : input
-	    name = input_value.to_s.strip.empty? ? 'World' : input_value
-	    { message: "Hello #{name}!" }
-	  end
+def myfunction(context:, input:)
+  input_value = input.respond_to?(:fetch) ? input.fetch('name') : input
+  name = input_value.to_s.strip.empty? ? 'World' : input_value
+  { message: "Hello #{name}!" }
+end
 
-	  FDK.handle(:myfunction)
+FDK.handle(target: :myfunction)
 `
 
-	rubyGemfileBoilerplate = `
-  	source 'https://rubygems.org' do
-      gem 'fdk', '~> 0.0.13'
-		end
-`
-
-	// Could use same test for most langs
-	rubyTestBoilerPlate = `{
-    "tests": [
-        {
-            "input": {
-                "body": {
-                    "name": "Johnny"
-                }
-            },
-            "output": {
-                "body": {
-                    "message": "Hello Johnny!"
-                }
-            }
-        },
-        {
-            "input": {
-                "body": ""
-            },
-            "output": {
-                "body": {
-                    "message": "Hello World!"
-                }
-            }
-        }
-    ]
-}
+	rubyGemfileBoilerplate = `source 'https://rubygems.org' do
+  gem 'fdk', '~> 0.0.16'
+end
 `
 )

@@ -83,7 +83,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 		},
 		cli.StringFlag{
 			Name:        "trigger",
-			Usage:       "Specify the trigger type.",
+			Usage:       "Specify the trigger type - permitted values are 'http'.",
 			Destination: &a.triggerType,
 		},
 		cli.Uint64Flag{
@@ -205,6 +205,12 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	}
 
 	if a.triggerType != "" {
+		a.triggerType = strings.ToLower(a.triggerType)
+		ok := validateTriggerType(a.triggerType)
+		if !ok {
+			return fmt.Errorf("Init does not support the trigger type '%s'.\n Permitted values are 'http'.", a.triggerType)
+		}
+
 		trig := make([]common.Trigger, 1)
 		trig[0] = common.Trigger{
 			Name:   a.ff.Name + "-trigger",
@@ -213,6 +219,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 
 		a.ff.Triggers = trig
+
 	}
 
 	err = os.Chdir(dir)
@@ -459,6 +466,9 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 			if err != nil {
 				return err
 			}
+
+		} else {
+			a.ff.Entrypoint = c.String("entrypoint")
 		}
 
 		if runtime == "" {
@@ -477,8 +487,9 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 				return err
 			}
 			a.ff.Cmd = cmd
+		} else {
+			a.ff.Cmd = c.String("cmd")
 		}
-
 		if helper.FixImagesOnInit() {
 			if a.ff.Build_image == "" {
 				buildImage, err := helper.BuildFromImage()
@@ -498,7 +509,6 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 			}
 		}
 	}
-
 	if a.ff.Entrypoint == "" && a.ff.Cmd == "" {
 		return fmt.Errorf("Could not detect entrypoint or cmd for %v, use --entrypoint and/or --cmd to set them explicitly", a.ff.Runtime)
 	}
@@ -513,7 +523,6 @@ func detectRuntime(path string) (langs.LangHelper, error) {
 			filenames = append(filenames,
 				filepath.Join(path, fmt.Sprintf("func%s", ext)),
 				filepath.Join(path, fmt.Sprintf("Func%s", ext)),
-				filepath.Join(path, fmt.Sprintf("src/main%s", ext)), // rust
 			)
 		}
 		for _, filename := range filenames {
@@ -523,4 +532,13 @@ func detectRuntime(path string) (langs.LangHelper, error) {
 		}
 	}
 	return nil, fmt.Errorf("No supported files found to guess runtime, please set runtime explicitly with --runtime flag")
+}
+
+func validateTriggerType(triggerType string) bool {
+	switch triggerType {
+	case "http":
+		return true
+	default:
+		return false
+	}
 }

@@ -10,7 +10,7 @@ func Create() cli.Command {
 		ArgsUsage:   "<context>",
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This command creates a new context for a created application.",
-		Action:      create,
+		Action:      createCtx,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "provider",
@@ -35,7 +35,7 @@ func List() cli.Command {
 		Aliases:     []string{"context", "ctx"},
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This command returns a list of contexts.",
-		Action:      list,
+		Action:      listCtx,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "output",
@@ -54,7 +54,7 @@ func Delete() cli.Command {
 		ArgsUsage:   "<context>",
 		Description: "This command deletes a context.",
 		Category:    "MANAGEMENT COMMAND",
-		Action:      delete,
+		Action:      deleteCtx,
 	}
 }
 
@@ -64,7 +64,7 @@ func Inspect() cli.Command {
 		Usage:    "Inspect the contents of a context, if no context is specified the current-context will be used.",
 		Aliases:  []string{"ctx"},
 		Category: "MANAGEMENT COMMAND",
-		Action:   inspect,
+		Action:   inspectCtx,
 	}
 }
 
@@ -74,10 +74,16 @@ func Update() cli.Command {
 		Name:        "context",
 		Usage:       "Update context files",
 		Aliases:     []string{"ctx"},
-		ArgsUsage:   "<key> <value>",
+		ArgsUsage:   "<key> [value]",
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This command updates the current context file.",
-		Action:      ctxMap.update,
+		Action:      ctxMap.updateCtx,
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "delete",
+				Usage: "Delete key=value pair from context file.",
+			},
+		},
 	}
 }
 
@@ -89,7 +95,7 @@ func Use() cli.Command {
 		ArgsUsage:   "<context>",
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This command uses context for future invocations.",
-		Action:      use,
+		Action:      useCtx,
 	}
 }
 
@@ -100,6 +106,6 @@ func Unset() cli.Command {
 		Aliases:     []string{"ctx"},
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This command unsets the current context in use.",
-		Action:      unset,
+		Action:      unsetCtx,
 	}
 }
