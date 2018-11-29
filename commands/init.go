@@ -326,24 +326,20 @@ func runInitImage(initImage string, a *initFnCmd) error {
 	stdout := io.Writer(&stdoutBuf)
 	stderr := io.Writer(&stderrBuf)
 
-	err := cmd.Start() // can start ever fail?
+	errStart := cmd.Start()
 
-	go func() {
-		_, errStdout = io.Copy(stdout, stdoutIn)
-	}()
+	_, errStdout = io.Copy(stdout, stdoutIn)
+	_, errStderr = io.Copy(stderr, stderrIn)
 
-	go func() {
-		_, errStderr = io.Copy(stderr, stderrIn)
-	}()
+	errUntar := untarStream(bytes.NewReader(stdoutBuf.Bytes()))
 
-	err = cmd.Wait()
-	if err != nil || errStdout != nil || errStderr != nil {
-		return errors.New("Error, unbale to use the init-image! Make sure that Docker is running and that the init-image exists.")
+	err := cmd.Wait()
+	if err != nil || errStdout != nil || errStderr != nil || errStart != nil {
+		return errors.New("Error, unbale to use the init-image! Make sure that Docker is running and that the init-image exists")
 	}
 
-	err = untarStream(bytes.NewReader(stdoutBuf.Bytes()))
-	if err != nil {
-		return errors.New("Error un-tarring the output of the init-image " + err.Error())
+	if errUntar != nil {
+		return errors.New("Error un-tarring the output of the init-image")
 	}
 
 	return nil
