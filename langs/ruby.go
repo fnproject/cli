@@ -94,7 +94,7 @@ FDK.handle(target: :myfunction)
 `
 
 	rubyGemfileBoilerplate = `source 'https://rubygems.org' do
-  gem 'fdk', '~> 0.0.16'
+  gem 'fdk', '>= 0.0.17'
 end
 `
 )
