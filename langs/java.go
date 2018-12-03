@@ -308,6 +308,14 @@ const (
                     <target>%s</target>
                 </configuration>
             </plugin>
+            <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-surefire-plugin</artifactId>
+                 <version>2.22.1</version>
+                 <configuration>
+                     <useSystemClassLoader>false</useSystemClassLoader>
+                 </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
