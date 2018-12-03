@@ -38,7 +38,10 @@ func (lh *JavaLangHelper) LangStrings() []string {
 	if lh.version == "1.8" {
 		return []string{"java8"}
 	}
-	return []string{"java9", "java"}
+	if lh.version == "9" {
+		return []string{"java9"}
+	}
+	return []string{"java11", "java"}
 
 }
 func (lh *JavaLangHelper) Extensions() []string {
@@ -55,9 +58,11 @@ func (lh *JavaLangHelper) BuildFromImage() (string, error) {
 
 	if lh.version == "1.8" {
 		return fmt.Sprintf("fnproject/fn-java-fdk-build:%s", fdkVersion), nil
-	} else if lh.version == "9" {
-		return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk9-%s", fdkVersion), nil
-	} else {
+		} else if lh.version == "9" {
+			return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk9-%s", fdkVersion), nil
+		} else if lh.version == "11" {
+			return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk11-%s", fdkVersion), nil
+		} else {
 		return "", fmt.Errorf("unsupported java version %s", lh.version)
 	}
 }
@@ -72,6 +77,8 @@ func (lh *JavaLangHelper) RunFromImage() (string, error) {
 		return fmt.Sprintf("fnproject/fn-java-fdk:%s", fdkVersion), nil
 	} else if lh.version == "9" {
 		return fmt.Sprintf("fnproject/fn-java-fdk:jdk9-%s", fdkVersion), nil
+	} else if lh.version == "11" {
+		return fmt.Sprintf("fnproject/fn-java-fdk:jdk11-%s", fdkVersion), nil
 	} else {
 		return "", fmt.Errorf("unsupported java version %s", lh.version)
 	}
