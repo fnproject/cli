@@ -90,17 +90,9 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Name:  "memory,m",
 			Usage: "Memory in MiB",
 		},
-		cli.StringFlag{
-			Name:  "type,t",
-			Usage: "Function type - sync or async",
-		},
 		cli.StringSliceFlag{
 			Name:  "config,c",
 			Usage: "Function configuration",
-		},
-		cli.StringFlag{
-			Name:  "format,f",
-			Usage: "Hot container IO format - default or http",
 		},
 		cli.IntFlag{
 			Name:  "timeout",
