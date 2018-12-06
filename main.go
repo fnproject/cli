@@ -40,6 +40,7 @@ func newFn() *cli.App {
 		cli.StringFlag{
 			Name:  "context",
 			Usage: "Use --context to select context configuration file",
+			EnvVar: "FN_CONTEXT",
 		},
 		cli.StringFlag{
 			Name:  "registry",
