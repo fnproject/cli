@@ -77,7 +77,7 @@ func (lh *JavaLangHelper) RunFromImage() (string, error) {
 	} else if lh.version == "9" {
 		return fmt.Sprintf("fnproject/fn-java-fdk:jdk9-%s", fdkVersion), nil
 	} else if lh.version == "11" {
-		return fmt.Sprintf("fnproject/fn-java-fdk:jdk11-%s", fdkVersion), nil
+		return fmt.Sprintf("fnproject/fn-java-fdk:jre11-%s", fdkVersion), nil
 	} else {
 		return "", fmt.Errorf("unsupported java version %s", lh.version)
 	}
