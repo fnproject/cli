@@ -92,7 +92,7 @@ func (a *appsCmd) list(c *cli.Context) error {
 }
 
 func appWithFlags(c *cli.Context, app *modelsv2.App) {
-	if len(c.String("syslog-url")) > 0 {
+	if c.IsSet("syslog-url") {
 		app.SyslogURL = c.String("syslog-url")
 	}
 	if len(c.StringSlice("config")) > 0 {
