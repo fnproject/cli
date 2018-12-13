@@ -59,7 +59,7 @@ func (h *PythonLangHelper) RunFromImage() (string, error) {
 }
 
 func (h *PythonLangHelper) Entrypoint() (string, error) {
-	return "/python/bin/fdk func.py handler", nil
+	return "/python/bin/fdk /function/func.py handler", nil
 }
 
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
@@ -81,9 +81,6 @@ func (h *PythonLangHelper) IsMultiStage() bool {
 
 const (
 	helloPythonSrcBoilerplate = `import io
-import pytest
-
-from fdk import fixtures
 from fdk import response
 
 
@@ -101,17 +98,6 @@ def handler(ctx, data: io.BytesIO=None):
             {"message": "Hello {0}".format(name)}), 
         headers={"Content-Type": "application/json"}
     )
-
-
-@pytest.mark.asyncio
-async def test_parse_request_without_data():
-    call = await fixtures.setup_fn_call(handler)
-
-    content, status, headers = await call
-
-    assert 200 == status
-    assert {"message": "Hello World"} == json.loads(content)
-    assert "application/json" == headers.get("Content-Type")
 `
 	reqsPythonSrcBoilerplate = `fdk`
 )
