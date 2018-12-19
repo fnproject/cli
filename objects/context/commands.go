@@ -1,7 +1,12 @@
 package context
 
-import "github.com/urfave/cli"
+import (
+	"fmt"
 
+	"github.com/urfave/cli"
+)
+
+// Create context command
 func Create() cli.Command {
 	return cli.Command{
 		Name:        "context",
@@ -28,6 +33,7 @@ func Create() cli.Command {
 	}
 }
 
+// List contexts command
 func List() cli.Command {
 	return cli.Command{
 		Name:        "contexts",
@@ -46,6 +52,7 @@ func List() cli.Command {
 	}
 }
 
+// Delete context command
 func Delete() cli.Command {
 	return cli.Command{
 		Name:        "context",
@@ -55,9 +62,19 @@ func Delete() cli.Command {
 		Description: "This command deletes a context.",
 		Category:    "MANAGEMENT COMMAND",
 		Action:      deleteCtx,
+		BashComplete: func(ctx *cli.Context) {
+			contexts, err := getAvailableContexts()
+			if err != nil {
+				return
+			}
+			for _, c := range contexts {
+				fmt.Println(c.Name)
+			}
+		},
 	}
 }
 
+// Inspect context command
 func Inspect() cli.Command {
 	return cli.Command{
 		Name:     "context",
@@ -68,6 +85,7 @@ func Inspect() cli.Command {
 	}
 }
 
+// Update context command
 func Update() cli.Command {
 	ctxMap := ContextMap{}
 	return cli.Command{
@@ -87,6 +105,7 @@ func Update() cli.Command {
 	}
 }
 
+// Use context command
 func Use() cli.Command {
 	return cli.Command{
 		Name:        "context",
@@ -96,9 +115,19 @@ func Use() cli.Command {
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This command uses context for future invocations.",
 		Action:      useCtx,
+		BashComplete: func(ctx *cli.Context) {
+			contexts, err := getAvailableContexts()
+			if err != nil {
+				return
+			}
+			for _, c := range contexts {
+				fmt.Println(c.Name)
+			}
+		},
 	}
 }
 
+// Unset context command
 func Unset() cli.Command {
 	return cli.Command{
 		Name:        "context",

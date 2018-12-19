@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/urfave/cli"
 )
 
@@ -15,5 +17,10 @@ func ListCommand() cli.Command {
 		ArgsUsage:   "<subcommand>",
 		Description: "This command returns a list of created objects ('app', 'call', 'context', 'function' or 'trigger') or configurations.",
 		Subcommands: GetCommands(ListCmds),
+		BashComplete: func(ctx *cli.Context) {
+			for _, c := range GetCommands(ListCmds) {
+				fmt.Println(c.Name)
+			}
+		},
 	}
 }

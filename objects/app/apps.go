@@ -57,19 +57,31 @@ func printApps(c *cli.Context, apps []*modelsv2.App) error {
 }
 
 func (a *appsCmd) list(c *cli.Context) error {
+	resApps, err := a.getApps(c)
+	if err != nil {
+		return err
+	}
+
+	if err := printApps(c, resApps); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *appsCmd) getApps(c *cli.Context) ([]*modelsv2.App, error) {
 	params := &apiapps.ListAppsParams{Context: context.Background()}
 	var resApps []*modelsv2.App
 	for {
 		resp, err := a.client.Apps.ListApps(params)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		resApps = append(resApps, resp.Payload.Items...)
 
 		n := c.Int64("n")
 		if n < 0 {
-			return errors.New("Number of calls: negative value not allowed")
+			return nil, errors.New("Number of calls: negative value not allowed")
 		}
 
 		howManyMore := n - int64(len(resApps)+len(resp.Payload.Items))
@@ -82,13 +94,9 @@ func (a *appsCmd) list(c *cli.Context) error {
 
 	if len(resApps) == 0 {
 		fmt.Fprint(os.Stderr, "No apps found\n")
-		return nil
+		return nil, nil
 	}
-
-	if err := printApps(c, resApps); err != nil {
-		return err
-	}
-	return nil
+	return resApps, nil
 }
 
 func appWithFlags(c *cli.Context, app *modelsv2.App) {

@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/urfave/cli"
 )
 
@@ -14,5 +16,10 @@ func ConfigureCommand() cli.Command {
 		ArgsUsage:   "<subcommand>",
 		Description: "This command sets a configuaration key for an 'app' or 'function'.",
 		Subcommands: GetCommands(ConfigCmds),
+		BashComplete: func(ctx *cli.Context) {
+			for _, c := range GetCommands(ConfigCmds) {
+				fmt.Println(c.Name)
+			}
+		},
 	}
 }

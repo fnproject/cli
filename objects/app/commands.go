@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/fnproject/cli/client"
 	"github.com/urfave/cli"
 )
@@ -48,7 +50,7 @@ func List() cli.Command {
 		Name:        "apps",
 		Usage:       "List all created applications",
 		Category:    "MANAGEMENT COMMAND",
-		Description: "This command provides a list of defined application.",
+		Description: "This command provides a list of defined applications.",
 		Aliases:     []string{"app", "a"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
@@ -96,6 +98,20 @@ func Delete() cli.Command {
 			return nil
 		},
 		Action: a.delete,
+		BashComplete: func(ctx *cli.Context) {
+			provider, err := client.CurrentProvider()
+			if err != nil {
+				return
+			}
+			a.client = provider.APIClientv2()
+			resp, err := a.getApps(ctx)
+			if err != nil {
+				return
+			}
+			for _, r := range resp {
+				fmt.Println(r.Name)
+			}
+		},
 	}
 }
 
@@ -118,6 +134,20 @@ func Inspect() cli.Command {
 		},
 		ArgsUsage: "<app-name> [property.[key]]",
 		Action:    a.inspect,
+		BashComplete: func(ctx *cli.Context) {
+			provider, err := client.CurrentProvider()
+			if err != nil {
+				return
+			}
+			a.client = provider.APIClientv2()
+			resp, err := a.getApps(ctx)
+			if err != nil {
+				return
+			}
+			for _, r := range resp {
+				fmt.Println(r.Name)
+			}
+		},
 	}
 }
 
@@ -154,6 +184,20 @@ func Update() cli.Command {
 				Usage: "Syslog URL to send application logs to",
 			},
 		},
+		BashComplete: func(ctx *cli.Context) {
+			provider, err := client.CurrentProvider()
+			if err != nil {
+				return
+			}
+			a.client = provider.APIClientv2()
+			resp, err := a.getApps(ctx)
+			if err != nil {
+				return
+			}
+			for _, r := range resp {
+				fmt.Println(r.Name)
+			}
+		},
 	}
 }
 
@@ -176,6 +220,20 @@ func SetConfig() cli.Command {
 		},
 		ArgsUsage: "<app-name> <key> <value>",
 		Action:    a.setConfig,
+		BashComplete: func(ctx *cli.Context) {
+			provider, err := client.CurrentProvider()
+			if err != nil {
+				return
+			}
+			a.client = provider.APIClientv2()
+			resp, err := a.getApps(ctx)
+			if err != nil {
+				return
+			}
+			for _, r := range resp {
+				fmt.Println(r.Name)
+			}
+		},
 	}
 }
 
@@ -198,6 +256,20 @@ func ListConfig() cli.Command {
 		},
 		ArgsUsage: "<app-name>",
 		Action:    a.listConfig,
+		BashComplete: func(ctx *cli.Context) {
+			provider, err := client.CurrentProvider()
+			if err != nil {
+				return
+			}
+			a.client = provider.APIClientv2()
+			resp, err := a.getApps(ctx)
+			if err != nil {
+				return
+			}
+			for _, r := range resp {
+				fmt.Println(r.Name)
+			}
+		},
 	}
 }
 
@@ -220,6 +292,20 @@ func GetConfig() cli.Command {
 		},
 		ArgsUsage: "<app-name> <key>",
 		Action:    a.getConfig,
+		BashComplete: func(ctx *cli.Context) {
+			provider, err := client.CurrentProvider()
+			if err != nil {
+				return
+			}
+			a.client = provider.APIClientv2()
+			resp, err := a.getApps(ctx)
+			if err != nil {
+				return
+			}
+			for _, r := range resp {
+				fmt.Println(r.Name)
+			}
+		},
 	}
 }
 
@@ -242,5 +328,19 @@ func UnsetConfig() cli.Command {
 		},
 		ArgsUsage: "<app-name> <key>",
 		Action:    a.unsetConfig,
+		BashComplete: func(ctx *cli.Context) {
+			provider, err := client.CurrentProvider()
+			if err != nil {
+				return
+			}
+			a.client = provider.APIClientv2()
+			resp, err := a.getApps(ctx)
+			if err != nil {
+				return
+			}
+			for _, r := range resp {
+				fmt.Println(r.Name)
+			}
+		},
 	}
 }
