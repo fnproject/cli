@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/urfave/cli"
 )
 
@@ -16,5 +18,10 @@ func InspectCommand() cli.Command {
 		ArgsUsage:   "<subcommand>",
 		Description: "This command allows to inspect the properties of an object ('app', 'context', function' or 'trigger').",
 		Subcommands: GetCommands(InspectCmds),
+		BashComplete: func(ctx *cli.Context) {
+			for _, c := range GetCommands(InspectCmds) {
+				fmt.Println(c.Name)
+			}
+		},
 	}
 }

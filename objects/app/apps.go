@@ -57,7 +57,7 @@ func printApps(c *cli.Context, apps []*modelsv2.App) error {
 }
 
 func (a *appsCmd) list(c *cli.Context) error {
-	resApps, err := a.getApps(c)
+	resApps, err := GetApps(c, a.client)
 	if err != nil {
 		return err
 	}
@@ -68,11 +68,12 @@ func (a *appsCmd) list(c *cli.Context) error {
 	return nil
 }
 
-func (a *appsCmd) getApps(c *cli.Context) ([]*modelsv2.App, error) {
+// GetApps returns an array of apps in the given context and client
+func GetApps(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.App, error) {
 	params := &apiapps.ListAppsParams{Context: context.Background()}
 	var resApps []*modelsv2.App
 	for {
-		resp, err := a.client.Apps.ListApps(params)
+		resp, err := client.Apps.ListApps(params)
 		if err != nil {
 			return nil, err
 		}

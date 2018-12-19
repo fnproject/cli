@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/urfave/cli"
 )
 
@@ -15,5 +17,10 @@ func UseCommand() cli.Command {
 		ArgsUsage:   "<subcommand>",
 		Description: "This command uses a selected object ('context') for further invocations.",
 		Subcommands: GetCommands(UseCmds),
+		BashComplete: func(ctx *cli.Context) {
+			for _, c := range GetCommands(UseCmds) {
+				fmt.Println(c.Name)
+			}
+		},
 	}
 }

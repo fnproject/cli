@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"errors"
+
 	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/objects/app"
@@ -11,7 +13,6 @@ import (
 	"github.com/fnproject/fn_go/clientv2"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/urfave/cli"
-	"errors"
 )
 
 // FnInvokeEndpointAnnotation is the annotation that exposes the fn invoke endpoint as defined in models/fn.go
@@ -63,6 +64,20 @@ func InvokeCommand() cli.Command {
 		Category:    "DEVELOPMENT COMMANDS",
 		Description: "This command explicitly invokes a function.",
 		Action:      cl.Invoke,
+		BashComplete: func(ctx *cli.Context) {
+			//TODO: Expand to include <app-name> <function-name>
+			provider, err := client.CurrentProvider()
+			if err != nil {
+				return
+			}
+			resp, err := app.GetApps(ctx, provider.APIClientv2())
+			if err != nil {
+				return
+			}
+			for _, r := range resp {
+				fmt.Println(r.Name)
+			}
+		},
 	}
 }
 

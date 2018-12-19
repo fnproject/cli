@@ -104,7 +104,7 @@ func Delete() cli.Command {
 				return
 			}
 			a.client = provider.APIClientv2()
-			resp, err := a.getApps(ctx)
+			resp, err := GetApps(ctx, a.client)
 			if err != nil {
 				return
 			}
@@ -140,7 +140,7 @@ func Inspect() cli.Command {
 				return
 			}
 			a.client = provider.APIClientv2()
-			resp, err := a.getApps(ctx)
+			resp, err := GetApps(ctx, a.client)
 			if err != nil {
 				return
 			}
@@ -190,7 +190,7 @@ func Update() cli.Command {
 				return
 			}
 			a.client = provider.APIClientv2()
-			resp, err := a.getApps(ctx)
+			resp, err := GetApps(ctx, a.client)
 			if err != nil {
 				return
 			}
@@ -226,7 +226,7 @@ func SetConfig() cli.Command {
 				return
 			}
 			a.client = provider.APIClientv2()
-			resp, err := a.getApps(ctx)
+			resp, err := GetApps(ctx, a.client)
 			if err != nil {
 				return
 			}
@@ -262,7 +262,7 @@ func ListConfig() cli.Command {
 				return
 			}
 			a.client = provider.APIClientv2()
-			resp, err := a.getApps(ctx)
+			resp, err := GetApps(ctx, a.client)
 			if err != nil {
 				return
 			}
@@ -298,7 +298,7 @@ func GetConfig() cli.Command {
 				return
 			}
 			a.client = provider.APIClientv2()
-			resp, err := a.getApps(ctx)
+			resp, err := GetApps(ctx, a.client)
 			if err != nil {
 				return
 			}
@@ -334,7 +334,7 @@ func UnsetConfig() cli.Command {
 				return
 			}
 			a.client = provider.APIClientv2()
-			resp, err := a.getApps(ctx)
+			resp, err := GetApps(ctx, a.client)
 			if err != nil {
 				return
 			}

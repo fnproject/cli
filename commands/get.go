@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/urfave/cli"
 )
 
@@ -15,5 +17,10 @@ func GetCommand() cli.Command {
 		ArgsUsage:   "<subcommand>",
 		Description: "This command gets a 'call', 'configuration' or 'log' to retrieve information for an object ('app' or 'function').",
 		Subcommands: GetCommands(GetCmds),
+		BashComplete: func(ctx *cli.Context) {
+			for _, c := range GetCommands(GetCmds) {
+				fmt.Println(c.Name)
+			}
+		},
 	}
 }

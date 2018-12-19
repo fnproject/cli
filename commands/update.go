@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/urfave/cli"
 )
 
@@ -15,5 +17,10 @@ func UpdateCommand() cli.Command {
 		ArgsUsage:   "<subcommand>",
 		Description: "This command updates an object ('app', 'context', 'function', 'server' or 'trigger').",
 		Subcommands: GetCommands(UpdateCmds),
+		BashComplete: func(ctx *cli.Context) {
+			for _, c := range GetCommands(UpdateCmds) {
+				fmt.Println(c.Name)
+			}
+		},
 	}
 }

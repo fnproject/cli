@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/urfave/cli"
 )
 
@@ -15,5 +17,10 @@ func UnsetCommand() cli.Command {
 		ArgsUsage:   "<subcommand>",
 		Description: "This command unsets elements ('configurations') for a created object ('app', 'function' or 'context').",
 		Subcommands: GetCommands(UnsetCmds),
+		BashComplete: func(ctx *cli.Context) {
+			for _, c := range GetCommands(UnsetCmds) {
+				fmt.Println(c.Name)
+			}
+		},
 	}
 }

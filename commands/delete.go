@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/urfave/cli"
 )
 
@@ -15,5 +17,10 @@ func DeleteCommand() cli.Command {
 		Hidden:      false,
 		ArgsUsage:   "<subcommand>",
 		Subcommands: GetCommands(DeleteCmds),
+		BashComplete: func(ctx *cli.Context) {
+			for _, c := range GetCommands(DeleteCmds) {
+				fmt.Println(c.Name)
+			}
+		},
 	}
 }
