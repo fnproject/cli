@@ -10,6 +10,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
 	fnclient "github.com/fnproject/fn_go/clientv2"
 	apiapps "github.com/fnproject/fn_go/clientv2/apps"
@@ -57,7 +58,7 @@ func printApps(c *cli.Context, apps []*modelsv2.App) error {
 }
 
 func (a *appsCmd) list(c *cli.Context) error {
-	resApps, err := GetApps(c, a.client)
+	resApps, err := getApps(c, a.client)
 	if err != nil {
 		return err
 	}
@@ -68,8 +69,24 @@ func (a *appsCmd) list(c *cli.Context) error {
 	return nil
 }
 
-// GetApps returns an array of apps in the given context and client
-func GetApps(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.App, error) {
+// BashCompleteApps can be called from a BashComplete function
+// to provide app completion suggestions
+func BashCompleteApps(ctx *cli.Context) {
+	provider, err := client.CurrentProvider()
+	if err != nil {
+		return
+	}
+	resp, err := getApps(ctx, provider.APIClientv2())
+	if err != nil {
+		return
+	}
+	for _, r := range resp {
+		fmt.Println(r.Name)
+	}
+}
+
+// getApps returns an array of apps in the given context and client
+func getApps(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.App, error) {
 	params := &apiapps.ListAppsParams{Context: context.Background()}
 	var resApps []*modelsv2.App
 	for {

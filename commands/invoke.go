@@ -65,18 +65,17 @@ func InvokeCommand() cli.Command {
 		Description: "This command explicitly invokes a function.",
 		Action:      cl.Invoke,
 		BashComplete: func(ctx *cli.Context) {
-			//TODO: Expand to include <app-name> <function-name>
-			provider, err := client.CurrentProvider()
-			if err != nil {
-				return
+			args := ctx.Args()
+			if len(args) == 0 {
+				app.BashCompleteApps(ctx)
 			}
-			resp, err := app.GetApps(ctx, provider.APIClientv2())
-			if err != nil {
-				return
+			//convert to using arg[0] to get available functions.
+			var msg string
+			for _, a := range args {
+				msg = msg + "-" + a
 			}
-			for _, r := range resp {
-				fmt.Println(r.Name)
-			}
+			fmt.Println(msg)
+
 		},
 	}
 }

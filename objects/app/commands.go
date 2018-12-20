@@ -99,17 +99,10 @@ func Delete() cli.Command {
 		},
 		Action: a.delete,
 		BashComplete: func(ctx *cli.Context) {
-			provider, err := client.CurrentProvider()
-			if err != nil {
+			args := ctx.Args()
+			if len(args) == 0 {
+				BashCompleteApps(ctx)
 				return
-			}
-			a.client = provider.APIClientv2()
-			resp, err := GetApps(ctx, a.client)
-			if err != nil {
-				return
-			}
-			for _, r := range resp {
-				fmt.Println(r.Name)
 			}
 		},
 	}
@@ -135,17 +128,10 @@ func Inspect() cli.Command {
 		ArgsUsage: "<app-name> [property.[key]]",
 		Action:    a.inspect,
 		BashComplete: func(ctx *cli.Context) {
-			provider, err := client.CurrentProvider()
-			if err != nil {
+			args := ctx.Args()
+			if len(args) == 0 {
+				BashCompleteApps(ctx)
 				return
-			}
-			a.client = provider.APIClientv2()
-			resp, err := GetApps(ctx, a.client)
-			if err != nil {
-				return
-			}
-			for _, r := range resp {
-				fmt.Println(r.Name)
 			}
 		},
 	}
@@ -185,17 +171,10 @@ func Update() cli.Command {
 			},
 		},
 		BashComplete: func(ctx *cli.Context) {
-			provider, err := client.CurrentProvider()
-			if err != nil {
+			args := ctx.Args()
+			if len(args) == 0 {
+				BashCompleteApps(ctx)
 				return
-			}
-			a.client = provider.APIClientv2()
-			resp, err := GetApps(ctx, a.client)
-			if err != nil {
-				return
-			}
-			for _, r := range resp {
-				fmt.Println(r.Name)
 			}
 		},
 	}
@@ -221,17 +200,10 @@ func SetConfig() cli.Command {
 		ArgsUsage: "<app-name> <key> <value>",
 		Action:    a.setConfig,
 		BashComplete: func(ctx *cli.Context) {
-			provider, err := client.CurrentProvider()
-			if err != nil {
+			args := ctx.Args()
+			if len(args) == 0 {
+				BashCompleteApps(ctx)
 				return
-			}
-			a.client = provider.APIClientv2()
-			resp, err := GetApps(ctx, a.client)
-			if err != nil {
-				return
-			}
-			for _, r := range resp {
-				fmt.Println(r.Name)
 			}
 		},
 	}
@@ -257,17 +229,10 @@ func ListConfig() cli.Command {
 		ArgsUsage: "<app-name>",
 		Action:    a.listConfig,
 		BashComplete: func(ctx *cli.Context) {
-			provider, err := client.CurrentProvider()
-			if err != nil {
+			args := ctx.Args()
+			if len(args) == 0 {
+				BashCompleteApps(ctx)
 				return
-			}
-			a.client = provider.APIClientv2()
-			resp, err := GetApps(ctx, a.client)
-			if err != nil {
-				return
-			}
-			for _, r := range resp {
-				fmt.Println(r.Name)
 			}
 		},
 	}
@@ -293,17 +258,24 @@ func GetConfig() cli.Command {
 		ArgsUsage: "<app-name> <key>",
 		Action:    a.getConfig,
 		BashComplete: func(ctx *cli.Context) {
-			provider, err := client.CurrentProvider()
-			if err != nil {
+			args := ctx.Args()
+			switch len(args) {
+			case 0:
+				BashCompleteApps(ctx)
+			case 1:
+				provider, err := client.CurrentProvider()
+				if err != nil {
+					return
+				}
+				app, err := GetAppByName(provider.APIClientv2(), args[0])
+				if err != nil {
+					return
+				}
+				for key := range app.Config {
+					fmt.Println(key)
+				}
+			default:
 				return
-			}
-			a.client = provider.APIClientv2()
-			resp, err := GetApps(ctx, a.client)
-			if err != nil {
-				return
-			}
-			for _, r := range resp {
-				fmt.Println(r.Name)
 			}
 		},
 	}
@@ -329,17 +301,24 @@ func UnsetConfig() cli.Command {
 		ArgsUsage: "<app-name> <key>",
 		Action:    a.unsetConfig,
 		BashComplete: func(ctx *cli.Context) {
-			provider, err := client.CurrentProvider()
-			if err != nil {
+			args := ctx.Args()
+			switch len(args) {
+			case 0:
+				BashCompleteApps(ctx)
+			case 1:
+				provider, err := client.CurrentProvider()
+				if err != nil {
+					return
+				}
+				app, err := GetAppByName(provider.APIClientv2(), args[0])
+				if err != nil {
+					return
+				}
+				for key := range app.Config {
+					fmt.Println(key)
+				}
+			default:
 				return
-			}
-			a.client = provider.APIClientv2()
-			resp, err := GetApps(ctx, a.client)
-			if err != nil {
-				return
-			}
-			for _, r := range resp {
-				fmt.Println(r.Name)
 			}
 		},
 	}
