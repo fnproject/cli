@@ -10,6 +10,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	client "github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/objects/app"
 	fnclient "github.com/fnproject/fn_go/clientv2"
@@ -153,10 +154,21 @@ func getFns(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.Fn, error) {
 	return resFns, nil
 }
 
+// BashCompleteFns can be called from a BashComplete function
+// to provide function completion suggestions (Assumes the
+// current context already contains an app name as an argument.
+// This should be confirmed before calling this)
 func BashCompleteFns(c *cli.Context) {
-	appName := c.Args().Get(0)
-	if appName != "" {
+	provider, err := client.CurrentProvider()
+	if err != nil {
 		return
+	}
+	resp, err := getFns(c, provider.APIClientv2())
+	if err != nil {
+		return
+	}
+	for _, f := range resp {
+		fmt.Println(f.Name)
 	}
 }
 

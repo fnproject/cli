@@ -64,18 +64,13 @@ func InvokeCommand() cli.Command {
 		Category:    "DEVELOPMENT COMMANDS",
 		Description: "This command explicitly invokes a function.",
 		Action:      cl.Invoke,
-		BashComplete: func(ctx *cli.Context) {
-			args := ctx.Args()
-			if len(args) == 0 {
-				app.BashCompleteApps(ctx)
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				fn.BashCompleteFns(c)
 			}
-			//convert to using arg[0] to get available functions.
-			var msg string
-			for _, a := range args {
-				msg = msg + "-" + a
-			}
-			fmt.Println(msg)
-
 		},
 	}
 }

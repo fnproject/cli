@@ -301,8 +301,7 @@ func UnsetConfig() cli.Command {
 		ArgsUsage: "<app-name> <key>",
 		Action:    a.unsetConfig,
 		BashComplete: func(c *cli.Context) {
-			args := c.Args()
-			switch len(args) {
+			switch len(c.Args()) {
 			case 0:
 				BashCompleteApps(c)
 			case 1:
@@ -310,7 +309,7 @@ func UnsetConfig() cli.Command {
 				if err != nil {
 					return
 				}
-				app, err := GetAppByName(provider.APIClientv2(), args[0])
+				app, err := GetAppByName(provider.APIClientv2(), c.Args().Get(1))
 				if err != nil {
 					return
 				}
