@@ -62,30 +62,10 @@ func (a *appsCmd) list(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-
-	if err := printApps(c, resApps); err != nil {
-		return err
-	}
-	return nil
+	return printApps(c, resApps)
 }
 
-// BashCompleteApps can be called from a BashComplete function
-// to provide app completion suggestions
-func BashCompleteApps(ctx *cli.Context) {
-	provider, err := client.CurrentProvider()
-	if err != nil {
-		return
-	}
-	resp, err := getApps(ctx, provider.APIClientv2())
-	if err != nil {
-		return
-	}
-	for _, r := range resp {
-		fmt.Println(r.Name)
-	}
-}
-
-// getApps returns an array of apps in the given context and client
+// getApps returns an array of all apps in the given context and client
 func getApps(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.App, error) {
 	params := &apiapps.ListAppsParams{Context: context.Background()}
 	var resApps []*modelsv2.App
@@ -115,6 +95,24 @@ func getApps(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.App, error) {
 		return nil, nil
 	}
 	return resApps, nil
+}
+
+// BashCompleteApps can be called from a BashComplete function
+// to provide app completion suggestions (Does not check if the
+// current context already contains an app name as an argument.
+// This should be checked before calling this)
+func BashCompleteApps(c *cli.Context) {
+	provider, err := client.CurrentProvider()
+	if err != nil {
+		return
+	}
+	resp, err := getApps(c, provider.APIClientv2())
+	if err != nil {
+		return
+	}
+	for _, r := range resp {
+		fmt.Println(r.Name)
+	}
 }
 
 func appWithFlags(c *cli.Context, app *modelsv2.App) {

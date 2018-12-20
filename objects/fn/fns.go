@@ -12,8 +12,9 @@ import (
 
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/objects/app"
-	"github.com/fnproject/fn_go/clientv2"
+	fnclient "github.com/fnproject/fn_go/clientv2"
 	apifns "github.com/fnproject/fn_go/clientv2/fns"
+	"github.com/fnproject/fn_go/modelsv2"
 	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/jmoiron/jsonq"
@@ -22,7 +23,7 @@ import (
 
 type fnsCmd struct {
 	provider provider.Provider
-	client   *clientv2.Fn
+	client   *fnclient.Fn
 }
 
 // FnFlags used to create/update functions
@@ -79,7 +80,7 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 			newFns = append(newFns, struct {
 				Name  string `json:"name"`
 				Image string `json:"image"`
-				ID string `json:"id"`
+				ID    string `json:"id"`
 			}{
 				fn.Name,
 				fn.Image,
@@ -106,11 +107,19 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 }
 
 func (f *fnsCmd) list(c *cli.Context) error {
-	appName := c.Args().Get(0)
-
-	a, err := app.GetAppByName(f.client, appName)
+	resFns, err := getFns(c, f.client)
 	if err != nil {
 		return err
+	}
+	return printFunctions(c, resFns)
+}
+
+func getFns(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.Fn, error) {
+	appName := c.Args().Get(0)
+
+	a, err := app.GetAppByName(client, appName)
+	if err != nil {
+		return nil, err
 	}
 	params := &apifns.ListFnsParams{
 		Context: context.Background(),
@@ -119,14 +128,14 @@ func (f *fnsCmd) list(c *cli.Context) error {
 
 	var resFns []*models.Fn
 	for {
-		resp, err := f.client.Fns.ListFns(params)
+		resp, err := client.Fns.ListFns(params)
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 		n := c.Int64("n")
 		if n < 0 {
-			return errors.New("number of calls: negative value not allowed")
+			return nil, errors.New("number of calls: negative value not allowed")
 		}
 
 		resFns = append(resFns, resp.Payload.Items...)
@@ -139,11 +148,16 @@ func (f *fnsCmd) list(c *cli.Context) error {
 	}
 
 	if len(resFns) == 0 {
-		fmt.Fprintf(os.Stderr, "No functions found for app: %s\n", appName)
-		return nil
+		return nil, fmt.Errorf("no functions found for app: %s", appName)
 	}
+	return resFns, nil
+}
 
-	return printFunctions(c, resFns)
+func BashCompleteFns(c *cli.Context) {
+	appName := c.Args().Get(0)
+	if appName != "" {
+		return
+	}
 }
 
 // WithFlags returns a function with specified flags
@@ -233,7 +247,7 @@ func (f *fnsCmd) create(c *cli.Context) error {
 }
 
 // CreateFn request
-func CreateFn(r *clientv2.Fn, appName string, fn *models.Fn) error {
+func CreateFn(r *fnclient.Fn, appName string, fn *models.Fn) error {
 	a, err := app.GetAppByName(r, appName)
 	if err != nil {
 		return err
@@ -266,7 +280,7 @@ func CreateFn(r *clientv2.Fn, appName string, fn *models.Fn) error {
 }
 
 // PutFn updates the fn with the given ID using the content of the provided fn
-func PutFn(f *clientv2.Fn, fnID string, fn *models.Fn) error {
+func PutFn(f *fnclient.Fn, fnID string, fn *models.Fn) error {
 	if fn.Image != "" {
 		err := common.ValidateTagImageName(fn.Image)
 		if err != nil {
@@ -294,7 +308,7 @@ func PutFn(f *clientv2.Fn, fnID string, fn *models.Fn) error {
 }
 
 // GetFnByName looks up a fn by name using the given client
-func GetFnByName(client *clientv2.Fn, appID, fnName string) (*models.Fn, error) {
+func GetFnByName(client *fnclient.Fn, appID, fnName string) (*models.Fn, error) {
 	resp, err := client.Fns.ListFns(&apifns.ListFnsParams{
 		Context: context.Background(),
 		AppID:   &appID,
@@ -448,7 +462,6 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	fnName := WithoutSlash(c.Args().Get(1))
 	prop := c.Args().Get(2)
 
-
 	app, err := app.GetAppByName(f.client, appName)
 	if err != nil {
 		return err
@@ -459,12 +472,12 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	}
 
 	if c.Bool("endpoint") {
-		 endpoint,ok:= fn.Annotations["fnproject.io/fn/invokeEndpoint"].(string)
-		 if !ok {
-		 	return errors.New("missing or invalid endpoint on function")
-		 }
-		 fmt.Println(endpoint)
-		 return nil
+		endpoint, ok := fn.Annotations["fnproject.io/fn/invokeEndpoint"].(string)
+		if !ok {
+			return errors.New("missing or invalid endpoint on function")
+		}
+		fmt.Println(endpoint)
+		return nil
 	}
 
 	enc := json.NewEncoder(os.Stdout)
