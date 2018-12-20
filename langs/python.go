@@ -82,6 +82,7 @@ func (h *PythonLangHelper) IsMultiStage() bool {
 const (
 	helloPythonSrcBoilerplate = `import io
 import json
+
 from fdk import response
 
 
@@ -92,7 +93,6 @@ def handler(ctx, data: io.BytesIO=None):
         name = body.get("name")
     except (Exception, ValueError) as ex:
         print(str(ex))
-        pass
 
     return response.Response(
         ctx, response_data=json.dumps(
