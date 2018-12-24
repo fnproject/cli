@@ -2,6 +2,8 @@ package trigger
 
 import (
 	"github.com/fnproject/cli/client"
+	"github.com/fnproject/cli/objects/app"
+	"github.com/fnproject/cli/objects/fn"
 	"github.com/urfave/cli"
 )
 
@@ -27,6 +29,14 @@ func Create() cli.Command {
 		ArgsUsage: "<app-name> <function-name> <trigger-name>",
 		Action:    t.create,
 		Flags:     TriggerFlags,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				fn.BashCompleteFns(c)
+			}
+		},
 	}
 }
 
@@ -62,6 +72,14 @@ func List() cli.Command {
 				Value: int64(100),
 			},
 		},
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				fn.BashCompleteFns(c)
+			}
+		},
 	}
 }
 
@@ -92,6 +110,16 @@ func Update() cli.Command {
 				Usage: "trigger annotations",
 			},
 		},
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				fn.BashCompleteFns(c)
+			case 2:
+				BashCompleteTriggers(c)
+			}
+		},
 	}
 }
 
@@ -116,6 +144,16 @@ func Delete() cli.Command {
 		},
 		ArgsUsage: "<app-name> <function-name> <trigger-name>",
 		Action:    t.delete,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				fn.BashCompleteFns(c)
+			case 2:
+				BashCompleteTriggers(c)
+			}
+		},
 	}
 }
 
@@ -146,5 +184,15 @@ func Inspect() cli.Command {
 		},
 		ArgsUsage: "<app-name> <function-name> <trigger-name>",
 		Action:    t.inspect,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				fn.BashCompleteFns(c)
+			case 2:
+				BashCompleteTriggers(c)
+			}
+		},
 	}
 }

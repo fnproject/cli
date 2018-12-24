@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/fnproject/cli/client"
@@ -102,7 +103,6 @@ func Delete() cli.Command {
 			args := c.Args()
 			if len(args) == 0 {
 				BashCompleteApps(c)
-				return
 			}
 		},
 	}
@@ -128,10 +128,30 @@ func Inspect() cli.Command {
 		ArgsUsage: "<app-name> [property.[key]]",
 		Action:    a.inspect,
 		BashComplete: func(c *cli.Context) {
-			args := c.Args()
-			if len(args) == 0 {
+			switch len(c.Args()) {
+			case 0:
 				BashCompleteApps(c)
-				return
+			case 1:
+				provider, err := client.CurrentProvider()
+				if err != nil {
+					return
+				}
+				app, err := GetAppByName(provider.APIClientv2(), c.Args()[0])
+				if err != nil {
+					return
+				}
+				data, err := json.Marshal(app)
+				if err != nil {
+					return
+				}
+				var inspect map[string]interface{}
+				err = json.Unmarshal(data, &inspect)
+				if err != nil {
+					return
+				}
+				for key := range inspect {
+					fmt.Println(key)
+				}
 			}
 		},
 	}
@@ -174,7 +194,6 @@ func Update() cli.Command {
 			args := c.Args()
 			if len(args) == 0 {
 				BashCompleteApps(c)
-				return
 			}
 		},
 	}
@@ -203,7 +222,6 @@ func SetConfig() cli.Command {
 			args := c.Args()
 			if len(args) == 0 {
 				BashCompleteApps(c)
-				return
 			}
 		},
 	}
@@ -232,7 +250,6 @@ func ListConfig() cli.Command {
 			args := c.Args()
 			if len(args) == 0 {
 				BashCompleteApps(c)
-				return
 			}
 		},
 	}
@@ -258,8 +275,7 @@ func GetConfig() cli.Command {
 		ArgsUsage: "<app-name> <key>",
 		Action:    a.getConfig,
 		BashComplete: func(c *cli.Context) {
-			args := c.Args()
-			switch len(args) {
+			switch len(c.Args()) {
 			case 0:
 				BashCompleteApps(c)
 			case 1:
@@ -267,15 +283,13 @@ func GetConfig() cli.Command {
 				if err != nil {
 					return
 				}
-				app, err := GetAppByName(provider.APIClientv2(), args[0])
+				app, err := GetAppByName(provider.APIClientv2(), c.Args()[0])
 				if err != nil {
 					return
 				}
 				for key := range app.Config {
 					fmt.Println(key)
 				}
-			default:
-				return
 			}
 		},
 	}
@@ -309,15 +323,13 @@ func UnsetConfig() cli.Command {
 				if err != nil {
 					return
 				}
-				app, err := GetAppByName(provider.APIClientv2(), c.Args().Get(1))
+				app, err := GetAppByName(provider.APIClientv2(), c.Args()[0])
 				if err != nil {
 					return
 				}
 				for key := range app.Config {
 					fmt.Println(key)
 				}
-			default:
-				return
 			}
 		},
 	}

@@ -68,7 +68,9 @@ func Delete() cli.Command {
 				return
 			}
 			for _, c := range contexts {
-				fmt.Println(c.Name)
+				if c.Name != "default" {
+					fmt.Println(c.Name)
+				}
 			}
 		},
 	}
@@ -82,6 +84,15 @@ func Inspect() cli.Command {
 		Aliases:  []string{"ctx"},
 		Category: "MANAGEMENT COMMAND",
 		Action:   inspectCtx,
+		BashComplete: func(ctx *cli.Context) {
+			contexts, err := getAvailableContexts()
+			if err != nil {
+				return
+			}
+			for _, c := range contexts {
+				fmt.Println(c.Name)
+			}
+		},
 	}
 }
 

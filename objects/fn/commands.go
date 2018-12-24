@@ -1,6 +1,7 @@
 package fn
 
 import (
+	"encoding/json"
 	"fmt"
 
 	client "github.com/fnproject/cli/client"
@@ -135,7 +136,7 @@ func Inspect() cli.Command {
 				Usage: "Output the function invoke endpoint if set",
 			},
 		},
-		ArgsUsage: "<app-name> <function-name> [property.[key]]",
+		ArgsUsage: "<app-name> <function-name> [property[.key]]",
 		Action:    f.inspect,
 		BashComplete: func(c *cli.Context) {
 			switch len(c.Args()) {
@@ -143,6 +144,23 @@ func Inspect() cli.Command {
 				app.BashCompleteApps(c)
 			case 1:
 				BashCompleteFns(c)
+			case 2:
+				fn, err := getFnByAppAndFnName(c.Args()[0], c.Args()[1])
+				if err != nil {
+					return
+				}
+				data, err := json.Marshal(fn)
+				if err != nil {
+					return
+				}
+				var inspect map[string]interface{}
+				err = json.Unmarshal(data, &inspect)
+				if err != nil {
+					return
+				}
+				for key := range inspect {
+					fmt.Println(key)
+				}
 			}
 		},
 	}
@@ -209,16 +227,7 @@ func GetConfig() cli.Command {
 			case 1:
 				BashCompleteFns(c)
 			case 2:
-				provider, err := client.CurrentProvider()
-				if err != nil {
-					return
-				}
-				f.client = provider.APIClientv2()
-				app, err := app.GetAppByName(f.client, c.Args().Get(0))
-				if err != nil {
-					return
-				}
-				fn, err := GetFnByName(f.client, app.ID, c.Args().Get(1))
+				fn, err := getFnByAppAndFnName(c.Args()[0], c.Args()[1])
 				if err != nil {
 					return
 				}
@@ -313,26 +322,16 @@ func UnsetConfig() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app-name> </path> <key>",
+		ArgsUsage: "<app-name> <function-name> <key>",
 		Action:    f.unsetConfig,
 		BashComplete: func(c *cli.Context) {
 			switch len(c.Args()) {
 			case 0:
 				app.BashCompleteApps(c)
-			//TODO: Confirm that this is a mistake and that </path> should actually be <func-name>
-			// case 1:
-			// BashCompleteFns(c)
+			case 1:
+				BashCompleteFns(c)
 			case 2:
-				provider, err := client.CurrentProvider()
-				if err != nil {
-					return
-				}
-				f.client = provider.APIClientv2()
-				app, err := app.GetAppByName(f.client, c.Args().Get(0))
-				if err != nil {
-					return
-				}
-				fn, err := GetFnByName(f.client, app.ID, c.Args().Get(1))
+				fn, err := getFnByAppAndFnName(c.Args()[0], c.Args()[1])
 				if err != nil {
 					return
 				}

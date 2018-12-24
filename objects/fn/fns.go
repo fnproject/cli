@@ -172,6 +172,22 @@ func BashCompleteFns(c *cli.Context) {
 	}
 }
 
+func getFnByAppAndFnName(appName, fnName string) (*models.Fn, error) {
+	provider, err := client.CurrentProvider()
+	if err != nil {
+		return nil, errors.New("could not get context")
+	}
+	app, err := app.GetAppByName(provider.APIClientv2(), appName)
+	if err != nil {
+		return nil, fmt.Errorf("could not get app %v", appName)
+	}
+	fn, err := GetFnByName(provider.APIClientv2(), app.ID, fnName)
+	if err != nil {
+		return nil, fmt.Errorf("could not get function %v", fnName)
+	}
+	return fn, nil
+}
+
 // WithFlags returns a function with specified flags
 func WithFlags(c *cli.Context, fn *models.Fn) {
 	if i := c.String("image"); i != "" {
