@@ -10,6 +10,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
 	fnclient "github.com/fnproject/fn_go/clientv2"
 	apiapps "github.com/fnproject/fn_go/clientv2/apps"
@@ -57,19 +58,28 @@ func printApps(c *cli.Context, apps []*modelsv2.App) error {
 }
 
 func (a *appsCmd) list(c *cli.Context) error {
+	resApps, err := getApps(c, a.client)
+	if err != nil {
+		return err
+	}
+	return printApps(c, resApps)
+}
+
+// getApps returns an array of all apps in the given context and client
+func getApps(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.App, error) {
 	params := &apiapps.ListAppsParams{Context: context.Background()}
 	var resApps []*modelsv2.App
 	for {
-		resp, err := a.client.Apps.ListApps(params)
+		resp, err := client.Apps.ListApps(params)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		resApps = append(resApps, resp.Payload.Items...)
 
 		n := c.Int64("n")
 		if n < 0 {
-			return errors.New("Number of calls: negative value not allowed")
+			return nil, errors.New("Number of calls: negative value not allowed")
 		}
 
 		howManyMore := n - int64(len(resApps)+len(resp.Payload.Items))
@@ -82,13 +92,27 @@ func (a *appsCmd) list(c *cli.Context) error {
 
 	if len(resApps) == 0 {
 		fmt.Fprint(os.Stderr, "No apps found\n")
-		return nil
+		return nil, nil
 	}
+	return resApps, nil
+}
 
-	if err := printApps(c, resApps); err != nil {
-		return err
+// BashCompleteApps can be called from a BashComplete function
+// to provide app completion suggestions (Does not check if the
+// current context already contains an app name as an argument.
+// This should be checked before calling this)
+func BashCompleteApps(c *cli.Context) {
+	provider, err := client.CurrentProvider()
+	if err != nil {
+		return
 	}
-	return nil
+	resp, err := getApps(c, provider.APIClientv2())
+	if err != nil {
+		return
+	}
+	for _, r := range resp {
+		fmt.Println(r.Name)
+	}
 }
 
 func appWithFlags(c *cli.Context, app *modelsv2.App) {

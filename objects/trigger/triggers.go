@@ -13,10 +13,11 @@ import (
 
 	"github.com/jmoiron/jsonq"
 
+	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/objects/app"
 	"github.com/fnproject/cli/objects/fn"
-	"github.com/fnproject/fn_go/clientv2"
+	fnclient "github.com/fnproject/fn_go/clientv2"
 	apiTriggers "github.com/fnproject/fn_go/clientv2/triggers"
 	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider"
@@ -25,7 +26,7 @@ import (
 
 type triggersCmd struct {
 	provider provider.Provider
-	client   *clientv2.Fn
+	client   *fnclient.Fn
 }
 
 // TriggerFlags used to create/update triggers
@@ -91,7 +92,7 @@ func validateTriggerSource(ts string) string {
 }
 
 // CreateTrigger request
-func CreateTrigger(client *clientv2.Fn, trigger *models.Trigger) error {
+func CreateTrigger(client *fnclient.Fn, trigger *models.Trigger) error {
 	resp, err := client.Triggers.CreateTrigger(&apiTriggers.CreateTriggerParams{
 		Context: context.Background(),
 		Body:    trigger,
@@ -117,64 +118,11 @@ func CreateTrigger(client *clientv2.Fn, trigger *models.Trigger) error {
 }
 
 func (t *triggersCmd) list(c *cli.Context) error {
-	appName := c.Args().Get(0)
-	fnName := c.Args().Get(1)
-	var params *apiTriggers.ListTriggersParams
-
-	app, err := app.GetAppByName(t.client, appName)
+	resTriggers, err := getTriggers(c, t.client)
 	if err != nil {
 		return err
 	}
-
-	if len(fnName) == 0 {
-		params = &apiTriggers.ListTriggersParams{
-			Context: context.Background(),
-			AppID:   &app.ID,
-		}
-
-	} else {
-
-		fn, err := fn.GetFnByName(t.client, app.ID, fnName)
-		if err != nil {
-			return err
-		}
-		params = &apiTriggers.ListTriggersParams{
-			Context: context.Background(),
-			AppID:   &app.ID,
-			FnID:    &fn.ID,
-		}
-	}
-
-	var resTriggers []*models.Trigger
-	for {
-
-		resp, err := t.client.Triggers.ListTriggers(params)
-		if err != nil {
-			return err
-		}
-		n := c.Int64("n")
-		if n < 0 {
-			return errors.New("number of calls: negative value not allowed")
-		}
-
-		resTriggers = append(resTriggers, resp.Payload.Items...)
-		howManyMore := n - int64(len(resTriggers)+len(resp.Payload.Items))
-		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
-			break
-		}
-
-		params.Cursor = &resp.Payload.NextCursor
-	}
-
-	if len(resTriggers) == 0 {
-		if len(fnName) == 0 {
-			fmt.Fprintf(os.Stderr, "No triggers found for app: %s\n", appName)
-		} else {
-			fmt.Fprintf(os.Stderr, "No triggers found for function: %s\n", fnName)
-		}
-		return nil
-	}
-
+	fnName := c.Args().Get(1)
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
 	if len(fnName) != 0 {
 
@@ -203,6 +151,83 @@ func (t *triggersCmd) list(c *cli.Context) error {
 	return nil
 }
 
+func getTriggers(c *cli.Context, client *fnclient.Fn) ([]*models.Trigger, error) {
+	appName := c.Args().Get(0)
+	fnName := c.Args().Get(1)
+	var params *apiTriggers.ListTriggersParams
+
+	app, err := app.GetAppByName(client, appName)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(fnName) == 0 {
+		params = &apiTriggers.ListTriggersParams{
+			Context: context.Background(),
+			AppID:   &app.ID,
+		}
+
+	} else {
+
+		fn, err := fn.GetFnByName(client, app.ID, fnName)
+		if err != nil {
+			return nil, err
+		}
+		params = &apiTriggers.ListTriggersParams{
+			Context: context.Background(),
+			AppID:   &app.ID,
+			FnID:    &fn.ID,
+		}
+	}
+
+	var resTriggers []*models.Trigger
+	for {
+
+		resp, err := client.Triggers.ListTriggers(params)
+		if err != nil {
+			return nil, err
+		}
+		n := c.Int64("n")
+		if n < 0 {
+			return nil, errors.New("number of calls: negative value not allowed")
+		}
+
+		resTriggers = append(resTriggers, resp.Payload.Items...)
+		howManyMore := n - int64(len(resTriggers)+len(resp.Payload.Items))
+		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
+			break
+		}
+
+		params.Cursor = &resp.Payload.NextCursor
+	}
+
+	if len(resTriggers) == 0 {
+		if len(fnName) == 0 {
+			return nil, fmt.Errorf("no triggers found for app: %s", appName)
+		}
+		return nil, fmt.Errorf("no triggers found for function: %s", fnName)
+	}
+	return resTriggers, nil
+}
+
+// BashCompleteTriggers can be called from a BashComplete function
+// to provide function completion suggestions (Assumes the
+// current context already contains an app name and a function name
+// as the first 2 arguments. This should be confirmed before calling this)
+func BashCompleteTriggers(c *cli.Context) {
+	provider, err := client.CurrentProvider()
+	if err != nil {
+		return
+	}
+	resp, err := getTriggers(c, provider.APIClientv2())
+	if err != nil {
+		return
+	}
+	for _, t := range resp {
+		fmt.Println(t.Name)
+	}
+}
+
 func (t *triggersCmd) update(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
@@ -225,7 +250,7 @@ func (t *triggersCmd) update(c *cli.Context) error {
 }
 
 // PutTrigger updates the provided trigger with new values
-func PutTrigger(t *clientv2.Fn, trigger *models.Trigger) error {
+func PutTrigger(t *fnclient.Fn, trigger *models.Trigger) error {
 	_, err := t.Triggers.UpdateTrigger(&apiTriggers.UpdateTriggerParams{
 		Context:   context.Background(),
 		TriggerID: trigger.ID,
@@ -316,7 +341,7 @@ func (t *triggersCmd) delete(c *cli.Context) error {
 }
 
 // GetTrigger looks up a trigger using the provided client by app, function and trigger name
-func GetTrigger(client *clientv2.Fn, appName, fnName, triggerName string) (*models.Trigger, error) {
+func GetTrigger(client *fnclient.Fn, appName, fnName, triggerName string) (*models.Trigger, error) {
 	app, err := app.GetAppByName(client, appName)
 	if err != nil {
 		return nil, err
@@ -336,7 +361,7 @@ func GetTrigger(client *clientv2.Fn, appName, fnName, triggerName string) (*mode
 }
 
 // GetTriggerByName looks up a trigger using the provided client by app and function ID and trigger name
-func GetTriggerByName(client *clientv2.Fn, appID string, fnID string, triggerName string) (*models.Trigger, error) {
+func GetTriggerByName(client *fnclient.Fn, appID string, fnID string, triggerName string) (*models.Trigger, error) {
 	triggerList, err := client.Triggers.ListTriggers(&apiTriggers.ListTriggersParams{
 		Context: context.Background(),
 		AppID:   &appID,

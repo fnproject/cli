@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/fnproject/cli/common"
 	"github.com/urfave/cli"
 )
 
@@ -19,12 +20,13 @@ func ConfigCommand(command string) cli.Command {
 	}
 
 	return cli.Command{
-		Name:        "config",
-		ShortName:   "config",
-		Usage:       "Manage configurations for apps and functions",
-		Aliases:     []string{"cf"},
-		ArgsUsage:   "<subcommand>",
-		Description: "This command unsets the configuration of created objects ('app' or 'function').",
-		Subcommands: cmds,
+		Name:         "config",
+		ShortName:    "config",
+		Usage:        "Manage configurations for apps and functions",
+		Aliases:      []string{"cf"},
+		ArgsUsage:    "<subcommand>",
+		Description:  "This command unsets the configuration of created objects ('app' or 'function').",
+		Subcommands:  cmds,
+		BashComplete: common.DefaultBashComplete,
 	}
 }

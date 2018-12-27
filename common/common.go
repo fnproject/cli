@@ -34,6 +34,19 @@ const (
 	MinRequiredDockerVersion = "17.5.0"
 )
 
+// DefaultBashComplete prints the list of all sub commands
+// of the current command (without alias names)
+func DefaultBashComplete(c *cli.Context) {
+	for _, command := range c.App.Commands {
+		if command.Hidden {
+			continue
+		}
+		if command.Name != "help" {
+			fmt.Println(command.Name)
+		}
+	}
+}
+
 // GetWd returns working directory.
 func GetWd() string {
 	wd, err := os.Getwd()
