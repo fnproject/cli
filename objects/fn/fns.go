@@ -79,7 +79,7 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 			newFns = append(newFns, struct {
 				Name  string `json:"name"`
 				Image string `json:"image"`
-				ID string `json:"id"`
+				ID    string `json:"id"`
 			}{
 				fn.Name,
 				fn.Image,
@@ -432,6 +432,11 @@ func (f *fnsCmd) unsetConfig(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	_, ok := fn.Config[key]
+	if !ok {
+		fmt.Printf("Config key '%s' does not exist. Nothing to do.\n", key)
+		return nil
+	}
 	fn.Config[key] = ""
 
 	err = PutFn(f.client, fn.ID, fn)
@@ -439,7 +444,7 @@ func (f *fnsCmd) unsetConfig(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Printf("removed key '%s' from the function '%s' \n", key, fnName)
+	fmt.Printf("Removed key '%s' from the function '%s' \n", key, fnName)
 	return nil
 }
 
@@ -447,7 +452,6 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := WithoutSlash(c.Args().Get(1))
 	prop := c.Args().Get(2)
-
 
 	app, err := app.GetAppByName(f.client, appName)
 	if err != nil {
@@ -459,12 +463,12 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	}
 
 	if c.Bool("endpoint") {
-		 endpoint,ok:= fn.Annotations["fnproject.io/fn/invokeEndpoint"].(string)
-		 if !ok {
-		 	return errors.New("missing or invalid endpoint on function")
-		 }
-		 fmt.Println(endpoint)
-		 return nil
+		endpoint, ok := fn.Annotations["fnproject.io/fn/invokeEndpoint"].(string)
+		if !ok {
+			return errors.New("missing or invalid endpoint on function")
+		}
+		fmt.Println(endpoint)
+		return nil
 	}
 
 	enc := json.NewEncoder(os.Stdout)

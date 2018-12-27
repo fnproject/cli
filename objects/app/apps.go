@@ -225,6 +225,11 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	_, ok := app.Config[key]
+	if !ok {
+		fmt.Printf("Config key '%s' does not exist. Nothing to do.\n", key)
+		return nil
+	}
 	app.Config[key] = ""
 
 	err = PutApp(a.client, app.ID, app)
