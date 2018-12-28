@@ -474,6 +474,11 @@ func (f *fnsCmd) unsetConfig(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	_, ok := fn.Config[key]
+	if !ok {
+		fmt.Printf("Config key '%s' does not exist. Nothing to do.\n", key)
+		return nil
+	}
 	fn.Config[key] = ""
 
 	err = PutFn(f.client, fn.ID, fn)
@@ -481,7 +486,7 @@ func (f *fnsCmd) unsetConfig(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Printf("removed key '%s' from the function '%s' \n", key, fnName)
+	fmt.Printf("Removed key '%s' from the function '%s' \n", key, fnName)
 	return nil
 }
 
