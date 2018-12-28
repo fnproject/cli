@@ -210,7 +210,7 @@ func (a *appsCmd) getConfig(c *cli.Context) error {
 
 	val, ok := app.Config[key]
 	if !ok {
-		return fmt.Errorf("Config key does not exist")
+		return fmt.Errorf("config key does not exist")
 	}
 
 	fmt.Println(val)

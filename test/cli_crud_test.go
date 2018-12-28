@@ -196,3 +196,23 @@ func TestInspectEndpoints(t *testing.T) {
 	}
 
 }
+
+func TestEmptyConfigs(t *testing.T) {
+	h := testharness.Create(t)
+	defer h.Cleanup()
+	appName1 := h.NewAppName()
+	funcName1 := h.NewFuncName(appName1)
+
+	h.Fn("create", "app", appName1)
+	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
+	//begin tests
+	//get config
+	h.Fn("get", "config", "app", appName1, "nonexistantKey").AssertFailed()
+	h.Fn("get", "config", "function", appName1, funcName1, "nonexistantKey").AssertFailed()
+	//list config
+	h.Fn("list", "config", "app", appName1).AssertSuccess()
+	h.Fn("list", "config", "function", appName1, funcName1).AssertSuccess()
+	//unset config
+	h.Fn("unset", "config", "app", appName1, "nonexistantKey").AssertSuccess()
+	h.Fn("unset", "config", "function", appName1, funcName1, "nonexistantKey").AssertSuccess()
+}
