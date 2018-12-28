@@ -76,6 +76,12 @@ func List() cli.Command {
 				Value: "",
 			},
 		},
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			}
+		},
 	}
 }
 

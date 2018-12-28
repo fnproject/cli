@@ -62,14 +62,17 @@ func Delete() cli.Command {
 		Description: "This command deletes a context.",
 		Category:    "MANAGEMENT COMMAND",
 		Action:      deleteCtx,
-		BashComplete: func(ctx *cli.Context) {
-			contexts, err := getAvailableContexts()
-			if err != nil {
-				return
-			}
-			for _, c := range contexts {
-				if c.Name != "default" {
-					fmt.Println(c.Name)
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				contexts, err := getAvailableContexts()
+				if err != nil {
+					return
+				}
+				for _, c := range contexts {
+					if c.Name != "default" {
+						fmt.Println(c.Name)
+					}
 				}
 			}
 		},
@@ -84,13 +87,16 @@ func Inspect() cli.Command {
 		Aliases:  []string{"ctx"},
 		Category: "MANAGEMENT COMMAND",
 		Action:   inspectCtx,
-		BashComplete: func(ctx *cli.Context) {
-			contexts, err := getAvailableContexts()
-			if err != nil {
-				return
-			}
-			for _, c := range contexts {
-				fmt.Println(c.Name)
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				contexts, err := getAvailableContexts()
+				if err != nil {
+					return
+				}
+				for _, c := range contexts {
+					fmt.Println(c.Name)
+				}
 			}
 		},
 	}
@@ -126,13 +132,16 @@ func Use() cli.Command {
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This command uses context for future invocations.",
 		Action:      useCtx,
-		BashComplete: func(ctx *cli.Context) {
-			contexts, err := getAvailableContexts()
-			if err != nil {
-				return
-			}
-			for _, c := range contexts {
-				fmt.Println(c.Name)
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				contexts, err := getAvailableContexts()
+				if err != nil {
+					return
+				}
+				for _, c := range contexts {
+					fmt.Println(c.Name)
+				}
 			}
 		},
 	}
