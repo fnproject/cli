@@ -2,6 +2,8 @@ package log
 
 import (
 	"github.com/fnproject/cli/client"
+	"github.com/fnproject/cli/objects/app"
+	"github.com/fnproject/cli/objects/fn"
 	"github.com/urfave/cli"
 )
 
@@ -24,5 +26,13 @@ func Get() cli.Command {
 		},
 		ArgsUsage: "<app-name> <function-name> <call-id>",
 		Action:    l.get,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				fn.BashCompleteFns(c)
+			}
+		},
 	}
 }
