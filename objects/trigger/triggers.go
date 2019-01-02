@@ -360,6 +360,16 @@ func GetTrigger(client *fnclient.Fn, appName, fnName, triggerName string) (*mode
 	return trigger, nil
 }
 
+// GetTriggerByAppFnAndTriggerNames looks up a trigger using app, fn and trigger names
+func GetTriggerByAppFnAndTriggerNames(appName, fnName, triggerName string) (*models.Trigger, error) {
+	provider, err := client.CurrentProvider()
+	if err != nil {
+		return nil, err
+	}
+	client := provider.APIClientv2()
+	return GetTrigger(client, appName, fnName, triggerName)
+}
+
 // GetTriggerByName looks up a trigger using the provided client by app and function ID and trigger name
 func GetTriggerByName(client *fnclient.Fn, appID string, fnID string, triggerName string) (*models.Trigger, error) {
 	triggerList, err := client.Triggers.ListTriggers(&apiTriggers.ListTriggersParams{

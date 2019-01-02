@@ -35,14 +35,15 @@ type triggerRef struct {
 
 //CLIHarness encapsulates a single CLI session
 type CLIHarness struct {
-	t           *testing.T
-	cliPath     string
-	appNames    []string
-	funcRefs    []funcRef
-	triggerRefs []triggerRef
-	testDir     string
-	homeDir     string
-	cwd         string
+	t            *testing.T
+	cliPath      string
+	appNames     []string
+	funcRefs     []funcRef
+	triggerRefs  []triggerRef
+	contextNames []string
+	testDir      string
+	homeDir      string
+	cwd          string
 
 	env     map[string]string
 	history []string
@@ -100,7 +101,15 @@ func (cr *CmdResult) AssertStdoutContains(match string) *CmdResult {
 	return cr
 }
 
-// AssertStdoutContains asserts that the string appears somewhere in the stderr
+// AssertStdoutContainsEach asserts that each string appears somewhere in the stdout
+func (cr *CmdResult) AssertStdoutContainsEach(matches []string) *CmdResult {
+	for _, s := range matches {
+		cr.AssertStdoutContains(s)
+	}
+	return cr
+}
+
+// AssertStderrContains asserts that the string appears somewhere in the stderr
 func (cr *CmdResult) AssertStderrContains(match string) *CmdResult {
 	if !strings.Contains(cr.Stderr, match) {
 		log.Fatalf("Expected sdterr message (%s) not found in result: %v", match, cr)
@@ -182,6 +191,9 @@ func (h *CLIHarness) Cleanup() {
 	}
 	for _, app := range h.appNames {
 		h.Fn("delete", "apps", app)
+	}
+	for _, context := range h.contextNames {
+		h.Fn("delete", "context", context)
 	}
 
 	os.RemoveAll(h.testDir)
@@ -382,11 +394,23 @@ func (h *CLIHarness) NewFuncName(appName string) string {
 	return funcName
 }
 
-//NewTriggerName creates a valid trigger name and registers it for deletioneanup
+//NewTriggerName creates a valid trigger name and registers it for deletion
 func (h *CLIHarness) NewTriggerName(appName, funcName string) string {
 	triggerName := randString(8)
 	h.triggerRefs = append(h.triggerRefs, triggerRef{appName, funcName, triggerName})
 	return triggerName
+}
+
+//NewContextName creates a valid Context name and registers it for deletion
+func (h *CLIHarness) NewContextName() string {
+	name := randString(8)
+	h.contextNames = append(h.contextNames, name)
+	return name
+}
+
+//NewRandString creates a random string of length n that is safe for naming objects
+func (h *CLIHarness) NewRandString(an int) string {
+	return randString(8)
 }
 
 func (h *CLIHarness) relativeToTestDir(dir string) string {
