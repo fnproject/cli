@@ -88,7 +88,7 @@ func Delete() cli.Command {
 		Usage:       "Delete an application",
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This command deletes a created application.",
-		ArgsUsage:   "<app_name>",
+		ArgsUsage:   "<app-name>",
 		Aliases:     []string{"apps", "a"},
 		Before: func(c *cli.Context) error {
 			provider, err := client.CurrentProvider()
