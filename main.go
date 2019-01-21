@@ -11,6 +11,7 @@ import (
 	"text/template"
 
 	"github.com/fnproject/cli/commands"
+	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/common/color"
 	"github.com/fnproject/cli/config"
 	"github.com/spf13/viper"
@@ -24,6 +25,7 @@ func newFn() *cli.App {
 	app.Authors = []cli.Author{{Name: "Fn Project"}}
 	app.Description = "Fn Command Line Tool"
 	app.EnableBashCompletion = true
+	app.BashComplete = common.DefaultBashComplete
 	app.Before = func(c *cli.Context) error {
 		err := config.LoadConfiguration(c)
 		if err != nil {
@@ -38,8 +40,9 @@ func newFn() *cli.App {
 			Usage: "Use --verbose to enable verbose mode for debugging",
 		},
 		cli.StringFlag{
-			Name:  "context",
-			Usage: "Use --context to select context configuration file",
+			Name:   "context",
+			Usage:  "Use --context to select context configuration file",
+			EnvVar: "FN_CONTEXT",
 		},
 		cli.StringFlag{
 			Name:  "registry",

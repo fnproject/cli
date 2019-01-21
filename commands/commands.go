@@ -14,10 +14,11 @@ import (
 	"github.com/urfave/cli"
 )
 
-type cmd map[string]cli.Command
+//Cmd is a mapping from a commands name to its corresponding structure
+type Cmd map[string]cli.Command
 
 // Commands map of all top-level commands
-var Commands = cmd{
+var Commands = Cmd{
 	"build":        BuildCommand(),
 	"build-server": BuildServerCommand(),
 	"bump":         common.BumpCommand(),
@@ -40,59 +41,59 @@ var Commands = cmd{
 	"use":          UseCommand(),
 }
 
-var CreateCmds = cmd{
+var CreateCmds = Cmd{
 	"apps":      app.Create(),
 	"functions": fn.Create(),
 	"triggers":  trigger.Create(),
 	"context":   context.Create(),
 }
 
-var ConfigCmds = cmd{
+var ConfigCmds = Cmd{
 	"apps":      app.SetConfig(),
 	"functions": fn.SetConfig(),
 }
 
-var ConfigListCmds = cmd{
+var ConfigListCmds = Cmd{
 	"apps":      app.ListConfig(),
 	"functions": fn.ListConfig(),
 }
 
-var ConfigGetCmds = cmd{
+var ConfigGetCmds = Cmd{
 	"apps":      app.GetConfig(),
 	"functions": fn.GetConfig(),
 }
 
-var ConfigSetCmds = cmd{
+var ConfigSetCmds = Cmd{
 	"apps":      app.SetConfig(),
 	"functions": fn.SetConfig(),
 }
 
-var ConfigUnsetCmds = cmd{
+var ConfigUnsetCmds = Cmd{
 	"apps":      app.UnsetConfig(),
 	"functions": fn.UnsetConfig(),
 }
 
-var DeleteCmds = cmd{
+var DeleteCmds = Cmd{
 	"apps":      app.Delete(),
 	"functions": fn.Delete(),
 	"context":   context.Delete(),
 	"triggers":  trigger.Delete(),
 }
 
-var GetCmds = cmd{
+var GetCmds = Cmd{
 	"config": ConfigCommand("get"),
 	"logs":   log.Get(),
 	"calls":  call.Get(),
 }
 
-var InspectCmds = cmd{
+var InspectCmds = Cmd{
 	"apps":      app.Inspect(),
 	"context":   context.Inspect(),
 	"functions": fn.Inspect(),
 	"triggers":  trigger.Inspect(),
 }
 
-var ListCmds = cmd{
+var ListCmds = Cmd{
 	"config":    ConfigCommand("list"),
 	"apps":      app.List(),
 	"functions": fn.List(),
@@ -101,12 +102,12 @@ var ListCmds = cmd{
 	"contexts":  context.List(),
 }
 
-var UnsetCmds = cmd{
+var UnsetCmds = Cmd{
 	"config":  ConfigCommand("unset"),
 	"context": context.Unset(),
 }
 
-var UpdateCmds = cmd{
+var UpdateCmds = Cmd{
 	"apps":      app.Update(),
 	"functions": fn.Update(),
 	"context":   context.Update(),
@@ -114,7 +115,7 @@ var UpdateCmds = cmd{
 	"trigger":   trigger.Update(),
 }
 
-var UseCmds = cmd{
+var UseCmds = Cmd{
 	"context": context.Use(),
 }
 
