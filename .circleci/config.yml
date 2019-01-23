@@ -29,7 +29,7 @@ jobs:
       - run: docker version
       - run:
           name: install dependencies
-          command: go mod vendor
+          command: make dep
       - run:
           name: build and test
           command: make test
