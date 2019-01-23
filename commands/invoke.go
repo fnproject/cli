@@ -62,7 +62,7 @@ func InvokeCommand() cli.Command {
 		ArgsUsage:   "[app-name] [function-name]",
 		Flags:       InvokeFnFlags,
 		Category:    "DEVELOPMENT COMMANDS",
-		Description: "This command explicitly invokes a function.",
+		Description: `This command invokes a function. Users may send input to their function by passing input to this command via STDIN.`,
 		Action:      cl.Invoke,
 		BashComplete: func(c *cli.Context) {
 			switch len(c.Args()) {
