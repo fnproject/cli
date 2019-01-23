@@ -68,8 +68,8 @@ type LangHelper interface {
 	Entrypoint() (string, error)
 	// Cmd sets the Docker command. One of Entrypoint or Cmd is required.
 	Cmd() (string, error)
-	// DefaultFormat provides the default fn format to set in func.yaml fn init, return "" for an empty format.
-	DefaultFormat() string
+	// CustomMemory allows a helper to specify a base memory amount, return "" to leave unspecified and let the runtime decide.
+	CustomMemory() uint64
 	HasPreBuild() bool
 	PreBuild() error
 	AfterBuild() error
@@ -105,7 +105,7 @@ func (h *BaseHelper) PreBuild() error                  { return nil }
 func (h *BaseHelper) AfterBuild() error                { return nil }
 func (h *BaseHelper) HasBoilerplate() bool             { return false }
 func (h *BaseHelper) GenerateBoilerplate(string) error { return nil }
-func (h *BaseHelper) DefaultFormat() string            { return "" }
+func (h *BaseHelper) CustomMemory() uint64             { return 0 }
 func (h *BaseHelper) FixImagesOnInit() bool            { return false }
 
 // exists checks if a file exists

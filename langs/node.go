@@ -56,7 +56,7 @@ const packageJsonContent = `{
 }
 `
 
-func (lh *NodeLangHelper) GenerateBoilerplate(path string) error {
+func (h *NodeLangHelper) GenerateBoilerplate(path string) error {
 	pathToPackageJsonFile := filepath.Join(path, "package.json")
 	pathToFuncJs := filepath.Join(path, "func.js")
 
@@ -76,11 +76,12 @@ func (lh *NodeLangHelper) GenerateBoilerplate(path string) error {
 	return nil
 }
 
-func (lh *NodeLangHelper) HasBoilerplate() bool { return true }
+func (h *NodeLangHelper) HasBoilerplate() bool { return true }
 
-func (lh *NodeLangHelper) DefaultFormat() string { return "http-stream" }
+// CustomMemory - no memory override here.
+func (h *NodeLangHelper) CustomMemory() uint64 { return 0 }
 
-func (lh *NodeLangHelper) Entrypoint() (string, error) {
+func (h *NodeLangHelper) Entrypoint() (string, error) {
 	return "node func.js", nil
 }
 

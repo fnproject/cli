@@ -8,17 +8,21 @@ import (
 	"path/filepath"
 )
 
+// PythonLangHelper - python-specific init helper
 type PythonLangHelper struct {
 	BaseHelper
 	Version string
 }
 
-func (h *PythonLangHelper) DefaultFormat() string {
-	return "http-stream"
+// CustomMemory - python is a hungry beast so specify a higher base memory here.
+func (h *PythonLangHelper) CustomMemory() uint64 {
+	return 256
 }
 
+// HasBoilerplate - yep, we have boilerplate...
 func (h *PythonLangHelper) HasBoilerplate() bool { return true }
 
+// GenerateBoilerplate - ...and here it is.
 func (h *PythonLangHelper) GenerateBoilerplate(path string) error {
 	codeFile := filepath.Join(path, "func.py")
 	if exists(codeFile) {
