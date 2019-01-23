@@ -11,10 +11,7 @@ docker:
 	docker build -t fnproject/fn:latest .
 
 dep:
-	dep ensure --vendor-only
-
-dep-up:
-	dep ensure
+	go mod vendor
 
 test: build
 	./test.sh
