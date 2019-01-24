@@ -18,8 +18,8 @@ func (h *GoLangHelper) Runtime() string {
 	return h.LangStrings()[0]
 }
 
-func (h *GoLangHelper) DefaultFormat() string {
-	return "http-stream"
+func (h *GoLangHelper) CustomMemory() uint64 {
+	return 0
 }
 
 func (lh *GoLangHelper) LangStrings() []string {
