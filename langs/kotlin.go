@@ -28,22 +28,24 @@ func (h *KotlinLangHelper) Handles(lang string) bool {
 	}
 	return false
 }
+
+// Runtime - return the correct runtime value for this helper.
 func (h *KotlinLangHelper) Runtime() string {
 	return h.LangStrings()[0]
 }
 
-func (lh *KotlinLangHelper) LangStrings() []string {
+func (h *KotlinLangHelper) LangStrings() []string {
 	return []string{"kotlin"}
 
 }
-func (lh *KotlinLangHelper) Extensions() []string {
+func (h *KotlinLangHelper) Extensions() []string {
 	return []string{".kt"}
 }
 
 // BuildFromImage returns the Docker image used to compile the Maven function project
-func (lh *KotlinLangHelper) BuildFromImage() (string, error) {
+func (h *KotlinLangHelper) BuildFromImage() (string, error) {
 
-	fdkVersion, err := lh.getFDKAPIVersion()
+	fdkVersion, err := h.getFDKAPIVersion()
 	if err != nil {
 		return "", err
 	}
@@ -52,8 +54,8 @@ func (lh *KotlinLangHelper) BuildFromImage() (string, error) {
 }
 
 // RunFromImage returns the Docker image used to run the Kotlin function.
-func (lh *KotlinLangHelper) RunFromImage() (string, error) {
-	fdkVersion, err := lh.getFDKAPIVersion()
+func (h *KotlinLangHelper) RunFromImage() (string, error) {
+	fdkVersion, err := h.getFDKAPIVersion()
 	if err != nil {
 		return "", err
 	}
@@ -62,20 +64,20 @@ func (lh *KotlinLangHelper) RunFromImage() (string, error) {
 }
 
 // HasBoilerplate returns whether the Java runtime has boilerplate that can be generated.
-func (lh *KotlinLangHelper) HasBoilerplate() bool { return true }
+func (h *KotlinLangHelper) HasBoilerplate() bool { return true }
 
-// Kotlin defaults to http
-func (lh *KotlinLangHelper) DefaultFormat() string { return "http-stream" }
+// CustomMemory - no memory override here.
+func (h *KotlinLangHelper) CustomMemory() uint64 { return 0 }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime.
 // The default boilerplate is for a Maven project.
-func (lh *KotlinLangHelper) GenerateBoilerplate(path string) error {
+func (h *KotlinLangHelper) GenerateBoilerplate(path string) error {
 	pathToPomFile := filepath.Join(path, "pom.xml")
 	if exists(pathToPomFile) {
 		return ErrBoilerplateExists
 	}
 
-	apiVersion, err := lh.getFDKAPIVersion()
+	apiVersion, err := h.getFDKAPIVersion()
 	if err != nil {
 		return err
 	}
