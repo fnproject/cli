@@ -14,7 +14,6 @@ import (
 	function "github.com/fnproject/cli/objects/fn"
 	trigger "github.com/fnproject/cli/objects/trigger"
 	v2Client "github.com/fnproject/fn_go/clientv2"
-	clientApps "github.com/fnproject/fn_go/clientv2/apps"
 	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/urfave/cli"
 )
@@ -125,7 +124,6 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	dir := common.GetDir(c)
 
 	appf, err := common.LoadAppfile(dir)
-
 	if err != nil {
 		if _, ok := err.(*common.NotFoundError); ok {
 			if p.all {
@@ -147,33 +145,50 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 		return errors.New("App name must be provided, try `--app APP_NAME`")
 	}
 
+	// find and create/update app if required
 	app, err := apps.GetAppByName(p.clientV2, appName)
 	if _, ok := err.(apps.NameNotFoundError); ok && p.createApp {
 		app = &models.App{
 			Name: appName,
 		}
 
-		err = apps.CreateApp(p.clientV2, app)
-		if err != nil {
-			return err
+		if appf != nil {
+			// set other fields from app file
+			app.Config = appf.Config
+			app.Annotations = appf.Annotations
 		}
-		app, err = apps.GetAppByName(p.clientV2, appName)
+
+		app, err = apps.CreateApp(p.clientV2, app)
 		if err != nil {
 			return err
 		}
 	} else if err != nil {
 		return err
+	} else if appf != nil {
+		// app exists, but we need to update it if we have an app file
+		app, err = apps.PutApp(p.clientV2, app.ID, &models.App{
+			Config:      appf.Config,
+			Annotations: appf.Annotations,
+		})
+		if err != nil {
+			return fmt.Errorf("Failed to update app config: %v", err)
+		}
 	}
 
-	if p.all {
-		return p.deployAll(c, app, appf)
+	if app == nil {
+		panic("app should not be nil here") // tests should catch... better than panic later
 	}
-	return p.deploySingle(c, app, appf)
+
+	// deploy functions
+	if p.all {
+		return p.deployAll(c, app)
+	}
+	return p.deploySingle(c, app)
 }
 
 // deploySingle deploys a single function, either the current directory or if in the context
 // of an app and user provides relative path as the first arg, it will deploy that function.
-func (p *deploycmd) deploySingle(c *cli.Context, app *models.App, appf *common.AppFile) error {
+func (p *deploycmd) deploySingle(c *cli.Context, app *models.App) error {
 	var dir string
 	wd := common.GetWd()
 
@@ -205,17 +220,8 @@ func (p *deploycmd) deploySingle(c *cli.Context, app *models.App, appf *common.A
 		if err != nil {
 			return err
 		}
-		if appf != nil {
-			if dir == wd {
-				setFuncInfoV20180708(ff, appf.Name)
-			}
-		}
-
-		if appf != nil {
-			err = p.updateAppConfig(appf)
-			if err != nil {
-				return fmt.Errorf("Failed to update app config: %v", err)
-			}
+		if dir == wd {
+			setFuncInfoV20180708(ff, app.Name)
 		}
 
 		return p.deployFuncV20180708(c, app, wd, fpath, ff)
@@ -225,14 +231,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, app *models.App, appf *common.A
 }
 
 // deployAll deploys all functions in an app.
-func (p *deploycmd) deployAll(c *cli.Context, app *models.App, appf *common.AppFile) error {
-	if appf != nil {
-		err := p.updateAppConfig(appf)
-		if err != nil {
-			return fmt.Errorf("Failed to update app config: %v", err)
-		}
-	}
-
+func (p *deploycmd) deployAll(c *cli.Context, app *models.App) error {
 	var dir string
 	wd := common.GetWd()
 
@@ -391,37 +390,4 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 	}
 
 	return nil
-}
-
-func (p *deploycmd) updateAppConfig(appf *common.AppFile) error {
-	app, err := apps.GetAppByName(p.clientV2, appf.Name)
-	if err != nil {
-		switch err.(type) {
-		case apps.NameNotFoundError:
-			param := clientApps.NewCreateAppParams()
-			param.Body = &models.App{
-				Name:        appf.Name,
-				Config:      appf.Config,
-				Annotations: appf.Annotations,
-			}
-			if _, err = p.clientV2.Apps.CreateApp(param); err != nil {
-				return err
-			}
-			return nil
-		default:
-			return err
-		}
-	}
-	param := clientApps.NewUpdateAppParams()
-	param.AppID = app.ID
-	param.Body = &models.App{
-		Config:      appf.Config,
-		Annotations: appf.Annotations,
-	}
-
-	if _, err = p.clientV2.Apps.UpdateApp(param); err != nil {
-		return err
-	}
-	return nil
-
 }
