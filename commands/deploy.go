@@ -15,8 +15,6 @@ import (
 	trigger "github.com/fnproject/cli/objects/trigger"
 	v2Client "github.com/fnproject/fn_go/clientv2"
 	clientApps "github.com/fnproject/fn_go/clientv2/apps"
-	clientFns "github.com/fnproject/fn_go/clientv2/fns"
-	clientTrigs "github.com/fnproject/fn_go/clientv2/triggers"
 	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/urfave/cli"
 )
@@ -150,7 +148,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	}
 
 	app, err := apps.GetAppByName(p.clientV2, appName)
-	if _, ok := err.(*clientApps.GetAppNotFound); ok && p.createApp {
+	if _, ok := err.(apps.NameNotFoundError); ok && p.createApp {
 		app = &models.App{
 			Name: appName,
 		}
@@ -347,8 +345,7 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 	}
 
 	fnRes, err := function.GetFnByName(p.clientV2, appID, ff.Name)
-	fmt.Printf("YODAWG %T %v\n", err, err)
-	if _, ok := err.(*clientFns.GetFnNotFound); ok {
+	if _, ok := err.(function.NameNotFoundError); ok {
 		fn.Name = ff.Name
 		fn, err = function.CreateFn(p.clientV2, appID, fn)
 		if err != nil {
@@ -376,7 +373,7 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 			}
 
 			trigs, err := trigger.GetTriggerByName(p.clientV2, appID, fn.ID, t.Name)
-			if _, ok := err.(*clientTrigs.GetTriggerNotFound); ok {
+			if _, ok := err.(trigger.NameNotFoundError); ok {
 				err = trigger.CreateTrigger(p.clientV2, trig)
 				if err != nil {
 					return err

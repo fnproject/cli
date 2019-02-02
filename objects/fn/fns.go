@@ -336,6 +336,15 @@ func PutFn(f *fnclient.Fn, fnID string, fn *models.Fn) error {
 	return nil
 }
 
+// NameNotFoundError error for app not found when looked up by name
+type NameNotFoundError struct {
+	Name string
+}
+
+func (n NameNotFoundError) Error() string {
+	return fmt.Sprintf("function %s not found", n.Name)
+}
+
 // GetFnByName looks up a fn by name using the given client
 func GetFnByName(client *fnclient.Fn, appID, fnName string) (*models.Fn, error) {
 	resp, err := client.Fns.ListFns(&apifns.ListFnsParams{
@@ -354,7 +363,7 @@ func GetFnByName(client *fnclient.Fn, appID, fnName string) (*models.Fn, error) 
 		}
 	}
 	if fn == nil {
-		return nil, fmt.Errorf("function %s not found", fnName)
+		return nil, NameNotFoundError{fnName}
 	}
 
 	return fn, nil
