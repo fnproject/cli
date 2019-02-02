@@ -347,6 +347,7 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 	}
 
 	fnRes, err := function.GetFnByName(p.clientV2, appID, ff.Name)
+	fmt.Printf("YODAWG %T %v\n", err, err)
 	if _, ok := err.(*clientFns.GetFnNotFound); ok {
 		fn.Name = ff.Name
 		fn, err = function.CreateFn(p.clientV2, appID, fn)
