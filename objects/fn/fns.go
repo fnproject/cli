@@ -271,20 +271,22 @@ func (f *fnsCmd) create(c *cli.Context) error {
 		return errors.New("no image specified")
 	}
 
-	return CreateFn(f.client, appName, fn)
+	_, err := CreateFn(f.client, appName, fn)
+	return err
 }
 
 // CreateFn request
-func CreateFn(r *fnclient.Fn, appName string, fn *models.Fn) error {
+func CreateFn(r *fnclient.Fn, appName string, fn *models.Fn) (*models.Fn, error) {
 	a, err := app.GetAppByName(r, appName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	// TODO(reed): this validation should all be server side
 	fn.AppID = a.ID
 	err = common.ValidateTagImageName(fn.Image)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := r.Fns.CreateFn(&apifns.CreateFnParams{
@@ -295,16 +297,15 @@ func CreateFn(r *fnclient.Fn, appName string, fn *models.Fn) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apifns.CreateFnBadRequest:
-			return fmt.Errorf("%s", e.Payload.Message)
+			err = fmt.Errorf("%s", e.Payload.Message)
 		case *apifns.CreateFnConflict:
-			return fmt.Errorf("%s", e.Payload.Message)
-		default:
-			return err
+			err = fmt.Errorf("%s", e.Payload.Message)
 		}
+		return nil, err
 	}
 
 	fmt.Println("Successfully created function:", resp.Payload.Name, "with", resp.Payload.Image)
-	return nil
+	return resp.Payload, nil
 }
 
 // PutFn updates the fn with the given ID using the content of the provided fn
