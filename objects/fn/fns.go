@@ -271,20 +271,19 @@ func (f *fnsCmd) create(c *cli.Context) error {
 		return errors.New("no image specified")
 	}
 
-	_, err := CreateFn(f.client, appName, fn)
+	a, err := app.GetAppByName(f.client, appName)
+	if err != nil {
+		return err
+	}
+
+	_, err = CreateFn(f.client, a.ID, fn)
 	return err
 }
 
 // CreateFn request
-func CreateFn(r *fnclient.Fn, appName string, fn *models.Fn) (*models.Fn, error) {
-	a, err := app.GetAppByName(r, appName)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO(reed): this validation should all be server side
-	fn.AppID = a.ID
-	err = common.ValidateTagImageName(fn.Image)
+func CreateFn(r *fnclient.Fn, appID string, fn *models.Fn) (*models.Fn, error) {
+	fn.AppID = appID
+	err := common.ValidateTagImageName(fn.Image)
 	if err != nil {
 		return nil, err
 	}
