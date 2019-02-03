@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	FN_CALL_ID             = "Fn-Call-Id"
+	CallIDHeader           = "Fn-Call-Id"
 	MaximumRequestBodySize = 5 * 1024 * 1024 // bytes
 )
 
@@ -37,12 +37,7 @@ type apiErr struct {
 	Message string `json:"message"`
 }
 
-type callID struct {
-	CallID string `json:"call_id"`
-	Error  apiErr `json:"error"`
-}
-
-func Invoke(provider provider.Provider, invokeUrl string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
+func Invoke(provider provider.Provider, invokeURL string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
 
 	method = "POST"
 
@@ -52,13 +47,13 @@ func Invoke(provider provider.Provider, invokeUrl string, content io.Reader, out
 	if content != nil {
 		b, err := ioutil.ReadAll(io.LimitReader(content, MaximumRequestBodySize))
 		buffer := bytes.NewBuffer(b)
-		req, err = http.NewRequest(method, invokeUrl, buffer)
+		req, err = http.NewRequest(method, invokeURL, buffer)
 		if err != nil {
 			return fmt.Errorf("Error creating request to service: %s", err)
 		}
 	} else {
 		var err error
-		req, err = http.NewRequest(method, invokeUrl, nil)
+		req, err = http.NewRequest(method, invokeURL, nil)
 		if err != nil {
 			return fmt.Errorf("Error creating request to service: %s", err)
 		}
@@ -86,10 +81,10 @@ func Invoke(provider provider.Provider, invokeUrl string, content io.Reader, out
 	}
 
 	resp, err := httpClient.Do(req)
-
 	if err != nil {
-		return fmt.Errorf("Error invoking fn: %s", err)
+		return fmt.Errorf("Error invoking function: %s", err)
 	}
+	defer resp.Body.Close()
 
 	if logger.DebugEnabled() {
 		b, err := httputil.DumpResponse(resp, true)
@@ -99,35 +94,52 @@ func Invoke(provider provider.Provider, invokeUrl string, content io.Reader, out
 		fmt.Printf(string(b) + "\n")
 	}
 
-	// for sync calls
-	if call_id, found := resp.Header[FN_CALL_ID]; found {
-		if includeCallID {
-			fmt.Fprint(os.Stderr, fmt.Sprintf("Call ID: %v\n", call_id[0]))
-		}
-		io.Copy(output, resp.Body)
-	} else {
-		// for async calls and error discovering
-		c := &callID{}
-		err = json.NewDecoder(resp.Body).Decode(c)
-		if err == nil {
-			// decode would not fail in both cases:
-			// - call id in body
-			// - error in body
-			// that's why we need to check values of attributes
-			if c.CallID != "" {
-				fmt.Fprint(os.Stderr, fmt.Sprintf("Call ID: %v\n", c.CallID))
-			} else {
-				fmt.Fprint(output, fmt.Sprintf("Error: %v\n", c.Error.Message))
-			}
-		} else {
-			return err
-		}
+	if cid, ok := resp.Header[CallIDHeader]; ok && includeCallID {
+		fmt.Fprint(output, fmt.Sprintf("Call ID: %v\n", cid[0]))
 	}
 
+	var body io.Reader = resp.Body
 	if resp.StatusCode >= 400 {
-		// TODO: parse out error message
-		return fmt.Errorf("Error calling function: status %v", resp.StatusCode)
+		// if we don't get json, we need to buffer the input so that we can
+		// display the user's function output as it was...
+		var b bytes.Buffer
+		body = io.TeeReader(resp.Body, &b)
+
+		var msg apiErr
+		err = json.NewDecoder(body).Decode(&msg)
+		if err == nil && msg.Message != "" {
+			// this is likely from fn, so unravel this...
+			return fmt.Errorf("Error invoking function. status: %v message: %v", resp.StatusCode, msg.Message)
+		}
+
+		// read anything written to buffer first, then copy out rest of body
+		body = io.MultiReader(&b, resp.Body)
 	}
 
+	// at this point, it's not an fn error, so output function output as is
+	// TODO we should give users the option to see a status code too, like call id?
+
+	lcc := lastCharChecker{reader: body}
+	body = &lcc
+	io.Copy(output, body)
+
+	// #1408 - flush stdout
+	if lcc.last != '\n' {
+		fmt.Fprintln(output)
+	}
 	return nil
+}
+
+// lastCharChecker wraps an io.Reader to return the last read character
+type lastCharChecker struct {
+	reader io.Reader
+	last   byte
+}
+
+func (l *lastCharChecker) Read(b []byte) (int, error) {
+	n, err := l.reader.Read(b)
+	if n > 0 {
+		l.last = b[n-1]
+	}
+	return n, err
 }
