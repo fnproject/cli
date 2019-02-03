@@ -117,9 +117,10 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 
 	err := client.Invoke(cl.provider, invokeURL, content, os.Stdout, c.String("method"), c.StringSlice("e"), contentType, c.Bool("display-call-id"))
 	// we don't want to show the help message if invoke fails, just copy error to
-	// stderr but don't return the error from Invoke
+	// stderr but don't return the error from Invoke. also exit early here
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
 	}
 	return nil
 }
