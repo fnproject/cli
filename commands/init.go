@@ -47,7 +47,7 @@ type initFnCmd struct {
 func initFlags(a *initFnCmd) []cli.Flag {
 	fgs := []cli.Flag{
 		cli.StringFlag{
-			Name:  "name",
+			Name:  "name,n",
 			Usage: "Name of the function. Defaults to directory name in lowercase.",
 		},
 		cli.BoolFlag{
@@ -56,11 +56,11 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Destination: &a.force,
 		},
 		cli.StringFlag{
-			Name:  "runtime",
+			Name:  "runtimer",
 			Usage: "Choose an existing runtime - " + langsList(),
 		},
 		cli.StringFlag{
-			Name:  "init-image",
+			Name:  "init-image,i",
 			Usage: "A Docker image which will create a function template",
 		},
 		cli.StringFlag{
@@ -82,7 +82,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Destination: &a.wd,
 		},
 		cli.StringFlag{
-			Name:        "trigger",
+			Name:        "trigger,t",
 			Usage:       "Specify the trigger type - permitted values are 'http'.",
 			Destination: &a.triggerType,
 		},
@@ -103,7 +103,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Usage: "Function idle timeout (eg. 30)",
 		},
 		cli.StringSliceFlag{
-			Name:  "annotation",
+			Name:  "annotation,a",
 			Usage: "Function annotation (can be specified multiple times)",
 		},
 	}
