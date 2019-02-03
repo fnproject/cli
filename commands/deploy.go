@@ -183,12 +183,12 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	if p.all {
 		return p.deployAll(c, app)
 	}
-	return p.deploySingle(c, app)
+	return p.deploySingle(c, app, appf != nil)
 }
 
 // deploySingle deploys a single function, either the current directory or if in the context
 // of an app and user provides relative path as the first arg, it will deploy that function.
-func (p *deploycmd) deploySingle(c *cli.Context, app *models.App) error {
+func (p *deploycmd) deploySingle(c *cli.Context, app *models.App, isAppYAML bool) error {
 	var dir string
 	wd := common.GetWd()
 
@@ -220,7 +220,10 @@ func (p *deploycmd) deploySingle(c *cli.Context, app *models.App) error {
 		if err != nil {
 			return err
 		}
-		if dir == wd {
+		if isAppYAML && dir == wd {
+			// TODO(reed): why are we setting this any differently than anything else? this is magical.
+			// for app.yaml that don't provide a func.yaml with a name, we use '$PWD-root' instead of '$PWD'
+			// for the name of the function - this is really weird. remove?
 			setFuncInfoV20180708(ff, app.Name)
 		}
 
