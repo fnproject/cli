@@ -14,7 +14,6 @@ var Runtimes = []struct {
 	{"go", ""},
 	{"java", ""},
 	{"java8", ""},
-	{"java9", ""},
 	{"java11", ""},
 	{"kotlin", `{"name": "John"}`}, //  no arg fn run is broken https://github.com/fnproject/cli/issues/262
 	{"node", ""},
