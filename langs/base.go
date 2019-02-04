@@ -11,8 +11,7 @@ var helpers = []LangHelper{}
 
 func init() {
 	registerHelper(&GoLangHelper{})
-	registerHelper(&JavaLangHelper{version: "1.8"})
-	registerHelper(&JavaLangHelper{version: "9"})
+	registerHelper(&JavaLangHelper{version: "8"})
 	registerHelper(&JavaLangHelper{version: "11"})
 	registerHelper(&NodeLangHelper{})
 	registerHelper(&PythonLangHelper{Version: "3.6"})
