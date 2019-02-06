@@ -1,7 +1,11 @@
 package fn
 
 import (
+	"encoding/json"
+	"fmt"
+
 	client "github.com/fnproject/cli/client"
+	"github.com/fnproject/cli/objects/app"
 	"github.com/urfave/cli"
 )
 
@@ -27,6 +31,11 @@ func Create() cli.Command {
 		ArgsUsage: "<app-name> <function-name> <image>",
 		Action:    f.create,
 		Flags:     FnFlags,
+		BashComplete: func(c *cli.Context) {
+			if len(c.Args()) == 0 {
+				app.BashCompleteApps(c)
+			}
+		},
 	}
 }
 
@@ -67,6 +76,12 @@ func List() cli.Command {
 				Value: "",
 			},
 		},
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			}
+		},
 	}
 }
 
@@ -91,6 +106,14 @@ func Delete() cli.Command {
 		},
 		ArgsUsage: "<app-name> <function-name>",
 		Action:    f.delete,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				BashCompleteFns(c)
+			}
+		},
 	}
 }
 
@@ -119,8 +142,33 @@ func Inspect() cli.Command {
 				Usage: "Output the function invoke endpoint if set",
 			},
 		},
-		ArgsUsage: "<app-name> <function-name> [property.[key]]",
+		ArgsUsage: "<app-name> <function-name> [property[.key]]",
 		Action:    f.inspect,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				BashCompleteFns(c)
+			case 2:
+				fn, err := getFnByAppAndFnName(c.Args()[0], c.Args()[1])
+				if err != nil {
+					return
+				}
+				data, err := json.Marshal(fn)
+				if err != nil {
+					return
+				}
+				var inspect map[string]interface{}
+				err = json.Unmarshal(data, &inspect)
+				if err != nil {
+					return
+				}
+				for key := range inspect {
+					fmt.Println(key)
+				}
+			}
+		},
 	}
 }
 
@@ -146,12 +194,20 @@ func Update() cli.Command {
 		ArgsUsage: "<app-name> <function-name>",
 		Action:    f.update,
 		Flags:     updateFnFlags,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				BashCompleteFns(c)
+			}
+		},
 	}
 }
 
 // GetConfig for function command
 func GetConfig() cli.Command {
-	r := fnsCmd{}
+	f := fnsCmd{}
 	return cli.Command{
 		Name:        "function",
 		ShortName:   "func",
@@ -161,15 +217,31 @@ func GetConfig() cli.Command {
 		Description: "This command gets the configuration of a specific function for an application.",
 		Before: func(c *cli.Context) error {
 			var err error
-			r.provider, err = client.CurrentProvider()
+			f.provider, err = client.CurrentProvider()
 			if err != nil {
 				return err
 			}
-			r.client = r.provider.APIClientv2()
+			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app-name> <funct> <key>",
-		Action:    r.getConfig,
+		ArgsUsage: "<app-name> <function-name> <key>",
+		Action:    f.getConfig,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				BashCompleteFns(c)
+			case 2:
+				fn, err := getFnByAppAndFnName(c.Args()[0], c.Args()[1])
+				if err != nil {
+					return
+				}
+				for key := range fn.Config {
+					fmt.Println(key)
+				}
+			}
+		},
 	}
 }
 
@@ -194,6 +266,14 @@ func SetConfig() cli.Command {
 		},
 		ArgsUsage: "<app-name> <function-name> <key> <value>",
 		Action:    f.setConfig,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				BashCompleteFns(c)
+			}
+		},
 	}
 }
 
@@ -218,6 +298,14 @@ func ListConfig() cli.Command {
 		},
 		ArgsUsage: "<app-name> <function-name>",
 		Action:    f.listConfig,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				BashCompleteFns(c)
+			}
+		},
 	}
 }
 
@@ -240,7 +328,23 @@ func UnsetConfig() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app-name> </path> <key>",
+		ArgsUsage: "<app-name> <function-name> <key>",
 		Action:    f.unsetConfig,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				BashCompleteFns(c)
+			case 2:
+				fn, err := getFnByAppAndFnName(c.Args()[0], c.Args()[1])
+				if err != nil {
+					return
+				}
+				for key := range fn.Config {
+					fmt.Println(key)
+				}
+			}
+		},
 	}
 }

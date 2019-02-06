@@ -1,7 +1,12 @@
 package trigger
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/fnproject/cli/client"
+	"github.com/fnproject/cli/objects/app"
+	"github.com/fnproject/cli/objects/fn"
 	"github.com/urfave/cli"
 )
 
@@ -27,6 +32,14 @@ func Create() cli.Command {
 		ArgsUsage: "<app-name> <function-name> <trigger-name>",
 		Action:    t.create,
 		Flags:     TriggerFlags,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				fn.BashCompleteFns(c)
+			}
+		},
 	}
 }
 
@@ -62,6 +75,14 @@ func List() cli.Command {
 				Value: int64(100),
 			},
 		},
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				fn.BashCompleteFns(c)
+			}
+		},
 	}
 }
 
@@ -92,6 +113,16 @@ func Update() cli.Command {
 				Usage: "trigger annotations",
 			},
 		},
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				fn.BashCompleteFns(c)
+			case 2:
+				BashCompleteTriggers(c)
+			}
+		},
 	}
 }
 
@@ -116,6 +147,16 @@ func Delete() cli.Command {
 		},
 		ArgsUsage: "<app-name> <function-name> <trigger-name>",
 		Action:    t.delete,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				fn.BashCompleteFns(c)
+			case 2:
+				BashCompleteTriggers(c)
+			}
+		},
 	}
 }
 
@@ -144,7 +185,34 @@ func Inspect() cli.Command {
 			t.client = t.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app-name> <function-name> <trigger-name>",
+		ArgsUsage: "<app-name> <function-name> <trigger-name> [property[.key]]",
 		Action:    t.inspect,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				fn.BashCompleteFns(c)
+			case 2:
+				BashCompleteTriggers(c)
+			case 3:
+				trigg, err := GetTriggerByAppFnAndTriggerNames(c.Args()[0], c.Args()[1], c.Args()[2])
+				if err != nil {
+					return
+				}
+				data, err := json.Marshal(trigg)
+				if err != nil {
+					return
+				}
+				var inspect map[string]interface{}
+				err = json.Unmarshal(data, &inspect)
+				if err != nil {
+					return
+				}
+				for key := range inspect {
+					fmt.Println(key)
+				}
+			}
+		},
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"errors"
+
 	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/objects/app"
@@ -61,8 +62,16 @@ func InvokeCommand() cli.Command {
 		ArgsUsage:   "[app-name] [function-name]",
 		Flags:       InvokeFnFlags,
 		Category:    "DEVELOPMENT COMMANDS",
-		Description: "This command explicitly invokes a function.",
+		Description: `This command invokes a function. Users may send input to their function by passing input to this command via STDIN.`,
 		Action:      cl.Invoke,
+		BashComplete: func(c *cli.Context) {
+			switch len(c.Args()) {
+			case 0:
+				app.BashCompleteApps(c)
+			case 1:
+				fn.BashCompleteFns(c)
+			}
+		},
 	}
 }
 
@@ -76,6 +85,7 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 		appName := c.Args().Get(0)
 		fnName := c.Args().Get(1)
 
+    
 		if appName == "" || fnName == "" {
 			return errors.New("missing app and function name")
 		}

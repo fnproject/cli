@@ -465,8 +465,10 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 
 		a.ff.Runtime = runtime
 
-		if c.String("format") == "" {
-			a.ff.Format = helper.DefaultFormat()
+		a.ff.Format = "http-stream"
+
+		if c.Uint64("memory") == 0 {
+			a.ff.Memory = helper.CustomMemory()
 		}
 
 		if c.String("cmd") == "" {

@@ -5,7 +5,7 @@ jobs:
     working_directory: ~/go/src/github.com/fnproject/cli
     environment: # apparently expansion doesn't work here yet: https://discuss.circleci.com/t/environment-variable-expansion-in-working-directory/11322
       - GOPATH=/home/circleci/go
-      - GOVERSION=1.10
+      - GOVERSION=1.11.4
       - OS=linux
       - ARCH=amd64
     steps:

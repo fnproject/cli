@@ -14,7 +14,6 @@ var Runtimes = []struct {
 	{"go", ""},
 	{"java", ""},
 	{"java8", ""},
-	{"java9", ""},
 	{"java11", ""},
 	{"kotlin", `{"name": "John"}`}, //  no arg fn run is broken https://github.com/fnproject/cli/issues/262
 	{"node", ""},
@@ -33,6 +32,7 @@ func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 			defer h.Cleanup()
 
 			appName := h.NewAppName()
+			h.Fn("create", "app", appName).AssertSuccess()
 			funcName := h.NewFuncName(appName)
 
 			h.Fn("init", "--runtime", rt.runtime, funcName).AssertSuccess()

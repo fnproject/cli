@@ -45,16 +45,17 @@ func DeployCommand() cli.Command {
 }
 
 type deploycmd struct {
-	appName  string
 	clientV2 *v2Client.Fn
 
-	wd       string
-	verbose  bool
-	local    bool
-	noCache  bool
-	registry string
-	all      bool
-	noBump   bool
+	appName   string
+	createApp bool
+	wd        string
+	verbose   bool
+	local     bool
+	noCache   bool
+	registry  string
+	all       bool
+	noBump    bool
 }
 
 func (p *deploycmd) flags() []cli.Flag {
@@ -63,6 +64,11 @@ func (p *deploycmd) flags() []cli.Flag {
 			Name:        "app",
 			Usage:       "App name to deploy to",
 			Destination: &p.appName,
+		},
+		cli.BoolFlag{
+			Name:        "create-app",
+			Usage:       "Enable automatic creation of app if it doesn't exist during deploy",
+			Destination: &p.createApp,
 		},
 		cli.BoolFlag{
 			Name:        "verbose, v",
@@ -326,16 +332,20 @@ func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.Fu
 
 	app, err := apps.GetAppByName(p.clientV2, appName)
 	if err != nil {
-		app = &modelsV2.App{
-			Name: appName,
-		}
+		if p.createApp {
+			app = &modelsV2.App{
+				Name: appName,
+			}
 
-		err = apps.CreateApp(p.clientV2, app)
-		if err != nil {
-			return err
-		}
-		app, err = apps.GetAppByName(p.clientV2, appName)
-		if err != nil {
+			err = apps.CreateApp(p.clientV2, app)
+			if err != nil {
+				return err
+			}
+			app, err = apps.GetAppByName(p.clientV2, appName)
+			if err != nil {
+				return err
+			}
+		} else {
 			return err
 		}
 	}
