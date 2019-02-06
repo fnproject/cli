@@ -50,7 +50,7 @@ func (h *KotlinLangHelper) BuildFromImage() (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk9-%s", fdkVersion), nil
+	return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk11-%s", fdkVersion), nil
 }
 
 // RunFromImage returns the Docker image used to run the Kotlin function.
@@ -60,7 +60,7 @@ func (h *KotlinLangHelper) RunFromImage() (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("fnproject/fn-java-fdk:jdk9-%s", fdkVersion), nil
+	return fmt.Sprintf("fnproject/fn-java-fdk:jre11-%s", fdkVersion), nil
 }
 
 // HasBoilerplate returns whether the Java runtime has boilerplate that can be generated.

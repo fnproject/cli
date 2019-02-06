@@ -38,6 +38,7 @@ func TestInitImage(t *testing.T) {
 
 		// Create the init-image
 		appName := h.NewAppName()
+		h.Fn("create", "app", appName).AssertSuccess()
 		origFuncName := h.NewFuncName(appName)
 		h.Fn("init", "--runtime", "go", origFuncName)
 		h.Cd(origFuncName)
