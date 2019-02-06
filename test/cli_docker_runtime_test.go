@@ -36,6 +36,7 @@ func TestDockerRuntimeInit(t *testing.T) {
 	defer tctx.Cleanup()
 
 	appName := tctx.NewAppName()
+	tctx.Fn("create", "app", appName).AssertSuccess()
 	fnName := tctx.NewFuncName(appName)
 	tctx.MkDir(fnName)
 	tctx.Cd(fnName)

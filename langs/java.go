@@ -35,10 +35,10 @@ func (h *JavaLangHelper) Runtime() string {
 
 // TOOD: same as python, I think we should just have version tags on the single runtime, eg: `java:8` or `java:9`
 func (h *JavaLangHelper) LangStrings() []string {
-	if h.version == "1.8" {
+	if h.version == "8" {
 		return []string{"java8"}
-	} else if h.version == "9" {
-		return []string{"java9", "java"}
+	} else if h.version == "11" {
+		return []string{"java11", "java"}
 	}
 	return []string{"java11"}
 
@@ -56,10 +56,8 @@ func (h *JavaLangHelper) BuildFromImage() (string, error) {
 		return "", err
 	}
 
-	if h.version == "1.8" {
+	if h.version == "8" {
 		return fmt.Sprintf("fnproject/fn-java-fdk-build:%s", fdkVersion), nil
-	} else if h.version == "9" {
-		return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk9-%s", fdkVersion), nil
 	} else if h.version == "11" {
 		return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk11-%s", fdkVersion), nil
 	} else {
@@ -73,10 +71,8 @@ func (h *JavaLangHelper) RunFromImage() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if h.version == "1.8" {
+	if h.version == "8" {
 		return fmt.Sprintf("fnproject/fn-java-fdk:%s", fdkVersion), nil
-	} else if h.version == "9" {
-		return fmt.Sprintf("fnproject/fn-java-fdk:jdk9-%s", fdkVersion), nil
 	} else if h.version == "11" {
 		return fmt.Sprintf("fnproject/fn-java-fdk:jre11-%s", fdkVersion), nil
 	} else {

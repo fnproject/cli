@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"io"
 	"github.com/fnproject/fdk-go"
+	"io"
 )
 
 func main() {
