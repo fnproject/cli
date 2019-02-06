@@ -85,6 +85,7 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 		appName := c.Args().Get(0)
 		fnName := c.Args().Get(1)
 
+    
 		if appName == "" || fnName == "" {
 			return errors.New("missing app and function name")
 		}
