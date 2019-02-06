@@ -11,6 +11,8 @@ import (
 )
 
 func TestTopLevelAutoComplete(t *testing.T) {
+	t.Parallel()
+
 	h := testharness.Create(t)
 	defer h.Cleanup()
 
@@ -40,6 +42,8 @@ func TestTopLevelAutoComplete(t *testing.T) {
 // Needs to be seperate from top level commands as structure of config commands
 // is slightly different than the standard verb-noun command structure
 func TestTopLevelConfigAutoComplete(t *testing.T) {
+	t.Parallel()
+
 	h := testharness.Create(t)
 	defer h.Cleanup()
 	allCmds := map[string]commands.Cmd{
@@ -71,7 +75,7 @@ func TestCreateAutoComplete(t *testing.T) {
 	appName1 := h.NewAppName()
 	funcName1 := h.NewFuncName(appName1)
 
-	h.Fn("create", "app", appName1)
+	h.Fn("create", "app", appName1).AssertSuccess()
 	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
 	//tests begin
 	//non auto-completed
@@ -97,7 +101,7 @@ func TestConfigAutoComplete(t *testing.T) {
 	configKeyFunc := h.NewRandString(5)
 	configValFunc := h.NewRandString(5)
 
-	h.Fn("create", "app", appName1)
+	h.Fn("create", "app", appName1).AssertSuccess()
 	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
 	h.Fn("config", "app", appName1, configKeyApp, configValApp).AssertSuccess()
 	h.Fn("config", "function", appName1, funcName1, configKeyFunc, configValFunc).AssertSuccess()
@@ -142,7 +146,7 @@ func TestDeleteAutoComplete(t *testing.T) {
 	triggerName1 := h.NewTriggerName(appName1, funcName1)
 	contextName1 := h.NewContextName()
 
-	h.Fn("create", "app", appName1)
+	h.Fn("create", "app", appName1).AssertSuccess()
 	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
 	h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/trig").AssertSuccess()
 	h.Fn("create", "context", contextName1).AssertSuccess()
@@ -171,7 +175,7 @@ func TestGetAutoComplete(t *testing.T) {
 	appName1 := h.NewAppName()
 	funcName1 := h.NewFuncName(appName1)
 
-	h.Fn("create", "app", appName1)
+	h.Fn("create", "app", appName1).AssertSuccess()
 	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
 	//tests begin
 	//get logs
@@ -195,7 +199,7 @@ func TestInspectAutoComplete(t *testing.T) {
 	fnProperties := []string{"app_id", "created_at", "id", "idle_timeout", "image", "memory", "name", "timeout", "updated_at"}
 	triggerProperties := []string{"app_id", "created_at", "id", "name", "source", "updated_at", "annotations", "fn_id", "type"}
 
-	h.Fn("create", "app", appName1)
+	h.Fn("create", "app", appName1).AssertSuccess()
 	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
 	h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/trig").AssertSuccess()
 	h.Fn("create", "context", contextName1).AssertSuccess()
@@ -229,7 +233,7 @@ func TestListAutoComplete(t *testing.T) {
 	triggerName1 := h.NewTriggerName(appName1, funcName1)
 	contextName1 := h.NewContextName()
 
-	h.Fn("create", "app", appName1)
+	h.Fn("create", "app", appName1).AssertSuccess()
 	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
 	h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/trig").AssertSuccess()
 	h.Fn("create", "context", contextName1).AssertSuccess()
@@ -249,6 +253,8 @@ func TestListAutoComplete(t *testing.T) {
 }
 
 func TestUseAutoComplete(t *testing.T) {
+	t.Parallel()
+
 	h := testharness.Create(t)
 	defer h.Cleanup()
 
