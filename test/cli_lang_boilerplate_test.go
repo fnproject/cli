@@ -32,6 +32,7 @@ func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 			defer h.Cleanup()
 
 			appName := h.NewAppName()
+			h.Fn("create", "app", appName).AssertSuccess()
 			funcName := h.NewFuncName(appName)
 
 			h.Fn("init", "--runtime", rt.runtime, funcName).AssertSuccess()
