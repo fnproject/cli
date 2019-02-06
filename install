@@ -55,6 +55,10 @@ case "$(uname)" in
     $sh_c "$curl /tmp/fn_linux $url/$version/fn_linux"
     $sh_c "mv /tmp/fn_linux /usr/local/bin/fn"
     $sh_c "chmod +x /usr/local/bin/fn"
+    if [ "${PATH#*/usr/local/bin}" != "$PATH" ]; then
+       echo 'PATH="$PATH:/usr/local/bin"'>/etc/profile.d/fn.sh
+       . /etc/profile.d/fn.sh
+    fi
     fn --version
     ;;
   Darwin)
