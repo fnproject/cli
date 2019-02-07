@@ -34,75 +34,72 @@ func (h *JavaLangHelper) Runtime() string {
 }
 
 // TOOD: same as python, I think we should just have version tags on the single runtime, eg: `java:8` or `java:9`
-func (lh *JavaLangHelper) LangStrings() []string {
-	if lh.version == "1.8" {
+func (h *JavaLangHelper) LangStrings() []string {
+	if h.version == "8" {
 		return []string{"java8"}
-	} else if lh.version == "9" {
-		return []string{"java9", "java"}
+	} else if h.version == "11" {
+		return []string{"java11", "java"}
 	}
 	return []string{"java11"}
 
 }
-func (lh *JavaLangHelper) Extensions() []string {
+
+func (h *JavaLangHelper) Extensions() []string {
 	return []string{".java"}
 }
 
 // BuildFromImage returns the Docker image used to compile the Maven function project
-func (lh *JavaLangHelper) BuildFromImage() (string, error) {
+func (h *JavaLangHelper) BuildFromImage() (string, error) {
 
-	fdkVersion, err := lh.getFDKAPIVersion()
+	fdkVersion, err := h.getFDKAPIVersion()
 	if err != nil {
 		return "", err
 	}
 
-	if lh.version == "1.8" {
+	if h.version == "8" {
 		return fmt.Sprintf("fnproject/fn-java-fdk-build:%s", fdkVersion), nil
-	} else if lh.version == "9" {
-		return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk9-%s", fdkVersion), nil
-	} else if lh.version == "11" {
+	} else if h.version == "11" {
 		return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk11-%s", fdkVersion), nil
 	} else {
-		return "", fmt.Errorf("unsupported java version %s", lh.version)
+		return "", fmt.Errorf("unsupported java version %s", h.version)
 	}
 }
 
 // RunFromImage returns the Docker image used to run the Java function.
-func (lh *JavaLangHelper) RunFromImage() (string, error) {
-	fdkVersion, err := lh.getFDKAPIVersion()
+func (h *JavaLangHelper) RunFromImage() (string, error) {
+	fdkVersion, err := h.getFDKAPIVersion()
 	if err != nil {
 		return "", err
 	}
-	if lh.version == "1.8" {
+	if h.version == "8" {
 		return fmt.Sprintf("fnproject/fn-java-fdk:%s", fdkVersion), nil
-	} else if lh.version == "9" {
-		return fmt.Sprintf("fnproject/fn-java-fdk:jdk9-%s", fdkVersion), nil
-	} else if lh.version == "11" {
+	} else if h.version == "11" {
 		return fmt.Sprintf("fnproject/fn-java-fdk:jre11-%s", fdkVersion), nil
 	} else {
-		return "", fmt.Errorf("unsupported java version %s", lh.version)
+		return "", fmt.Errorf("unsupported java version %s", h.version)
 	}
 }
 
 // HasBoilerplate returns whether the Java runtime has boilerplate that can be generated.
-func (lh *JavaLangHelper) HasBoilerplate() bool { return true }
+func (h *JavaLangHelper) HasBoilerplate() bool { return true }
 
-// Java defaults to http
-func (lh *JavaLangHelper) DefaultFormat() string { return "http-stream" }
+// CustomMemory - no custom memory value here.
+func (h *JavaLangHelper) CustomMemory() uint64 { return 0 }
 
 // GenerateBoilerplate will generate function boilerplate for a Java runtime. The default boilerplate is for a Maven
 // project.
-func (lh *JavaLangHelper) GenerateBoilerplate(path string) error {
+func (h *JavaLangHelper) GenerateBoilerplate(path string) error {
 	pathToPomFile := filepath.Join(path, "pom.xml")
 	if exists(pathToPomFile) {
 		return ErrBoilerplateExists
 	}
 
-	apiVersion, err := lh.getFDKAPIVersion()
+	apiVersion, err := h.getFDKAPIVersion()
 	if err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, lh.version)), os.FileMode(0644)); err != nil {
+	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, h.version)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -125,19 +122,19 @@ func (lh *JavaLangHelper) GenerateBoilerplate(path string) error {
 }
 
 // Cmd returns the Java runtime Docker entrypoint that will be executed when the function is executed.
-func (lh *JavaLangHelper) Cmd() (string, error) {
+func (h *JavaLangHelper) Cmd() (string, error) {
 	return "com.example.fn.HelloFunction::handleRequest", nil
 }
 
 // DockerfileCopyCmds returns the Docker COPY command to copy the compiled Java function jar and dependencies.
-func (lh *JavaLangHelper) DockerfileCopyCmds() []string {
+func (h *JavaLangHelper) DockerfileCopyCmds() []string {
 	return []string{
 		"COPY --from=build-stage /function/target/*.jar /function/app/",
 	}
 }
 
 // DockerfileBuildCmds returns the build stage steps to compile the Maven function project.
-func (lh *JavaLangHelper) DockerfileBuildCmds() []string {
+func (h *JavaLangHelper) DockerfileBuildCmds() []string {
 	return []string{
 		fmt.Sprintf("ENV MAVEN_OPTS %s", mavenOpts()),
 		"ADD pom.xml /function/pom.xml",
@@ -149,10 +146,10 @@ func (lh *JavaLangHelper) DockerfileBuildCmds() []string {
 }
 
 // HasPreBuild returns whether the Java Maven runtime has a pre-build step.
-func (lh *JavaLangHelper) HasPreBuild() bool { return true }
+func (h *JavaLangHelper) HasPreBuild() bool { return true }
 
 // PreBuild ensures that the expected the function is based is a maven project.
-func (lh *JavaLangHelper) PreBuild() error {
+func (h *JavaLangHelper) PreBuild() error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -193,10 +190,10 @@ func pomFileContent(APIversion, javaVersion string) string {
 	return fmt.Sprintf(pomFile, APIversion, javaVersion, javaVersion)
 }
 
-func (lh *JavaLangHelper) getFDKAPIVersion() (string, error) {
+func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
 
-	if lh.latestFdkVersion != "" {
-		return lh.latestFdkVersion, nil
+	if h.latestFdkVersion != "" {
+		return h.latestFdkVersion, nil
 	}
 
 	const versionURL = "https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
@@ -242,11 +239,11 @@ func (lh *JavaLangHelper) getFDKAPIVersion() (string, error) {
 	}
 
 	version = parsedResp[0].Version
-	lh.latestFdkVersion = version
+	h.latestFdkVersion = version
 	return version, nil
 }
 
-func (lh *JavaLangHelper) FixImagesOnInit() bool {
+func (h *JavaLangHelper) FixImagesOnInit() bool {
 	return true
 }
 

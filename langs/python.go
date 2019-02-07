@@ -8,17 +8,21 @@ import (
 	"path/filepath"
 )
 
+// PythonLangHelper - python-specific init helper
 type PythonLangHelper struct {
 	BaseHelper
 	Version string
 }
 
-func (h *PythonLangHelper) DefaultFormat() string {
-	return "http-stream"
+// CustomMemory - python is a hungry beast so specify a higher base memory here.
+func (h *PythonLangHelper) CustomMemory() uint64 {
+	return 256
 }
 
+// HasBoilerplate - yep, we have boilerplate...
 func (h *PythonLangHelper) HasBoilerplate() bool { return true }
 
+// GenerateBoilerplate - ...and here it is.
 func (h *PythonLangHelper) GenerateBoilerplate(path string) error {
 	codeFile := filepath.Join(path, "func.py")
 	if exists(codeFile) {
@@ -59,17 +63,19 @@ func (h *PythonLangHelper) RunFromImage() (string, error) {
 }
 
 func (h *PythonLangHelper) Entrypoint() (string, error) {
-	return "python3 func.py", nil
+	return "/python/bin/fdk /function/func.py handler", nil
 }
 
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
-	r := []string{}
-	r = append(r, "ADD . /function/")
+	var r []string
 	if exists("requirements.txt") {
+		r = append(r, "ADD requirements.txt /function/")
 		r = append(r, `
 RUN pip3 install --target /python/  --no-cache --no-cache-dir -r requirements.txt &&\
     rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv`)
+
 	}
+	r = append(r, "ADD . /function/")
 	return r
 }
 
@@ -78,21 +84,25 @@ func (h *PythonLangHelper) IsMultiStage() bool {
 }
 
 const (
-	helloPythonSrcBoilerplate = `import fdk
+	helloPythonSrcBoilerplate = `import io
 import json
 
+from fdk import response
 
-def handler(ctx, data=None, loop=None):
+
+def handler(ctx, data: io.BytesIO=None):
     name = "World"
-    if data and len(data) > 0:
-        body = json.loads(data)
+    try:
+        body = json.loads(data.getvalue())
         name = body.get("name")
-    return {"message": "Hello {0}".format(name)}
+    except (Exception, ValueError) as ex:
+        print(str(ex))
 
-
-if __name__ == "__main__":
-    fdk.handle(handler)
-
+    return response.Response(
+        ctx, response_data=json.dumps(
+            {"message": "Hello {0}".format(name)}),
+        headers={"Content-Type": "application/json"}
+    )
 `
 	reqsPythonSrcBoilerplate = `fdk`
 )

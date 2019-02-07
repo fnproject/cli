@@ -3,7 +3,7 @@ package config
 import (
 	"io/ioutil"
 
-	"github.com/go-yaml/yaml"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // ContextFile defines the internal structure of a default context

@@ -30,7 +30,6 @@ func withMinimalFunction(h *testharness.CLIHarness) {
 	})
 }
 
-
 // this is messy and nasty  as we generate different potential values for FN_API_URL based on its type
 func fnApiUrlVariations(t *testing.T) []string {
 
@@ -204,6 +203,20 @@ func TestAppYamlDeploy(t *testing.T) {
 	h.Fn("invoke", appName, fnName).AssertSuccess()
 }
 
+func TestDeployCreateApp(t *testing.T) {
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+
+	appName := h.NewAppName()
+	fnName := h.NewFuncName(appName)
+	h.MkDir(fnName)
+	h.Cd(fnName)
+	withMinimalFunction(h)
+	h.Fn("deploy", "--local", "--app", appName, "--create-app").AssertSuccess()
+}
+
 func TestBump(t *testing.T) {
 	t.Parallel()
 
@@ -219,6 +232,7 @@ func TestBump(t *testing.T) {
 	}
 
 	appName := h.NewAppName()
+	h.Fn("create", "app", appName).AssertSuccess()
 	fnName := h.NewFuncName(appName)
 	h.MkDir(fnName)
 	h.Cd(fnName)

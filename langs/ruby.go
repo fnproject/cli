@@ -24,8 +24,10 @@ func (h *RubyLangHelper) LangStrings() []string {
 func (h *RubyLangHelper) Extensions() []string {
 	return []string{".rb"}
 }
-func (h *RubyLangHelper) DefaultFormat() string {
-	return "http-stream"
+
+// CustomMemory - no memory override here.
+func (h *RubyLangHelper) CustomMemory() uint64 {
+	return 0
 }
 func (h *RubyLangHelper) BuildFromImage() (string, error) {
 	return "fnproject/ruby:dev", nil
@@ -94,7 +96,7 @@ FDK.handle(target: :myfunction)
 `
 
 	rubyGemfileBoilerplate = `source 'https://rubygems.org' do
-  gem 'fdk', '>= 0.0.17'
+  gem 'fdk', '>= 0.0.18'
 end
 `
 )
