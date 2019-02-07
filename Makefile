@@ -1,4 +1,4 @@
-all: dep build	
+all: dep build
 	./fn
 
 build: 
@@ -11,10 +11,7 @@ docker:
 	docker build -t fnproject/fn:latest .
 
 dep:
-	dep ensure --vendor-only
-
-dep-up:
-	dep ensure
+	GO111MODULE=on GOFLAGS=-mod=vendor go mod vendor -v
 
 test: build
 	./test.sh
