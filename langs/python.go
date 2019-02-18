@@ -63,7 +63,7 @@ func (h *PythonLangHelper) RunFromImage() (string, error) {
 }
 
 func (h *PythonLangHelper) Entrypoint() (string, error) {
-	return "/python/bin/fdk /function/func.py handler", nil
+	return "/python/bin/fdk func.py handler", nil
 }
 
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
@@ -76,6 +76,9 @@ RUN pip3 install --target /python/  --no-cache --no-cache-dir -r requirements.tx
 
 	}
 	r = append(r, "ADD . /function/")
+	if exists("setup.py") {
+		r = append(r, "python setup.py install")
+	}
 	return r
 }
 
@@ -112,5 +115,6 @@ func (h *PythonLangHelper) DockerfileCopyCmds() []string {
 		"COPY --from=build-stage /function /function",
 		"COPY --from=build-stage /python /python",
 		"ENV PYTHONPATH=/python",
+		"WORKDIR /function",
 	}
 }
