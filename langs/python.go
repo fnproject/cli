@@ -76,6 +76,9 @@ RUN pip3 install --target /python/  --no-cache --no-cache-dir -r requirements.tx
 
 	}
 	r = append(r, "ADD . /function/")
+	if exists("setup.py") {
+		r = append(r, "python setup.py install")
+	}
 	return r
 }
 
