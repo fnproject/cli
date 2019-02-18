@@ -75,7 +75,8 @@ func (h *PythonLangHelper) DockerfileBuildCmds() []string {
 			pip_cmd += " --find-links file:///function/.pip_cache"
 		}
 		r = append(r, "ADD requirements.txt /function/")
-		r = append(r, fmt.Sprintf(`%v requirements.txt &&\
+		r = append(r, fmt.Sprintf(`
+			%v -r requirements.txt &&\
 			 rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv /function/.pip_cache`, pip_cmd))
 	}
 	r = append(r, "ADD . /function/")
