@@ -71,8 +71,8 @@ func (h *PythonLangHelper) DockerfileBuildCmds() []string {
 	if exists("requirements.txt") {
 		pip_cmd := `RUN pip3 install --target /python/  --no-cache --no-cache-dir`
 		if exists(".pip_cache") {
-			r = append(r, "ADD .pip_cache /function/")
-			pip_cmd += " --find-links file:///function/.pip_cache"
+			r = append(r, "ADD .pip_cache /function/.pip_cache")
+			pip_cmd += " --no-index --find-links /function/.pip_cache"
 		}
 		r = append(r, "ADD requirements.txt /function/")
 		r = append(r, fmt.Sprintf(`
