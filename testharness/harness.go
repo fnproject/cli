@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -96,7 +95,7 @@ func (cr *CmdResult) AssertSuccess() *CmdResult {
 // AssertStdoutContains asserts that the string appears somewhere in the stdout
 func (cr *CmdResult) AssertStdoutContains(match string) *CmdResult {
 	if !strings.Contains(cr.Stdout, match) {
-		log.Fatalf("Expected stdout  message (%s) not found in result: %v", match, cr)
+		cr.t.Fatalf("Expected stdout  message (%s) not found in result: %v", match, cr)
 	}
 	return cr
 }
@@ -112,7 +111,7 @@ func (cr *CmdResult) AssertStdoutContainsEach(matches []string) *CmdResult {
 // AssertStderrContains asserts that the string appears somewhere in the stderr
 func (cr *CmdResult) AssertStderrContains(match string) *CmdResult {
 	if !strings.Contains(cr.Stderr, match) {
-		log.Fatalf("Expected sdterr message (%s) not found in result: %v", match, cr)
+		cr.t.Fatalf("Expected sdterr message (%s) not found in result: %v", match, cr)
 	}
 	return cr
 }
@@ -451,9 +450,7 @@ func (h *CLIHarness) Cd(s string) {
 
 }
 func (h *CLIHarness) pushHistoryf(s string, args ...interface{}) {
-	//log.Printf(s, args...)
 	h.history = append(h.history, fmt.Sprintf(s, args...))
-
 }
 
 // MkDir creates a directory in the current cwd
@@ -533,18 +530,18 @@ func (cr *CmdResult) AssertStdoutContainsJSON(query []string, value interface{})
 	routeObj := map[string]interface{}{}
 	err := json.Unmarshal([]byte(cr.Stdout), &routeObj)
 	if err != nil {
-		log.Fatalf("Failed to parse routes inspect as JSON %v, %v", err, cr)
+		cr.t.Fatalf("Failed to parse routes inspect as JSON %v, %v", err, cr)
 	}
 
 	q := jsonq.NewQuery(routeObj)
 
 	val, err := q.Interface(query...)
 	if err != nil {
-		log.Fatalf("Failed to find path %v in json body %v", query, cr.Stdout)
+		cr.t.Fatalf("Failed to find path %v in json body %v", query, cr.Stdout)
 	}
 
 	if val != value {
-		log.Fatalf("Expected %s to be %v but was %s, %v", strings.Join(query, "."), value, val, cr)
+		cr.t.Fatalf("Expected %s to be %v but was %s, %v", strings.Join(query, "."), value, val, cr)
 	}
 }
 
@@ -552,13 +549,13 @@ func (cr *CmdResult) AssertStdoutMissingJSONPath(query []string) {
 	routeObj := map[string]interface{}{}
 	err := json.Unmarshal([]byte(cr.Stdout), &routeObj)
 	if err != nil {
-		log.Fatalf("Failed to parse routes inspect as JSON %v, %v", err, cr)
+		cr.t.Fatalf("Failed to parse routes inspect as JSON %v, %v", err, cr)
 	}
 
 	q := jsonq.NewQuery(routeObj)
 	_, err = q.Interface(query...)
 	if err == nil {
-		log.Fatalf("Found path %v in json body %v when it was supposed to be missing", query, cr.Stdout)
+		cr.t.Fatalf("Found path %v in json body %v when it was supposed to be missing", query, cr.Stdout)
 	}
 }
 

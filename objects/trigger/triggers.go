@@ -383,7 +383,7 @@ func GetTriggerByName(client *fnclient.Fn, appID string, fnID string, triggerNam
 		return nil, err
 	}
 	if len(triggerList.Payload.Items) == 0 {
-		return nil, fmt.Errorf("Trigger %s not found", triggerName)
+		return nil, NameNotFoundError{triggerName}
 	}
 
 	return triggerList.Payload.Items[0], nil
@@ -394,4 +394,13 @@ func WithFlags(c *cli.Context, t *models.Trigger) {
 	if len(c.StringSlice("annotation")) > 0 {
 		t.Annotations = common.ExtractAnnotations(c)
 	}
+}
+
+// NameNotFoundError error for app not found when looked up by name
+type NameNotFoundError struct {
+	Name string
+}
+
+func (n NameNotFoundError) Error() string {
+	return fmt.Sprintf("trigger %s not found", n.Name)
 }

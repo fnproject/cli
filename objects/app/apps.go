@@ -135,11 +135,12 @@ func (a *appsCmd) create(c *cli.Context) error {
 
 	appWithFlags(c, app)
 
-	return CreateApp(a.client, app)
+	_, err := CreateApp(a.client, app)
+	return err
 }
 
 // CreateApp creates a new app using the given client
-func CreateApp(a *fnclient.Fn, app *modelsv2.App) error {
+func CreateApp(a *fnclient.Fn, app *modelsv2.App) (*modelsv2.App, error) {
 	resp, err := a.Apps.CreateApp(&apiapps.CreateAppParams{
 		Context: context.Background(),
 		Body:    app,
@@ -148,16 +149,15 @@ func CreateApp(a *fnclient.Fn, app *modelsv2.App) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apiapps.CreateAppBadRequest:
-			return fmt.Errorf("%v", e.Payload.Message)
+			err = fmt.Errorf("%v", e.Payload.Message)
 		case *apiapps.CreateAppConflict:
-			return fmt.Errorf("%v", e.Payload.Message)
-		default:
-			return err
+			err = fmt.Errorf("%v", e.Payload.Message)
 		}
+		return nil, err
 	}
 
 	fmt.Println("Successfully created app: ", resp.Payload.Name)
-	return nil
+	return resp.Payload, nil
 }
 
 func (a *appsCmd) update(c *cli.Context) error {
@@ -170,7 +170,7 @@ func (a *appsCmd) update(c *cli.Context) error {
 
 	appWithFlags(c, app)
 
-	if err = PutApp(a.client, app.ID, app); err != nil {
+	if _, err = PutApp(a.client, app.ID, app); err != nil {
 		return err
 	}
 
@@ -191,7 +191,7 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	app.Config = make(map[string]string)
 	app.Config[key] = value
 
-	if err = PutApp(a.client, app.ID, app); err != nil {
+	if _, err = PutApp(a.client, app.ID, app); err != nil {
 		return fmt.Errorf("Error updating app configuration: %v", err)
 	}
 
@@ -256,7 +256,7 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	}
 	app.Config[key] = ""
 
-	err = PutApp(a.client, app.ID, app)
+	_, err = PutApp(a.client, app.ID, app)
 	if err != nil {
 		return err
 	}
@@ -337,8 +337,8 @@ func (a *appsCmd) delete(c *cli.Context) error {
 }
 
 // PutApp updates the app with the given ID using the content of the provided app
-func PutApp(a *fnclient.Fn, appID string, app *modelsv2.App) error {
-	_, err := a.Apps.UpdateApp(&apiapps.UpdateAppParams{
+func PutApp(a *fnclient.Fn, appID string, app *modelsv2.App) (*modelsv2.App, error) {
+	resp, err := a.Apps.UpdateApp(&apiapps.UpdateAppParams{
 		Context: context.Background(),
 		AppID:   appID,
 		Body:    app,
@@ -347,14 +347,12 @@ func PutApp(a *fnclient.Fn, appID string, app *modelsv2.App) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *apiapps.UpdateAppBadRequest:
-			return fmt.Errorf("%s", e.Payload.Message)
-
-		default:
-			return err
+			err = fmt.Errorf("%s", e.Payload.Message)
 		}
+		return nil, err
 	}
 
-	return nil
+	return resp.Payload, nil
 }
 
 // NameNotFoundError error for app not found when looked up by name

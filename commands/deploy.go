@@ -14,8 +14,7 @@ import (
 	function "github.com/fnproject/cli/objects/fn"
 	trigger "github.com/fnproject/cli/objects/trigger"
 	v2Client "github.com/fnproject/fn_go/clientv2"
-	clientApps "github.com/fnproject/fn_go/clientv2/apps"
-	modelsV2 "github.com/fnproject/fn_go/modelsv2"
+	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/urfave/cli"
 )
 
@@ -125,7 +124,6 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	dir := common.GetDir(c)
 
 	appf, err := common.LoadAppfile(dir)
-
 	if err != nil {
 		if _, ok := err.(*common.NotFoundError); ok {
 			if p.all {
@@ -147,15 +145,50 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 		return errors.New("App name must be provided, try `--app APP_NAME`")
 	}
 
-	if p.all {
-		return p.deployAll(c, appName, appf)
+	// find and create/update app if required
+	app, err := apps.GetAppByName(p.clientV2, appName)
+	if _, ok := err.(apps.NameNotFoundError); ok && p.createApp {
+		app = &models.App{
+			Name: appName,
+		}
+
+		if appf != nil {
+			// set other fields from app file
+			app.Config = appf.Config
+			app.Annotations = appf.Annotations
+		}
+
+		app, err = apps.CreateApp(p.clientV2, app)
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	} else if appf != nil {
+		// app exists, but we need to update it if we have an app file
+		app, err = apps.PutApp(p.clientV2, app.ID, &models.App{
+			Config:      appf.Config,
+			Annotations: appf.Annotations,
+		})
+		if err != nil {
+			return fmt.Errorf("Failed to update app config: %v", err)
+		}
 	}
-	return p.deploySingle(c, appName, appf)
+
+	if app == nil {
+		panic("app should not be nil here") // tests should catch... better than panic later
+	}
+
+	// deploy functions
+	if p.all {
+		return p.deployAll(c, app)
+	}
+	return p.deploySingle(c, app, appf != nil)
 }
 
 // deploySingle deploys a single function, either the current directory or if in the context
 // of an app and user provides relative path as the first arg, it will deploy that function.
-func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.AppFile) error {
+func (p *deploycmd) deploySingle(c *cli.Context, app *models.App, isAppYAML bool) error {
 	var dir string
 	wd := common.GetWd()
 
@@ -187,34 +220,21 @@ func (p *deploycmd) deploySingle(c *cli.Context, appName string, appf *common.Ap
 		if err != nil {
 			return err
 		}
-		if appf != nil {
-			if dir == wd {
-				setFuncInfoV20180708(ff, appf.Name)
-			}
+		if isAppYAML && dir == wd {
+			// TODO(reed): why are we setting this any differently than anything else? this is magical.
+			// for app.yaml that don't provide a func.yaml with a name, we use '$PWD-root' instead of '$PWD'
+			// for the name of the function - this is really weird. remove?
+			setFuncInfoV20180708(ff, app.Name)
 		}
 
-		if appf != nil {
-			err = p.updateAppConfig(appf)
-			if err != nil {
-				return fmt.Errorf("Failed to update app config: %v", err)
-			}
-		}
-
-		return p.deployFuncV20180708(c, appName, wd, fpath, ff)
+		return p.deployFuncV20180708(c, app, wd, fpath, ff)
 	default:
 		return fmt.Errorf("routes are no longer supported, please use the migrate command to update your metadata")
 	}
 }
 
 // deployAll deploys all functions in an app.
-func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFile) error {
-	if appf != nil {
-		err := p.updateAppConfig(appf)
-		if err != nil {
-			return fmt.Errorf("Failed to update app config: %v", err)
-		}
-	}
-
+func (p *deploycmd) deployAll(c *cli.Context, app *models.App) error {
 	var dir string
 	wd := common.GetWd()
 
@@ -231,7 +251,7 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFi
 		}
 		dir := filepath.Dir(path)
 		if dir == wd {
-			setFuncInfoV20180708(ff, appName)
+			setFuncInfoV20180708(ff, app.Name)
 		} else {
 			// change dirs
 			err = os.Chdir(dir)
@@ -248,7 +268,7 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFi
 			}
 		}
 
-		err = p.deployFuncV20180708(c, appName, wd, path, ff)
+		err = p.deployFuncV20180708(c, app, wd, path, ff)
 		if err != nil {
 			return fmt.Errorf("deploy error on %s: %v", path, err)
 		}
@@ -269,15 +289,11 @@ func (p *deploycmd) deployAll(c *cli.Context, appName string, appf *common.AppFi
 	return nil
 }
 
-func (p *deploycmd) deployFuncV20180708(c *cli.Context, appName, baseDir, funcfilePath string, funcfile *common.FuncFileV20180708) error {
-	if appName == "" {
-		return errors.New("App name must be provided, try `--app APP_NAME`")
-	}
-
+func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, baseDir, funcfilePath string, funcfile *common.FuncFileV20180708) error {
 	if funcfile.Name == "" {
 		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
 	}
-	fmt.Printf("Deploying %s to app: %s\n", funcfile.Name, appName)
+	fmt.Printf("Deploying %s to app: %s\n", funcfile.Name, app.Name)
 
 	var err error
 	if !p.noBump {
@@ -301,7 +317,7 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, appName, baseDir, funcfi
 		}
 	}
 
-	return p.updateFunction(c, appName, funcfile)
+	return p.updateFunction(c, app.ID, funcfile)
 }
 
 func setRootFuncInfo(ff *common.FuncFile, appName string) {
@@ -322,41 +338,24 @@ func setFuncInfoV20180708(ff *common.FuncFileV20180708, appName string) {
 	}
 }
 
-func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.FuncFileV20180708) error {
+func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.FuncFileV20180708) error {
 	fmt.Printf("Updating function %s using image %s...\n", ff.Name, ff.ImageNameV20180708())
 
-	fn := &modelsV2.Fn{}
+	fn := &models.Fn{}
 	if err := function.WithFuncFileV20180708(ff, fn); err != nil {
 		return fmt.Errorf("Error getting function with funcfile: %s", err)
 	}
 
-	app, err := apps.GetAppByName(p.clientV2, appName)
-	if err != nil {
-		if p.createApp {
-			app = &modelsV2.App{
-				Name: appName,
-			}
-
-			err = apps.CreateApp(p.clientV2, app)
-			if err != nil {
-				return err
-			}
-			app, err = apps.GetAppByName(p.clientV2, appName)
-			if err != nil {
-				return err
-			}
-		} else {
-			return err
-		}
-	}
-
-	fnRes, err := function.GetFnByName(p.clientV2, app.ID, ff.Name)
-	if err != nil {
+	fnRes, err := function.GetFnByName(p.clientV2, appID, ff.Name)
+	if _, ok := err.(function.NameNotFoundError); ok {
 		fn.Name = ff.Name
-		err := function.CreateFn(p.clientV2, appName, fn)
+		fn, err = function.CreateFn(p.clientV2, appID, fn)
 		if err != nil {
 			return err
 		}
+	} else if err != nil {
+		// probably service is down or something...
+		return err
 	} else {
 		fn.ID = fnRes.ID
 		err = function.PutFn(p.clientV2, fn.ID, fn)
@@ -365,29 +364,24 @@ func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.Fu
 		}
 	}
 
-	if fnRes == nil {
-		fn, err = function.GetFnByName(p.clientV2, app.ID, ff.Name)
-		if err != nil {
-			return err
-		}
-	}
-
 	if len(ff.Triggers) != 0 {
 		for _, t := range ff.Triggers {
-			trig := &modelsV2.Trigger{
-				AppID:  app.ID,
+			trig := &models.Trigger{
+				AppID:  appID,
 				FnID:   fn.ID,
 				Name:   t.Name,
 				Source: t.Source,
 				Type:   t.Type,
 			}
 
-			trigs, err := trigger.GetTriggerByName(p.clientV2, app.ID, fn.ID, t.Name)
-			if err != nil {
+			trigs, err := trigger.GetTriggerByName(p.clientV2, appID, fn.ID, t.Name)
+			if _, ok := err.(trigger.NameNotFoundError); ok {
 				err = trigger.CreateTrigger(p.clientV2, trig)
 				if err != nil {
 					return err
 				}
+			} else if err != nil {
+				return err
 			} else {
 				trig.ID = trigs.ID
 				err = trigger.PutTrigger(p.clientV2, trig)
@@ -399,37 +393,4 @@ func (p *deploycmd) updateFunction(c *cli.Context, appName string, ff *common.Fu
 	}
 
 	return nil
-}
-
-func (p *deploycmd) updateAppConfig(appf *common.AppFile) error {
-	app, err := apps.GetAppByName(p.clientV2, appf.Name)
-	if err != nil {
-		switch err.(type) {
-		case apps.NameNotFoundError:
-			param := clientApps.NewCreateAppParams()
-			param.Body = &modelsV2.App{
-				Name:        appf.Name,
-				Config:      appf.Config,
-				Annotations: appf.Annotations,
-			}
-			if _, err = p.clientV2.Apps.CreateApp(param); err != nil {
-				return err
-			}
-			return nil
-		default:
-			return err
-		}
-	}
-	param := clientApps.NewUpdateAppParams()
-	param.AppID = app.ID
-	param.Body = &modelsV2.App{
-		Config:      appf.Config,
-		Annotations: appf.Annotations,
-	}
-
-	if _, err = p.clientV2.Apps.UpdateApp(param); err != nil {
-		return err
-	}
-	return nil
-
 }

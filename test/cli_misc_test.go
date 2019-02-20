@@ -184,7 +184,7 @@ func TestAllMainCommandsExist(t *testing.T) {
 	}
 }
 
-func TestAppYamlDeploy(t *testing.T) {
+func TestAppYamlDeployFailNotExist(t *testing.T) {
 	t.Parallel()
 
 	h := testharness.Create(t)
@@ -197,10 +197,44 @@ func TestAppYamlDeploy(t *testing.T) {
 	h.Cd(fnName)
 	withMinimalFunction(h)
 	h.Cd("")
+	h.Fn("deploy", "--all", "--local").AssertFailed().AssertStderrContains("app " + appName + " not found")
+}
+
+func TestAppYamlDeploy(t *testing.T) {
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+
+	appName := h.NewAppName()
+	fnName := h.NewFuncName(appName)
+	h.WithFile("app.yaml", fmt.Sprintf(`
+name: %s
+config:
+  animal: giraffe
+`, appName), 0644)
+	h.MkDir(fnName)
+	h.Cd(fnName)
+	withMinimalFunction(h)
+	h.Cd("")
+	h.Fn("deploy", "--all", "--local", "--create-app").AssertSuccess()
+	h.Fn("invoke", appName, fnName).AssertSuccess()
+	// check config from app.yaml is set
+	h.Fn("get", "config", "app", appName, "animal").AssertSuccess().AssertStdoutContains("giraffe")
+
+	// now should exist, this should work too
+	h.WithFile("app.yaml", fmt.Sprintf(`
+name: %s
+config:
+  animal: giraffe
+  tea: oolong
+`, appName), 0644)
 	h.Fn("deploy", "--all", "--local").AssertSuccess()
 	h.Fn("invoke", appName, fnName).AssertSuccess()
-	h.Fn("deploy", "--all", "--local").AssertSuccess()
-	h.Fn("invoke", appName, fnName).AssertSuccess()
+	// make sure config was updated
+	h.Fn("get", "config", "app", appName, "tea").AssertSuccess().AssertStdoutContains("oolong")
+
+	// TODO we could test flag precedence of name here too
 }
 
 func TestDeployCreateApp(t *testing.T) {
