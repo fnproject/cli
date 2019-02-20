@@ -69,13 +69,22 @@ func (h *PythonLangHelper) Entrypoint() (string, error) {
 func (h *PythonLangHelper) DockerfileBuildCmds() []string {
 	var r []string
 	if exists("requirements.txt") {
+		pip_cmd := `RUN pip3 install --target /python/  --no-cache --no-cache-dir`
+		if exists(".pip_cache") {
+			r = append(r, "ADD .pip_cache /function/.pip_cache")
+			pip_cmd += " --no-index --find-links /function/.pip_cache"
+		}
 		r = append(r, "ADD requirements.txt /function/")
-		r = append(r, `
-RUN pip3 install --target /python/  --no-cache --no-cache-dir -r requirements.txt &&\
-    rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv`)
-
+		r = append(r, fmt.Sprintf(`
+			%v -r requirements.txt &&\
+			 rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv`, pip_cmd))
 	}
 	r = append(r, "ADD . /function/")
+	if exists("setup.py") {
+		r = append(r, "python setup.py install")
+	}
+	r = append(r, "RUN rm -fr /function/.pip_cache")
+
 	return r
 }
 
