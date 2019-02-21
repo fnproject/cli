@@ -28,21 +28,25 @@ jobs:
           curl -fsSL https://get.docker.com/ | sudo sh
       - run: docker version
       - run:
-          name: install dependencies
-          command: make dep
-      - run:
           name: build and test
           command: make test
           no_output_timeout: 20m
+          environment:
+            GO111MODULE: on
+            GOFLAGS: -mod=vendor
       - run:
           name: test build macos
           command: go build -o fn_mac
           environment:
+            GO111MODULE: on
+            GOFLAGS: -mod=vendor
             GOOS: darwin
       - run:
           name: test build windows
           command: go build -o fn.exe
           environment:
+            GO111MODULE: on
+            GOFLAGS: -mod=vendor
             GOOS: windows
       - deploy:
           command: |
