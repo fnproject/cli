@@ -1,15 +1,13 @@
 # build stage
-FROM golang:1.10-alpine AS build-env
-RUN apk --no-cache add build-base git bzr mercurial gcc
-ENV D=/go/src/github.com/fnproject/cli
-RUN go get -u github.com/golang/dep/cmd/dep
-ADD Gopkg.* $D/
-RUN cd $D && dep ensure --vendor-only
+FROM golang:1.11.5-alpine3.9 AS build-env
+ARG D=/go/src/github.com/fnproject/cli
+ARG GO111MODULE=on
+ARG GOFLAGS=-mod=vendor
 ADD . $D
 RUN cd $D && go build -o fn-alpine && cp fn-alpine /tmp/
 
 # final stage
-FROM alpine
+FROM alpine:3.9
 RUN apk add --no-cache ca-certificates curl
 WORKDIR /app
 COPY --from=build-env /tmp/fn-alpine /app/fn
