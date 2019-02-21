@@ -32,21 +32,21 @@ jobs:
           command: make test
           no_output_timeout: 20m
           environment:
-            GO111MODULE: on
-            GOFLAGS: -mod=vendor
+            GO111MODULE: "on"
+            GOFLAGS: "-mod=vendor"
       - run:
           name: test build macos
           command: go build -o fn_mac
           environment:
-            GO111MODULE: on
-            GOFLAGS: -mod=vendor
+            GO111MODULE: "on"
+            GOFLAGS: "-mod=vendor"
             GOOS: darwin
       - run:
           name: test build windows
           command: go build -o fn.exe
           environment:
-            GO111MODULE: on
-            GOFLAGS: -mod=vendor
+            GO111MODULE: "on"
+            GOFLAGS: "-mod=vendor"
             GOOS: windows
       - run:
           name: test build docker
