@@ -21,19 +21,6 @@ export fn="${CUR_DIR}/fn"
 go test -v $(go list ./... |  grep -pv "^github.com/fnproject/cli/test$")
 
 
-# Our test directory
-OS=$(uname -s)
-if [ $OS = "Darwin" ]; then
-	WORK_DIR=$(mktemp -d /tmp/temp.XXXXXX)
-else
-	WORK_DIR=$(mktemp -d)
-fi
-cd $WORK_DIR
-
-# HACK: if we don't pre touch these, fn server will create these as 'root'
-mkdir data
-touch data/fn.db data/fn.mq
-
 # start fn
 CONTAINER_ID=$($fn start -d | tail -1)
 

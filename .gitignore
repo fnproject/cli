@@ -4,7 +4,6 @@
 /fn
 /fn_alpine
 tmp/
-vendor/
 _vendor*/
 /cli
 data/

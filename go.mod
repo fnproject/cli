@@ -1,10 +1,12 @@
 module github.com/fnproject/cli
 
 require (
+	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.0 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20171111151018-521b25f4b05f // indirect
 	github.com/coreos/go-semver v0.2.0
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
 	github.com/fnproject/fdk-go v0.0.0-20181128231321-225736950b1c
 	github.com/fnproject/fn_go v0.0.0-20181210161029-1c373f73ab3a
@@ -24,6 +26,7 @@ require (
 	github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce // indirect
 	github.com/jmoiron/jsonq v0.0.0-20150511023944-e874b168d07e
 	github.com/juju/errgo v0.0.0-20140925100237-08cceb5d0b53 // indirect
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/magiconair/properties v1.7.6 // indirect
 	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
@@ -31,12 +34,14 @@ require (
 	github.com/mitchellh/go-homedir v0.0.0-20161203194507-b8bc1bf76747
 	github.com/mitchellh/mapstructure v0.0.0-20171017171808-06020f85339e
 	github.com/oracle/oci-go-sdk v1.5.0 // indirect
+	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/pelletier/go-toml v1.1.0 // indirect
 	github.com/spf13/afero v1.1.0 // indirect
 	github.com/spf13/cast v1.2.0 // indirect
 	github.com/spf13/jwalterweatherman v0.0.0-20180109140146-7c0cea34c8ec // indirect
 	github.com/spf13/pflag v1.0.0 // indirect
 	github.com/spf13/viper v1.0.2
+	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/urfave/cli v1.20.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
@@ -45,6 +50,7 @@ require (
 	golang.org/x/net v0.0.0-20171212005608-d866cfc389ce // indirect
 	golang.org/x/sys v0.0.0-20171211203343-53aa286056ef // indirect
 	golang.org/x/text v0.0.0-20171209171308-3b24cac7bc3a // indirect
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/mgo.v2 v2.0.0-20160818020120-3f83fa500528 // indirect
 	gopkg.in/yaml.v2 v2.0.0-20171116090243-287cf08546ab
 )

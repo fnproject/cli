@@ -4,8 +4,10 @@ jobs:
     machine: true
     working_directory: ~/go/src/github.com/fnproject/cli
     environment: # apparently expansion doesn't work here yet: https://discuss.circleci.com/t/environment-variable-expansion-in-working-directory/11322
+      - GO111MODULE=on
+      - GOFLAGS=-mod=vendor
       - GOPATH=/home/circleci/go
-      - GOVERSION=1.11.4
+      - GOVERSION=1.11.5
       - OS=linux
       - ARCH=amd64
     steps:
@@ -28,12 +30,10 @@ jobs:
           curl -fsSL https://get.docker.com/ | sudo sh
       - run: docker version
       - run:
-          name: install dependencies
-          command: make dep
-      - run:
           name: build and test
           command: make test
           no_output_timeout: 20m
+          environment:
       - run:
           name: test build macos
           command: go build -o fn_mac
@@ -44,6 +44,9 @@ jobs:
           command: go build -o fn.exe
           environment:
             GOOS: windows
+      - run:
+          name: test build docker
+          command: docker build -t fnproject/fn:latest .
       - deploy:
           command: |
             if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
