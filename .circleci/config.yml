@@ -4,6 +4,8 @@ jobs:
     machine: true
     working_directory: ~/go/src/github.com/fnproject/cli
     environment: # apparently expansion doesn't work here yet: https://discuss.circleci.com/t/environment-variable-expansion-in-working-directory/11322
+      - GO111MODULE=on
+      - GOFLAGS=-mod=vendor
       - GOPATH=/home/circleci/go
       - GOVERSION=1.11.5
       - OS=linux
@@ -32,21 +34,15 @@ jobs:
           command: make test
           no_output_timeout: 20m
           environment:
-            GO111MODULE: "on"
-            GOFLAGS: "-mod=vendor"
       - run:
           name: test build macos
           command: go build -o fn_mac
           environment:
-            GO111MODULE: "on"
-            GOFLAGS: "-mod=vendor"
             GOOS: darwin
       - run:
           name: test build windows
           command: go build -o fn.exe
           environment:
-            GO111MODULE: "on"
-            GOFLAGS: "-mod=vendor"
             GOOS: windows
       - run:
           name: test build docker
