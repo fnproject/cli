@@ -20,7 +20,7 @@ See [CONTRIBUTING](https://github.com/fnproject/cli/blob/master/CONTRIBUTING.md)
 * See the Fn [Quickstart](https://github.com/fnproject/fn/blob/master/README.md) for sample commands.
 * Refer to the [Fn CLI Wiki](https://github.com/fnproject/cli/wiki) for development details.
 * For a list of commands see [Fn CLI Command Guide and Reference](https://github.com/fnproject/docs/blob/master/cli/README.md).
-* For general information see Fn [docs](https://github.com/fnproject/docs) and [tutorials](http://fnproject.io/tutorials/).
+* For general information see Fn [docs](https://github.com/fnproject/docs) and [tutorials](https://fnproject.io/tutorials/).
 
 
 
