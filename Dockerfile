@@ -1,5 +1,6 @@
 # build stage
 FROM golang:1.11.5-alpine3.9 AS build-env
+RUN apk add --no-cache gcc musl-dev
 ARG D=/go/src/github.com/fnproject/cli
 ARG GO111MODULE=on
 ARG GOFLAGS=-mod=vendor
