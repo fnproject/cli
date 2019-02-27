@@ -200,7 +200,53 @@ func TestAppYamlDeployFailNotExist(t *testing.T) {
 	h.Fn("deploy", "--all", "--local").AssertFailed().AssertStderrContains("app " + appName + " not found")
 }
 
+func TestAppYamlDeployInspect(t *testing.T) {
+	// this test only inspects, does not invoke! for syslog, mostly
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+
+	appName := h.NewAppName()
+	fnName := h.NewFuncName(appName)
+	h.WithFile("app.yaml", fmt.Sprintf(`
+name: %s
+syslog_url: tcp://example.com:42
+config:
+  animal: giraffe
+`, appName), 0644)
+	h.MkDir(fnName)
+	h.Cd(fnName)
+	withMinimalFunction(h)
+	h.Cd("")
+	h.Fn("deploy", "--all", "--local", "--create-app").AssertSuccess()
+	// check config from app.yaml is set
+	inspect := h.Fn("inspect", "app", appName).AssertSuccess()
+	inspect.AssertStdoutContains(fmt.Sprintf(`"name": "%s"`, appName))
+	inspect.AssertStdoutContains(`"giraffe"`)
+	inspect.AssertStdoutContains(`"tcp://example.com:42"`)
+
+	// now should exist, this should work too
+	h.WithFile("app.yaml", fmt.Sprintf(`
+name: %s
+syslog_url: tcp://example.com:443
+config:
+  animal: giraffe
+  tea: oolong
+`, appName), 0644)
+	h.Fn("deploy", "--all", "--local").AssertSuccess()
+	// make sure config was updated
+	inspect = h.Fn("inspect", "app", appName).AssertSuccess()
+	inspect.AssertStdoutContains(fmt.Sprintf(`"name": "%s"`, appName))
+	inspect.AssertStdoutContains(`"oolong"`)
+	inspect.AssertStdoutContains(`"tcp://example.com:443"`)
+}
+
 func TestAppYamlDeploy(t *testing.T) {
+	// this test makes sure that functions can be invoked after using app.yaml deploy,
+	// the other test that looks just like this just inspects the function b/c syslog config
+	// in tests is a bad idea (ie don't test syslog here)
+
 	t.Parallel()
 
 	h := testharness.Create(t)
