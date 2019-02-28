@@ -15,10 +15,10 @@ var Runtimes = []struct {
 	{"java", ""},
 	{"java8", ""},
 	{"java11", ""},
-	{"kotlin", `{"name": "John"}`}, //  no arg fn run is broken https://github.com/fnproject/cli/issues/262
+	{"kotlin", ""},
 	{"node", ""},
 	{"ruby", ""},
-	{"python", `{"name": "John"}`},
+	{"python", ""},
 }
 
 func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
