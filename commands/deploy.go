@@ -184,12 +184,12 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	if p.all {
 		return p.deployAll(c, app)
 	}
-	return p.deploySingle(c, app, appf != nil)
+	return p.deploySingle(c, app)
 }
 
 // deploySingle deploys a single function, either the current directory or if in the context
 // of an app and user provides relative path as the first arg, it will deploy that function.
-func (p *deploycmd) deploySingle(c *cli.Context, app *models.App, isAppYAML bool) error {
+func (p *deploycmd) deploySingle(c *cli.Context, app *models.App) error {
 	var dir string
 	wd := common.GetWd()
 
@@ -210,28 +210,11 @@ func (p *deploycmd) deploySingle(c *cli.Context, app *models.App, isAppYAML bool
 	}
 	defer os.Chdir(wd)
 
-	ffV, err := common.ReadInFuncFile()
+	fpath, ff, err := common.FindAndParseFuncFileV20180708(dir)
 	if err != nil {
 		return err
 	}
-
-	switch common.GetFuncYamlVersion(ffV) {
-	case common.LatestYamlVersion:
-		fpath, ff, err := common.FindAndParseFuncFileV20180708(dir)
-		if err != nil {
-			return err
-		}
-		if isAppYAML && dir == wd {
-			// TODO(reed): why are we setting this any differently than anything else? this is magical.
-			// for app.yaml that don't provide a func.yaml with a name, we use '$PWD-root' instead of '$PWD'
-			// for the name of the function - this is really weird. remove?
-			setFuncInfoV20180708(ff, app.Name)
-		}
-
-		return p.deployFuncV20180708(c, app, wd, fpath, ff)
-	default:
-		return fmt.Errorf("routes are no longer supported, please use the migrate command to update your metadata")
-	}
+	return p.deployFuncV20180708(c, app, fpath, ff)
 }
 
 // deployAll deploys all functions in an app.
@@ -239,10 +222,15 @@ func (p *deploycmd) deployAll(c *cli.Context, app *models.App) error {
 	var dir string
 	wd := common.GetWd()
 
-	if c.String("dir") != "" {
-		dir = c.String("dir")
+	if c.String("working-dir") != "" {
+		dir = c.String("working-dir")
 	} else {
-		dir = wd
+		// if we're in the context of an app, first arg is path to the function
+		path := c.Args().First()
+		if path != "" {
+			fmt.Printf("Deploying function at: /%s\n", path)
+		}
+		dir = filepath.Join(wd, path)
 	}
 
 	var funcFound bool
@@ -251,25 +239,22 @@ func (p *deploycmd) deployAll(c *cli.Context, app *models.App) error {
 			return err
 		}
 		dir := filepath.Dir(path)
-		if dir == wd {
-			setFuncInfoV20180708(ff, app.Name)
-		} else {
+		if dir != wd {
 			// change dirs
 			err = os.Chdir(dir)
 			if err != nil {
 				return err
 			}
-			p2 := strings.TrimPrefix(dir, wd)
-			if ff.Name == "" {
-				ff.Name = strings.Replace(p2, "/", "-", -1)
-				if strings.HasPrefix(ff.Name, "-") {
-					ff.Name = ff.Name[1:]
-				}
-				// todo: should we prefix appname too?
+		}
+		p2 := strings.TrimPrefix(dir, wd)
+		if ff.Name == "" {
+			ff.Name = strings.Replace(p2, "/", "-", -1)
+			if strings.HasPrefix(ff.Name, "-") {
+				ff.Name = ff.Name[1:]
 			}
 		}
 
-		err = p.deployFuncV20180708(c, app, wd, path, ff)
+		err = p.deployFuncV20180708(c, app, path, ff)
 		if err != nil {
 			return fmt.Errorf("deploy error on %s: %v", path, err)
 		}
@@ -290,7 +275,7 @@ func (p *deploycmd) deployAll(c *cli.Context, app *models.App) error {
 	return nil
 }
 
-func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, baseDir, funcfilePath string, funcfile *common.FuncFileV20180708) error {
+func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfilePath string, funcfile *common.FuncFileV20180708) error {
 	if funcfile.Name == "" {
 		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
 	}
@@ -319,24 +304,6 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, baseDir
 	}
 
 	return p.updateFunction(c, app.ID, funcfile)
-}
-
-func setRootFuncInfo(ff *common.FuncFile, appName string) {
-	if ff.Name == "" {
-		fmt.Println("Setting name")
-		ff.Name = fmt.Sprintf("%s-root", appName)
-	}
-	if ff.Path == "" {
-		// then in root dir, so this will be deployed at /
-		ff.Path = "/"
-	}
-}
-
-func setFuncInfoV20180708(ff *common.FuncFileV20180708, appName string) {
-	if ff.Name == "" {
-		fmt.Println("Setting name")
-		ff.Name = fmt.Sprintf("%s-root", appName)
-	}
 }
 
 func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.FuncFileV20180708) error {
