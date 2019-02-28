@@ -195,7 +195,6 @@ func outputNormal(output io.Writer, resp *http.Response, includeCallID bool) {
 	}
 
 	// at this point, it's not an fn error, so output function output as is
-	// TODO we should give users the option to see a status code too, like call id?
 
 	lcc := lastCharChecker{reader: body}
 	body = &lcc
