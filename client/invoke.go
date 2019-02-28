@@ -1,11 +1,8 @@
 package client
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"os"
@@ -13,11 +10,6 @@ import (
 
 	"github.com/fnproject/fn_go/provider"
 	"github.com/go-openapi/runtime/logger"
-)
-
-const (
-	CallIDHeader           = "Fn-Call-Id"
-	MaximumRequestBodySize = 5 * 1024 * 1024 // bytes
 )
 
 func EnvAsHeader(req *http.Request, selectedEnv []string) {
@@ -33,30 +25,26 @@ func EnvAsHeader(req *http.Request, selectedEnv []string) {
 	}
 }
 
-type apiErr struct {
-	Message string `json:"message"`
+// InvokeRequest are the parameters provided to Invoke
+type InvokeRequest struct {
+	URL         string
+	Content     io.Reader
+	Env         []string
+	ContentType string
+	// TODO headers should be their real type?
 }
 
-func Invoke(provider provider.Provider, invokeURL string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
+// Invoke calls the fn invoke API
+func Invoke(provider provider.Provider, ireq InvokeRequest) (*http.Response, error) {
+	invokeURL := ireq.URL
+	content := ireq.Content
+	env := ireq.Env
+	contentType := ireq.ContentType
+	method := "POST"
 
-	method = "POST"
-
-	// Read the request body (up to the maximum size), as this is used in the
-	// authentication signature
-	var req *http.Request
-	if content != nil {
-		b, err := ioutil.ReadAll(io.LimitReader(content, MaximumRequestBodySize))
-		buffer := bytes.NewBuffer(b)
-		req, err = http.NewRequest(method, invokeURL, buffer)
-		if err != nil {
-			return fmt.Errorf("Error creating request to service: %s", err)
-		}
-	} else {
-		var err error
-		req, err = http.NewRequest(method, invokeURL, nil)
-		if err != nil {
-			return fmt.Errorf("Error creating request to service: %s", err)
-		}
+	req, err := http.NewRequest(method, invokeURL, content)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating request to service: %s", err)
 	}
 
 	if contentType != "" {
@@ -75,71 +63,25 @@ func Invoke(provider provider.Provider, invokeURL string, content io.Reader, out
 	if logger.DebugEnabled() {
 		b, err := httputil.DumpRequestOut(req, content != nil)
 		if err != nil {
-			return err
+			fmt.Fprintln(os.Stderr, "error dumping req", err)
 		}
-		fmt.Printf(string(b) + "\n")
+		os.Stderr.Write(b)
+		fmt.Fprintln(os.Stderr)
 	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("Error invoking function: %s", err)
+		return nil, fmt.Errorf("Error invoking function: %s", err)
 	}
-	defer resp.Body.Close()
 
 	if logger.DebugEnabled() {
 		b, err := httputil.DumpResponse(resp, true)
 		if err != nil {
-			return err
+			fmt.Fprintln(os.Stderr, "error dumping resp", err)
 		}
-		fmt.Printf(string(b) + "\n")
+		os.Stderr.Write(b)
+		fmt.Fprintln(os.Stderr)
 	}
 
-	if cid, ok := resp.Header[CallIDHeader]; ok && includeCallID {
-		fmt.Fprint(output, fmt.Sprintf("Call ID: %v\n", cid[0]))
-	}
-
-	var body io.Reader = resp.Body
-	if resp.StatusCode >= 400 {
-		// if we don't get json, we need to buffer the input so that we can
-		// display the user's function output as it was...
-		var b bytes.Buffer
-		body = io.TeeReader(resp.Body, &b)
-
-		var msg apiErr
-		err = json.NewDecoder(body).Decode(&msg)
-		if err == nil && msg.Message != "" {
-			// this is likely from fn, so unravel this...
-			return fmt.Errorf("Error invoking function. status: %v message: %v", resp.StatusCode, msg.Message)
-		}
-
-		// read anything written to buffer first, then copy out rest of body
-		body = io.MultiReader(&b, resp.Body)
-	}
-
-	// at this point, it's not an fn error, so output function output as is
-	// TODO we should give users the option to see a status code too, like call id?
-
-	lcc := lastCharChecker{reader: body}
-	body = &lcc
-	io.Copy(output, body)
-
-	// #1408 - flush stdout
-	if lcc.last != '\n' {
-		fmt.Fprintln(output)
-	}
-	return nil
-}
-
-// lastCharChecker wraps an io.Reader to return the last read character
-type lastCharChecker struct {
-	reader io.Reader
-	last   byte
-}
-
-func (l *lastCharChecker) Read(b []byte) (int, error) {
-	n, err := l.reader.Read(b)
-	if n > 0 {
-		l.last = b[n-1]
-	}
-	return n, err
+	return resp, nil
 }
