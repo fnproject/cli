@@ -145,20 +145,24 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 		return errors.New("App name must be provided, try `--app APP_NAME`")
 	}
 
+	// appfApp is used to create/update app, with app file additions if provided
+	appfApp := models.App{
+		Name: appName,
+	}
+	if appf != nil {
+		// set other fields from app file
+		appfApp.Config = appf.Config
+		appfApp.Annotations = appf.Annotations
+		if appf.SyslogURL != "" {
+			// TODO consistent with some other fields (config), unsetting in app.yaml doesn't unset on server. undecided policy for all fields
+			appfApp.SyslogURL = &appf.SyslogURL
+		}
+	}
+
 	// find and create/update app if required
 	app, err := apps.GetAppByName(p.clientV2, appName)
 	if _, ok := err.(apps.NameNotFoundError); ok && p.createApp {
-		app = &models.App{
-			Name: appName,
-		}
-
-		if appf != nil {
-			// set other fields from app file
-			app.Config = appf.Config
-			app.Annotations = appf.Annotations
-		}
-
-		app, err = apps.CreateApp(p.clientV2, app)
+		app, err = apps.CreateApp(p.clientV2, &appfApp)
 		if err != nil {
 			return err
 		}
@@ -166,10 +170,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 		return err
 	} else if appf != nil {
 		// app exists, but we need to update it if we have an app file
-		app, err = apps.PutApp(p.clientV2, app.ID, &models.App{
-			Config:      appf.Config,
-			Annotations: appf.Annotations,
-		})
+		app, err = apps.PutApp(p.clientV2, app.ID, &appfApp)
 		if err != nil {
 			return fmt.Errorf("Failed to update app config: %v", err)
 		}

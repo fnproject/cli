@@ -23,10 +23,10 @@ var (
 
 // AppFile defines the internal structure of a app.yaml/json/yml
 type AppFile struct {
-	Name string `yaml:"name,omitempty" json:"name,omitempty"`
-	// TODO: Config here is not yet used
+	Name        string                 `yaml:"name,omitempty" json:"name,omitempty"`
 	Config      map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
 	Annotations map[string]interface{} `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	SyslogURL   string                 `yaml:"syslog_url,omitempty" json:"syslog_url,omitempty"`
 }
 
 func findAppfile(path string) (string, error) {
