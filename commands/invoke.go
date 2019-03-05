@@ -1,8 +1,13 @@
 package commands
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
+	"strings"
 
 	"errors"
 
@@ -16,7 +21,10 @@ import (
 )
 
 // FnInvokeEndpointAnnotation is the annotation that exposes the fn invoke endpoint as defined in models/fn.go
-const FnInvokeEndpointAnnotation = "fnproject.io/fn/invokeEndpoint"
+const (
+	FnInvokeEndpointAnnotation = "fnproject.io/fn/invokeEndpoint"
+	CallIDHeader               = "Fn-Call-Id"
+)
 
 type invokeCmd struct {
 	provider provider.Provider
@@ -30,16 +38,16 @@ var InvokeFnFlags = []cli.Flag{
 		Usage: "Specify the function invoke endpoint for this function, the app-name and func-name parameters will be ignored",
 	},
 	cli.StringFlag{
-		Name:  "method",
-		Usage: "Http method for function",
-	},
-	cli.StringFlag{
 		Name:  "content-type",
 		Usage: "The payload Content-Type for the function invocation.",
 	},
 	cli.BoolFlag{
 		Name:  "display-call-id",
 		Usage: "whether display call ID or not",
+	},
+	cli.StringFlag{
+		Name:  "output",
+		Usage: "Output format (json)",
 	},
 }
 
@@ -85,7 +93,6 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 		appName := c.Args().Get(0)
 		fnName := c.Args().Get(1)
 
-    
 		if appName == "" || fnName == "" {
 			return errors.New("missing app and function name")
 		}
@@ -116,5 +123,99 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 		}
 	}
 
-	return client.Invoke(cl.provider, invokeURL, content, os.Stdout, c.String("method"), c.StringSlice("e"), contentType, c.Bool("display-call-id"))
+	resp, err := client.Invoke(cl.provider,
+		client.InvokeRequest{
+			URL:         invokeURL,
+			Content:     content,
+			Env:         c.StringSlice("e"),
+			ContentType: contentType,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	outputFormat := strings.ToLower(c.String("output"))
+	if outputFormat == "json" {
+		outputJSON(os.Stdout, resp)
+	} else {
+		outputNormal(os.Stdout, resp, c.Bool("display-call-id"))
+	}
+	// TODO we should have a 'raw' option to output the raw http request, it may be useful, idk
+
+	return nil
+}
+
+func outputJSON(output io.Writer, resp *http.Response) {
+	var b bytes.Buffer
+	// TODO this is lame
+	io.Copy(&b, resp.Body)
+
+	i := struct {
+		Body       string      `json:"body"`
+		Headers    http.Header `json:"headers"`
+		StatusCode int         `json:"status_code"`
+	}{
+		Body:       b.String(),
+		Headers:    resp.Header,
+		StatusCode: resp.StatusCode,
+	}
+
+	enc := json.NewEncoder(output)
+	enc.SetIndent("", "    ")
+	enc.Encode(i)
+}
+
+func outputNormal(output io.Writer, resp *http.Response, includeCallID bool) {
+	if cid, ok := resp.Header[CallIDHeader]; ok && includeCallID {
+		fmt.Fprint(output, fmt.Sprintf("Call ID: %v\n", cid[0]))
+	}
+
+	var body io.Reader = resp.Body
+	if resp.StatusCode >= 400 {
+		// if we don't get json, we need to buffer the input so that we can
+		// display the user's function output as it was...
+		var b bytes.Buffer
+		body = io.TeeReader(resp.Body, &b)
+
+		var msg struct {
+			Message string `json:"message"`
+		}
+		err := json.NewDecoder(body).Decode(&msg)
+		if err == nil && msg.Message != "" {
+			// this is likely from fn, so unravel this...
+			// TODO this should be stderr maybe? meh...
+			fmt.Fprintf(output, "Error invoking function. status: %v message: %v\n", resp.StatusCode, msg.Message)
+			return
+		}
+
+		// read anything written to buffer first, then copy out rest of body
+		body = io.MultiReader(&b, resp.Body)
+	}
+
+	// at this point, it's not an fn error, so output function output as is
+
+	lcc := lastCharChecker{reader: body}
+	body = &lcc
+	io.Copy(output, body)
+
+	// #1408 - flush stdout
+	if lcc.last != '\n' {
+		fmt.Fprintln(output)
+	}
+}
+
+// lastCharChecker wraps an io.Reader to return the last read character
+type lastCharChecker struct {
+	reader io.Reader
+	last   byte
+}
+
+func (l *lastCharChecker) Read(b []byte) (int, error) {
+	n, err := l.reader.Read(b)
+	if n > 0 {
+		l.last = b[n-1]
+	}
+	return n, err
 }

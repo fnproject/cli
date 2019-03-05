@@ -37,10 +37,6 @@ var FnFlags = []cli.Flag{
 		Name:  "config,c",
 		Usage: "Function configuration",
 	},
-	cli.StringFlag{
-		Name:  "format,f",
-		Usage: "Hot container IO format - can be one of: default, http, json or cloudevent (check FDK docs to see which are supported for the FDK in use.)",
-	},
 	cli.IntFlag{
 		Name:  "timeout",
 		Usage: "Function timeout (eg. 30)",
@@ -193,10 +189,6 @@ func WithFlags(c *cli.Context, fn *models.Fn) {
 	if i := c.String("image"); i != "" {
 		fn.Image = i
 	}
-	if f := c.String("format"); f != "" {
-		fn.Format = f
-	}
-
 	if m := c.Uint64("memory"); m > 0 {
 		fn.Memory = m
 	}
@@ -228,11 +220,6 @@ func WithFuncFileV20180708(ff *common.FuncFileV20180708, fn *models.Fn) error {
 	if ff.ImageNameV20180708() != "" { // args take precedence
 		fn.Image = ff.ImageNameV20180708()
 	}
-
-	if ff.Format != "" {
-		fn.Format = ff.Format
-	}
-
 	if ff.Timeout != nil {
 		fn.Timeout = ff.Timeout
 	}

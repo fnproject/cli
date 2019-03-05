@@ -252,14 +252,13 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		//     The following fields are already in a.ff:
 		//         config, cpus, idle_timeout, memory, name, path, timeout, type, triggers, version
 		//     Add the following from the init-image:
-		//         build, build_image, cmd, content_type, entrypoint, expects, format, headers, run_image, runtime
+		//         build, build_image, cmd, content_type, entrypoint, expects, headers, run_image, runtime
 		a.ff.Build = initFf.Build
 		a.ff.Build_image = initFf.BuildImage
 		a.ff.Cmd = initFf.Cmd
 		a.ff.Content_type = initFf.ContentType
 		a.ff.Entrypoint = initFf.Entrypoint
 		a.ff.Expects = initFf.Expects
-		a.ff.Format = initFf.Format
 		a.ff.Run_image = initFf.RunImage
 		a.ff.Runtime = initFf.Runtime
 
@@ -270,10 +269,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 		if c.String("entrypoint") != "" {
 			a.ff.Entrypoint = c.String("entrypoint")
-		}
-
-		if c.String("format") != "" {
-			a.ff.Format = c.String("format")
 		}
 
 		if err := common.EncodeFuncFileV20180708YAML("func.yaml", a.ff); err != nil {
@@ -384,9 +379,6 @@ func (a *initFnCmd) generateBoilerplate(path, runtime string) error {
 
 func (a *initFnCmd) bindFn(fn *modelsV2.Fn) {
 	ff := a.ff
-	if fn.Format != "" {
-		ff.Format = fn.Format
-	}
 	if fn.Memory > 0 {
 		ff.Memory = fn.Memory
 	}
@@ -440,10 +432,6 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 			return err
 		}
 		fmt.Printf("Found %v function, assuming %v runtime.\n", helper.Runtime(), helper.Runtime())
-		//need to default this to default format to be backwards compatible. Might want to just not allow this anymore, fail here.
-		if c.String("format") == "" {
-			a.ff.Format = "default"
-		}
 	} else {
 		helper = langs.GetLangHelper(runtime)
 	}
@@ -465,8 +453,6 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 		}
 
 		a.ff.Runtime = runtime
-
-		a.ff.Format = "http-stream"
 
 		if c.Uint64("memory") == 0 {
 			a.ff.Memory = helper.CustomMemory()

@@ -53,6 +53,9 @@ type Expects struct {
 
 // FuncFile defines the internal structure of a func.yaml/json/yml
 type FuncFile struct {
+	// just for posterity, this won't be set on old files, but we can check that
+	Schema_version int `yaml:"schema_version,omitempty" json:"schema_version,omitempty"`
+
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 
 	// Build params
@@ -71,7 +74,6 @@ type FuncFile struct {
 	Type        string                 `yaml:"type,omitempty" json:"type,omitempty"`
 	Memory      uint64                 `yaml:"memory,omitempty" json:"memory,omitempty"`
 	Cpus        string                 `yaml:"cpus,omitempty" json:"cpus,omitempty"`
-	Format      string                 `yaml:"format,omitempty" json:"format,omitempty"`
 	Timeout     *int32                 `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 	Path        string                 `yaml:"path,omitempty" json:"path,omitempty"`
 	Config      map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
@@ -94,7 +96,6 @@ type FuncFileV20180708 struct {
 	Cmd          string `yaml:"cmd,omitempty" json:"cmd,omitempty"`
 	Entrypoint   string `yaml:"entrypoint,omitempty" json:"entrypoint,omitempty"`
 	Content_type string `yaml:"content_type,omitempty" json:"content_type,omitempty"`
-	Format       string `yaml:"format,omitempty" json:"format,omitempty"`
 	Type         string `yaml:"type,omitempty" json:"type,omitempty"`
 	Memory       uint64 `yaml:"memory,omitempty" json:"memory,omitempty"`
 	Timeout      *int32 `yaml:"timeout,omitempty" json:"timeout,omitempty"`
@@ -208,9 +209,7 @@ func decodeFuncfileJSON(path string) (*FuncFile, error) {
 		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", path, err)
 	}
 	ff := &FuncFile{}
-	// ff.Route = &fnmodels.Route{}
 	err = json.NewDecoder(f).Decode(ff)
-	// ff := fff.MakeFuncFile()
 	return ff, err
 }
 
@@ -221,7 +220,6 @@ func decodeFuncfileYAML(path string) (*FuncFile, error) {
 	}
 	ff := &FuncFile{}
 	err = yaml.Unmarshal(b, ff)
-	// ff := fff.MakeFuncFile()
 	return ff, err
 }
 
@@ -275,15 +273,22 @@ func LoadFuncFileV20180708(path string) (string, *FuncFileV20180708, error) {
 	return FindAndParseFuncFileV20180708(path)
 }
 
-func ParseFuncFileV20180708(path string) (*FuncFileV20180708, error) {
+func ParseFuncFileV20180708(path string) (ff *FuncFileV20180708, err error) {
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json":
-		return decodeFuncFileV20180708JSON(path)
+		ff, err = decodeFuncFileV20180708JSON(path)
 	case ".yaml", ".yml":
-		return decodeFuncFileV20180708YAML(path)
+		ff, err = decodeFuncFileV20180708YAML(path)
+	default:
+		return nil, errUnexpectedFileFormat
 	}
-	return nil, errUnexpectedFileFormat
+
+	if err == nil && ff.Schema_version != V20180708 {
+		// todo: we should maybe not assume this, but it's more useful than saying 'version mismatch' for users...
+		return nil, fmt.Errorf("unsupported func.yaml version, please use the migrate command to update your function metadata")
+	}
+	return ff, err
 }
 
 func decodeFuncFileV20180708JSON(path string) (*FuncFileV20180708, error) {
