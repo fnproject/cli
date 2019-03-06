@@ -3,7 +3,7 @@
 
 ## General Information
 * See the Fn [Quickstart](https://github.com/fnproject/fn/blob/master/README.md) for sample commands.
-* [Detailed nstallation instructions are here](http://fnproject.io/tutorials/install/)
+* [Detailed Installation instructions are here](http://fnproject.io/tutorials/install/)
 * [Configure your CLI Context](http://fnproject.io/tutorials/install/#ConfigureyourContext)
 * For a list of commands see [Fn CLI Command Guide and Reference](https://github.com/fnproject/docs/blob/master/cli/README.md).
 * For general information see Fn [docs](https://github.com/fnproject/docs) and [tutorials](https://fnproject.io/tutorials/).
