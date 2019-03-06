@@ -4,7 +4,7 @@
 ## Install
 
 ```sh
-brew install fn
+brew update && brew install fn
 ```
 or
 
