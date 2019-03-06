@@ -1,13 +1,6 @@
 # Fn CLI
 [![CircleCI](https://circleci.com/gh/fnproject/cli.svg?style=svg)](https://circleci.com/gh/fnproject/cli)
 
-## General Information
-* See the Fn [Quickstart](https://github.com/fnproject/fn/blob/master/README.md) for sample commands.
-* [Detailed Installation instructions are here](http://fnproject.io/tutorials/install/)
-* [Configure your CLI Context](http://fnproject.io/tutorials/install/#ConfigureyourContext)
-* For a list of commands see [Fn CLI Command Guide and Reference](https://github.com/fnproject/docs/blob/master/cli/README.md).
-* For general information see Fn [docs](https://github.com/fnproject/docs) and [tutorials](https://fnproject.io/tutorials/).
-
 ## Install
 Linux/Unix/MacOS installation:
 
@@ -22,6 +15,13 @@ Alternatively for MacOS:
 ```sh
 brew update && brew install fn
 ```
+
+## General Information
+* See the Fn [Quickstart](https://github.com/fnproject/fn/blob/master/README.md) for sample commands.
+* [Detailed installation instructions are here](http://fnproject.io/tutorials/install/)
+* [Configure your CLI Context](http://fnproject.io/tutorials/install/#ConfigureyourContext)
+* For a list of commands see [Fn CLI Command Guide and Reference](https://github.com/fnproject/docs/blob/master/cli/README.md).
+* For general information see Fn [docs](https://github.com/fnproject/docs) and [tutorials](https://fnproject.io/tutorials/).
 
 ## CLI Development
 * Refer to the [Fn CLI Wiki](https://github.com/fnproject/cli/wiki) for development details.
