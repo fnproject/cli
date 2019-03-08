@@ -16,7 +16,7 @@ func TestFnInvokeInvalidImage(t *testing.T) {
 	funcName1 := h.NewFuncName(appName1)
 	h.Fn("create", "app", appName1).AssertSuccess()
 	h.Fn("create", "function", appName1, funcName1, "foo/duffimage:0.0.1").AssertSuccess()
-	h.Fn("invoke", appName1, funcName1).AssertStdoutContains("Failed to pull image")
+	h.Fn("invoke", appName1, funcName1).AssertFailed()
 }
 
 func TestFnInvokeValidImage(t *testing.T) {
