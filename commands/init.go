@@ -234,6 +234,10 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	a.ff.Schema_version = common.LatestYamlVersion
 
 	if initImage != "" {
+		err = common.ValidateFullImageName(initImage)
+		if err != nil {
+			return err
+		}
 
 		err = runInitImage(initImage, a)
 		if err != nil {

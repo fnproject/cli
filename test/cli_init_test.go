@@ -70,8 +70,9 @@ func TestInitImage(t *testing.T) {
 		// Lets use it
 		h.Cd("")
 		newFuncName := h.NewFuncName(appName)
+		newInitImageName := "tester/" + origFuncName + "-init:0.0.1"
 
-		h.Fn("init", "--init-image", origFuncName+"-init", newFuncName)
+		h.Fn("init", "--init-image", newInitImageName, newFuncName)
 		h.Cd(newFuncName)
 		h.Fn("--registry", "test", "deploy", "--local", "--no-bump", "--app", appName).AssertSuccess()
 		h.Fn("invoke", appName, newFuncName).AssertSuccess()
