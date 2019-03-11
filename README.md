@@ -17,8 +17,8 @@ curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
 
 ## General Information
 * See the Fn [Quickstart](https://github.com/fnproject/fn/blob/master/README.md) for sample commands.
-* [Detailed installation instructions are here](http://fnproject.io/tutorials/install/)
-* [Configure your CLI Context](http://fnproject.io/tutorials/install/#ConfigureyourContext)
+* [Detailed installation instructions](http://fnproject.io/tutorials/install/).
+* [Configure your CLI Context](http://fnproject.io/tutorials/install/#ConfigureyourContext).
 * For a list of commands see [Fn CLI Command Guide and Reference](https://github.com/fnproject/docs/blob/master/cli/README.md).
 * For general information see Fn [docs](https://github.com/fnproject/docs) and [tutorials](https://fnproject.io/tutorials/).
 
