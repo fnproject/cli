@@ -2,18 +2,17 @@
 [![CircleCI](https://circleci.com/gh/fnproject/cli.svg?style=svg)](https://circleci.com/gh/fnproject/cli)
 
 ## Install
-Linux/Unix/MacOS installation:
-
+MacOS installation:
 ```sh
-curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
+brew update && brew install fn
 ```
 
 or
 
-Alternatively for MacOS:
+Alternatively for Linux/Unix/MacOS:
 
 ```sh
-brew update && brew install fn
+curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
 ```
 
 ## General Information
