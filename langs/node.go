@@ -1,6 +1,7 @@
 package langs
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -8,6 +9,7 @@ import (
 
 type NodeLangHelper struct {
 	BaseHelper
+	Version string
 }
 
 func (h *NodeLangHelper) Handles(lang string) bool {
@@ -18,18 +20,20 @@ func (h *NodeLangHelper) Runtime() string {
 }
 
 func (lh *NodeLangHelper) LangStrings() []string {
-	return []string{"node"}
+	return []string{"node", fmt.Sprintf("node%s", lh.Version)}
 }
+
 func (lh *NodeLangHelper) Extensions() []string {
 	// this won't be chosen by default
 	return []string{".js"}
 }
 
 func (lh *NodeLangHelper) BuildFromImage() (string, error) {
-	return "fnproject/node:dev", nil
+	return fmt.Sprintf("fnproject/node:%s-dev", lh.Version), nil
 }
+
 func (lh *NodeLangHelper) RunFromImage() (string, error) {
-	return "fnproject/node", nil
+	return fmt.Sprintf("fnproject/node:%s", lh.Version), nil
 }
 
 const funcJsContent = `const fdk=require('@fnproject/fdk');
