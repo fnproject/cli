@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,10 @@ import (
 
 	"github.com/fnproject/fn_go/provider"
 	"github.com/go-openapi/runtime/logger"
+)
+
+const (
+	MaximumRequestBodySize = 5 * 1024 * 1024 // bytes
 )
 
 func EnvAsHeader(req *http.Request, selectedEnv []string) {
@@ -42,7 +47,14 @@ func Invoke(provider provider.Provider, ireq InvokeRequest) (*http.Response, err
 	contentType := ireq.ContentType
 	method := "POST"
 
-	req, err := http.NewRequest(method, invokeURL, content)
+	// Read the request body (up to the maximum size), as this is used in the
+	// authentication signature (Content-Length & Date must be set correctly)
+	var buffer bytes.Buffer
+	_, err := io.Copy(&buffer, io.LimitReader(content, MaximumRequestBodySize))
+	if err != nil {
+		return nil, fmt.Errorf("Error creating request body: %s", err)
+	}
+	req, err := http.NewRequest(method, invokeURL, &buffer)
 	if err != nil {
 		return nil, fmt.Errorf("Error creating request to service: %s", err)
 	}
