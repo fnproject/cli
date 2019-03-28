@@ -196,14 +196,18 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		a.triggerType = strings.ToLower(a.triggerType)
 		ok := validateTriggerType(a.triggerType)
 		if !ok {
-			return fmt.Errorf("Init does not support the trigger type '%s'.\n Permitted values are 'http'.", a.triggerType)
+			return fmt.Errorf("init does not support the trigger type '%s'.\n Permitted values are 'http'.", a.triggerType)
 		}
+
+		// TODO when we allow multiple trigger definitions in a func file, we need
+		// to allow naming triggers in a func file as well as use the type of
+		// trigger to deduplicate the trigger names
 
 		trig := make([]common.Trigger, 1)
 		trig[0] = common.Trigger{
-			Name:   a.ff.Name + "-trigger",
+			Name:   a.ff.Name,
 			Type:   a.triggerType,
-			Source: "/" + a.ff.Name + "-trigger",
+			Source: "/" + a.ff.Name,
 		}
 
 		a.ff.Triggers = trig
