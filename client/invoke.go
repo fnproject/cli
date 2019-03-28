@@ -2,10 +2,8 @@ package client
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"os"
@@ -16,7 +14,6 @@ import (
 )
 
 const (
-	FN_CALL_ID             = "Fn-Call-Id"
 	MaximumRequestBodySize = 5 * 1024 * 1024 // bytes
 )
 
@@ -33,35 +30,33 @@ func EnvAsHeader(req *http.Request, selectedEnv []string) {
 	}
 }
 
-type apiErr struct {
-	Message string `json:"message"`
+// InvokeRequest are the parameters provided to Invoke
+type InvokeRequest struct {
+	URL         string
+	Content     io.Reader
+	Env         []string
+	ContentType string
+	// TODO headers should be their real type?
 }
 
-type callID struct {
-	CallID string `json:"call_id"`
-	Error  apiErr `json:"error"`
-}
-
-func Invoke(provider provider.Provider, invokeUrl string, content io.Reader, output io.Writer, method string, env []string, contentType string, includeCallID bool) error {
-
-	method = "POST"
+// Invoke calls the fn invoke API
+func Invoke(provider provider.Provider, ireq InvokeRequest) (*http.Response, error) {
+	invokeURL := ireq.URL
+	content := ireq.Content
+	env := ireq.Env
+	contentType := ireq.ContentType
+	method := "POST"
 
 	// Read the request body (up to the maximum size), as this is used in the
-	// authentication signature
-	var req *http.Request
-	if content != nil {
-		b, err := ioutil.ReadAll(io.LimitReader(content, MaximumRequestBodySize))
-		buffer := bytes.NewBuffer(b)
-		req, err = http.NewRequest(method, invokeUrl, buffer)
-		if err != nil {
-			return fmt.Errorf("Error creating request to service: %s", err)
-		}
-	} else {
-		var err error
-		req, err = http.NewRequest(method, invokeUrl, nil)
-		if err != nil {
-			return fmt.Errorf("Error creating request to service: %s", err)
-		}
+	// authentication signature (Content-Length & Date must be set correctly)
+	var buffer bytes.Buffer
+	_, err := io.Copy(&buffer, io.LimitReader(content, MaximumRequestBodySize))
+	if err != nil {
+		return nil, fmt.Errorf("Error creating request body: %s", err)
+	}
+	req, err := http.NewRequest(method, invokeURL, &buffer)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating request to service: %s", err)
 	}
 
 	if contentType != "" {
@@ -80,54 +75,25 @@ func Invoke(provider provider.Provider, invokeUrl string, content io.Reader, out
 	if logger.DebugEnabled() {
 		b, err := httputil.DumpRequestOut(req, content != nil)
 		if err != nil {
-			return err
+			fmt.Fprintln(os.Stderr, "error dumping req", err)
 		}
-		fmt.Printf(string(b) + "\n")
+		os.Stderr.Write(b)
+		fmt.Fprintln(os.Stderr)
 	}
 
 	resp, err := httpClient.Do(req)
-
 	if err != nil {
-		return fmt.Errorf("Error invoking fn: %s", err)
+		return nil, fmt.Errorf("Error invoking function: %s", err)
 	}
 
 	if logger.DebugEnabled() {
 		b, err := httputil.DumpResponse(resp, true)
 		if err != nil {
-			return err
+			fmt.Fprintln(os.Stderr, "error dumping resp", err)
 		}
-		fmt.Printf(string(b) + "\n")
+		os.Stderr.Write(b)
+		fmt.Fprintln(os.Stderr)
 	}
 
-	// for sync calls
-	if call_id, found := resp.Header[FN_CALL_ID]; found {
-		if includeCallID {
-			fmt.Fprint(os.Stderr, fmt.Sprintf("Call ID: %v\n", call_id[0]))
-		}
-		io.Copy(output, resp.Body)
-	} else {
-		// for async calls and error discovering
-		c := &callID{}
-		err = json.NewDecoder(resp.Body).Decode(c)
-		if err == nil {
-			// decode would not fail in both cases:
-			// - call id in body
-			// - error in body
-			// that's why we need to check values of attributes
-			if c.CallID != "" {
-				fmt.Fprint(os.Stderr, fmt.Sprintf("Call ID: %v\n", c.CallID))
-			} else {
-				fmt.Fprint(output, fmt.Sprintf("Error: %v\n", c.Error.Message))
-			}
-		} else {
-			return err
-		}
-	}
-
-	if resp.StatusCode >= 400 {
-		// TODO: parse out error message
-		return fmt.Errorf("Error calling function: status %v", resp.StatusCode)
-	}
-
-	return nil
+	return resp, nil
 }
