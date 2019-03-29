@@ -50,9 +50,11 @@ func Invoke(provider provider.Provider, ireq InvokeRequest) (*http.Response, err
 	// Read the request body (up to the maximum size), as this is used in the
 	// authentication signature (Content-Length & Date must be set correctly)
 	var buffer bytes.Buffer
-	_, err := io.Copy(&buffer, io.LimitReader(content, MaximumRequestBodySize))
-	if err != nil {
-		return nil, fmt.Errorf("Error creating request body: %s", err)
+	if content != nil {
+		_, err := io.Copy(&buffer, io.LimitReader(content, MaximumRequestBodySize))
+		if err != nil {
+			return nil, fmt.Errorf("Error creating request body: %s", err)
+		}
 	}
 	req, err := http.NewRequest(method, invokeURL, &buffer)
 	if err != nil {
