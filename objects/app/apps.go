@@ -78,9 +78,6 @@ func getApps(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.App, error) {
 		resApps = append(resApps, resp.Payload.Items...)
 
 		n := c.Int64("n")
-		if n < 0 {
-			return nil, errors.New("Number of calls: negative value not allowed")
-		}
 
 		howManyMore := n - int64(len(resApps)+len(resp.Payload.Items))
 		if howManyMore <= 0 || resp.Payload.NextCursor == "" {

@@ -178,11 +178,6 @@ func TestGetAutoComplete(t *testing.T) {
 	h.Fn("create", "app", appName1).AssertSuccess()
 	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
 	//tests begin
-	//get logs
-	h.Fn("get", "logs", "--generate-bash-completion").AssertStdoutContains(appName1)
-	h.Fn("get", "logs", appName1, "--generate-bash-completion").AssertStdoutContains(funcName1)
-	h.Fn("get", "logs", appName1, funcName1, "--generate-bash-completion").AssertStdoutEmpty()
-	//No tests for Calls because unsupported
 	//No tests for Config because covered by config tests
 }
 
@@ -248,7 +243,6 @@ func TestListAutoComplete(t *testing.T) {
 	h.Fn("list", "triggers", "--generate-bash-completion").AssertStdoutContains(appName1)
 	h.Fn("list", "triggers", appName1, "--generate-bash-completion").AssertStdoutContains(funcName1)
 	h.Fn("list", "triggers", appName1, funcName1, "--generate-bash-completion").AssertStdoutEmpty()
-	//No tests for listing Calls because unsupported
 	//No tests for listing Config because covered by config tests
 }
 
