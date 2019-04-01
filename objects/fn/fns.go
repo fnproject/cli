@@ -49,6 +49,10 @@ var FnFlags = []cli.Flag{
 		Name:  "annotation",
 		Usage: "Function annotation (can be specified multiple times)",
 	},
+	cli.StringFlag{
+		Name:  "image",
+		Usage: "Function image",
+	},
 }
 var updateFnFlags = FnFlags
 
