@@ -117,6 +117,7 @@ func TestFnUpdateValues(t *testing.T) {
 		{[]string{"--idle-timeout", "128"}, []string{"idle_timeout"}, 128.0},
 		{[]string{"--config", "test=val"}, []string{"config", "test"}, "val"},
 		{[]string{"--annotation", "test=1"}, []string{"annotations", "test"}, 1.0},
+		{[]string{"--image", "fnproject/blah-blah:0.1.0"}, []string{"image"}, "fnproject/blah-blah:0.1.0"},
 	}
 
 	for i, tcI := range validCases {
