@@ -136,7 +136,8 @@ func TestFnUpdateValues(t *testing.T) {
 	}
 
 	invalidCases := [][]string{
-		{"--image", "fooimage:1.0.0"}, // image with no registry
+		// image with no registry is valid case for local development
+		// {"--image", "fooimage:1.0.0"}, // image with no registry
 		//	{"--memory", "0"},  bug?
 		{"--memory", "wibble"},
 		{"--type", "blancmange"},
