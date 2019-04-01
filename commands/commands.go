@@ -77,7 +77,7 @@ var DeleteCmds = Cmd{
 	"functions": fn.Delete(),
 	"context":   context.Delete(),
 	"triggers":  trigger.Delete(),
-	"config":    ConfigCommand("unset"),
+	"config":    ConfigCommand("delete"),
 }
 
 var GetCmds = Cmd{
