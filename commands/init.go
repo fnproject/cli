@@ -28,6 +28,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/fnproject/cli/common"
@@ -389,14 +390,14 @@ func (a *initFnCmd) bindFn(fn *modelsV2.Fn) {
 	}
 }
 
-// ValidateFuncName checks if the func name is valid, the name can't contain a colon and
-// must be all lowercase
+// ValidateFuncName checks if the func name is valid, the name can only contain alphanumerical
+// lowercase characters, separated by ., _ or -.
 func ValidateFuncName(name string) error {
-	if strings.Contains(name, ":") {
-		return errors.New("Function name cannot contain a colon")
-	}
-	if strings.ToLower(name) != name {
-		return errors.New("Function name must be lowercase")
+	// Match multiple groups of lowercase charaters and numbers, followed by 0 or 1 instances
+	// of the separators; the string also needs to end with a character or a number (not separator)
+	isValid := regexp.MustCompile(`^([a-z0-9]+[._-]?)*[a-z0-9]$`).MatchString
+	if !isValid(name) {
+		return errors.New("Function name cannot contain spaces, start with separators or contain uppercase letters")
 	}
 	return nil
 }

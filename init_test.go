@@ -58,17 +58,110 @@ func TestInit(t *testing.T) {
 	}
 }
 
-func funcNameValidation(name string, t *testing.T) {
-	err := commands.ValidateFuncName("fooFunc")
-	if err == nil {
-		t.Error("Expected validation error for function name")
+func TestFuncNameValidation(t *testing.T) {
+	tc := []struct {
+		name        string
+		value       string
+		errExpected bool
+	}{
+		{
+			name:        "strings only",
+			value:       "somename",
+			errExpected: false,
+		},
+		{
+			name:        "numbers only",
+			value:       "12345",
+			errExpected: false,
+		},
+		{
+			name:        "uppercase letters",
+			value:       "HelloFuncName",
+			errExpected: true,
+		},
+		{
+			name:        "starts with separator",
+			value:       ".myfunc",
+			errExpected: true,
+		},
+		{
+			name:        "starts with separator (*)",
+			value:       "*myfunc",
+			errExpected: true,
+		},
+		{
+			name:        "starts with separator (-)",
+			value:       "-myfunc",
+			errExpected: true,
+		},
+		{
+			name:        "ends with separator",
+			value:       "myfunc-",
+			errExpected: true,
+		},
+		{
+			name:        "ends with separator (.)",
+			value:       "myfunc.",
+			errExpected: true,
+		},
+		{
+			name:        "ends with separator (*)",
+			value:       "myfunc*",
+			errExpected: true,
+		},
+		{
+			name:        "contains spaces",
+			value:       "my func blah",
+			errExpected: true,
+		},
+		{
+			name:        "hypen in name",
+			value:       "my-func-blah",
+			errExpected: false,
+		},
+		{
+			name:        "underscore in name",
+			value:       "my_funcblah",
+			errExpected: false,
+		},
+		{
+			name:        "dot in name",
+			value:       "my.funcblah",
+			errExpected: false,
+		},
+		{
+			name:        "multiple separators in row",
+			value:       "my___funcblah",
+			errExpected: true,
+		},
+		{
+			name:        "multiple different separators in row",
+			value:       "my_.funcblah",
+			errExpected: true,
+		},
+		{
+			name:        "multiple separators in the name",
+			value:       "my_func-blah.test",
+			errExpected: false,
+		},
 	}
-}
 
-func TestFuncNameWithUpperCase(t *testing.T) {
-	funcNameValidation("fooMyFunc", t)
-}
-
-func TestFuncNameWithColon(t *testing.T) {
-	funcNameValidation("foo:myfunc", t)
+	t.Log("Test func name validation")
+	{
+		for i, tst := range tc {
+			t.Logf("\tTest %d: \t%s", i, tst.name)
+			{
+				err := commands.ValidateFuncName(tst.value)
+				if err != nil {
+					if !tst.errExpected {
+						t.Fatalf("\tValidateFuncName failed : got unexpected error [%v]\n", err)
+					}
+				} else {
+					if tst.errExpected {
+						t.Fatalf("\tValidateFuncName failed : error expected for value '%s' but was nil\n", tst.value)
+					}
+				}
+			}
+		}
+	}
 }
