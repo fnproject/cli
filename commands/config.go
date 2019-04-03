@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"strings"
+
 	"github.com/fnproject/cli/common"
 	"github.com/urfave/cli"
 )
@@ -15,14 +17,16 @@ func ConfigCommand(command string) cli.Command {
 		cmds = GetCommands(ConfigGetCmds)
 	case "configure":
 		cmds = GetCommands(ConfigCmds)
-	case "unset":
+	case "unset", "delete":
 		cmds = GetCommands(ConfigUnsetCmds)
 	}
+
+	usage := strings.Title(command) + " configurations for apps and functions"
 
 	return cli.Command{
 		Name:         "config",
 		ShortName:    "config",
-		Usage:        "Manage configurations for apps and functions",
+		Usage:        usage,
 		Aliases:      []string{"cf"},
 		ArgsUsage:    "<subcommand>",
 		Description:  "This command unsets the configuration of created objects ('app' or 'function').",
