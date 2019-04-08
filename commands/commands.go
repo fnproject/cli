@@ -5,10 +5,8 @@ import (
 
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/objects/app"
-	"github.com/fnproject/cli/objects/call"
 	"github.com/fnproject/cli/objects/context"
 	"github.com/fnproject/cli/objects/fn"
-	"github.com/fnproject/cli/objects/log"
 	"github.com/fnproject/cli/objects/server"
 	"github.com/fnproject/cli/objects/trigger"
 	"github.com/urfave/cli"
@@ -82,8 +80,6 @@ var DeleteCmds = Cmd{
 
 var GetCmds = Cmd{
 	"config": ConfigCommand("get"),
-	"logs":   log.Get(),
-	"calls":  call.Get(),
 }
 
 var InspectCmds = Cmd{
@@ -98,7 +94,6 @@ var ListCmds = Cmd{
 	"apps":      app.List(),
 	"functions": fn.List(),
 	"triggers":  trigger.List(),
-	"calls":     call.List(),
 	"contexts":  context.List(),
 }
 

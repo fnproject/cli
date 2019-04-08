@@ -135,9 +135,6 @@ func getFns(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.Fn, error) {
 			return nil, err
 		}
 		n := c.Int64("n")
-		if n < 0 {
-			return nil, errors.New("number of calls: negative value not allowed")
-		}
 
 		resFns = append(resFns, resp.Payload.Items...)
 		howManyMore := n - int64(len(resFns)+len(resp.Payload.Items))
