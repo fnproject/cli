@@ -22,26 +22,14 @@ type JavaLangHelper struct {
 }
 
 func (h *JavaLangHelper) Handles(lang string) bool {
-	for _, s := range h.LangStrings() {
-		if lang == s {
-			return true
-		}
-	}
-	return false
+	return defaultHandles(h, lang)
 }
 func (h *JavaLangHelper) Runtime() string {
 	return h.LangStrings()[0]
 }
 
-// TOOD: same as python, I think we should just have version tags on the single runtime, eg: `java:8` or `java:9`
 func (h *JavaLangHelper) LangStrings() []string {
-	if h.version == "8" {
-		return []string{"java8"}
-	} else if h.version == "11" {
-		return []string{"java11", "java"}
-	}
-	return []string{"java11"}
-
+	return []string{"java", fmt.Sprintf("java%s", h.version)}
 }
 
 func (h *JavaLangHelper) Extensions() []string {
