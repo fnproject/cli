@@ -28,6 +28,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/fnproject/cli/common"
@@ -116,7 +117,16 @@ func langsList() string {
 	for _, h := range langs.Helpers() {
 		allLangs = append(allLangs, h.LangStrings()...)
 	}
-	return strings.Join(allLangs, ", ")
+	sort.Strings(allLangs)
+	// remove duplicates
+	var allUnique []string
+	for i, s := range allLangs {
+		if i > 0 && s == allLangs[i-1] {
+			continue
+		}
+		allUnique = append(allUnique, s)
+	}
+	return strings.Join(allUnique, ", ")
 }
 
 // InitCommand returns init cli.command

@@ -11,9 +11,11 @@ var helpers = []LangHelper{}
 
 func init() {
 	registerHelper(&GoLangHelper{})
-	registerHelper(&JavaLangHelper{version: "8"})
+	// order matter, 'java' will pick up the first JavaLangHelper
 	registerHelper(&JavaLangHelper{version: "11"})
+	registerHelper(&JavaLangHelper{version: "8"})
 	registerHelper(&NodeLangHelper{})
+	// order matter, 'python' will pick up the first PythonLangHelper
 	registerHelper(&PythonLangHelper{Version: "3.6"})
 	registerHelper(&PythonLangHelper{Version: "3.7.1"})
 	registerHelper(&RubyLangHelper{})

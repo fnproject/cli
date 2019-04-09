@@ -21,12 +21,7 @@ type KotlinLangHelper struct {
 }
 
 func (h *KotlinLangHelper) Handles(lang string) bool {
-	for _, s := range h.LangStrings() {
-		if lang == s {
-			return true
-		}
-	}
-	return false
+	return defaultHandles(h, lang)
 }
 
 // Runtime - return the correct runtime value for this helper.
