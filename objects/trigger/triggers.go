@@ -188,9 +188,6 @@ func getTriggers(c *cli.Context, client *fnclient.Fn) ([]*models.Trigger, error)
 			return nil, err
 		}
 		n := c.Int64("n")
-		if n < 0 {
-			return nil, errors.New("number of calls: negative value not allowed")
-		}
 
 		resTriggers = append(resTriggers, resp.Payload.Items...)
 		howManyMore := n - int64(len(resTriggers)+len(resp.Payload.Items))
