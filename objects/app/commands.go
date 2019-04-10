@@ -105,6 +105,10 @@ func Delete() cli.Command {
 				BashCompleteApps(c)
 			}
 		},
+		Flags: []cli.Flag{cli.BoolFlag{
+			Name:  "force, f",
+			Usage: "Delete this app and all associated resources (can fail part way through execution after deleting some resources without the ability to undo)",
+		}},
 	}
 }
 

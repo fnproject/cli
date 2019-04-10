@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +15,8 @@ import (
 	"github.com/fnproject/cli/common"
 	fnclient "github.com/fnproject/fn_go/clientv2"
 	apiapps "github.com/fnproject/fn_go/clientv2/apps"
+	apifns "github.com/fnproject/fn_go/clientv2/fns"
+	apitriggers "github.com/fnproject/fn_go/clientv2/triggers"
 	"github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/jmoiron/jsonq"
@@ -316,6 +319,20 @@ func (a *appsCmd) delete(c *cli.Context) error {
 		return err
 	}
 
+	if c.Bool("f") {
+
+		fns, triggers, err := getAssociatedResources(c, a.client, app)
+		if err != nil {
+			return fmt.Errorf("Failed to get associated objects: %s", err)
+		}
+		if userConfirmedRecursiveAppDeleteion(fns, triggers) {
+			deleteTriggers(c, a.client, triggers)
+			deleteFunctions(c, a.client, fns)
+		} else {
+			return nil
+		}
+	}
+
 	_, err = a.client.Apps.DeleteApp(&apiapps.DeleteAppParams{
 		Context: context.Background(),
 		AppID:   app.ID,
@@ -379,4 +396,128 @@ func GetAppByName(client *fnclient.Fn, appName string) (*modelsv2.App, error) {
 	}
 
 	return app, nil
+}
+
+func getAssociatedResources(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*modelsv2.Fn, []*modelsv2.Trigger, error) {
+	fns, err := listFnsInApp(c, client, app)
+	if err != nil {
+		return nil, nil, err
+	}
+	var trs []*modelsv2.Trigger
+	for _, fn := range fns {
+		t, err := listTriggersInFunc(c, client, fn)
+		if err != nil {
+			return nil, nil, err
+		}
+		trs = append(trs, t...)
+	}
+	return fns, trs, nil
+}
+
+func userConfirmedRecursiveAppDeleteion(fns []*modelsv2.Fn, trs []*modelsv2.Trigger) bool {
+	if len(fns) > 0 {
+		fmt.Println("You are about to delete the following resources:")
+		fmt.Println("   Applications: 1")
+		fmt.Println("   Functions:   ", len(fns))
+		fmt.Println("   Triggers:    ", len(trs))
+		fmt.Println("This operation cannot be undone")
+		fmt.Printf("Do you wish to proceed? Y/N: ")
+		reader := bufio.NewReader(os.Stdin)
+		input, _ := reader.ReadString('\n')
+		if strings.ToLower(input) == "y\n" {
+			return true
+		} else if strings.ToLower(input) == "n\n" {
+			fmt.Println("Cancelling delete")
+			return false
+		} else {
+			fmt.Println("Unrecognised input, should be Y/N")
+			fmt.Println("Cancelling delete")
+			return false
+		}
+	}
+	return true
+}
+
+func deleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) error {
+	if fns == nil {
+		return nil
+	}
+	for _, fn := range fns {
+		params := apifns.NewDeleteFnParams()
+		params.FnID = fn.ID
+		_, err := client.Fns.DeleteFn(params)
+		if err != nil {
+			return fmt.Errorf("Failed to delete Function %s: %s", fn.Name, err)
+		}
+		fmt.Println("Function ", fn.Name, " deleted")
+	}
+	return nil
+}
+
+func deleteTriggers(c *cli.Context, client *fnclient.Fn, triggers []*modelsv2.Trigger) error {
+	if triggers == nil {
+		return nil
+	}
+	for _, t := range triggers {
+		params := apitriggers.NewDeleteTriggerParams()
+		params.TriggerID = t.ID
+		_, err := client.Triggers.DeleteTrigger(params)
+		if err != nil {
+			return fmt.Errorf("Failed to Delete trigger %s: %s", t.Name, err)
+		}
+		fmt.Println("Trigger ", t.Name, " deleted")
+	}
+	return nil
+}
+
+func listFnsInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*modelsv2.Fn, error) {
+	params := &apifns.ListFnsParams{
+		Context: context.Background(),
+		AppID:   &app.ID,
+	}
+
+	var resFns []*modelsv2.Fn
+	for {
+		resp, err := client.Fns.ListFns(params)
+
+		if err != nil {
+			return nil, fmt.Errorf("Could not list functions in App %s: %s", app.Name, err)
+		}
+		n := c.Int64("n")
+
+		resFns = append(resFns, resp.Payload.Items...)
+		howManyMore := n - int64(len(resFns)+len(resp.Payload.Items))
+		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
+			break
+		}
+
+		params.Cursor = &resp.Payload.NextCursor
+	}
+
+	return resFns, nil
+}
+
+func listTriggersInFunc(c *cli.Context, client *fnclient.Fn, fn *modelsv2.Fn) ([]*modelsv2.Trigger, error) {
+	params := &apitriggers.ListTriggersParams{
+		Context: context.Background(),
+		AppID:   &fn.AppID,
+		FnID:    &fn.ID,
+	}
+
+	var resTriggers []*modelsv2.Trigger
+	for {
+		resp, err := client.Triggers.ListTriggers(params)
+		if err != nil {
+			return nil, fmt.Errorf("Could not list Triggers in Function %s: %s", fn.Name, err)
+		}
+		n := c.Int64("n")
+
+		resTriggers = append(resTriggers, resp.Payload.Items...)
+		howManyMore := n - int64(len(resTriggers)+len(resp.Payload.Items))
+		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
+			break
+		}
+		params.Cursor = &resp.Payload.NextCursor
+	}
+	return resTriggers, nil
 }
