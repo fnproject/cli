@@ -218,3 +218,21 @@ func TestEmptyConfigs(t *testing.T) {
 	h.Fn("unset", "config", "app", appName1, "nonexistantKey").AssertSuccess()
 	h.Fn("unset", "config", "function", appName1, funcName1, "nonexistantKey").AssertSuccess()
 }
+
+func TestRecursiveDelete(t *testing.T) {
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+	appName1 := h.NewAppName()
+	funcName1 := h.NewFuncName(appName1)
+	triggerName1 := h.NewTriggerName(appName1, funcName1)
+
+	h.Fn("create", "app", appName1).AssertSuccess()
+	h.Fn("create", "function", appName1, funcName1, "foo/duffimage:0.0.1").AssertSuccess()
+	h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/mytrigger").AssertSuccess()
+	h.Fn("delete", "app", appName1, "-f", "-r").AssertSuccess().
+		AssertStdoutContains(appName1).
+		AssertStdoutContains(funcName1).
+		AssertStdoutContains(triggerName1)
+}
