@@ -114,6 +114,16 @@ func Delete() cli.Command {
 				BashCompleteFns(c)
 			}
 		},
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "force, f",
+				Usage: "Forces this delete (you will not be asked if you wish to continue with the delete)",
+			},
+			cli.BoolFlag{
+				Name:  "cascade, c",
+				Usage: "Delete this function and all associated resources (can fail part way through execution after deleting some resources without the ability to undo)",
+			},
+		},
 	}
 }
 
