@@ -551,8 +551,8 @@ func (f *fnsCmd) delete(c *cli.Context) error {
 		return err
 	}
 
-	//Cascading delete of sub-objects
-	if c.Bool("cascade") {
+	//recursive delete of sub-objects
+	if c.Bool("recursive") {
 		triggers, err := common.ListTriggersInFunc(c, f.client, fn)
 		if err != nil {
 			return fmt.Errorf("Failed to get associated objects: %s", err)

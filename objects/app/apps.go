@@ -317,8 +317,8 @@ func (a *appsCmd) delete(c *cli.Context) error {
 		return err
 	}
 
-	//Cascading delete of sub-objects
-	if c.Bool("cascade") {
+	//recursive delete of sub-objects
+	if c.Bool("recursive") {
 		fns, triggers, err := common.ListFnsAndTriggersInApp(c, a.client, app)
 		if err != nil {
 			return fmt.Errorf("Failed to get associated objects: %s", err)
