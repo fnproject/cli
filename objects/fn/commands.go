@@ -120,7 +120,7 @@ func Delete() cli.Command {
 				Usage: "Forces this delete (you will not be asked if you wish to continue with the delete)",
 			},
 			cli.BoolFlag{
-				Name:  "cascade, c",
+				Name:  "recursive, r",
 				Usage: "Delete this function and all associated resources (can fail part way through execution after deleting some resources without the ability to undo)",
 			},
 		},
