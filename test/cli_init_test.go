@@ -48,7 +48,7 @@ func TestInitImage(t *testing.T) {
 		origYaml.Version = ""
 		h.WriteYamlFile("func.init.yaml", origYaml)
 
-		err = h.Exec("tar", "-cf", "go.tar", "func.go", "func.init.yaml", "Gopkg.toml")
+		err = h.Exec("tar", "-cf", "go.tar", "func.go", "func.init.yaml", "go.mod")
 		if err != nil {
 			fmt.Println(err)
 			t.Fatal("Failed to create tarball for init-image")
