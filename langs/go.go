@@ -53,6 +53,13 @@ func (h *GoLangHelper) DockerfileBuildCmds() []string {
 			r = append(r, "ADD . /go/src/func/")
 			r = append(r, "RUN cd /go/src/func/ && dep ensure")
 		}
+	} else if exists("go.mod") {
+		r = append(r, "WORKDIR /go/src/func/")
+		r = append(r, "ENV GO111MODULE=on")
+		if vendor {
+			r = append(r, "ENV GOFLAGS=\"-mod=vendor\"")
+		}
+		r = append(r, "COPY . .")
 	} else {
 		r = append(r, "ADD . /go/src/func/")
 	}
@@ -82,8 +89,8 @@ func (lh *GoLangHelper) GenerateBoilerplate(path string) error {
 	if err := ioutil.WriteFile(codeFile, []byte(helloGoSrcBoilerplate), os.FileMode(0644)); err != nil {
 		return err
 	}
-	depFile := "Gopkg.toml"
-	if err := ioutil.WriteFile(depFile, []byte(depBoilerplate), os.FileMode(0644)); err != nil {
+	modFile := "go.mod"
+	if err := ioutil.WriteFile(modFile, []byte(modBoilerplate), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -122,13 +129,7 @@ func myHandler(ctx context.Context, in io.Reader, out io.Writer) {
 }
 `
 
-	depBoilerplate = `
-[[constraint]]
-  branch = "master"
-  name = "github.com/fnproject/fdk-go"
-
-[prune]
-  go-tests = true
-  unused-packages = true
+	modBoilerplate = `
+module func
 `
 )
