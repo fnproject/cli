@@ -251,6 +251,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 		err = runInitImage(initImage, a)
 		if err != nil {
+			os.Remove(dir)
 			return err
 		}
 
@@ -312,22 +313,29 @@ func (a *initFnCmd) init(c *cli.Context) error {
 func runInitImage(initImage string, a *initFnCmd) error {
 	fmt.Println("Building from init-image: " + initImage)
 
-	// Run the initImage
-	var c1ErrB bytes.Buffer
-	tarR, tarW := io.Pipe()
+	var stdoutBuf, stderrBuf bytes.Buffer
+	var errStdout, errStderr error
 
-	c1 := exec.Command("docker", "run", "-e", "FN_FUNCTION_NAME="+a.ff.Name, initImage)
-	c1.Stderr = &c1ErrB
-	c1.Stdout = tarW
+	cmd := exec.Command("docker", "run", "-e", "FN_FUNCTION_NAME="+a.ff.Name, initImage)
+	stdoutIn, _ := cmd.StdoutPipe()
+	stderrIn, _ := cmd.StderrPipe()
 
-	c1Err := c1.Start()
-	if c1Err != nil {
-		fmt.Println(c1ErrB.String())
-		return errors.New("Error running init-image")
+	stdout := io.Writer(&stdoutBuf)
+	stderr := io.Writer(&stderrBuf)
+
+	errStart := cmd.Start()
+
+	_, errStdout = io.Copy(stdout, stdoutIn)
+	_, errStderr = io.Copy(stderr, stderrIn)
+
+	errUntar := untarStream(bytes.NewReader(stdoutBuf.Bytes()))
+
+	err := cmd.Wait()
+	if err != nil || errStdout != nil || errStderr != nil || errStart != nil {
+		return errors.New("Error, unbale to use the init-image! Make sure that Docker is running and that the init-image exists")
 	}
 
-	err := untarStream(tarR)
-	if err != nil {
+	if errUntar != nil {
 		return errors.New("Error un-tarring the output of the init-image")
 	}
 
