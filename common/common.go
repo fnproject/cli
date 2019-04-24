@@ -600,8 +600,8 @@ func GetFuncYamlVersion(oldFF map[string]interface{}) int {
 	return 1
 }
 
-// UserConfirmedMultiResourceDeleteion will prompt the user for confirmation to delete all the the resources
-func UserConfirmedMultiResourceDeleteion(aps []*modelsv2.App, fns []*modelsv2.Fn, trs []*modelsv2.Trigger) bool {
+// UserConfirmedMultiResourceDeletion will prompt the user for confirmation to delete all the the resources
+func UserConfirmedMultiResourceDeletion(aps []*modelsv2.App, fns []*modelsv2.Fn, trs []*modelsv2.Trigger) bool {
 
 	apsLen := len(aps)
 	fnsLen := len(fns)
@@ -621,20 +621,21 @@ func UserConfirmedMultiResourceDeleteion(aps []*modelsv2.App, fns []*modelsv2.Fn
 	fmt.Printf("Do you wish to proceed? Y/N: ")
 	reader := bufio.NewReader(os.Stdin)
 	input, _ := reader.ReadString('\n')
-	if strings.ToLower(input) == "y\n" {
+	input = strings.TrimSpace(input)
+	if strings.ToLower(input) == "y" {
 		return true
-	} else if strings.ToLower(input) == "n\n" {
+	} else if strings.ToLower(input) == "n" {
 		fmt.Println("Cancelling delete")
 		return false
 	} else {
-		fmt.Println("Unrecognised input, should be y/n")
+		fmt.Println("Unrecognised input, should be Y/N")
 		fmt.Println("Cancelling delete")
 		return false
 	}
 	return true
 }
 
-// ListFnsAndTriggersInApp lists all the fucntions associated with an app and all the triggers associated with each of those functions
+// ListFnsAndTriggersInApp lists all the functions associated with an app and all the triggers associated with each of those functions
 func ListFnsAndTriggersInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*modelsv2.Fn, []*modelsv2.Trigger, error) {
 	fns, err := ListFnsInApp(c, client, app)
 	if err != nil {

@@ -11,4 +11,3 @@ data/
 .idea/
 **/*.iml
 **/.DS_Store
-/vendor

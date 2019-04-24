@@ -329,7 +329,7 @@ func (a *appsCmd) delete(c *cli.Context) error {
 		if c.Bool("force") {
 			shouldContinue = true
 		} else {
-			shouldContinue = common.UserConfirmedMultiResourceDeleteion([]*modelsv2.App{app}, fns, triggers)
+			shouldContinue = common.UserConfirmedMultiResourceDeletion([]*modelsv2.App{app}, fns, triggers)
 		}
 
 		if shouldContinue {

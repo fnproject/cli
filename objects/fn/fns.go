@@ -563,7 +563,7 @@ func (f *fnsCmd) delete(c *cli.Context) error {
 		if c.Bool("force") {
 			shouldContinue = true
 		} else {
-			shouldContinue = common.UserConfirmedMultiResourceDeleteion(nil, []*modelsv2.Fn{fn}, triggers)
+			shouldContinue = common.UserConfirmedMultiResourceDeletion(nil, []*modelsv2.Fn{fn}, triggers)
 		}
 
 		if shouldContinue {
