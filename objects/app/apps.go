@@ -12,6 +12,7 @@ import (
 
 	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
+
 	fnclient "github.com/fnproject/fn_go/clientv2"
 	apiapps "github.com/fnproject/fn_go/clientv2/apps"
 	"github.com/fnproject/fn_go/modelsv2"
@@ -314,6 +315,35 @@ func (a *appsCmd) delete(c *cli.Context) error {
 	app, err := GetAppByName(a.client, appName)
 	if err != nil {
 		return err
+	}
+
+	//recursive delete of sub-objects
+	if c.Bool("recursive") {
+		fns, triggers, err := common.ListFnsAndTriggersInApp(c, a.client, app)
+		if err != nil {
+			return fmt.Errorf("Failed to get associated objects: %s", err)
+		}
+
+		//Forced deletion
+		var shouldContinue bool
+		if c.Bool("force") {
+			shouldContinue = true
+		} else {
+			shouldContinue = common.UserConfirmedMultiResourceDeletion([]*modelsv2.App{app}, fns, triggers)
+		}
+
+		if shouldContinue {
+			err := common.DeleteTriggers(c, a.client, triggers)
+			if err != nil {
+				return fmt.Errorf("Failed to delete associated objects: %s", err)
+			}
+			err = common.DeleteFunctions(c, a.client, fns)
+			if err != nil {
+				return fmt.Errorf("Failed to delete associated objects: %s", err)
+			}
+		} else {
+			return nil
+		}
 	}
 
 	_, err = a.client.Apps.DeleteApp(&apiapps.DeleteAppParams{
