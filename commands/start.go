@@ -35,6 +35,11 @@ func StartCommand() cli.Command {
 				Name:  "env-file",
 				Usage: "Path to Fn server configuration file.",
 			},
+			cli.StringFlag{
+				Name:  "version",
+				Usage: "Specify a specific fnproject/fnserver version to run, ex: '1.2.3'.",
+				Value: "latest",
+			},
 			cli.IntFlag{
 				Name:  "port, p",
 				Value: 8080,
@@ -74,7 +79,10 @@ func start(c *cli.Context) error {
 	if c.Bool("detach") {
 		args = append(args, "-d")
 	}
-	args = append(args, common.FunctionsDockerImage)
+
+	image := fmt.Sprintf("%s:%s", common.FunctionsDockerImage, c.String("version"))
+
+	args = append(args, image)
 	cmd := exec.Command("docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
