@@ -3,6 +3,7 @@ package common
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,14 +18,17 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/spf13/viper"
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/coreos/go-semver/semver"
 	"github.com/fatih/color"
 	"github.com/fnproject/cli/config"
 	"github.com/fnproject/cli/langs"
+	fnclient "github.com/fnproject/fn_go/clientv2"
+	apifns "github.com/fnproject/fn_go/clientv2/fns"
+	apitriggers "github.com/fnproject/fn_go/clientv2/triggers"
+	"github.com/fnproject/fn_go/modelsv2"
+	"github.com/spf13/viper"
 	"github.com/urfave/cli"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // Global docker variables.
@@ -594,4 +598,144 @@ func GetFuncYamlVersion(oldFF map[string]interface{}) int {
 		return oldFF["schema_version"].(int)
 	}
 	return 1
+}
+
+// UserConfirmedMultiResourceDeletion will prompt the user for confirmation to delete all the the resources
+func UserConfirmedMultiResourceDeletion(aps []*modelsv2.App, fns []*modelsv2.Fn, trs []*modelsv2.Trigger) bool {
+
+	apsLen := len(aps)
+	fnsLen := len(fns)
+	trsLen := len(trs)
+
+	fmt.Println("You are about to delete the following resources:")
+	if apsLen > 0 {
+		fmt.Println("   Applications:", apsLen)
+	}
+	if fnsLen > 0 {
+		fmt.Println("   Functions:   ", fnsLen)
+	}
+	if trsLen > 0 {
+		fmt.Println("   Triggers:    ", trsLen)
+	}
+	fmt.Println("This operation cannot be undone")
+	fmt.Printf("Do you wish to proceed? Y/N: ")
+	reader := bufio.NewReader(os.Stdin)
+	input, _ := reader.ReadString('\n')
+	input = strings.TrimSpace(input)
+	if strings.ToLower(input) == "y" {
+		return true
+	} else if strings.ToLower(input) == "n" {
+		fmt.Println("Cancelling delete")
+		return false
+	} else {
+		fmt.Println("Unrecognised input, should be Y/N")
+		fmt.Println("Cancelling delete")
+		return false
+	}
+	return true
+}
+
+// ListFnsAndTriggersInApp lists all the functions associated with an app and all the triggers associated with each of those functions
+func ListFnsAndTriggersInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*modelsv2.Fn, []*modelsv2.Trigger, error) {
+	fns, err := ListFnsInApp(c, client, app)
+	if err != nil {
+		return nil, nil, err
+	}
+	var trs []*modelsv2.Trigger
+	for _, fn := range fns {
+		t, err := ListTriggersInFunc(c, client, fn)
+		if err != nil {
+			return nil, nil, err
+		}
+		trs = append(trs, t...)
+	}
+	return fns, trs, nil
+}
+
+//DeleteFunctions deletes all the functions provided to it. if provided nil it is a no-op
+func DeleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) error {
+	if fns == nil {
+		return nil
+	}
+	for _, fn := range fns {
+		params := apifns.NewDeleteFnParams()
+		params.FnID = fn.ID
+		_, err := client.Fns.DeleteFn(params)
+		if err != nil {
+			return fmt.Errorf("Failed to delete Function %s: %s", fn.Name, err)
+		}
+		fmt.Println("Function ", fn.Name, " deleted")
+	}
+	return nil
+}
+
+//DeleteTriggers deletes all the triggers provided to it. if provided nil it is a no-op
+func DeleteTriggers(c *cli.Context, client *fnclient.Fn, triggers []*modelsv2.Trigger) error {
+	if triggers == nil {
+		return nil
+	}
+	for _, t := range triggers {
+		params := apitriggers.NewDeleteTriggerParams()
+		params.TriggerID = t.ID
+		_, err := client.Triggers.DeleteTrigger(params)
+		if err != nil {
+			return fmt.Errorf("Failed to Delete trigger %s: %s", t.Name, err)
+		}
+		fmt.Println("Trigger ", t.Name, " deleted")
+	}
+	return nil
+}
+
+//ListFnsInApp gets all the functions associated with an app
+func ListFnsInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*modelsv2.Fn, error) {
+	params := &apifns.ListFnsParams{
+		Context: context.Background(),
+		AppID:   &app.ID,
+	}
+
+	var resFns []*modelsv2.Fn
+	for {
+		resp, err := client.Fns.ListFns(params)
+
+		if err != nil {
+			return nil, fmt.Errorf("Could not list functions in application %s: %s", app.Name, err)
+		}
+		n := c.Int64("n")
+
+		resFns = append(resFns, resp.Payload.Items...)
+		howManyMore := n - int64(len(resFns)+len(resp.Payload.Items))
+		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
+			break
+		}
+
+		params.Cursor = &resp.Payload.NextCursor
+	}
+
+	return resFns, nil
+}
+
+//ListTriggersInFunc gets all the triggers associated with a function
+func ListTriggersInFunc(c *cli.Context, client *fnclient.Fn, fn *modelsv2.Fn) ([]*modelsv2.Trigger, error) {
+	params := &apitriggers.ListTriggersParams{
+		Context: context.Background(),
+		AppID:   &fn.AppID,
+		FnID:    &fn.ID,
+	}
+
+	var resTriggers []*modelsv2.Trigger
+	for {
+		resp, err := client.Triggers.ListTriggers(params)
+		if err != nil {
+			return nil, fmt.Errorf("Could not list triggers in function %s: %s", fn.Name, err)
+		}
+		n := c.Int64("n")
+
+		resTriggers = append(resTriggers, resp.Payload.Items...)
+		howManyMore := n - int64(len(resTriggers)+len(resp.Payload.Items))
+		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
+			break
+		}
+		params.Cursor = &resp.Payload.NextCursor
+	}
+	return resTriggers, nil
 }
