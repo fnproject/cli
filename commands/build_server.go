@@ -166,13 +166,11 @@ func main() {
 // # github.com/x/y/vendor/github.com/openzipkin/zipkin-go-opentracing/thrift/gen-go/scribe
 // vendor/github.com/openzipkin/zipkin-go-opentracing/thrift/gen-go/scribe/scribe.go:210: undefined: thrift.TClient
 var dockerFileTmpl = `# build stage
-FROM golang:1.10-alpine AS build-env
+FROM golang:1-alpine AS build-env
 RUN apk --no-cache add build-base git bzr mercurial gcc
-# RUN go get -u github.com/golang/dep/cmd/dep
 ENV D=/go/src/github.com/x/y
 ADD main.go $D/
 RUN cd $D && go get
-# RUN cd $D && dep init && dep ensure
 RUN cd $D && go build -o fnserver && cp fnserver /tmp/
 
 # final stage
