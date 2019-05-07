@@ -99,6 +99,8 @@ func start(c *cli.Context) error {
 	sigC := make(chan os.Signal, 2)
 	signal.Notify(sigC, os.Interrupt, syscall.SIGTERM)
 
+	log.Println("¡¡¡ 'fn start' should NOT be used for PRODUCTION !!! see https://github.com/fnproject/fn-helm/")
+
 	for {
 		select {
 		case <-sigC:
