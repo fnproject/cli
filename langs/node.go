@@ -1,7 +1,10 @@
 package langs
 
 import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 )
@@ -51,12 +54,17 @@ const packageJsonContent = `{
 	"author": "",
 	"license": "Apache-2.0",
 	"dependencies": {
-		"@fnproject/fdk": ">=0.0.15"
+		"@fnproject/fdk": ">=%s"
 	}
 }
 `
 
 func (h *NodeLangHelper) GenerateBoilerplate(path string) error {
+	fdkVersion, err := h.getFDKAPIVersion()
+	if err != nil {
+		return err
+	}
+
 	pathToPackageJsonFile := filepath.Join(path, "package.json")
 	pathToFuncJs := filepath.Join(path, "func.js")
 
@@ -64,7 +72,8 @@ func (h *NodeLangHelper) GenerateBoilerplate(path string) error {
 		return ErrBoilerplateExists
 	}
 
-	err := ioutil.WriteFile(pathToPackageJsonFile, []byte(packageJsonContent), os.FileMode(0644))
+	packageJsonBoilerplate := fmt.Sprintf(packageJsonContent, fdkVersion)
+	err = ioutil.WriteFile(pathToPackageJsonFile, []byte(packageJsonBoilerplate), os.FileMode(0644))
 	if err != nil {
 		return err
 	}
@@ -109,4 +118,40 @@ func (h *NodeLangHelper) DockerfileCopyCmds() []string {
 	}
 
 	return r
+}
+
+func (h *NodeLangHelper) getFDKAPIVersion() (string, error) {
+
+	const versionURL = "https://registry.npmjs.org/@fnproject/fdk"
+	const versionEnv = "FN_NODE_FDK_VERSION"
+	fetchError := fmt.Errorf("failed to fetch latest Node FDK version from %v. "+
+		"Check your network settings or manually override the Node FDK version by setting %s", versionURL, versionEnv)
+
+	version := os.Getenv(versionEnv)
+	if version != "" {
+		return version, nil
+	}
+
+	resp, err := http.Get(versionURL)
+	if err != nil || resp.StatusCode != 200 {
+		return "", fetchError
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fetchError
+	}
+
+	parsedResp := struct {
+		DistTags struct {
+			Latest string `json:"latest"`
+		} `json:"dist-tags"`
+	}{}
+	err = json.Unmarshal(body, &parsedResp)
+	if err != nil {
+		return "", fetchError
+	}
+
+	return parsedResp.DistTags.Latest, nil
 }
