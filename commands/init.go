@@ -316,7 +316,7 @@ func runInitImage(initImage string, a *initFnCmd) error {
 	var c1ErrB bytes.Buffer
 	tarR, tarW := io.Pipe()
 
-	c1 := exec.Command("docker", "run", "-e", "FN_FUNCTION_NAME="+a.ff.Name, initImage)
+	c1 := exec.Command("docker", "run", "--rm", "-e", "FN_FUNCTION_NAME="+a.ff.Name, initImage)
 	c1.Stderr = &c1ErrB
 	c1.Stdout = tarW
 

@@ -1,8 +1,10 @@
 package langs
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 )
@@ -62,6 +64,11 @@ func (h *RubyLangHelper) Entrypoint() (string, error) {
 func (h *RubyLangHelper) HasBoilerplate() bool { return true }
 
 func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
+	fdkVersion, err := h.getFDKAPIVersion()
+	if err != nil {
+		return err
+	}
+
 	msg := "%s already exists, can't generate boilerplate"
 	codeFile := filepath.Join(path, "func.rb")
 	if exists(codeFile) {
@@ -76,11 +83,46 @@ func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(gemFile, []byte(rubyGemfileBoilerplate), os.FileMode(0644)); err != nil {
+	gemfileBoilerplate := fmt.Sprintf(rubyGemfileBoilerplate, fdkVersion)
+	if err := ioutil.WriteFile(gemFile, []byte(gemfileBoilerplate), os.FileMode(0644)); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (h *RubyLangHelper) getFDKAPIVersion() (string, error) {
+
+	const versionURL = "https://rubygems.org/api/v1/versions/fdk/latest.json"
+	const versionEnv = "FN_RUBY_FDK_VERSION"
+	fetchError := fmt.Errorf("failed to fetch latest Ruby FDK version from %v. "+
+		"Check your network settings or manually override the Ruby FDK version by setting %s", versionURL, versionEnv)
+
+	version := os.Getenv(versionEnv)
+	if version != "" {
+		return version, nil
+	}
+
+	resp, err := http.Get(versionURL)
+	if err != nil || resp.StatusCode != 200 {
+		return "", fetchError
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fetchError
+	}
+
+	parsedResp := struct {
+		Version string `json:"version"`
+	}{}
+	err = json.Unmarshal(body, &parsedResp)
+	if err != nil {
+		return "", fetchError
+	}
+
+	return parsedResp.Version, nil
 }
 
 const (
@@ -96,7 +138,7 @@ FDK.handle(target: :myfunction)
 `
 
 	rubyGemfileBoilerplate = `source 'https://rubygems.org' do
-  gem 'fdk', '>= 0.0.18'
+  gem 'fdk', '>= %s'
 end
 `
 )
