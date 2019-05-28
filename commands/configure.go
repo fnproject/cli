@@ -13,7 +13,7 @@ func ConfigureCommand() cli.Command {
 		Usage:        "\tSet configuration for an object",
 		Category:     "MANAGEMENT COMMANDS",
 		ArgsUsage:    "<subcommand>",
-		Description:  "This command sets a configuaration key for an 'app' or 'function'.",
+		Description:  "This command sets a configuration key for an 'app' or 'function'.",
 		Subcommands:  GetCommands(ConfigCmds),
 		BashComplete: common.DefaultBashComplete,
 	}
