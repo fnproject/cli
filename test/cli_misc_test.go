@@ -22,11 +22,11 @@ func TestFnVersion(t *testing.T) {
 func withMinimalFunction(h *testharness.CLIHarness) {
 
 	h.CopyFiles(map[string]string{
-		"simplefunc/vendor":     "vendor",
-		"simplefunc/func.go":    "func.go",
-		"simplefunc/Gopkg.lock": "Gopkg.lock",
-		"simplefunc/Gopkg.toml": "Gopkg.toml",
-		"simplefunc/func.yaml":  "func.yaml",
+		"simplefunc/vendor":    "vendor",
+		"simplefunc/func.go":   "func.go",
+		"simplefunc/go.sum":    "go.sum",
+		"simplefunc/go.mod":    "go.mod",
+		"simplefunc/func.yaml": "func.yaml",
 	})
 }
 

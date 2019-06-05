@@ -40,7 +40,7 @@ func (lh *GoLangHelper) RunFromImage() (string, error) {
 func (h *GoLangHelper) DockerfileBuildCmds() []string {
 	r := []string{}
 	// more info on Go multi-stage builds: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
-	// TODO: if we keep the Gopkg.lock on user's drive, we can put this after the dep commands and then the dep layers will be cached.
+	// TODO: if we keep the go.sum on user's drive, we can put this after the dep commands and then the dep layers will be cached.
 	vendor := exists("vendor/")
 	// skip dep tool install if vendor is there
 	if !vendor && exists("Gopkg.toml") {

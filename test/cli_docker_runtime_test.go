@@ -23,10 +23,10 @@ runtime: docker`
 func withGoFunction(h *testharness.CLIHarness) {
 
 	h.CopyFiles(map[string]string{
-		"simplefunc/vendor":     "vendor",
-		"simplefunc/func.go":    "func.go",
-		"simplefunc/Gopkg.lock": "Gopkg.lock",
-		"simplefunc/Gopkg.toml": "Gopkg.toml",
+		"simplefunc/vendor":  "vendor",
+		"simplefunc/func.go": "func.go",
+		"simplefunc/go.sum":  "go.sum",
+		"simplefunc/go.mod":  "go.mod",
 	})
 }
 
