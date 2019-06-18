@@ -177,7 +177,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	path := c.Args().First()
 	if path != "" {
-		fmt.Printf("Creating function at: /%s\n", path)
+		fmt.Printf("Creating function at: ./%s\n", path)
 		dir = filepath.Join(dir, path)
 
 		// check if dir exists, if it does, then we can't create function

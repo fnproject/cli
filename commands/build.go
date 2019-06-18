@@ -59,7 +59,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 
 	path := c.Args().First()
 	if path != "" {
-		fmt.Printf("Building function at: /%s\n", path)
+		fmt.Printf("Building function at: ./%s\n", path)
 		dir = filepath.Join(dir, path)
 	}
 

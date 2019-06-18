@@ -199,7 +199,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, app *models.App) error {
 		// if we're in the context of an app, first arg is path to the function
 		path := c.Args().First()
 		if path != "" {
-			fmt.Printf("Deploying function at: /%s\n", path)
+			fmt.Printf("Deploying function at: ./%s\n", path)
 		}
 		dir = filepath.Join(wd, path)
 	}
@@ -228,7 +228,7 @@ func (p *deploycmd) deployAll(c *cli.Context, app *models.App) error {
 		// if we're in the context of an app, first arg is path to the function
 		path := c.Args().First()
 		if path != "" {
-			fmt.Printf("Deploying function at: /%s\n", path)
+			fmt.Printf("Deploying function at: ./%s\n", path)
 		}
 		dir = filepath.Join(wd, path)
 	}
