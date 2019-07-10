@@ -97,6 +97,10 @@ func (op *Provider) APIURL() *url.URL {
 	return op.FnApiUrl
 }
 
+func (op *Provider) UnavailableResources()  []provider.FnResourceType {
+	return []provider.FnResourceType{provider.TriggerResourceType}
+}
+
 func (op *Provider) WrapCallTransport(roundTripper http.RoundTripper) http.RoundTripper {
 	if op.DisableCerts {
 		roundTripper = InsecureRoundTripper(roundTripper)

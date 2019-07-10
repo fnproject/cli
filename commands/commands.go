@@ -1,7 +1,13 @@
 package commands
 
 import (
+	"fmt"
+	"github.com/fnproject/cli/client"
+	"github.com/fnproject/cli/config"
+	"github.com/spf13/viper"
+	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/objects/app"
@@ -107,18 +113,35 @@ var UpdateCmds = Cmd{
 	"functions": fn.Update(),
 	"context":   context.Update(),
 	"server":    server.Update(),
-	"trigger":   trigger.Update(),
+	"triggers":   trigger.Update(),
 }
 
 var UseCmds = Cmd{
 	"context": context.Use(),
 }
 
-// GetCommands returns a list of cli.commands
+// GetCommands returns a list of cli.commands that are available from the current provider
 func GetCommands(commands map[string]cli.Command) []cli.Command {
+	pro, err := client.CurrentProvider()
+	if err != nil {
+		panic(fmt.Sprintf("Could not retrieve current provider: %s", err))
+	}
+	home := config.GetHomeDir()
+	currentcontextpath := filepath.Join(home, config.GetContextsPath(), viper.GetString(config.CurrentContext))
+	fmt.Printf("path'%s'\n", currentcontextpath)
+	//config.NewContextFile(currentcontextpath)
 	cmds := []cli.Command{}
-	for _, cmd := range commands {
-		cmds = append(cmds, cmd)
+	for name, cmd := range commands {
+		shouldAdd := true
+		for _, unavailable := range pro.UnavailableResources() {
+			if strings.Contains(name, unavailable.String()) {
+				shouldAdd = false
+				break
+			}
+		}
+		if shouldAdd{
+			cmds = append(cmds, cmd)
+		}
 	}
 
 	sort.Sort(cli.CommandsByName(cmds))

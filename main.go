@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/spf13/viper"
 	"io"
 	"os"
 	"sort"
@@ -14,7 +15,6 @@ import (
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/common/color"
 	"github.com/fnproject/cli/config"
-	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
 
@@ -146,7 +146,6 @@ func newFn() *cli.App {
 	cli.HelpPrinter = func(w io.Writer, templ string, data interface{}) {
 		printHelpCustom(w, templ, data, color.Colors)
 	}
-
 	return app
 }
 
