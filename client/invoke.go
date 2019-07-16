@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	MaximumRequestBodySize = 5 * 1024 * 1024 // bytes
+	MaximumRequestBodySize = 10 * 1024 * 1024 // bytes
 )
 
 func EnvAsHeader(req *http.Request, selectedEnv []string) {
