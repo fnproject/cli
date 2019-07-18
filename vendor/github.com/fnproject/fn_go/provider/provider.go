@@ -13,9 +13,20 @@ import (
 // ProviderFunc constructs a provider
 type ProviderFunc func(config ConfigSource, source PassPhraseSource) (Provider, error)
 
+type FnResourceType string
+const(
+	ApplicationResourceType FnResourceType = "app"
+	FunctionResourceType    FnResourceType = "function"
+	TriggerResourceType     FnResourceType = "trigger"
+)
+
 //Providers describes a set of providers
 type Providers struct {
 	Providers map[string]ProviderFunc
+}
+
+func (t FnResourceType) String() string {
+	return string(t)
 }
 
 // Register adds a named provider to a configuration
@@ -34,6 +45,8 @@ type Provider interface {
 	WrapCallTransport(http.RoundTripper) http.RoundTripper
 	APIClientv2() *clientv2.Fn
 	VersionClient() *version.Client
+	// Returns a list of resource types that are not supported by this provider
+	UnavailableResources() []FnResourceType
 }
 
 // CanonicalFnAPIUrl canonicalises an *FN_API_URL  to a default value
@@ -55,14 +68,6 @@ func CanonicalFnAPIUrl(urlStr string) (*url.URL, error) {
 		if parseUrl.Scheme == "https" {
 			parseUrl.Host = fmt.Sprint(parseUrl.Host, ":443")
 		}
-	}
-
-	//Remove /v1 from any paths here internal URL is now base URL
-
-	if strings.HasSuffix(parseUrl.Path, "/v1") {
-		parseUrl.Path = strings.TrimSuffix(parseUrl.Path, "v1")
-	} else if strings.HasSuffix(parseUrl.Path, "/v1/") {
-		parseUrl.Path = strings.TrimSuffix(parseUrl.Path, "v1/")
 	}
 
 	return parseUrl, nil

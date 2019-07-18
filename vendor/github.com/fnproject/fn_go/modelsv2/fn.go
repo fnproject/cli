@@ -6,8 +6,6 @@ package modelsv2
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"encoding/json"
-
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
@@ -32,10 +30,6 @@ type Fn struct {
 	// Read Only: true
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
-
-	// Payload format sent into function.
-	// Enum: [default http http-stream json cloudevent]
-	Format string `json:"format,omitempty"`
 
 	// Unique identifier
 	// Read Only: true
@@ -70,10 +64,6 @@ func (m *Fn) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateFormat(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.validateUpdatedAt(formats); err != nil {
 		res = append(res, err)
 	}
@@ -91,58 +81,6 @@ func (m *Fn) validateCreatedAt(formats strfmt.Registry) error {
 	}
 
 	if err := validate.FormatOf("created_at", "body", "date-time", m.CreatedAt.String(), formats); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-var fnTypeFormatPropEnum []interface{}
-
-func init() {
-	var res []string
-	if err := json.Unmarshal([]byte(`["default","http","http-stream","json","cloudevent"]`), &res); err != nil {
-		panic(err)
-	}
-	for _, v := range res {
-		fnTypeFormatPropEnum = append(fnTypeFormatPropEnum, v)
-	}
-}
-
-const (
-
-	// FnFormatDefault captures enum value "default"
-	FnFormatDefault string = "default"
-
-	// FnFormatHTTP captures enum value "http"
-	FnFormatHTTP string = "http"
-
-	// FnFormatHTTPStream captures enum value "http-stream"
-	FnFormatHTTPStream string = "http-stream"
-
-	// FnFormatJSON captures enum value "json"
-	FnFormatJSON string = "json"
-
-	// FnFormatCloudevent captures enum value "cloudevent"
-	FnFormatCloudevent string = "cloudevent"
-)
-
-// prop value enum
-func (m *Fn) validateFormatEnum(path, location string, value string) error {
-	if err := validate.Enum(path, location, value, fnTypeFormatPropEnum); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (m *Fn) validateFormat(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Format) { // not required
-		return nil
-	}
-
-	// value enum
-	if err := m.validateFormatEnum("format", "body", m.Format); err != nil {
 		return err
 	}
 

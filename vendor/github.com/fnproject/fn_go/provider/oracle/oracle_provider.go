@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/oracle/oci-go-sdk/common/auth"
+
 	"path"
 
 	"github.com/fnproject/fn_go/client/version"
@@ -25,14 +27,15 @@ import (
 )
 
 const (
-	CfgTenancyID     = "oracle.tenancy-id"
-	CfgUserID        = "oracle.user-id"
-	CfgFingerprint   = "oracle.fingerprint"
-	CfgKeyFile       = "oracle.key-file"
-	CfgPassPhrase    = "oracle.pass-phrase"
-	CfgProfile       = "oracle.profile"
-	CfgCompartmentID = "oracle.compartment-id"
-	CfgDisableCerts  = "oracle.disable-certs"
+	CfgTenancyID        = "oracle.tenancy-id"
+	CfgUserID           = "oracle.user-id"
+	CfgFingerprint      = "oracle.fingerprint"
+	CfgKeyFile          = "oracle.key-file"
+	CfgPassPhrase       = "oracle.pass-phrase"
+	CfgProfile          = "oracle.profile"
+	CfgCompartmentID    = "oracle.compartment-id"
+	CfgDisableCerts     = "oracle.disable-certs"
+	CompartmentMetadata = "http://169.254.169.254/opc/v1/instance/compartmentId"
 )
 
 // Provider :  Oracle Authentication provider
@@ -41,10 +44,8 @@ type Provider struct {
 	FnApiUrl *url.URL
 	// FnCallUrl is the endpoint used for call interactions
 	FnCallUrl *url.URL
-	// KeyId is the public key fingerprint (in colon-separated hex) of the public key used for interactions
-	KeyId string
-	// PrivateKey is the RSA private key used to sign requests
-	PrivateKey *rsa.PrivateKey
+	// The key provider can be a user or instance-principal-based one
+	KP oci.KeyProvider
 	//DisableCerts indicates if server certificates should be ignored
 	DisableCerts bool
 	//CompartmentID is the ocid of the functions compartment ID for a given function
@@ -86,8 +87,50 @@ func NewFromConfig(configSource provider.ConfigSource, passphraseSource provider
 		return nil, fmt.Errorf("no OCI compartment ID specified in config key %s ", CfgCompartmentID)
 	}
 	return &Provider{FnApiUrl: apiUrl,
-		KeyId:         keyID,
-		PrivateKey:    pKey,
+		KP: &ociKeyProvider{
+			ID:  keyID,
+			key: pKey,
+		},
+		DisableCerts:  configSource.GetBool(CfgDisableCerts),
+		CompartmentID: compartmentID,
+	}, nil
+}
+
+func NewIPProvider(configSource provider.ConfigSource, passphraseSource provider.PassPhraseSource) (provider.Provider, error) {
+	ip, err := auth.InstancePrincipalConfigurationProvider()
+	if err != nil {
+		return nil, err
+	}
+
+	cfgApiUrl := configSource.GetString(provider.CfgFnAPIURL)
+	if cfgApiUrl == "" {
+		region, err := ip.Region()
+		if err != nil {
+			return nil, err
+		}
+		// Construct the API endpoint from the "nearby" endpoint
+		cfgApiUrl = fmt.Sprintf("https://functions.%s.oraclecloud.com", region)
+	}
+	apiUrl, err := provider.CanonicalFnAPIUrl(cfgApiUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	compartmentID := configSource.GetString(CfgCompartmentID)
+	if compartmentID == "" {
+		// Get the local compartment ID from the metadata endpoint
+		resp, err := http.DefaultClient.Get(CompartmentMetadata)
+		if err != nil {
+			return nil, fmt.Errorf("problem fetching compartment Id from metadata endpoint %s", err)
+		}
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("problem fetching compartment Id from metadata endpoint %s", err)
+		}
+		compartmentID = string(body)
+	}
+	return &Provider{FnApiUrl: apiUrl,
+		KP:            ip,
 		DisableCerts:  configSource.GetBool(CfgDisableCerts),
 		CompartmentID: compartmentID,
 	}, nil
@@ -97,16 +140,16 @@ func (op *Provider) APIURL() *url.URL {
 	return op.FnApiUrl
 }
 
+func (p *Provider) UnavailableResources()  []provider.FnResourceType {
+	return []provider.FnResourceType{provider.TriggerResourceType}
+}
+
 func (op *Provider) WrapCallTransport(roundTripper http.RoundTripper) http.RoundTripper {
 	if op.DisableCerts {
 		roundTripper = InsecureRoundTripper(roundTripper)
 	}
 
-	prov := ociKeyProvider{
-		ID:  op.KeyId,
-		key: op.PrivateKey,
-	}
-	ociClient := common.RequestSigner(prov, []string{"host", "date", "(request-target)"}, []string{"content-length", "content-type", "x-content-sha256"})
+	ociClient := common.RequestSigner(op.KP, []string{"host", "date", "(request-target)"}, []string{"content-length", "content-type", "x-content-sha256"})
 
 	signingRoundTrripper := ociSigningRoundTripper{
 		transport: roundTripper,

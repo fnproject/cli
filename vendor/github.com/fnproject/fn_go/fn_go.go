@@ -9,8 +9,9 @@ import (
 // DefaultProviders includes the bundled providers available in the client
 var DefaultProviders = provider.Providers{
 	Providers: map[string]provider.ProviderFunc{
-		"":        defaultprovider.NewFromConfig,
-		"default": defaultprovider.NewFromConfig,
-		"oracle":  oracle.NewFromConfig,
+		"":          defaultprovider.NewFromConfig,
+		"default":   defaultprovider.NewFromConfig,
+		"oracle":    oracle.NewFromConfig,
+		"oracle-ip": oracle.NewIPProvider,
 	},
 }
