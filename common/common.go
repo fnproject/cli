@@ -380,6 +380,11 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")
 		dfLines = append(dfLines, helper.DockerfileCopyCmds()...)
+		resources := ff.Copy_resources.Resources
+
+		for resource := range resources {
+			dfLines = append(dfLines, fmt.Sprintf("COPY %s %s", resource.From, resource.To))
+		}
 	}
 	if ff.Entrypoint != "" {
 		dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", stringToSlice(ff.Entrypoint)))
