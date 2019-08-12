@@ -380,10 +380,11 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")
 		dfLines = append(dfLines, helper.DockerfileCopyCmds()...)
-		resources := ff.Copy_resources.Resource
+		
+		resources := ff.Copy_resources
 
 		for _, resource := range resources {
-			dfLines = append(dfLines, fmt.Sprintf("COPY %s %s", resource.From, resource.To))
+			dfLines = append(dfLines, fmt.Sprintf("COPY %s %s", resource.Resource.From, resource.Resource.To))
 		}
 	}
 	if ff.Entrypoint != "" {
@@ -439,6 +440,12 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")
 		dfLines = append(dfLines, helper.DockerfileCopyCmds()...)
+		
+		resources := ff.Copy_resources
+
+		for _, resource := range resources {
+			dfLines = append(dfLines, fmt.Sprintf("COPY %s %s", resource.Resource.From, resource.Resource.To))
+		}
 	}
 	if ff.Entrypoint != "" {
 		dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", stringToSlice(ff.Entrypoint)))

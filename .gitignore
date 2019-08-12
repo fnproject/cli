@@ -11,3 +11,5 @@ data/
 .idea/
 **/*.iml
 **/.DS_Store
+/testfunc
+/functest
