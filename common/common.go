@@ -384,7 +384,11 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 		resources := ff.Copy_resources
 
 		for _, resource := range resources {
-			dfLines = append(dfLines, fmt.Sprintf("COPY %s %s", resource.Resource.From, resource.Resource.To))
+			if Exists(resource.Resource.From){
+				dfLines = append(dfLines, fmt.Sprintf("COPY %s %s", resource.Resource.From, resource.Resource.To))
+			}else{
+				return "", errors.New(fmt.Sprintf("Filepath %s does not exist", resource.Resource.From))
+			}
 		}
 	}
 	if ff.Entrypoint != "" {
@@ -444,7 +448,11 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 		resources := ff.Copy_resources
 
 		for _, resource := range resources {
-			dfLines = append(dfLines, fmt.Sprintf("COPY %s %s", resource.Resource.From, resource.Resource.To))
+			if Exists(resource.Resource.From){
+				dfLines = append(dfLines, fmt.Sprintf("COPY %s %s", resource.Resource.From, resource.Resource.To))
+			}else{
+				return "", errors.New(fmt.Sprintf("Filepath %s does not exist", resource.Resource.From))
+			}
 		}
 	}
 	if ff.Entrypoint != "" {
