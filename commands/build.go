@@ -26,16 +26,15 @@ func BuildCommand() cli.Command {
 }
 
 type buildcmd struct {
-	verbose bool
 	noCache bool
 }
 
 func (b *buildcmd) flags() []cli.Flag {
 	return []cli.Flag{
 		cli.BoolFlag{
-			Name:        "v",
+			Name:        "verbose, v",
 			Usage:       "Verbose mode",
-			Destination: &b.verbose,
+			Destination: &common.CommandVerbose,
 		},
 		cli.BoolFlag{
 			Name:        "no-cache",
@@ -82,7 +81,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 		}
 
 		buildArgs := c.StringSlice("build-arg")
-		ff, err = common.BuildFuncV20180708(c.GlobalBool("verbose"), fpath, ff, buildArgs, b.noCache)
+		ff, err = common.BuildFuncV20180708(common.IsVerbose(), fpath, ff, buildArgs, b.noCache)
 		if err != nil {
 			return err
 		}
@@ -97,7 +96,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 		}
 
 		buildArgs := c.StringSlice("build-arg")
-		ff, err = common.BuildFunc(c.GlobalBool("verbose"), fpath, ff, buildArgs, b.noCache)
+		ff, err = common.BuildFunc(common.IsVerbose(), fpath, ff, buildArgs, b.noCache)
 		if err != nil {
 			return err
 		}

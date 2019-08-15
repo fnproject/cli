@@ -36,8 +36,9 @@ func newFn() *cli.App {
 	}
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
-			Name:  "verbose,v", // v is taken for version by default with urfave/cli
-			Usage: "Use --verbose to enable verbose mode for debugging",
+			Name:        "verbose,v", // v is taken for version by default with urfave/cli
+			Usage:       "Use --verbose to enable verbose mode for debugging",
+			Destination: &common.GlobalVerbose,
 		},
 		cli.StringFlag{
 			Name:   "context",

@@ -49,7 +49,6 @@ type deploycmd struct {
 	appName   string
 	createApp bool
 	wd        string
-	verbose   bool
 	local     bool
 	noCache   bool
 	registry  string
@@ -72,7 +71,7 @@ func (p *deploycmd) flags() []cli.Flag {
 		cli.BoolFlag{
 			Name:        "verbose, v",
 			Usage:       "Verbose mode",
-			Destination: &p.verbose,
+			Destination: &common.CommandVerbose,
 		},
 		cli.BoolFlag{
 			Name:        "no-cache",
@@ -292,7 +291,7 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	_, err = common.BuildFuncV20180708(c.GlobalBool("verbose"), funcfilePath, funcfile, buildArgs, p.noCache)
+	_, err = common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache)
 	if err != nil {
 		return err
 	}

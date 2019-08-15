@@ -38,6 +38,13 @@ const (
 	MinRequiredDockerVersion = "17.5.0"
 )
 
+var GlobalVerbose bool
+var CommandVerbose bool
+
+func IsVerbose() bool {
+	return GlobalVerbose || CommandVerbose
+}
+
 // DefaultBashComplete prints the list of all sub commands
 // of the current command (without alias names)
 func DefaultBashComplete(c *cli.Context) {
