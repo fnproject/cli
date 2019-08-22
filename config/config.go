@@ -125,8 +125,6 @@ func LoadConfiguration(c *cli.Context) error {
 	viper.AddConfigPath(filepath.Join(home, rootConfigPathName, contextsPathName))
 	viper.SetConfigName(context)
 
-	WriteConfigValueToConfigFile(CurrentCliVersion, Version)
-
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Printf("%v \n", err)
 		err := WriteConfigValueToConfigFile(CurrentContext, "default")
