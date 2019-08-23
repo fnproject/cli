@@ -129,7 +129,8 @@ func myHandler(ctx context.Context, in io.Reader, out io.Writer) {
 }
 `
 
-	modBoilerplate = `
-module func
+	modBoilerplate = `module func
+
+require github.com/fnproject/fdk-go master
 `
 )
