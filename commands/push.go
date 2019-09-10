@@ -25,16 +25,15 @@ func PushCommand() cli.Command {
 }
 
 type pushcmd struct {
-	verbose  bool
 	registry string
 }
 
 func (p *pushcmd) flags() []cli.Flag {
 	return []cli.Flag{
 		cli.BoolFlag{
-			Name:        "v",
+			Name:        "verbose, v",
 			Usage:       "Verbose mode",
-			Destination: &p.verbose,
+			Destination: &common.CommandVerbose,
 		},
 		cli.StringFlag{
 			Name:        "registry",

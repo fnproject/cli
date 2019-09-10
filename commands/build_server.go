@@ -13,7 +13,6 @@ import (
 )
 
 type BuildServerCmd struct {
-	verbose bool
 	noCache bool
 }
 
@@ -34,9 +33,9 @@ func BuildServerCommand() cli.Command {
 func (b *BuildServerCmd) flags() []cli.Flag {
 	return []cli.Flag{
 		cli.BoolFlag{
-			Name:        "v",
+			Name:        "verbose, v",
 			Usage:       "verbose mode",
-			Destination: &b.verbose,
+			Destination: &common.CommandVerbose,
 		},
 		cli.BoolFlag{
 			Name:        "no-cache",
@@ -98,7 +97,7 @@ func (b *BuildServerCmd) buildServer(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	err = common.RunBuild(c.GlobalBool("verbose"), dir, c.String("tag"), "Dockerfile", nil, b.noCache)
+	err = common.RunBuild(common.IsVerbose(), dir, c.String("tag"), "Dockerfile", nil, b.noCache)
 	if err != nil {
 		return err
 	}

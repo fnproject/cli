@@ -41,9 +41,8 @@ func BumpCommand() cli.Command {
 }
 
 type bumpcmd struct {
-	verbose bool
-	major   bool
-	minor   bool
+	major bool
+	minor bool
 }
 
 func (b *bumpcmd) flags() []cli.Flag {
@@ -61,7 +60,7 @@ func (b *bumpcmd) flags() []cli.Flag {
 		cli.BoolFlag{
 			Name:        "verbose, v",
 			Usage:       "verbose mode",
-			Destination: &b.verbose,
+			Destination: &CommandVerbose,
 		},
 		cli.StringFlag{
 			Name:  "working-dir,w",
