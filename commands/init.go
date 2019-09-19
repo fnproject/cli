@@ -244,7 +244,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	a.ff.Schema_version = common.LatestYamlVersion
 
 	if initImage != "" {
-		err := a.doInitImage(err, initImage, c)
+		err := a.doInitImage(initImage, c)
 		if err != nil {
 			return err
 		}
@@ -267,8 +267,8 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	return nil
 }
 
-func (a *initFnCmd) doInitImage(err error, initImage string, c *cli.Context) error {
-	err = common.DockerRunInitImage(initImage, a.ff.Name)
+func (a *initFnCmd) doInitImage(initImage string, c *cli.Context) error {
+	err := common.DockerRunInitImage(initImage, a.ff.Name)
 	if err != nil {
 		return err
 	}
