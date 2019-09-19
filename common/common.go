@@ -1,6 +1,7 @@
 package common
 
 import (
+	"archive/tar"
 	"bufio"
 	"bytes"
 	"context"
@@ -28,7 +29,7 @@ import (
 	"github.com/fnproject/fn_go/modelsv2"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 // Global docker variables.
@@ -746,3 +747,71 @@ func ListTriggersInFunc(c *cli.Context, client *fnclient.Fn, fn *modelsv2.Fn) ([
 	}
 	return resTriggers, nil
 }
+
+func DockerRunInitImage(initImage string, fName string) error {
+	fmt.Println("Running init-image: " + initImage)
+
+	// Run the initImage
+	var c1ErrB bytes.Buffer
+	tarR, tarW := io.Pipe()
+
+	c1 := exec.Command("docker", "run", "--rm", "-e", "FN_FUNCTION_NAME="+fName, initImage)
+	c1.Stderr = &c1ErrB
+	c1.Stdout = tarW
+
+	c1Err := c1.Start()
+	if c1Err != nil {
+		fmt.Println(c1ErrB.String())
+		return errors.New("Error running init-image")
+	}
+
+	err := untarStream(tarR)
+	if err != nil {
+		return errors.New("Error un-tarring the output of the init-image")
+	}
+
+	return nil
+}
+
+// Untars an io.Reader into the cwd
+func untarStream(r io.Reader) error {
+
+	tr := tar.NewReader(r)
+	for {
+		header, err := tr.Next()
+
+		if err == io.EOF {
+			// if no more files are found we are finished
+			return nil
+		}
+
+		if err != nil {
+			return err
+		}
+
+		switch header.Typeflag {
+		// if its a dir and it doesn't exist create it
+		case tar.TypeDir:
+			if _, err := os.Stat(header.Name); err != nil {
+				if err := os.MkdirAll(header.Name, 0755); err != nil {
+					return err
+				}
+			}
+
+		// if it's a file create it
+		case tar.TypeReg:
+			f, err := os.OpenFile(header.Name, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+
+			// copy over contents
+			if _, err := io.Copy(f, tr); err != nil {
+				return err
+			}
+
+			_ = f.Close()
+		}
+	}
+}
+

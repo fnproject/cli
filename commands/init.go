@@ -20,13 +20,9 @@ it will print an error message then exit.
 */
 
 import (
-	"archive/tar"
-	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -248,48 +244,10 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	a.ff.Schema_version = common.LatestYamlVersion
 
 	if initImage != "" {
-
-		err = runInitImage(initImage, a)
+		err := a.doInitImage(initImage, c)
 		if err != nil {
 			return err
 		}
-
-		// Merge the func.init.yaml from the initImage with a.ff
-		//     write out the new func file
-		var initFf, err = common.ParseFuncfile("func.init.yaml")
-		if err != nil {
-			return errors.New("init-image did not produce a valid func.init.yaml")
-		}
-
-		// Build up a combined func.yaml (in a.ff) from the init-image and defaults and cli-args
-		//     The following fields are already in a.ff:
-		//         config, cpus, idle_timeout, memory, name, path, timeout, type, triggers, version
-		//     Add the following from the init-image:
-		//         build, build_image, cmd, content_type, entrypoint, expects, headers, run_image, runtime
-		a.ff.Build = initFf.Build
-		a.ff.Build_image = initFf.BuildImage
-		a.ff.Cmd = initFf.Cmd
-		a.ff.Content_type = initFf.ContentType
-		a.ff.Entrypoint = initFf.Entrypoint
-		a.ff.Expects = initFf.Expects
-		a.ff.Run_image = initFf.RunImage
-		a.ff.Runtime = initFf.Runtime
-
-		// Then CLI args can override some init-image options (TODO: remove this with #383)
-		if c.String("cmd") != "" {
-			a.ff.Cmd = c.String("cmd")
-		}
-
-		if c.String("entrypoint") != "" {
-			a.ff.Entrypoint = c.String("entrypoint")
-		}
-
-		if err := common.EncodeFuncFileV20180708YAML("func.yaml", a.ff); err != nil {
-			return err
-		}
-
-		os.Remove("func.init.yaml")
-
 	} else {
 		// TODO: why don't we treat "docker" runtime as just another language helper?
 		// Then can get rid of several Docker specific if/else's like this one.
@@ -299,81 +257,34 @@ func (a *initFnCmd) init(c *cli.Context) error {
 				return err
 			}
 		}
+	}
 
-		if err := common.EncodeFuncFileV20180708YAML("func.yaml", a.ff); err != nil {
-			return err
-		}
+	if err := common.EncodeFuncFileV20180708YAML("func.yaml", a.ff); err != nil {
+		return err
 	}
 
 	fmt.Println("func.yaml created.")
 	return nil
 }
 
-func runInitImage(initImage string, a *initFnCmd) error {
-	fmt.Println("Building from init-image: " + initImage)
-
-	// Run the initImage
-	var c1ErrB bytes.Buffer
-	tarR, tarW := io.Pipe()
-
-	c1 := exec.Command("docker", "run", "--rm", "-e", "FN_FUNCTION_NAME="+a.ff.Name, initImage)
-	c1.Stderr = &c1ErrB
-	c1.Stdout = tarW
-
-	c1Err := c1.Start()
-	if c1Err != nil {
-		fmt.Println(c1ErrB.String())
-		return errors.New("Error running init-image")
-	}
-
-	err := untarStream(tarR)
+func (a *initFnCmd) doInitImage(initImage string, c *cli.Context) error {
+	err := common.DockerRunInitImage(initImage, a.ff.Name)
 	if err != nil {
-		return errors.New("Error un-tarring the output of the init-image")
+		return err
 	}
-
+	err = common.MergeFuncFileInitYAML("func.init.yaml", a.ff)
+	if err != nil {
+		return err
+	}
+	// Then CLI args can override some init-image options (TODO: remove this with #383)
+	if c.String("cmd") != "" {
+		a.ff.Cmd = c.String("cmd")
+	}
+	if c.String("entrypoint") != "" {
+		a.ff.Entrypoint = c.String("entrypoint")
+	}
+	_ = os.Remove("func.init.yaml")
 	return nil
-}
-
-// Untars an io.Reader into the cwd
-func untarStream(r io.Reader) error {
-
-	tr := tar.NewReader(r)
-	for {
-		header, err := tr.Next()
-
-		if err == io.EOF {
-			// if no more files are found we are finished
-			return nil
-		}
-
-		if err != nil {
-			return err
-		}
-
-		switch header.Typeflag {
-		// if its a dir and it doesn't exist create it
-		case tar.TypeDir:
-			if _, err := os.Stat(header.Name); err != nil {
-				if err := os.MkdirAll(header.Name, 0755); err != nil {
-					return err
-				}
-			}
-
-		// if it's a file create it
-		case tar.TypeReg:
-			f, err := os.OpenFile(header.Name, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
-			if err != nil {
-				return err
-			}
-
-			// copy over contents
-			if _, err := io.Copy(f, tr); err != nil {
-				return err
-			}
-
-			f.Close()
-		}
-	}
 }
 
 func (a *initFnCmd) generateBoilerplate(path, runtime string) error {
