@@ -755,7 +755,12 @@ func DockerRunInitImage(initImage string, fName string) error {
 	var c1ErrB bytes.Buffer
 	tarR, tarW := io.Pipe()
 
-	c1 := exec.Command("docker", "run", "--rm", "-e", "FN_FUNCTION_NAME="+fName, initImage)
+	c1 := exec.Command("docker", "run", "--rm", "-e",
+		"FN_FUNCTION_NAME="+fName,
+		"-e", "http_proxy="+os.Getenv("http_proxy"),
+		"-e", "https_proxy="+os.Getenv("https_proxy"),
+		"-e", "no_proxy="+os.Getenv("no_proxy"),
+		initImage)
 	c1.Stderr = &c1ErrB
 	c1.Stdout = tarW
 
@@ -814,4 +819,3 @@ func untarStream(r io.Reader) error {
 		}
 	}
 }
-
