@@ -1,6 +1,8 @@
 package common
 
 import (
+	"os"
+	"reflect"
 	"testing"
 )
 
@@ -24,5 +26,45 @@ func TestValidateImageName(t *testing.T) {
 				t.Fatalf("expected %s but got %s", c.expectedErr, errString)
 			}
 		})
+	}
+}
+
+func Test_proxyArgs(t *testing.T) {
+	tests := []struct {
+		name string
+		set  []string
+		want []string
+	}{
+		{"empty", []string{}, []string{}},
+		{"populated", []string{"http_proxy", "https_proxy", "no_proxy", "foo"}, []string{
+			"-e", "http_proxy=value_of_http_proxy",
+			"-e", "https_proxy=value_of_https_proxy",
+			"-e", "no_proxy=value_of_no_proxy"}},
+		{"partial", []string{"http_proxy", "no_proxy", "foo"}, []string{
+			"-e", "http_proxy=value_of_http_proxy",
+			"-e", "no_proxy=value_of_no_proxy"}},
+	}
+	for _, tt := range tests {
+		old := map[string]string{
+			"http_proxy":  "",
+			"https_proxy": "",
+			"no_proxy":    "",
+			"foo":         "",
+		}
+		for k, _ := range old {
+			old[k] = os.Getenv(k)
+			_ = os.Unsetenv(k)
+		}
+		t.Run(tt.name, func(t *testing.T) {
+			for _, k := range tt.set {
+				_ = os.Setenv(k, "value_of_"+k)
+			}
+			if got := proxyArgs(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("proxyArgs() = %v, want %v", got, tt.want)
+			}
+		})
+		for k, v := range old {
+			_ = os.Setenv(k, v)
+		}
 	}
 }
