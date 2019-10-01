@@ -751,31 +751,50 @@ func ListTriggersInFunc(c *cli.Context, client *fnclient.Fn, fn *modelsv2.Fn) ([
 func DockerRunInitImage(initImage string, fName string) error {
 	fmt.Println("Running init-image: " + initImage)
 
-	// Run the initImage
-	var c1ErrB bytes.Buffer
-	tarR, tarW := io.Pipe()
+	args := []string{"run", "--rm", "-e", "FN_FUNCTION_NAME=" + fName}
+	args = append(args, proxyArgs()...)
+	args = append(args, initImage)
 
-	c1 := exec.Command("docker", "run", "--rm", "-e", "FN_FUNCTION_NAME="+fName, initImage)
-	c1.Stderr = &c1ErrB
-	c1.Stdout = tarW
-
-	c1Err := c1.Start()
-	if c1Err != nil {
-		fmt.Println(c1ErrB.String())
-		return errors.New("Error running init-image")
+	fmt.Printf("Executing docker command: %s\n", strings.Join(args, " "))
+	cmd := exec.Command("docker", args...)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("Error attaching stdout pipe to init-image cmd: %v.", err)
 	}
 
-	err := untarStream(tarR)
+	err = cmd.Start()
 	if err != nil {
-		return errors.New("Error un-tarring the output of the init-image")
+		return fmt.Errorf("Error starting init-image: %v. Stderr: '%s'", err, stderr.String())
+	}
+
+	err = untarStream(stdout)
+	if err != nil {
+		return fmt.Errorf("Error un-tarring stdout from the init-image: %v", err)
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		return fmt.Errorf("Error running init-image: %v. Stderr: '%s'", err, stderr.String())
 	}
 
 	return nil
 }
 
+// Get any proxy environment variables
+func proxyArgs() []string {
+	args := make([]string, 0)
+	for _, a := range []string{"http_proxy", "https_proxy", "ftp_proxy", "no_proxy", "HTTP_PROXY", "HTTPS_PROXY", "FTP_PROXY", "NO_PROXY"} {
+		if val, ok := os.LookupEnv(a); ok {
+			args = append(args, "-e", a+"="+val)
+		}
+	}
+	return args
+}
+
 // Untars an io.Reader into the cwd
 func untarStream(r io.Reader) error {
-
 	tr := tar.NewReader(r)
 	for {
 		header, err := tr.Next()
@@ -814,4 +833,3 @@ func untarStream(r io.Reader) error {
 		}
 	}
 }
-
