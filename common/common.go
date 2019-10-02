@@ -15,7 +15,6 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -389,15 +388,6 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")
 		dfLines = append(dfLines, helper.DockerfileCopyCmds()...)
-
-		resources := ff.CopyResources
-		for _, resource := range resources {
-			if Exists(resource.From) {
-				dfLines = append(dfLines, fmt.Sprintf("COPY %s %s", strconv.Quote(resource.From), strconv.Quote(resource.To)))
-			} else {
-				return "", errors.New(fmt.Sprintf("Filepath %s does not exist", resource.From))
-			}
-		}
 	}
 	if ff.Entrypoint != "" {
 		dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", stringToSlice(ff.Entrypoint)))
@@ -452,15 +442,6 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")
 		dfLines = append(dfLines, helper.DockerfileCopyCmds()...)
-
-		resources := ff.CopyResources
-		for _, resource := range resources {
-			if Exists(resource.From) {
-				dfLines = append(dfLines, fmt.Sprintf("COPY %s %s", strconv.Quote(resource.From), strconv.Quote(resource.To)))
-			} else {
-				return "", errors.New(fmt.Sprintf("Filepath %s does not exist", resource.From))
-			}
-		}
 	}
 	if ff.Entrypoint != "" {
 		dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", stringToSlice(ff.Entrypoint)))

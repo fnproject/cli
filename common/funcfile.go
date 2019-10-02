@@ -52,11 +52,6 @@ type Expects struct {
 	Config []inputVar `yaml:"config" json:"config"`
 }
 
-type copyResources struct {
-	From string `yaml:"from,omitempty" json:"from,omitempty"`
-	To string `yaml:"to,omitempty" json:"to,omitempty"`
-}
-
 // FuncFile defines the internal structure of a func.yaml/json/yml
 type FuncFile struct {
 	// just for posterity, this won't be set on old files, but we can check that
@@ -74,9 +69,6 @@ type FuncFile struct {
 	BuildImage  string   `yaml:"build_image,omitempty" json:"build_image,omitempty"` // Image to use as base for building
 	RunImage    string   `yaml:"run_image,omitempty" json:"run_image,omitempty"`     // Image to use for running
 	ContentType string   `yaml:"content_type,omitempty" json:"content_type,omitempty"`
-
-	//Allows resource copy 
-	CopyResources []copyResources `yaml:"copy_resources,omitempty" json:"copy_resources,omitempty"`
 
 	// Route params
 	// TODO embed models.Route
@@ -109,8 +101,6 @@ type FuncFileV20180708 struct {
 	Memory       uint64 `yaml:"memory,omitempty" json:"memory,omitempty"`
 	Timeout      *int32 `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 	IDLE_timeout *int32 `yaml:"idle_timeout,omitempty" json:"idle_timeout,omitempty"`
-
-	CopyResources []copyResources `yaml:"copy_resources,omitempty" json:"copy_resources,omitempty"`
 
 	Config      map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
 	Annotations map[string]interface{} `yaml:"annotations,omitempty" json:"annotations,omitempty"`
