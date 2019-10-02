@@ -1,6 +1,7 @@
 package common
 
 import (
+	"archive/tar"
 	"bufio"
 	"bytes"
 	"context"
@@ -29,7 +30,7 @@ import (
 	"github.com/fnproject/fn_go/modelsv2"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 // Global docker variables.
@@ -38,6 +39,13 @@ const (
 	FuncfileDockerRuntime    = "docker"
 	MinRequiredDockerVersion = "17.5.0"
 )
+
+var GlobalVerbose bool
+var CommandVerbose bool
+
+func IsVerbose() bool {
+	return GlobalVerbose || CommandVerbose
+}
 
 // DefaultBashComplete prints the list of all sub commands
 // of the current command (without alias names)
@@ -757,4 +765,90 @@ func ListTriggersInFunc(c *cli.Context, client *fnclient.Fn, fn *modelsv2.Fn) ([
 		params.Cursor = &resp.Payload.NextCursor
 	}
 	return resTriggers, nil
+}
+
+func DockerRunInitImage(initImage string, fName string) error {
+	fmt.Println("Running init-image: " + initImage)
+
+	args := []string{"run", "--rm", "-e", "FN_FUNCTION_NAME=" + fName}
+	args = append(args, proxyArgs()...)
+	args = append(args, initImage)
+
+	fmt.Printf("Executing docker command: %s\n", strings.Join(args, " "))
+	cmd := exec.Command("docker", args...)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("Error attaching stdout pipe to init-image cmd: %v.", err)
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		return fmt.Errorf("Error starting init-image: %v. Stderr: '%s'", err, stderr.String())
+	}
+
+	err = untarStream(stdout)
+	if err != nil {
+		return fmt.Errorf("Error un-tarring stdout from the init-image: %v", err)
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		return fmt.Errorf("Error running init-image: %v. Stderr: '%s'", err, stderr.String())
+	}
+
+	return nil
+}
+
+// Get any proxy environment variables
+func proxyArgs() []string {
+	args := make([]string, 0)
+	for _, a := range []string{"http_proxy", "https_proxy", "ftp_proxy", "no_proxy", "HTTP_PROXY", "HTTPS_PROXY", "FTP_PROXY", "NO_PROXY"} {
+		if val, ok := os.LookupEnv(a); ok {
+			args = append(args, "-e", a+"="+val)
+		}
+	}
+	return args
+}
+
+// Untars an io.Reader into the cwd
+func untarStream(r io.Reader) error {
+	tr := tar.NewReader(r)
+	for {
+		header, err := tr.Next()
+
+		if err == io.EOF {
+			// if no more files are found we are finished
+			return nil
+		}
+
+		if err != nil {
+			return err
+		}
+
+		switch header.Typeflag {
+		// if its a dir and it doesn't exist create it
+		case tar.TypeDir:
+			if _, err := os.Stat(header.Name); err != nil {
+				if err := os.MkdirAll(header.Name, 0755); err != nil {
+					return err
+				}
+			}
+
+		// if it's a file create it
+		case tar.TypeReg:
+			f, err := os.OpenFile(header.Name, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+
+			// copy over contents
+			if _, err := io.Copy(f, tr); err != nil {
+				return err
+			}
+
+			_ = f.Close()
+		}
+	}
 }

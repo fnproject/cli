@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -11,7 +12,7 @@ import (
 	"github.com/fnproject/cli/config"
 	"github.com/spf13/viper"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -369,4 +370,27 @@ func (ff *FuncFileV20180708) ImageNameV20180708() string {
 		fname = fmt.Sprintf("%s:%s", fname, ff.Version)
 	}
 	return fname
+}
+
+// Merge the func.init.yaml from the initImage with a.ff
+//     write out the new func file
+func MergeFuncFileInitYAML(path string, ff *FuncFileV20180708) error {
+	var initFf, err = ParseFuncfile(path)
+	if err != nil {
+		return errors.New("init-image did not produce a valid func.init.yaml")
+	}
+	// Build up a combined func.yaml (in a.ff) from the init-image and defaults and cli-args
+	//     The following fields are already in a.ff:
+	//         config, cpus, idle_timeout, memory, name, path, timeout, type, triggers, version
+	//     Add the following from the init-image:
+	//         build, build_image, cmd, content_type, entrypoint, expects, headers, run_image, runtime
+	ff.Build = initFf.Build
+	ff.Build_image = initFf.BuildImage
+	ff.Cmd = initFf.Cmd
+	ff.Content_type = initFf.ContentType
+	ff.Entrypoint = initFf.Entrypoint
+	ff.Expects = initFf.Expects
+	ff.Run_image = initFf.RunImage
+	ff.Runtime = initFf.Runtime
+	return nil
 }
