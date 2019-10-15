@@ -551,31 +551,6 @@ func (f *fnsCmd) delete(c *cli.Context) error {
 		return err
 	}
 
-	//recursive delete of sub-objects
-	if c.Bool("recursive") {
-		triggers, err := common.ListTriggersInFunc(c, f.client, fn)
-		if err != nil {
-			return fmt.Errorf("Failed to get associated objects: %s", err)
-		}
-
-		//Forced delete
-		var shouldContinue bool
-		if c.Bool("force") {
-			shouldContinue = true
-		} else {
-			shouldContinue = common.UserConfirmedMultiResourceDeletion(nil, []*modelsv2.Fn{fn}, triggers)
-		}
-
-		if shouldContinue {
-			err := common.DeleteTriggers(c, f.client, triggers)
-			if err != nil {
-				return fmt.Errorf("Failed to delete associated objects: %s", err)
-			}
-		} else {
-			return nil
-		}
-	}
-
 	params := apifns.NewDeleteFnParams()
 	params.FnID = fn.ID
 	_, err = f.client.Fns.DeleteFn(params)

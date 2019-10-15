@@ -609,11 +609,10 @@ func GetFuncYamlVersion(oldFF map[string]interface{}) int {
 }
 
 // UserConfirmedMultiResourceDeletion will prompt the user for confirmation to delete all the the resources
-func UserConfirmedMultiResourceDeletion(aps []*modelsv2.App, fns []*modelsv2.Fn, trs []*modelsv2.Trigger) bool {
+func UserConfirmedMultiResourceDeletion(aps []*modelsv2.App, fns []*modelsv2.Fn) bool {
 
 	apsLen := len(aps)
 	fnsLen := len(fns)
-	trsLen := len(trs)
 
 	fmt.Println("You are about to delete the following resources:")
 	if apsLen > 0 {
@@ -622,9 +621,7 @@ func UserConfirmedMultiResourceDeletion(aps []*modelsv2.App, fns []*modelsv2.Fn,
 	if fnsLen > 0 {
 		fmt.Println("   Functions:   ", fnsLen)
 	}
-	if trsLen > 0 {
-		fmt.Println("   Triggers:    ", trsLen)
-	}
+
 	fmt.Println("This operation cannot be undone")
 	fmt.Printf("Do you wish to proceed? Y/N: ")
 	reader := bufio.NewReader(os.Stdin)
@@ -643,22 +640,6 @@ func UserConfirmedMultiResourceDeletion(aps []*modelsv2.App, fns []*modelsv2.Fn,
 	return true
 }
 
-// ListFnsAndTriggersInApp lists all the functions associated with an app and all the triggers associated with each of those functions
-func ListFnsAndTriggersInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*modelsv2.Fn, []*modelsv2.Trigger, error) {
-	fns, err := ListFnsInApp(c, client, app)
-	if err != nil {
-		return nil, nil, err
-	}
-	var trs []*modelsv2.Trigger
-	for _, fn := range fns {
-		t, err := ListTriggersInFunc(c, client, fn)
-		if err != nil {
-			return nil, nil, err
-		}
-		trs = append(trs, t...)
-	}
-	return fns, trs, nil
-}
 
 //DeleteFunctions deletes all the functions provided to it. if provided nil it is a no-op
 func DeleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) error {
@@ -673,23 +654,6 @@ func DeleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) er
 			return fmt.Errorf("Failed to delete Function %s: %s", fn.Name, err)
 		}
 		fmt.Println("Function ", fn.Name, " deleted")
-	}
-	return nil
-}
-
-//DeleteTriggers deletes all the triggers provided to it. if provided nil it is a no-op
-func DeleteTriggers(c *cli.Context, client *fnclient.Fn, triggers []*modelsv2.Trigger) error {
-	if triggers == nil {
-		return nil
-	}
-	for _, t := range triggers {
-		params := apitriggers.NewDeleteTriggerParams()
-		params.TriggerID = t.ID
-		_, err := client.Triggers.DeleteTrigger(params)
-		if err != nil {
-			return fmt.Errorf("Failed to Delete trigger %s: %s", t.Name, err)
-		}
-		fmt.Println("Trigger ", t.Name, " deleted")
 	}
 	return nil
 }
