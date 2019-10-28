@@ -8,7 +8,7 @@ github.com/asaskevich/govalidator
 github.com/coreos/go-semver/semver
 # github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
 github.com/fatih/color
-# github.com/fnproject/fn_go v0.0.0-20190717173117-b2f79f8e592f
+# github.com/fnproject/fn_go v0.5.0
 github.com/fnproject/fn_go
 github.com/fnproject/fn_go/provider
 github.com/fnproject/fn_go/clientv2

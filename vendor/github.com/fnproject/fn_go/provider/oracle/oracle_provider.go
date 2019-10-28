@@ -149,7 +149,7 @@ func (op *Provider) WrapCallTransport(roundTripper http.RoundTripper) http.Round
 		roundTripper = InsecureRoundTripper(roundTripper)
 	}
 
-	ociClient := common.RequestSigner(op.KP, []string{"host", "date", "(request-target)"}, []string{"content-length", "content-type", "x-content-sha256"})
+	ociClient := common.RequestSigner(op.KP, []string{"host", "date", "(request-target)", "opc-compartment-id"}, []string{"content-length", "content-type", "x-content-sha256"})
 
 	signingRoundTrripper := ociSigningRoundTripper{
 		transport: roundTripper,
