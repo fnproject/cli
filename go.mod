@@ -5,8 +5,7 @@ require (
 	github.com/coreos/go-semver v0.2.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
-	github.com/fnproject/fdk-go v0.0.0-20181128231321-225736950b1c // indirect
-	github.com/fnproject/fn_go v0.0.0-20190717173117-b2f79f8e592f
+	github.com/fnproject/fn_go v0.5.0
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/giantswarm/semver-bump v0.0.0-20140912095342-88e6c9f2fe39
