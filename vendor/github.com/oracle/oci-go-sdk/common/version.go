@@ -11,9 +11,9 @@ import (
 
 const (
 	major = "1"
-	minor = "5"
+	minor = "25"
 	patch = "0"
-	tag   = ""
+	tag   = "preview"
 )
 
 var once sync.Once

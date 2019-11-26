@@ -8,20 +8,20 @@ github.com/asaskevich/govalidator
 github.com/coreos/go-semver/semver
 # github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
 github.com/fatih/color
-# github.com/fnproject/fn_go v0.5.0
+# github.com/fnproject/fn_go v0.0.0-20200302225633-209122efdf3b
 github.com/fnproject/fn_go
-github.com/fnproject/fn_go/provider
+github.com/fnproject/fn_go/client/version
 github.com/fnproject/fn_go/clientv2
-github.com/fnproject/fn_go/modelsv2
-github.com/fnproject/fn_go/clientv2/fns
-github.com/fnproject/fn_go/clientv2/triggers
 github.com/fnproject/fn_go/clientv2/apps
+github.com/fnproject/fn_go/clientv2/call
+github.com/fnproject/fn_go/clientv2/fns
+github.com/fnproject/fn_go/clientv2/operations
+github.com/fnproject/fn_go/clientv2/triggers
+github.com/fnproject/fn_go/models
+github.com/fnproject/fn_go/modelsv2
+github.com/fnproject/fn_go/provider
 github.com/fnproject/fn_go/provider/defaultprovider
 github.com/fnproject/fn_go/provider/oracle
-github.com/fnproject/fn_go/client/version
-github.com/fnproject/fn_go/clientv2/call
-github.com/fnproject/fn_go/clientv2/operations
-github.com/fnproject/fn_go/models
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
 # github.com/ghodss/yaml v1.0.0
@@ -40,9 +40,9 @@ github.com/go-openapi/jsonreference
 # github.com/go-openapi/loads v0.0.0-20171207192234-2a2b323bab96
 github.com/go-openapi/loads
 # github.com/go-openapi/runtime v0.0.0-20180509184547-c0cae94704c7
-github.com/go-openapi/runtime/logger
 github.com/go-openapi/runtime
 github.com/go-openapi/runtime/client
+github.com/go-openapi/runtime/logger
 github.com/go-openapi/runtime/middleware
 github.com/go-openapi/runtime/middleware/denco
 github.com/go-openapi/runtime/middleware/header
@@ -58,13 +58,13 @@ github.com/go-openapi/swag
 github.com/go-openapi/validate
 # github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce
 github.com/hashicorp/hcl
-github.com/hashicorp/hcl/hcl/printer
 github.com/hashicorp/hcl/hcl/ast
 github.com/hashicorp/hcl/hcl/parser
-github.com/hashicorp/hcl/hcl/token
-github.com/hashicorp/hcl/json/parser
+github.com/hashicorp/hcl/hcl/printer
 github.com/hashicorp/hcl/hcl/scanner
 github.com/hashicorp/hcl/hcl/strconv
+github.com/hashicorp/hcl/hcl/token
+github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
 # github.com/jmoiron/jsonq v0.0.0-20150511023944-e874b168d07e
@@ -74,9 +74,9 @@ github.com/juju/errgo/errors
 # github.com/magiconair/properties v1.7.6
 github.com/magiconair/properties
 # github.com/mailru/easyjson v0.0.0-20180323154445-8b799c424f57
+github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
-github.com/mailru/easyjson/buffer
 # github.com/mattn/go-colorable v0.0.9
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.3
@@ -85,7 +85,7 @@ github.com/mattn/go-isatty
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v0.0.0-20180511142126-bb74f1db0675
 github.com/mitchellh/mapstructure
-# github.com/oracle/oci-go-sdk v1.5.0
+# github.com/oracle/oci-go-sdk v12.2.0+incompatible => bitbucket.oci.oraclecorp.com/sdk/oci-go-sdk.git v1.0.1-0.20191218185907-389f38d36df3
 github.com/oracle/oci-go-sdk/common
 github.com/oracle/oci-go-sdk/common/auth
 # github.com/pelletier/go-toml v1.1.0
@@ -116,14 +116,14 @@ golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/idna
 # golang.org/x/sys v0.0.0-20180525142821-c11f84a56e43
-golang.org/x/sys/windows
 golang.org/x/sys/unix
+golang.org/x/sys/windows
 # golang.org/x/text v0.3.0
+golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
+golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-golang.org/x/text/secure/bidirule
-golang.org/x/text/unicode/bidi
 # gopkg.in/mgo.v2 v2.0.0-20160818020120-3f83fa500528
 gopkg.in/mgo.v2/bson
 gopkg.in/mgo.v2/internal/json

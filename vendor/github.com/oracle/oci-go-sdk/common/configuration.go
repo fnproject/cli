@@ -22,6 +22,13 @@ type ConfigurationProvider interface {
 	Region() (string, error)
 }
 
+// CloudShellConfigurationProvider wraps information about default oci config on a cloudshell machine
+type CloudShellConfigurationProvider interface {
+	TenancyOCID() (string, error)
+	Region() (string, error)
+	DelegationToken() (string, error)
+}
+
 // IsConfigurationProviderValid Tests all parts of the configuration provider do not return an error
 func IsConfigurationProviderValid(conf ConfigurationProvider) (ok bool, err error) {
 	baseFn := []func() (string, error){conf.TenancyOCID, conf.UserOCID, conf.KeyFingerprint, conf.Region, conf.KeyID}
@@ -80,19 +87,28 @@ func (p rawConfigurationProvider) KeyID() (keyID string, err error) {
 }
 
 func (p rawConfigurationProvider) TenancyOCID() (string, error) {
+	if p.tenancy == "" {
+		return "", fmt.Errorf("tenancy OCID can not be empty")
+	}
 	return p.tenancy, nil
 }
 
 func (p rawConfigurationProvider) UserOCID() (string, error) {
+	if p.user == "" {
+		return "", fmt.Errorf("user OCID can not be empty")
+	}
 	return p.user, nil
 }
 
 func (p rawConfigurationProvider) KeyFingerprint() (string, error) {
+	if p.fingerprint == "" {
+		return "", fmt.Errorf("fingerprint can not be empty")
+	}
 	return p.fingerprint, nil
 }
 
 func (p rawConfigurationProvider) Region() (string, error) {
-	return p.region, nil
+	return canStringBeRegion(p.region)
 }
 
 // environmentConfigurationProvider reads configuration from environment variables
@@ -107,6 +123,13 @@ type environmentConfigurationProvider struct {
 func ConfigurationProviderEnvironmentVariables(environmentVariablePrefix, privateKeyPassword string) ConfigurationProvider {
 	return environmentConfigurationProvider{EnvironmentVariablePrefix: environmentVariablePrefix,
 		PrivateKeyPassword: privateKeyPassword}
+}
+
+// CloudshellConfigurationProviderEnvironmentVariables creates a CloudShellConfigurationProvider from a uniform set of environment variables starting with a prefix
+// The env variables should look like: [prefix]_tenancy_ocid, [prefix]_region, [prefix]_delegation_token_file
+func CloudshellConfigurationProviderEnvironmentVariables(environmentVariablePrefix string) CloudShellConfigurationProvider {
+	return environmentConfigurationProvider{EnvironmentVariablePrefix: environmentVariablePrefix,
+		PrivateKeyPassword: ""}
 }
 
 func (p environmentConfigurationProvider) String() string {
@@ -183,8 +206,32 @@ func (p environmentConfigurationProvider) Region() (value string, err error) {
 	var ok bool
 	if value, ok = os.LookupEnv(environmentVariable); !ok {
 		err = fmt.Errorf("can not read region from environment variable %s", environmentVariable)
+		return value, err
 	}
+
+	return canStringBeRegion(value)
+}
+
+func (p environmentConfigurationProvider) DelegationToken() (token string, err error) {
+
+	environmentVariable := fmt.Sprintf("%s_%s", p.EnvironmentVariablePrefix, "delegation_token_file")
+	var ok bool
+	var value string
+	if value, ok = os.LookupEnv(environmentVariable); !ok {
+		err = fmt.Errorf("can not read delegation_token_file from env variable: %s", environmentVariable)
+		return
+	}
+
+	expandedPath := expandPath(value)
+	fileContent, err := ioutil.ReadFile(expandedPath)
+	if err != nil {
+		err = fmt.Errorf("can not read contents of delegation_token_file from configuration file due to: %s", err.Error())
+		return
+	}
+
+	token = string(fileContent)
 	return
+
 }
 
 // fileConfigurationProvider. reads configuration information from a file
@@ -228,9 +275,22 @@ func ConfigurationProviderFromFileWithProfile(configFilePath, profile, privateKe
 		Profile:            profile}, nil
 }
 
+// CloudshellConfigurationProviderFromFileWithProfile creates a cloudshell configuration provider from a configuration file
+// and the given profile
+func CloudshellConfigurationProviderFromFileWithProfile(configFilePath, profile string) (CloudShellConfigurationProvider, error) {
+	if configFilePath == "" {
+		return nil, fmt.Errorf("config file path can not be empty")
+	}
+
+	return fileConfigurationProvider{
+		ConfigPath:         configFilePath,
+		PrivateKeyPassword: "",
+		Profile:            profile}, nil
+}
+
 type configFileInfo struct {
-	UserOcid, Fingerprint, KeyFilePath, TenancyOcid, Region, Passphrase string
-	PresentConfiguration                                                byte
+	UserOcid, Fingerprint, KeyFilePath, TenancyOcid, Region, Passphrase, DelegationTokenFile string
+	PresentConfiguration                                                                     byte
 }
 
 const (
@@ -240,6 +300,7 @@ const (
 	hasRegion
 	hasKeyFile
 	hasPassphrase
+	hasDelegationToken
 	none
 )
 
@@ -298,6 +359,9 @@ func parseConfigAtLine(start int, content []string) (info *configFileInfo, err e
 		case "region":
 			configurationPresent = configurationPresent | hasRegion
 			info.Region = value
+		case "delegation_token_file":
+			configurationPresent = configurationPresent | hasDelegationToken
+			info.DelegationTokenFile = value
 		}
 	}
 	info.PresentConfiguration = configurationPresent
@@ -310,7 +374,7 @@ func parseConfigAtLine(start int, content []string) (info *configFileInfo, err e
 func expandPath(filepath string) (expandedPath string) {
 	cleanedPath := path.Clean(filepath)
 	expandedPath = cleanedPath
-	if strings.HasPrefix(cleanedPath, "~/") {
+	if strings.HasPrefix(cleanedPath, "~") {
 		rest := cleanedPath[2:]
 		expandedPath = path.Join(getHomeFolder(), rest)
 	}
@@ -436,6 +500,33 @@ func (p fileConfigurationProvider) Region() (value string, err error) {
 	}
 
 	value, err = presentOrError(info.Region, hasRegion, info.PresentConfiguration, "region")
+	if err != nil {
+		return
+	}
+
+	return canStringBeRegion(value)
+}
+
+func (p fileConfigurationProvider) DelegationToken() (token string, err error) {
+	info, err := p.readAndParseConfigFile()
+	if err != nil {
+		err = fmt.Errorf("can not read tenancy configuration due to: %s", err.Error())
+		return
+	}
+
+	filePath, err := presentOrError(info.DelegationTokenFile, hasDelegationToken, info.PresentConfiguration, "delegation_token_file")
+	if err != nil {
+		return
+	}
+
+	expandedPath := expandPath(filePath)
+	fileContent, err := ioutil.ReadFile(expandedPath)
+	if err != nil {
+		err = fmt.Errorf("can not read contents of delegation_token_file from configuration file %s due to: %s", expandedPath, err.Error())
+		return
+	}
+
+	token = string(fileContent)
 	return
 }
 
@@ -518,3 +609,4 @@ func (c composingConfigurationProvider) PrivateRSAKey() (*rsa.PrivateKey, error)
 	}
 	return nil, fmt.Errorf("did not find a proper configuration for private key")
 }
+
