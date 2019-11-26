@@ -14,7 +14,8 @@ import (
 type ProviderFunc func(config ConfigSource, source PassPhraseSource) (Provider, error)
 
 type FnResourceType string
-const(
+
+const (
 	ApplicationResourceType FnResourceType = "app"
 	FunctionResourceType    FnResourceType = "function"
 	TriggerResourceType     FnResourceType = "trigger"
@@ -39,14 +40,14 @@ func (c *Providers) Register(name string, pf ProviderFunc) {
 
 // Provider creates API clients for Fn calls adding any required middleware
 type Provider interface {
+	APIClientv2() *clientv2.Fn
 	// APIURL returns the current API URL base to use with this provider
 	APIURL() *url.URL
-	// WrapCallTransport adds any request signing or auth to an existing round tripper for calls
-	WrapCallTransport(http.RoundTripper) http.RoundTripper
-	APIClientv2() *clientv2.Fn
-	VersionClient() *version.Client
 	// Returns a list of resource types that are not supported by this provider
 	UnavailableResources() []FnResourceType
+	VersionClient() *version.Client
+	// WrapCallTransport adds any request signing or auth to an existing round tripper for calls
+	WrapCallTransport(http.RoundTripper) http.RoundTripper
 }
 
 // CanonicalFnAPIUrl canonicalises an *FN_API_URL  to a default value

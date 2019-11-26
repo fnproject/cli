@@ -13,5 +13,6 @@ var DefaultProviders = provider.Providers{
 		"default":   defaultprovider.NewFromConfig,
 		"oracle":    oracle.NewFromConfig,
 		"oracle-ip": oracle.NewIPProvider,
+		"oracle-cs": oracle.NewCSProvider,
 	},
 }

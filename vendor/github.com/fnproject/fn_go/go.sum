@@ -32,6 +32,8 @@ github.com/mitchellh/mapstructure v0.0.0-20180511142126-bb74f1db0675 h1:/rdJjIiK
 github.com/mitchellh/mapstructure v0.0.0-20180511142126-bb74f1db0675/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=
 github.com/oracle/oci-go-sdk v1.5.0 h1:aYzEF8NckKmazVe5MNuyVuwXQAPSJJjwUnO3dRHxWTY=
 github.com/oracle/oci-go-sdk v1.5.0/go.mod h1:VQb79nF8Z2cwLkLS35ukwStZIg5F66tcBccjip/j888=
+github.com/oracle/oci-go-sdk v12.2.0+incompatible h1:z5FqDVTRHSYzR9td6FdQpFw2M3MGyPLSUPaBRlzjBco=
+github.com/oracle/oci-go-sdk v12.2.0+incompatible/go.mod h1:VQb79nF8Z2cwLkLS35ukwStZIg5F66tcBccjip/j888=
 golang.org/x/crypto v0.0.0-20180527072434-ab813273cd59 h1:hk3yo72LXLapY9EXVttc3Z1rLOxT9IuAPPX3GpY2+jo=
 golang.org/x/crypto v0.0.0-20180527072434-ab813273cd59/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/net v0.0.0-20180524181706-dfa909b99c79 h1:1FDlG4HI84rVePw1/0E/crL5tt2N+1blLJpY6UZ6krs=

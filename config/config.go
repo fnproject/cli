@@ -2,10 +2,10 @@ package config
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-	"io/ioutil"
 
 	"github.com/fnproject/fn_go/provider"
 	"github.com/spf13/viper"
@@ -49,7 +49,7 @@ func Init() error {
 	replacer := strings.NewReplacer("-", "_")
 	viper.SetEnvKeyReplacer(replacer)
 
-	viper.SetDefault(provider.CfgFnAPIURL, defaultLocalAPIURL)
+	//	viper.SetDefault(provider.CfgFnAPIURL, defaultLocalAPIURL)
 
 	return ensureConfiguration()
 }
@@ -204,7 +204,7 @@ func atomicwrite(file string, c *ContextMap) (err error) {
 
 	// replace file with the tempfile
 	err = os.Rename(f.Name(), file)
-	if err !=nil {
+	if err != nil {
 		return fmt.Errorf("error replacing file with tempfile")
 	}
 	return nil

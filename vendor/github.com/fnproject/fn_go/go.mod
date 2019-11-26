@@ -17,7 +17,7 @@ require (
 	github.com/mailru/easyjson v0.0.0-20180323154445-8b799c424f57 // indirect
 	github.com/mitchellh/go-homedir v0.0.0-20180523094522-3864e76763d9
 	github.com/mitchellh/mapstructure v0.0.0-20180511142126-bb74f1db0675 // indirect
-	github.com/oracle/oci-go-sdk v1.5.0
+	github.com/oracle/oci-go-sdk v12.2.0+incompatible
 	golang.org/x/crypto v0.0.0-20180527072434-ab813273cd59
 	golang.org/x/net v0.0.0-20180524181706-dfa909b99c79
 	golang.org/x/sys v0.0.0-20180525142821-c11f84a56e43 // indirect
@@ -25,3 +25,5 @@ require (
 	gopkg.in/mgo.v2 v2.0.0-20160818020120-3f83fa500528 // indirect
 	gopkg.in/yaml.v2 v2.2.1 // indirect
 )
+
+go 1.13

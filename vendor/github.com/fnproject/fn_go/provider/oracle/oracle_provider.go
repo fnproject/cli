@@ -38,24 +38,19 @@ const (
 	CompartmentMetadata = "http://169.254.169.254/opc/v1/instance/compartmentId"
 )
 
-// Provider :  Oracle Authentication provider
-type Provider struct {
+// Provider : Oracle Authentication provider
+type OracleProvider struct {
 	// FnApiUrl is the endpoint to use for API interactions
 	FnApiUrl *url.URL
-	// FnCallUrl is the endpoint used for call interactions
-	FnCallUrl *url.URL
+
 	// The key provider can be a user or instance-principal-based one
 	KP oci.KeyProvider
+
 	//DisableCerts indicates if server certificates should be ignored
 	DisableCerts bool
+
 	//CompartmentID is the ocid of the functions compartment ID for a given function
 	CompartmentID string
-}
-
-func (op *Provider) APIClientv2() *clientv2.Fn {
-	runtime := openapi.New(op.FnApiUrl.Host, path.Join(op.FnApiUrl.Path, clientv2.DefaultBasePath), []string{op.FnApiUrl.Scheme})
-	runtime.Transport = op.WrapCallTransport(runtime.Transport)
-	return clientv2.New(runtime, strfmt.Default)
 }
 
 type Response struct {
@@ -71,6 +66,7 @@ type Annotations struct {
 }
 
 func NewFromConfig(configSource provider.ConfigSource, passphraseSource provider.PassPhraseSource) (provider.Provider, error) {
+
 	apiUrl, err := provider.CanonicalFnAPIUrl(configSource.GetString(provider.CfgFnAPIURL))
 	if err != nil {
 		return nil, err
@@ -86,7 +82,9 @@ func NewFromConfig(configSource provider.ConfigSource, passphraseSource provider
 	if compartmentID == "" {
 		return nil, fmt.Errorf("no OCI compartment ID specified in config key %s ", CfgCompartmentID)
 	}
-	return &Provider{FnApiUrl: apiUrl,
+
+	return &OracleProvider{
+		FnApiUrl: apiUrl,
 		KP: &ociKeyProvider{
 			ID:  keyID,
 			key: pKey,
@@ -129,35 +127,56 @@ func NewIPProvider(configSource provider.ConfigSource, passphraseSource provider
 		}
 		compartmentID = string(body)
 	}
-	return &Provider{FnApiUrl: apiUrl,
+	return &OracleProvider{
+		FnApiUrl:      apiUrl,
 		KP:            ip,
 		DisableCerts:  configSource.GetBool(CfgDisableCerts),
 		CompartmentID: compartmentID,
 	}, nil
 }
 
-func (op *Provider) APIURL() *url.URL {
+//-- Provider interface impl ----------------------------------------------------------------------------------
+
+// func (op *OracleProvider) APIClient() *clientv2.Fn {
+// 	runtime := openapi.New(op.FnApiUrl.Host, path.Join(op.FnApiUrl.Path, clientv2.DefaultBasePath), []string{op.FnApiUrl.Scheme})
+// 	runtime.Transport = op.WrapCallTransport(runtime.Transport)
+// 	return clientv2.New(runtime, strfmt.Default)
+// }
+
+func (op *OracleProvider) APIClientv2() *clientv2.Fn {
+	runtime := openapi.New(op.FnApiUrl.Host, path.Join(op.FnApiUrl.Path, clientv2.DefaultBasePath), []string{op.FnApiUrl.Scheme})
+	runtime.Transport = op.WrapCallTransport(runtime.Transport)
+	return clientv2.New(runtime, strfmt.Default)
+}
+
+func (op *OracleProvider) APIURL() *url.URL {
 	return op.FnApiUrl
 }
 
-func (p *Provider) UnavailableResources()  []provider.FnResourceType {
+func (p *OracleProvider) UnavailableResources() []provider.FnResourceType {
 	return []provider.FnResourceType{provider.TriggerResourceType}
 }
 
-func (op *Provider) WrapCallTransport(roundTripper http.RoundTripper) http.RoundTripper {
+func (op *OracleProvider) VersionClient() *version.Client {
+	runtime := openapi.New(op.FnApiUrl.Host, op.FnApiUrl.Path, []string{op.FnApiUrl.Scheme})
+	runtime.Transport = op.WrapCallTransport(runtime.Transport)
+	return version.New(runtime, strfmt.Default)
+}
+
+func (op *OracleProvider) WrapCallTransport(roundTripper http.RoundTripper) http.RoundTripper {
 	if op.DisableCerts {
 		roundTripper = InsecureRoundTripper(roundTripper)
 	}
 
-	ociClient := common.RequestSigner(op.KP, []string{"host", "date", "(request-target)", "opc-compartment-id"}, []string{"content-length", "content-type", "x-content-sha256"})
+	ociClient := common.RequestSigner(op.KP, []string{"host", "date", "(request-target)"}, []string{"content-length", "content-type", "x-content-sha256"})
 
-	signingRoundTrripper := ociSigningRoundTripper{
+	signingRoundTripper := ociSigningRoundTripper{
 		transport: roundTripper,
 		ociClient: ociClient,
 	}
 
 	roundTripper = compartmentIDRoundTripper{
-		transport:     signingRoundTrripper,
+		transport:     signingRoundTripper,
 		compartmentID: op.CompartmentID,
 	}
 
@@ -168,17 +187,7 @@ func (op *Provider) WrapCallTransport(roundTripper http.RoundTripper) http.Round
 	return roundTripper
 }
 
-func (op *Provider) APIClient() *clientv2.Fn {
-	runtime := openapi.New(op.FnApiUrl.Host, path.Join(op.FnApiUrl.Path, clientv2.DefaultBasePath), []string{op.FnApiUrl.Scheme})
-	runtime.Transport = op.WrapCallTransport(runtime.Transport)
-	return clientv2.New(runtime, strfmt.Default)
-}
-
-func (op *Provider) VersionClient() *version.Client {
-	runtime := openapi.New(op.FnApiUrl.Host, op.FnApiUrl.Path, []string{op.FnApiUrl.Scheme})
-	runtime.Transport = op.WrapCallTransport(runtime.Transport)
-	return version.New(runtime, strfmt.Default)
-}
+//-- Provider interface impl ----------------------------------------------------------------------------------
 
 type ociKeyProvider struct {
 	ID  string

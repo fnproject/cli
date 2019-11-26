@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	major = "1"
-	minor = "5"
+	major = "12"
+	minor = "2"
 	patch = "0"
 	tag   = ""
 )
@@ -26,7 +26,7 @@ func Version() string {
 		verBuilder := bytes.NewBufferString(ver)
 		if tag != "" && tag != "-" {
 			_, err := verBuilder.WriteString(tag)
-			if err == nil {
+			if err != nil {
 				verBuilder = bytes.NewBufferString(ver)
 			}
 		}
