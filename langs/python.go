@@ -118,8 +118,8 @@ def handler(ctx, data: io.BytesIO=None):
 
 func (h *PythonLangHelper) DockerfileCopyCmds() []string {
 	return []string{
-		"COPY --from=build-stage /function /function",
 		"COPY --from=build-stage /python /python",
-		"ENV PYTHONPATH=/python",
+		"COPY --from=build-stage /function /function",
+		"ENV PYTHONPATH=/function:/python",
 	}
 }
