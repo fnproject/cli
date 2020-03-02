@@ -42,6 +42,7 @@ fdk.handle(function(input){
   if (input.name) {
     name = input.name;
   }
+  console.log('\nInside Node Hello World function')
   return {'message': 'Hello ' + name}
 })
 `

@@ -315,9 +315,12 @@ const (
 	helloKotlinSrcBoilerplate = `
 package com.fn.example
 
-fun hello(input: String) = when {
-    input.isEmpty() -> ("Hello, world!")
-        else -> ("Hello, ${input}")
+fun hello(input: String): String {
+    println("Inside Kotlin Hello World function")
+    return when {
+        input.isEmpty() -> ("Hello, world!")
+            else -> ("Hello, ${input}")
+    }
 }`
 
 	helloKotlinTestBoilerplate = `package com.fn.example
