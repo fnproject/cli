@@ -20,6 +20,9 @@ import (
 )
 
 const (
+	// DefaultHostURLTemplate The default url template for service hosts
+	DefaultHostURLTemplate = "%s.%s.oraclecloud.com"
+
 	// requestHeaderAccept The key for passing a header to indicate Accept
 	requestHeaderAccept = "Accept"
 
@@ -55,9 +58,6 @@ const (
 
 	// requestHeaderXContentSHA256 The key for passing a header to indicate SHA256 hash
 	requestHeaderXContentSHA256 = "X-Content-SHA256"
-
-	// requestHeaderOpcOboToken The key for passing a header to use obo token
-	requestHeaderOpcOboToken = "opc-obo-token"
 
 	// private constants
 	defaultScheme            = "https"
@@ -152,26 +152,6 @@ func NewClientWithConfig(configProvider ConfigurationProvider) (client BaseClien
 	}
 
 	client = defaultBaseClient(configProvider)
-
-	return
-}
-
-// NewClientWithOboToken Create a new client that will use oboToken for auth
-func NewClientWithOboToken(configProvider ConfigurationProvider, oboToken string) (client BaseClient, err error) {
-	client, err = NewClientWithConfig(configProvider)
-	if err != nil {
-		return
-	}
-
-	// Interceptor to add obo token header
-	client.Interceptor = func(request *http.Request) error {
-		request.Header.Add(requestHeaderOpcOboToken, oboToken)
-		return nil
-	}
-	// Obo token will also be signed
-	defaultHeaders := append(DefaultGenericHeaders(), requestHeaderOpcOboToken)
-	client.Signer = RequestSigner(configProvider, defaultHeaders, DefaultBodyHeaders())
-
 	return
 }
 
@@ -202,6 +182,22 @@ func DefaultConfigProvider() ConfigurationProvider {
 	environmentProvider := environmentConfigurationProvider{EnvironmentVariablePrefix: "TF_VAR"}
 
 	provider, _ := ComposingConfigurationProvider([]ConfigurationProvider{defaultFileProvider, secondaryFileProvider, environmentProvider})
+	Debugf("Configuration provided by: %s", provider)
+	return provider
+}
+
+// CustomProfileConfigProvider returns the config provider of given profile. The custom profile config provider
+// will look for configurations in 2 places: file in $HOME/.oci/config,  and variables names starting with the
+// string TF_VAR. If the same configuration is found in multiple places the provider will prefer the first one.
+func CustomProfileConfigProvider(customConfigPath string, profile string) ConfigurationProvider {
+	homeFolder := getHomeFolder()
+	if customConfigPath == "" {
+		customConfigPath = path.Join(homeFolder, defaultConfigDirName, defaultConfigFileName)
+	}
+	customFileProvider, _ := ConfigurationProviderFromFileWithProfile(customConfigPath, profile, "")
+	defaultFileProvider, _ := ConfigurationProviderFromFileWithProfile(customConfigPath, "DEFAULT", "")
+	environmentProvider := environmentConfigurationProvider{EnvironmentVariablePrefix: "TF_VAR"}
+	provider, _ := ComposingConfigurationProvider([]ConfigurationProvider{customFileProvider, defaultFileProvider, environmentProvider})
 	Debugf("Configuration provided by: %s", provider)
 	return provider
 }

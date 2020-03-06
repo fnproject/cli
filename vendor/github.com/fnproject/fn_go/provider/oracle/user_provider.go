@@ -35,7 +35,7 @@ func NewFromConfig(configSource provider.ConfigSource, passphraseSource provider
 
 	compartmentID := configSource.GetString(CfgCompartmentID)
 	if compartmentID == "" {
-		return nil, fmt.Errorf("no OCI compartment ID specified in config key %s ", CfgCompartmentID)
+		return nil, fmt.Errorf("no OCI compartment OCID specified in config key %s ", CfgCompartmentID)
 	}
 
 	kp := &ociKeyProvider{
@@ -52,22 +52,24 @@ func NewFromConfig(configSource provider.ConfigSource, passphraseSource provider
 	}, nil
 }
 
-//TODO support OCI environment variables
 func loadOracleConfig(config provider.ConfigSource, passphrase provider.PassPhraseSource) (string, *rsa.PrivateKey, error) {
 	var oracleProfile string
 	var err error
 	var cf oci.ConfigurationProvider
 
-	if oracleProfile = config.GetString(CfgProfile); oracleProfile == "" {
+	oracleProfile = getEnv(OCI_CLI_PROFILE_ENV_VAR, config.GetString(CfgProfile))
+
+	if oracleProfile == "" {
 		oracleProfile = "DEFAULT"
 	}
 
 	home, err := homedir.Dir()
 	if err != nil {
-		return "", nil, fmt.Errorf("error getting home directory %v", err)
+		return "", nil, fmt.Errorf("error getting home directory %s", err)
 	}
 
-	path := filepath.Join(home, ".oci", "config")
+	path := getEnv(OCI_CLI_CONFIG_FILE_ENV_VAR, filepath.Join(home, ".oci", "config"))
+
 	if _, err := os.Stat(path); err == nil {
 		cf, err = oci.ConfigurationProviderFromFileWithProfile(path, oracleProfile, "")
 		if err != nil {
@@ -76,9 +78,9 @@ func loadOracleConfig(config provider.ConfigSource, passphrase provider.PassPhra
 	}
 
 	var tenancyID string
-	if tenancyID = config.GetString(CfgTenancyID); tenancyID == "" {
+	if tenancyID = getEnv(OCI_CLI_TENANCY_ENV_VAR, config.GetString(CfgTenancyID)); tenancyID == "" {
 		if cf == nil {
-			return "", nil, errors.New("unable to find tenancyID in configuration: oracle.tenancy-id is missing from current-context file and tenancy-id wasn't found in ~/.oci/config.")
+			return "", nil, errors.New("unable to find tenancyID in environment or configuration.")
 		}
 		tenancyID, err = cf.TenancyOCID()
 		if err != nil {
@@ -88,9 +90,9 @@ func loadOracleConfig(config provider.ConfigSource, passphrase provider.PassPhra
 	}
 
 	var userID string
-	if userID = config.GetString(CfgUserID); userID == "" {
+	if userID = getEnv(OCI_CLI_USER_ENV_VAR, config.GetString(CfgUserID)); userID == "" {
 		if cf == nil {
-			return "", nil, errors.New("unable to find userID in configuration: oracle.tenancy-id is missing from current-context file and tenancy-id wasn't found in ~/.oci/config.")
+			return "", nil, errors.New("unable to find userID in environment or configuration.")
 		}
 		userID, err = cf.UserOCID()
 		if err != nil {
@@ -99,9 +101,9 @@ func loadOracleConfig(config provider.ConfigSource, passphrase provider.PassPhra
 	}
 
 	var fingerprint string
-	if fingerprint = config.GetString(CfgFingerprint); fingerprint == "" {
+	if fingerprint = getEnv(OCI_CLI_FINGERPRINT_ENV_VAR, config.GetString(CfgFingerprint)); fingerprint == "" {
 		if cf == nil {
-			return "", nil, errors.New("unable to find fingerprint in configuration: oracle.tenancy-id is missing from current-context file and tenancy-id wasn't found in ~/.oci/config.")
+			return "", nil, errors.New("unable to find fingerprint in environment or configuration.")
 		}
 		fingerprint, err = cf.KeyFingerprint()
 		if err != nil {
@@ -112,7 +114,7 @@ func loadOracleConfig(config provider.ConfigSource, passphrase provider.PassPhra
 	keyID := tenancyID + "/" + userID + "/" + fingerprint
 	var pKey *rsa.PrivateKey
 
-	if keyFile := config.GetString(CfgKeyFile); keyFile != "" {
+	if keyFile := getEnv(OCI_CLI_USER_ENV_VAR, config.GetString(CfgKeyFile)); keyFile != "" {
 		pKey, err = privateKey(config, passphrase, keyFile)
 		if err != nil {
 			return "", nil, err
@@ -121,7 +123,7 @@ func loadOracleConfig(config provider.ConfigSource, passphrase provider.PassPhra
 	}
 
 	if cf == nil {
-		return "", nil, errors.New("unable to find private key in configuration: oracle.tenancy-id is missing from current-context file and tenancy-id wasn't found in ~/.oci/config.")
+		return "", nil, errors.New("unable to find private key in environment or configuration.")
 	}
 	// Read private key for .oci file
 	pKey, err = cf.PrivateRSAKey()
@@ -136,7 +138,7 @@ func loadOracleConfig(config provider.ConfigSource, passphrase provider.PassPhra
 func privateKey(config provider.ConfigSource, passphrase provider.PassPhraseSource, pkeyFilePath string) (*rsa.PrivateKey, error) {
 	keyBytes, err := ioutil.ReadFile(pkeyFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to load private key from file: %s. Error: %s \n", pkeyFilePath, err)
+		return nil, fmt.Errorf("Unable to read private key from file due to error: %s\n", err)
 	}
 
 	var key *rsa.PrivateKey
@@ -157,7 +159,7 @@ func getPrivateKey(keyBytes []byte, pKeyPword, pkeyFilePath string) (*rsa.Privat
 	key, err := oci.PrivateKeyFromBytes(keyBytes, oci.String(pKeyPword))
 	if err != nil {
 		if pKeyPword != "" {
-			return nil, fmt.Errorf("Unable to load private key from file bytes: %s. Error: %s \n", pkeyFilePath, err)
+			return nil, fmt.Errorf("Unable to load private key from file due to error: %s\n", err)
 		}
 	}
 

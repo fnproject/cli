@@ -47,7 +47,7 @@ func DefaultContextConfigContents() (contextMap *ContextMap) {
 			ContextProvider: fn_go.OracleCSProvider,
 			EnvFnRegistry:   "",
 		}
-	} else if ociCliAuth == OCI_CLI_AUTH_INSTANCE_OBO_USER {
+	} else if ociCliAuth == OCI_CLI_AUTH_INSTANCE_PRINCIPAL {
 		contextMap = &ContextMap{
 			ContextProvider: fn_go.OracleIPProvider,
 			EnvFnRegistry:   "",

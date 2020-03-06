@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"time"
 
@@ -26,11 +27,15 @@ const (
 	FunctionsAPIURLTmpl                   = "https://functions.%s.oraclecloud.com"
 	requestHeaderOpcRequestID             = "Opc-Request-Id"
 	requestHeaderOpcCompId                = "opc-compartment-id"
+	requestHeaderOpcOboToken              = "opc-obo-token"
 	OCI_CLI_PROFILE_ENV_VAR               = "OCI_CLI_PROFILE"
 	OCI_CLI_REGION_ENV_VAR                = "OCI_CLI_REGION"
 	OCI_CLI_TENANCY_ENV_VAR               = "OCI_CLI_TENANCY"
 	OCI_CLI_CONFIG_FILE_ENV_VAR           = "OCI_CLI_CONFIG_FILE"
 	OCI_CLI_DELEGATION_TOKEN_FILE_ENV_VAR = "OCI_CLI_DELEGATION_TOKEN_FILE"
+	OCI_CLI_USER_ENV_VAR                  = "OCI_CLI_USER"
+	OCI_CLI_FINGERPRINT_ENV_VAR           = "OCI_CLI_FINGERPRINT"
+	OCI_CLI_KEY_FILE_ENV_VAR              = "OCI_CLI_KEY_FILE"
 )
 
 type Response struct {
@@ -191,4 +196,12 @@ func (op *OracleProvider) WrapCallTransport(roundTripper http.RoundTripper) http
 	}
 
 	return signingRoundTripper
+}
+
+func getEnv(key, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		value = fallback
+	}
+	return value
 }

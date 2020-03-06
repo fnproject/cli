@@ -17,10 +17,10 @@ const (
 // DefaultProviders includes the bundled providers available in the client
 var DefaultProviders = provider.Providers{
 	Providers: map[string]provider.ProviderFunc{
-		"":          defaultprovider.NewFromConfig,
-		"default":   defaultprovider.NewFromConfig,
-		"oracle":    oracle.NewFromConfig,
-		"oracle-ip": oracle.NewIPProvider,
-		"oracle-cs": oracle.NewCSProvider,
+		"":               defaultprovider.NewFromConfig,
+		DefaultProvider:  defaultprovider.NewFromConfig,
+		OracleProvider:   oracle.NewFromConfig,
+		OracleIPProvider: oracle.NewIPProvider,
+		OracleCSProvider: oracle.NewCSProvider,
 	},
 }

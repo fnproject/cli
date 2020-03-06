@@ -27,7 +27,7 @@ import (
 // collisions are avoided by appending "Mixin<N>" but only if
 // needed.
 //
-// The following parts of primary are never modified by merging:
+// The following parts of primary are subject to merge, filling empty details
 //   - Info
 //   - BasePath
 //   - Host
@@ -45,18 +45,20 @@ import (
 // scripts. Carefully review the collisions before accepting them;
 // consider renaming things if possible.
 //
-// No normalization of any keys takes place (paths, type defs,
+// No key normalization takes place (paths, type defs,
 // etc). Ensure they are canonical if your downstream tools do
 // key normalization of any form.
 //
 // Merging schemes (http, https), and consumers/producers do not account for
 // collisions.
 func Mixin(primary *spec.Swagger, mixins ...*spec.Swagger) []string {
-	var skipped []string
+	skipped := make([]string, 0, len(mixins))
 	opIds := getOpIds(primary)
 	initPrimary(primary)
 
 	for i, m := range mixins {
+		skipped = append(skipped, mergeSwaggerProps(primary, m)...)
+
 		skipped = append(skipped, mergeConsumes(primary, m)...)
 
 		skipped = append(skipped, mergeProduces(primary, m)...)
@@ -118,7 +120,8 @@ func appendOp(ops []*spec.Operation, op *spec.Operation) []*spec.Operation {
 func mergeSecurityDefinitions(primary *spec.Swagger, m *spec.Swagger) (skipped []string) {
 	for k, v := range m.SecurityDefinitions {
 		if _, exists := primary.SecurityDefinitions[k]; exists {
-			warn := fmt.Sprintf("SecurityDefinitions entry '%v' already exists in primary or higher priority mixin, skipping\n", k)
+			warn := fmt.Sprintf(
+				"SecurityDefinitions entry '%v' already exists in primary or higher priority mixin, skipping\n", k)
 			skipped = append(skipped, warn)
 			continue
 		}
@@ -137,7 +140,8 @@ func mergeSecurityRequirements(primary *spec.Swagger, m *spec.Swagger) (skipped 
 			}
 		}
 		if found {
-			warn := fmt.Sprintf("Security requirement: '%v' already exists in primary or higher priority mixin, skipping\n", v)
+			warn := fmt.Sprintf(
+				"Security requirement: '%v' already exists in primary or higher priority mixin, skipping\n", v)
 			skipped = append(skipped, warn)
 			continue
 		}
@@ -150,7 +154,8 @@ func mergeDefinitions(primary *spec.Swagger, m *spec.Swagger) (skipped []string)
 	for k, v := range m.Definitions {
 		// assume name collisions represent IDENTICAL type. careful.
 		if _, exists := primary.Definitions[k]; exists {
-			warn := fmt.Sprintf("definitions entry '%v' already exists in primary or higher priority mixin, skipping\n", k)
+			warn := fmt.Sprintf(
+				"definitions entry '%v' already exists in primary or higher priority mixin, skipping\n", k)
 			skipped = append(skipped, warn)
 			continue
 		}
@@ -163,7 +168,8 @@ func mergePaths(primary *spec.Swagger, m *spec.Swagger, opIds map[string]bool, m
 	if m.Paths != nil {
 		for k, v := range m.Paths.Paths {
 			if _, exists := primary.Paths.Paths[k]; exists {
-				warn := fmt.Sprintf("paths entry '%v' already exists in primary or higher priority mixin, skipping\n", k)
+				warn := fmt.Sprintf(
+					"paths entry '%v' already exists in primary or higher priority mixin, skipping\n", k)
 				skipped = append(skipped, warn)
 				continue
 			}
@@ -193,7 +199,8 @@ func mergeParameters(primary *spec.Swagger, m *spec.Swagger) (skipped []string) 
 		// have to fix $refs in the mixin. Complain
 		// for now
 		if _, exists := primary.Parameters[k]; exists {
-			warn := fmt.Sprintf("top level parameters entry '%v' already exists in primary or higher priority mixin, skipping\n", k)
+			warn := fmt.Sprintf(
+				"top level parameters entry '%v' already exists in primary or higher priority mixin, skipping\n", k)
 			skipped = append(skipped, warn)
 			continue
 		}
@@ -208,16 +215,17 @@ func mergeResponses(primary *spec.Swagger, m *spec.Swagger) (skipped []string) {
 		// have to fix $refs in the mixin. Complain
 		// for now
 		if _, exists := primary.Responses[k]; exists {
-			warn := fmt.Sprintf("top level responses entry '%v' already exists in primary or higher priority mixin, skipping\n", k)
+			warn := fmt.Sprintf(
+				"top level responses entry '%v' already exists in primary or higher priority mixin, skipping\n", k)
 			skipped = append(skipped, warn)
 			continue
 		}
 		primary.Responses[k] = v
 	}
-	return
+	return skipped
 }
 
-func mergeConsumes(primary *spec.Swagger, m *spec.Swagger) (skipped []string) {
+func mergeConsumes(primary *spec.Swagger, m *spec.Swagger) []string {
 	for _, v := range m.Consumes {
 		found := false
 		for _, vv := range primary.Consumes {
@@ -232,10 +240,10 @@ func mergeConsumes(primary *spec.Swagger, m *spec.Swagger) (skipped []string) {
 		}
 		primary.Consumes = append(primary.Consumes, v)
 	}
-	return
+	return []string{}
 }
 
-func mergeProduces(primary *spec.Swagger, m *spec.Swagger) (skipped []string) {
+func mergeProduces(primary *spec.Swagger, m *spec.Swagger) []string {
 	for _, v := range m.Produces {
 		found := false
 		for _, vv := range primary.Produces {
@@ -250,7 +258,7 @@ func mergeProduces(primary *spec.Swagger, m *spec.Swagger) (skipped []string) {
 		}
 		primary.Produces = append(primary.Produces, v)
 	}
-	return
+	return []string{}
 }
 
 func mergeTags(primary *spec.Swagger, m *spec.Swagger) (skipped []string) {
@@ -263,7 +271,8 @@ func mergeTags(primary *spec.Swagger, m *spec.Swagger) (skipped []string) {
 			}
 		}
 		if found {
-			warn := fmt.Sprintf("top level tags entry with name '%v' already exists in primary or higher priority mixin, skipping\n", v.Name)
+			warn := fmt.Sprintf(
+				"top level tags entry with name '%v' already exists in primary or higher priority mixin, skipping\n", v.Name)
 			skipped = append(skipped, warn)
 			continue
 		}
@@ -272,7 +281,7 @@ func mergeTags(primary *spec.Swagger, m *spec.Swagger) (skipped []string) {
 	return
 }
 
-func mergeSchemes(primary *spec.Swagger, m *spec.Swagger) (skipped []string) {
+func mergeSchemes(primary *spec.Swagger, m *spec.Swagger) []string {
 	for _, v := range m.Schemes {
 		found := false
 		for _, vv := range primary.Schemes {
@@ -286,6 +295,101 @@ func mergeSchemes(primary *spec.Swagger, m *spec.Swagger) (skipped []string) {
 			continue
 		}
 		primary.Schemes = append(primary.Schemes, v)
+	}
+	return []string{}
+}
+
+func mergeSwaggerProps(primary *spec.Swagger, m *spec.Swagger) []string {
+	var skipped []string
+	primary.Extensions, skipped = mergeExtensions(primary.Extensions, m.Extensions)
+
+	// merging details in swagger top properties
+	if primary.Host == "" {
+		primary.Host = m.Host
+	}
+	if primary.BasePath == "" {
+		primary.BasePath = m.BasePath
+	}
+	if primary.Info == nil {
+		primary.Info = m.Info
+	} else if m.Info != nil {
+		var sk []string
+		primary.Info.Extensions, sk = mergeExtensions(primary.Info.Extensions, m.Info.Extensions)
+		skipped = append(skipped, sk...)
+		if primary.Info.Description == "" {
+			primary.Info.Description = m.Info.Description
+		}
+		if primary.Info.Title == "" {
+			primary.Info.Description = m.Info.Description
+		}
+		if primary.Info.TermsOfService == "" {
+			primary.Info.TermsOfService = m.Info.TermsOfService
+		}
+		if primary.Info.Version == "" {
+			primary.Info.Version = m.Info.Version
+		}
+
+		if primary.Info.Contact == nil {
+			primary.Info.Contact = m.Info.Contact
+		} else if m.Info.Contact != nil {
+			var csk []string
+			primary.Info.Contact.Extensions, csk = mergeExtensions(primary.Info.Contact.Extensions, m.Info.Contact.Extensions)
+			skipped = append(skipped, csk...)
+			if primary.Info.Contact.Name == "" {
+				primary.Info.Contact.Name = m.Info.Contact.Name
+			}
+			if primary.Info.Contact.URL == "" {
+				primary.Info.Contact.URL = m.Info.Contact.URL
+			}
+			if primary.Info.Contact.Email == "" {
+				primary.Info.Contact.Email = m.Info.Contact.Email
+			}
+		}
+
+		if primary.Info.License == nil {
+			primary.Info.License = m.Info.License
+		} else if m.Info.License != nil {
+			var lsk []string
+			primary.Info.License.Extensions, lsk = mergeExtensions(primary.Info.License.Extensions, m.Info.License.Extensions)
+			skipped = append(skipped, lsk...)
+			if primary.Info.License.Name == "" {
+				primary.Info.License.Name = m.Info.License.Name
+			}
+			if primary.Info.License.URL == "" {
+				primary.Info.License.URL = m.Info.License.URL
+			}
+		}
+
+	}
+	if primary.ExternalDocs == nil {
+		primary.ExternalDocs = m.ExternalDocs
+	} else if m.ExternalDocs != nil {
+		if primary.ExternalDocs.Description == "" {
+			primary.ExternalDocs.Description = m.ExternalDocs.Description
+		}
+		if primary.ExternalDocs.URL == "" {
+			primary.ExternalDocs.URL = m.ExternalDocs.URL
+		}
+	}
+	return skipped
+}
+
+func mergeExtensions(primary spec.Extensions, m spec.Extensions) (result spec.Extensions, skipped []string) {
+	if primary == nil {
+		result = m
+		return
+	}
+	if m == nil {
+		result = primary
+		return
+	}
+	result = primary
+	for k, v := range m {
+		if _, found := primary[k]; found {
+			skipped = append(skipped, k)
+			continue
+		}
+		primary[k] = v
 	}
 	return
 }

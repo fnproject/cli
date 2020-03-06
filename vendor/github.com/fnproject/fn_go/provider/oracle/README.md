@@ -10,8 +10,7 @@ The provider can read most of it's settings from [OCI configuration file](https:
 
 |  Key               | Example      |  Required | Read from ~/.oci/config | Description |
 | -------------------|  ----------- |  -----    | ----- |  ---- |  
-| `api-url` | https://api.faas.us-ashburn-1.oraclecloud.com/ | Yes | No | The API endpoint to contact for accessing the service API |
-| `call-url` | https://r.faas.us-ashburn-1.oraclecloud.com/  | No | No | The call endpoint base URL for calling functions |
+| `api-url` | https://functions.us-ashburn-1.oraclecloud.com/ | Yes | No | The API endpoint to contact for accessing the service API |
 | `oracle.compartment-id` | ocid1.compartment.oc1..aaaaaaaajvunnz..... | Yes | No | The compartment OCID for the functions tenancy - this corresponds to where you want functions objects to exist in OCI |
 | `oracle.tenancy-id` | ocid1.tenancy.oc1..aaaaaaaai4w6iipzc73k3s2.... | No | Yes | The tenancy of the user accessing the service |
 | `oracle.user-id` | ocid1.user.oc1..aaaaaaaay2df7zq4lgv7.... | No | Yes | The OCID of the user accessing the API |
@@ -25,8 +24,7 @@ With the provider set to `oracle-ip`, and the CLI hosted on an OCI instance, the
 
 |  Key               | Example      |  Required | Read from ~/.oci/config | Description |
 | -------------------|  ----------- |  -----    | ----- |  ---- |  
-| `api-url` | https://api.faas.us-ashburn-1.oraclecloud.com/ | No | No | The API endpoint to contact for accessing the service API. If unset, it will construct a local endpoint from the instance's region |
-| `call-url` | https://r.faas.us-ashburn-1.oraclecloud.com/  | No | No | The call endpoint  base URL for calling functions |
+| `api-url` | https://functions.us-ashburn-1.oraclecloud.com/ | No | No | The API endpoint to contact for accessing the service API. If unset, it will construct a local endpoint from the instance's region |
 | `oracle.compartment-id` | ocid1.compartment.oc1..aaaaaaaajvunnz..... | No | No | The compartment OCID for the functions tenancy - this corresponds to where you want functions objects to exist in OCI. It defaults to the instance compartment |
 | `oracle.disable-certs` |`true`| No | No | Ignore SSL host name checks when contacting the server (should only be used for diagnosis and testing) |
 
@@ -37,10 +35,8 @@ With the provider set to `oracle-cs`, and the CLI running on an OCI Cloudshell m
 
 The provider can read most of it's settings from the [OCI CLI configuration file](https://docs.us-phoenix-1.oraclecloud.com/Content/API/Concepts/sdkconfig.htm): (/etc/oci/config)
 
-|  Key               | Example      |  Required | Read from ~/.oci/config | Description |
+|  Key               | Example      |  Required | Read from OCI CLI Config | Description |
 | -------------------|  ----------- |  -----    | ----- |  ---- |  
-| `api-url` | https://api.faas.us-ashburn-1.oraclecloud.com/ | No | No | The API endpoint to contact for accessing the service API. If unset, it will construct a local endpoint from the instance's region |
-| `call-url` | https://r.faas.us-ashburn-1.oraclecloud.com/  | No | No | The call endpoint  base URL for calling functions |
+| `api-url` | https://functions.us-ashburn-1.oraclecloud.com/ | No | No | The API endpoint to contact for accessing the service API. If unset, it will construct a local endpoint from the region in the default region OCI CLI profile |
 | `oracle.compartment-id` | ocid1.compartment.oc1..aaaaaaaajvunnz..... | No | No | The compartment OCID for the functions tenancy - this corresponds to where you want functions objects to exist in OCI. It defaults to the root tenancy compartment |
-| `oracle.delegation_token_file` | /etc/oci/delegation_token | No | Yes | The file containing the delegation token to be used by the cli |
 | `oracle.disable-certs` |`true`| No | No | Ignore SSL host name checks when contacting the server (should only be used for diagnosis and testing) |
