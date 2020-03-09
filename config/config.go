@@ -40,19 +40,23 @@ const (
 var defaultRootConfigContents = &ContextMap{CurrentContext: "default", CurrentCliVersion: Version}
 
 func DefaultContextConfigContents() (contextMap *ContextMap) {
+	//Read OCI_CLI_AUTH environment variable to determine what oracle provider to use
 	ociCliAuth := os.Getenv(OCI_CLI_AUTH_ENV_VAR)
+	//For the oracle cloudshell and instance principal providers,
+	//the default api url is determined by the provider by using the configured region in the environment
 
-	if ociCliAuth == OCI_CLI_AUTH_INSTANCE_OBO_USER {
+	switch ociCliAuth {
+	case OCI_CLI_AUTH_INSTANCE_OBO_USER:
 		contextMap = &ContextMap{
 			ContextProvider: fn_go.OracleCSProvider,
 			EnvFnRegistry:   "",
 		}
-	} else if ociCliAuth == OCI_CLI_AUTH_INSTANCE_PRINCIPAL {
+	case OCI_CLI_AUTH_INSTANCE_PRINCIPAL:
 		contextMap = &ContextMap{
 			ContextProvider: fn_go.OracleIPProvider,
 			EnvFnRegistry:   "",
 		}
-	} else {
+	default:
 		contextMap = &ContextMap{
 			ContextProvider:      fn_go.DefaultProvider,
 			provider.CfgFnAPIURL: defaultLocalAPIURL,
