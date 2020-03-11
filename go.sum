@@ -39,6 +39,8 @@ github.com/fnproject/fn_go v0.5.0 h1:LrHtbe1djT8I2tPBFBAUqprWaOzMLCa2rOIxlVI3BEU
 github.com/fnproject/fn_go v0.5.0/go.mod h1:PLIqk9ACBPYbaR74k/4a4I1HAjDYRPovUVVpYgr4sxY=
 github.com/fnproject/fn_go v0.5.2-0.20200306235942-b9463d5f4f6b h1:uVBqOOxMBLo2zYWwnm6jaHLU0OdBXFxJ94DoYrwPaXs=
 github.com/fnproject/fn_go v0.5.2-0.20200306235942-b9463d5f4f6b/go.mod h1:x8ixKCN89N8cwQSWucV+4sWR9n3cRyYRExnz0Zmij1o=
+github.com/fnproject/fn_go v0.5.2 h1:Gxn4bTJH6smamaR+BJ26ORnI0UAw+L/QweQYz3+1RjY=
+github.com/fnproject/fn_go v0.5.2/go.mod h1:x8ixKCN89N8cwQSWucV+4sWR9n3cRyYRExnz0Zmij1o=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
