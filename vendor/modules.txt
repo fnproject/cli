@@ -1,27 +1,27 @@
-# github.com/PuerkitoBio/purell v1.1.0
+# github.com/PuerkitoBio/purell v1.1.1
 github.com/PuerkitoBio/purell
 # github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
 github.com/PuerkitoBio/urlesc
-# github.com/asaskevich/govalidator v0.0.0-20180315120708-ccb8e960c48f
+# github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496
 github.com/asaskevich/govalidator
 # github.com/coreos/go-semver v0.2.0
 github.com/coreos/go-semver/semver
 # github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
 github.com/fatih/color
-# github.com/fnproject/fn_go v0.5.0
+# github.com/fnproject/fn_go v0.5.2
 github.com/fnproject/fn_go
-github.com/fnproject/fn_go/provider
+github.com/fnproject/fn_go/client/version
 github.com/fnproject/fn_go/clientv2
-github.com/fnproject/fn_go/modelsv2
-github.com/fnproject/fn_go/clientv2/fns
-github.com/fnproject/fn_go/clientv2/triggers
 github.com/fnproject/fn_go/clientv2/apps
+github.com/fnproject/fn_go/clientv2/call
+github.com/fnproject/fn_go/clientv2/fns
+github.com/fnproject/fn_go/clientv2/operations
+github.com/fnproject/fn_go/clientv2/triggers
+github.com/fnproject/fn_go/models
+github.com/fnproject/fn_go/modelsv2
+github.com/fnproject/fn_go/provider
 github.com/fnproject/fn_go/provider/defaultprovider
 github.com/fnproject/fn_go/provider/oracle
-github.com/fnproject/fn_go/client/version
-github.com/fnproject/fn_go/clientv2/call
-github.com/fnproject/fn_go/clientv2/operations
-github.com/fnproject/fn_go/models
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
 # github.com/ghodss/yaml v1.0.0
@@ -29,42 +29,45 @@ github.com/ghodss/yaml
 # github.com/giantswarm/semver-bump v0.0.0-20140912095342-88e6c9f2fe39
 github.com/giantswarm/semver-bump/bump
 github.com/giantswarm/semver-bump/storage
-# github.com/go-openapi/analysis v0.0.0-20180520152044-5957818e1003
+# github.com/go-openapi/analysis v0.19.10
 github.com/go-openapi/analysis
-# github.com/go-openapi/errors v0.0.0-20180515155515-b2b2befaf267
+github.com/go-openapi/analysis/internal
+# github.com/go-openapi/errors v0.19.3
 github.com/go-openapi/errors
-# github.com/go-openapi/jsonpointer v0.0.0-20180322222829-3a0015ad55fa
+# github.com/go-openapi/jsonpointer v0.19.3
 github.com/go-openapi/jsonpointer
-# github.com/go-openapi/jsonreference v0.0.0-20180322222742-3fb327e6747d
+# github.com/go-openapi/jsonreference v0.19.3
 github.com/go-openapi/jsonreference
-# github.com/go-openapi/loads v0.0.0-20171207192234-2a2b323bab96
+# github.com/go-openapi/loads v0.19.5
 github.com/go-openapi/loads
-# github.com/go-openapi/runtime v0.0.0-20180509184547-c0cae94704c7
-github.com/go-openapi/runtime/logger
+# github.com/go-openapi/runtime v0.19.11
 github.com/go-openapi/runtime
 github.com/go-openapi/runtime/client
+github.com/go-openapi/runtime/logger
 github.com/go-openapi/runtime/middleware
 github.com/go-openapi/runtime/middleware/denco
 github.com/go-openapi/runtime/middleware/header
 github.com/go-openapi/runtime/middleware/untyped
 github.com/go-openapi/runtime/security
-# github.com/go-openapi/spec v0.0.0-20180415031709-bcff419492ee
+# github.com/go-openapi/spec v0.19.6
 github.com/go-openapi/spec
-# github.com/go-openapi/strfmt v0.0.0-20180407011102-481808443b00
+# github.com/go-openapi/strfmt v0.19.4
 github.com/go-openapi/strfmt
-# github.com/go-openapi/swag v0.0.0-20180405201759-811b1089cde9
+# github.com/go-openapi/swag v0.19.7
 github.com/go-openapi/swag
-# github.com/go-openapi/validate v0.0.0-20180502213133-9286f6d0e5c1
+# github.com/go-openapi/validate v0.19.6
 github.com/go-openapi/validate
+# github.com/go-stack/stack v1.8.0
+github.com/go-stack/stack
 # github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce
 github.com/hashicorp/hcl
-github.com/hashicorp/hcl/hcl/printer
 github.com/hashicorp/hcl/hcl/ast
 github.com/hashicorp/hcl/hcl/parser
-github.com/hashicorp/hcl/hcl/token
-github.com/hashicorp/hcl/json/parser
+github.com/hashicorp/hcl/hcl/printer
 github.com/hashicorp/hcl/hcl/scanner
 github.com/hashicorp/hcl/hcl/strconv
+github.com/hashicorp/hcl/hcl/token
+github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
 # github.com/jmoiron/jsonq v0.0.0-20150511023944-e874b168d07e
@@ -73,22 +76,22 @@ github.com/jmoiron/jsonq
 github.com/juju/errgo/errors
 # github.com/magiconair/properties v1.7.6
 github.com/magiconair/properties
-# github.com/mailru/easyjson v0.0.0-20180323154445-8b799c424f57
+# github.com/mailru/easyjson v0.7.1
+github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
-github.com/mailru/easyjson/buffer
 # github.com/mattn/go-colorable v0.0.9
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.3
 github.com/mattn/go-isatty
-# github.com/mitchellh/go-homedir v0.0.0-20180523094522-3864e76763d9
+# github.com/mitchellh/go-homedir v1.1.0
 github.com/mitchellh/go-homedir
-# github.com/mitchellh/mapstructure v0.0.0-20180511142126-bb74f1db0675
+# github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
-# github.com/oracle/oci-go-sdk v1.5.0
+# github.com/oracle/oci-go-sdk v15.8.0+incompatible
 github.com/oracle/oci-go-sdk/common
 github.com/oracle/oci-go-sdk/common/auth
-# github.com/pelletier/go-toml v1.1.0
+# github.com/pelletier/go-toml v1.4.0
 github.com/pelletier/go-toml
 # github.com/spf13/afero v1.1.0
 github.com/spf13/afero
@@ -97,7 +100,7 @@ github.com/spf13/afero/mem
 github.com/spf13/cast
 # github.com/spf13/jwalterweatherman v0.0.0-20180109140146-7c0cea34c8ec
 github.com/spf13/jwalterweatherman
-# github.com/spf13/pflag v1.0.0
+# github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
 # github.com/spf13/viper v1.0.2
 github.com/spf13/viper
@@ -109,23 +112,27 @@ github.com/xeipuuv/gojsonpointer
 github.com/xeipuuv/gojsonreference
 # github.com/xeipuuv/gojsonschema v0.0.0-20180618132009-1d523034197f
 github.com/xeipuuv/gojsonschema
-# golang.org/x/crypto v0.0.0-20180527072434-ab813273cd59
+# go.mongodb.org/mongo-driver v1.3.1
+go.mongodb.org/mongo-driver/bson
+go.mongodb.org/mongo-driver/bson/bsoncodec
+go.mongodb.org/mongo-driver/bson/bsonoptions
+go.mongodb.org/mongo-driver/bson/bsonrw
+go.mongodb.org/mongo-driver/bson/bsontype
+go.mongodb.org/mongo-driver/bson/primitive
+go.mongodb.org/mongo-driver/x/bsonx/bsoncore
+# golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20180524181706-dfa909b99c79
+# golang.org/x/net v0.0.0-20200301022130-244492dfa37a
 golang.org/x/net/context
-golang.org/x/net/context/ctxhttp
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20180525142821-c11f84a56e43
-golang.org/x/sys/windows
+# golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.0
+golang.org/x/sys/windows
+# golang.org/x/text v0.3.2
+golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
+golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-golang.org/x/text/secure/bidirule
-golang.org/x/text/unicode/bidi
-# gopkg.in/mgo.v2 v2.0.0-20160818020120-3f83fa500528
-gopkg.in/mgo.v2/bson
-gopkg.in/mgo.v2/internal/json
-# gopkg.in/yaml.v2 v2.2.1
+# gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2

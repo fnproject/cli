@@ -44,6 +44,8 @@ func (r *referenceAnalysis) addItemsRef(key string, items *spec.Items, location 
 	r.items["#"+key] = items.Ref
 	r.addRef(key, items.Ref)
 	if location == "header" {
+		// NOTE: in swagger 2.0, headers and parameters (but not body param schemas) are simple schemas
+		// and $ref are not supported here. However it is possible to analyze this.
 		r.headerItems["#"+key] = items.Ref
 	} else {
 		r.parameterItems["#"+key] = items.Ref
@@ -102,43 +104,56 @@ func (p *patternAnalysis) addSchemaPattern(key, pattern string) {
 	p.addPattern(key, pattern)
 }
 
+type enumAnalysis struct {
+	parameters map[string][]interface{}
+	headers    map[string][]interface{}
+	items      map[string][]interface{}
+	schemas    map[string][]interface{}
+	allEnums   map[string][]interface{}
+}
+
+func (p *enumAnalysis) addEnum(key string, enum []interface{}) {
+	p.allEnums["#"+key] = enum
+}
+
+func (p *enumAnalysis) addParameterEnum(key string, enum []interface{}) {
+	p.parameters["#"+key] = enum
+	p.addEnum(key, enum)
+}
+
+func (p *enumAnalysis) addHeaderEnum(key string, enum []interface{}) {
+	p.headers["#"+key] = enum
+	p.addEnum(key, enum)
+}
+
+func (p *enumAnalysis) addItemsEnum(key string, enum []interface{}) {
+	p.items["#"+key] = enum
+	p.addEnum(key, enum)
+}
+
+func (p *enumAnalysis) addSchemaEnum(key string, enum []interface{}) {
+	p.schemas["#"+key] = enum
+	p.addEnum(key, enum)
+}
+
 // New takes a swagger spec object and returns an analyzed spec document.
 // The analyzed document contains a number of indices that make it easier to
 // reason about semantics of a swagger specification for use in code generation
 // or validation etc.
 func New(doc *spec.Swagger) *Spec {
 	a := &Spec{
-		spec:        doc,
-		consumes:    make(map[string]struct{}, 150),
-		produces:    make(map[string]struct{}, 150),
-		authSchemes: make(map[string]struct{}, 150),
-		operations:  make(map[string]map[string]*spec.Operation, 150),
-		allSchemas:  make(map[string]SchemaRef, 150),
-		allOfs:      make(map[string]SchemaRef, 150),
-		references: referenceAnalysis{
-			schemas:        make(map[string]spec.Ref, 150),
-			pathItems:      make(map[string]spec.Ref, 150),
-			responses:      make(map[string]spec.Ref, 150),
-			parameters:     make(map[string]spec.Ref, 150),
-			items:          make(map[string]spec.Ref, 150),
-			headerItems:    make(map[string]spec.Ref, 150),
-			parameterItems: make(map[string]spec.Ref, 150),
-			allRefs:        make(map[string]spec.Ref, 150),
-		},
-		patterns: patternAnalysis{
-			parameters:  make(map[string]string, 150),
-			headers:     make(map[string]string, 150),
-			items:       make(map[string]string, 150),
-			schemas:     make(map[string]string, 150),
-			allPatterns: make(map[string]string, 150),
-		},
+		spec:       doc,
+		references: referenceAnalysis{},
+		patterns:   patternAnalysis{},
+		enums:      enumAnalysis{},
 	}
+	a.reset()
 	a.initialize()
 	return a
 }
 
-// Spec takes a swagger spec object and turns it into a registry
-// with a bunch of utility methods to act on the information in the spec
+// Spec is an analyzed specification object. It takes a swagger spec object and turns it into a registry
+// with a bunch of utility methods to act on the information in the spec.
 type Spec struct {
 	spec        *spec.Swagger
 	consumes    map[string]struct{}
@@ -147,6 +162,7 @@ type Spec struct {
 	operations  map[string]map[string]*spec.Operation
 	references  referenceAnalysis
 	patterns    patternAnalysis
+	enums       enumAnalysis
 	allSchemas  map[string]SchemaRef
 	allOfs      map[string]SchemaRef
 }
@@ -171,6 +187,11 @@ func (s *Spec) reset() {
 	s.patterns.items = make(map[string]string, 150)
 	s.patterns.schemas = make(map[string]string, 150)
 	s.patterns.allPatterns = make(map[string]string, 150)
+	s.enums.parameters = make(map[string][]interface{}, 150)
+	s.enums.headers = make(map[string][]interface{}, 150)
+	s.enums.items = make(map[string][]interface{}, 150)
+	s.enums.schemas = make(map[string][]interface{}, 150)
+	s.enums.allEnums = make(map[string][]interface{}, 150)
 }
 
 func (s *Spec) reload() {
@@ -200,10 +221,13 @@ func (s *Spec) initialize() {
 			s.analyzeItems("items", parameter.Items, refPref, "parameter")
 		}
 		if parameter.In == "body" && parameter.Schema != nil {
-			s.analyzeSchema("schema", *parameter.Schema, refPref)
+			s.analyzeSchema("schema", parameter.Schema, refPref)
 		}
 		if parameter.Pattern != "" {
 			s.patterns.addParameterPattern(refPref, parameter.Pattern)
+		}
+		if len(parameter.Enum) > 0 {
+			s.enums.addParameterEnum(refPref, parameter.Enum)
 		}
 	}
 
@@ -217,14 +241,18 @@ func (s *Spec) initialize() {
 			if v.Pattern != "" {
 				s.patterns.addHeaderPattern(hRefPref, v.Pattern)
 			}
+			if len(v.Enum) > 0 {
+				s.enums.addHeaderEnum(hRefPref, v.Enum)
+			}
 		}
 		if response.Schema != nil {
-			s.analyzeSchema("schema", *response.Schema, refPref)
+			s.analyzeSchema("schema", response.Schema, refPref)
 		}
 	}
 
-	for name, schema := range s.spec.Definitions {
-		s.analyzeSchema(name, schema, "/definitions")
+	for name := range s.spec.Definitions {
+		schema := s.spec.Definitions[name]
+		s.analyzeSchema(name, &schema, "/definitions")
 	}
 	// TODO: after analyzing all things and flattening schemas etc
 	// resolve all the collected references to their final representations
@@ -233,6 +261,7 @@ func (s *Spec) initialize() {
 
 func (s *Spec) analyzeOperations(path string, pi *spec.PathItem) {
 	// TODO: resolve refs here?
+	// Currently, operations declared via pathItem $ref are known only after expansion
 	op := pi
 	if pi.Ref.String() != "" {
 		key := slashpath.Join("/paths", jsonpointer.Escape(path))
@@ -253,11 +282,14 @@ func (s *Spec) analyzeOperations(path string, pi *spec.PathItem) {
 		if param.Pattern != "" {
 			s.patterns.addParameterPattern(refPref, param.Pattern)
 		}
+		if len(param.Enum) > 0 {
+			s.enums.addParameterEnum(refPref, param.Enum)
+		}
 		if param.Items != nil {
 			s.analyzeItems("items", param.Items, refPref, "parameter")
 		}
 		if param.Schema != nil {
-			s.analyzeSchema("schema", *param.Schema, refPref)
+			s.analyzeSchema("schema", param.Schema, refPref)
 		}
 	}
 }
@@ -273,6 +305,9 @@ func (s *Spec) analyzeItems(name string, items *spec.Items, prefix, location str
 	}
 	if items.Pattern != "" {
 		s.patterns.addItemsPattern(refPref, items.Pattern)
+	}
+	if len(items.Enum) > 0 {
+		s.enums.addItemsEnum(refPref, items.Enum)
 	}
 }
 
@@ -305,9 +340,12 @@ func (s *Spec) analyzeOperation(method, path string, op *spec.Operation) {
 		if param.Pattern != "" {
 			s.patterns.addParameterPattern(refPref, param.Pattern)
 		}
+		if len(param.Enum) > 0 {
+			s.enums.addParameterEnum(refPref, param.Enum)
+		}
 		s.analyzeItems("items", param.Items, refPref, "parameter")
 		if param.In == "body" && param.Schema != nil {
-			s.analyzeSchema("schema", *param.Schema, refPref)
+			s.analyzeSchema("schema", param.Schema, refPref)
 		}
 	}
 	if op.Responses != nil {
@@ -324,7 +362,7 @@ func (s *Spec) analyzeOperation(method, path string, op *spec.Operation) {
 				}
 			}
 			if op.Responses.Default.Schema != nil {
-				s.analyzeSchema("schema", *op.Responses.Default.Schema, refPref)
+				s.analyzeSchema("schema", op.Responses.Default.Schema, refPref)
 			}
 		}
 		for k, res := range op.Responses.StatusCodeResponses {
@@ -338,19 +376,22 @@ func (s *Spec) analyzeOperation(method, path string, op *spec.Operation) {
 				if v.Pattern != "" {
 					s.patterns.addHeaderPattern(hRefPref, v.Pattern)
 				}
+				if len(v.Enum) > 0 {
+					s.enums.addHeaderEnum(hRefPref, v.Enum)
+				}
 			}
 			if res.Schema != nil {
-				s.analyzeSchema("schema", *res.Schema, refPref)
+				s.analyzeSchema("schema", res.Schema, refPref)
 			}
 		}
 	}
 }
 
-func (s *Spec) analyzeSchema(name string, schema spec.Schema, prefix string) {
+func (s *Spec) analyzeSchema(name string, schema *spec.Schema, prefix string) {
 	refURI := slashpath.Join(prefix, jsonpointer.Escape(name))
 	schRef := SchemaRef{
 		Name:     name,
-		Schema:   &schema,
+		Schema:   schema,
 		Ref:      spec.MustCreateRef("#" + refURI),
 		TopLevel: prefix == "/definitions",
 	}
@@ -363,42 +404,62 @@ func (s *Spec) analyzeSchema(name string, schema spec.Schema, prefix string) {
 	if schema.Pattern != "" {
 		s.patterns.addSchemaPattern(refURI, schema.Pattern)
 	}
+	if len(schema.Enum) > 0 {
+		s.enums.addSchemaEnum(refURI, schema.Enum)
+	}
 
 	for k, v := range schema.Definitions {
-		s.analyzeSchema(k, v, slashpath.Join(refURI, "definitions"))
+		v := v
+		s.analyzeSchema(k, &v, slashpath.Join(refURI, "definitions"))
 	}
 	for k, v := range schema.Properties {
-		s.analyzeSchema(k, v, slashpath.Join(refURI, "properties"))
+		v := v
+		s.analyzeSchema(k, &v, slashpath.Join(refURI, "properties"))
 	}
 	for k, v := range schema.PatternProperties {
-		s.analyzeSchema(k, v, slashpath.Join(refURI, "patternProperties"))
+		v := v
+		// NOTE: swagger 2.0 does not support PatternProperties.
+		// However it is possible to analyze this in a schema
+		s.analyzeSchema(k, &v, slashpath.Join(refURI, "patternProperties"))
 	}
-	for i, v := range schema.AllOf {
+	for i := range schema.AllOf {
+		v := &schema.AllOf[i]
 		s.analyzeSchema(strconv.Itoa(i), v, slashpath.Join(refURI, "allOf"))
 	}
 	if len(schema.AllOf) > 0 {
 		s.allOfs["#"+refURI] = schRef
 	}
-	for i, v := range schema.AnyOf {
+	for i := range schema.AnyOf {
+		v := &schema.AnyOf[i]
+		// NOTE: swagger 2.0 does not support anyOf constructs.
+		// However it is possible to analyze this in a schema
 		s.analyzeSchema(strconv.Itoa(i), v, slashpath.Join(refURI, "anyOf"))
 	}
-	for i, v := range schema.OneOf {
+	for i := range schema.OneOf {
+		v := &schema.OneOf[i]
+		// NOTE: swagger 2.0 does not support oneOf constructs.
+		// However it is possible to analyze this in a schema
 		s.analyzeSchema(strconv.Itoa(i), v, slashpath.Join(refURI, "oneOf"))
 	}
 	if schema.Not != nil {
-		s.analyzeSchema("not", *schema.Not, refURI)
+		// NOTE: swagger 2.0 does not support "not" constructs.
+		// However it is possible to analyze this in a schema
+		s.analyzeSchema("not", schema.Not, refURI)
 	}
 	if schema.AdditionalProperties != nil && schema.AdditionalProperties.Schema != nil {
-		s.analyzeSchema("additionalProperties", *schema.AdditionalProperties.Schema, refURI)
+		s.analyzeSchema("additionalProperties", schema.AdditionalProperties.Schema, refURI)
 	}
 	if schema.AdditionalItems != nil && schema.AdditionalItems.Schema != nil {
-		s.analyzeSchema("additionalItems", *schema.AdditionalItems.Schema, refURI)
+		// NOTE: swagger 2.0 does not support AdditionalItems.
+		// However it is possible to analyze this in a schema
+		s.analyzeSchema("additionalItems", schema.AdditionalItems.Schema, refURI)
 	}
 	if schema.Items != nil {
 		if schema.Items.Schema != nil {
-			s.analyzeSchema("items", *schema.Items.Schema, refURI)
+			s.analyzeSchema("items", schema.Items.Schema, refURI)
 		}
-		for i, sch := range schema.Items.Schemas {
+		for i := range schema.Items.Schemas {
+			sch := &schema.Items.Schemas[i]
 			s.analyzeSchema(strconv.Itoa(i), sch, slashpath.Join(refURI, "items"))
 		}
 	}
@@ -465,9 +526,11 @@ func (s *Spec) SecurityDefinitionsFor(operation *spec.Operation) map[string]spec
 	for _, reqs := range requirements {
 		for _, v := range reqs {
 			if v.Name == "" {
+				// optional requirement
 				continue
 			}
 			if _, ok := result[v.Name]; ok {
+				// duplicate requirement
 				continue
 			}
 			if definition, ok := s.spec.SecurityDefinitions[v.Name]; ok {
@@ -520,6 +583,7 @@ func mapKeyFromParam(param *spec.Parameter) string {
 }
 
 func fieldNameFromParam(param *spec.Parameter) string {
+	// TODO: this should be x-go-name
 	if nm, ok := param.Extensions.GetString("go-name"); ok {
 		return nm
 	}
@@ -529,9 +593,12 @@ func fieldNameFromParam(param *spec.Parameter) string {
 // ErrorOnParamFunc is a callback function to be invoked
 // whenever an error is encountered while resolving references
 // on parameters.
+//
 // This function takes as input the spec.Parameter which triggered the
 // error and the error itself.
+//
 // If the callback function returns false, the calling function should bail.
+//
 // If it returns true, the calling function should continue evaluating parameters.
 // A nil ErrorOnParamFunc must be evaluated as equivalent to panic().
 type ErrorOnParamFunc func(spec.Parameter, error) bool
@@ -569,6 +636,7 @@ func (s *Spec) paramsAsMap(parameters []spec.Parameter, res map[string]spec.Para
 }
 
 // ParametersFor the specified operation id.
+//
 // Assumes parameters properly resolve references if any and that
 // such references actually resolve to a parameter object.
 // Otherwise, panics.
@@ -577,10 +645,12 @@ func (s *Spec) ParametersFor(operationID string) []spec.Parameter {
 }
 
 // SafeParametersFor the specified operation id.
+//
 // Does not assume parameters properly resolve references or that
 // such references actually resolve to a parameter object.
+//
 // Upon error, invoke a ErrorOnParamFunc callback with the erroneous
-// parameter. If the callback is set to nil, panics upon errors.
+// parameters. If the callback is set to nil, panics upon errors.
 func (s *Spec) SafeParametersFor(operationID string, callmeOnError ErrorOnParamFunc) []spec.Parameter {
 	gatherParams := func(pi *spec.PathItem, op *spec.Operation) []spec.Parameter {
 		bag := make(map[string]spec.Parameter)
@@ -621,6 +691,7 @@ func (s *Spec) SafeParametersFor(operationID string, callmeOnError ErrorOnParamF
 
 // ParamsFor the specified method and path. Aggregates them with the defaults etc, so it's all the params that
 // apply for the method and path.
+//
 // Assumes parameters properly resolve references if any and that
 // such references actually resolve to a parameter object.
 // Otherwise, panics.
@@ -629,11 +700,13 @@ func (s *Spec) ParamsFor(method, path string) map[string]spec.Parameter {
 }
 
 // SafeParamsFor the specified method and path. Aggregates them with the defaults etc, so it's all the params that
-// apply for the method and path
+// apply for the method and path.
+//
 // Does not assume parameters properly resolve references or that
 // such references actually resolve to a parameter object.
+//
 // Upon error, invoke a ErrorOnParamFunc callback with the erroneous
-// parameter. If the callback is set to nil, panics upon errors.
+// parameters. If the callback is set to nil, panics upon errors.
 func (s *Spec) SafeParamsFor(method, path string, callmeOnError ErrorOnParamFunc) map[string]spec.Parameter {
 	res := make(map[string]spec.Parameter)
 	if pi, ok := s.spec.Paths.Paths[path]; ok {
@@ -793,7 +866,10 @@ func (s *Spec) AllPathItemReferences() (result []string) {
 	return
 }
 
-// AllItemsReferences returns the references for all the items
+// AllItemsReferences returns the references for all the items in simple schemas (parameters or headers).
+//
+// NOTE: since Swagger 2.0 forbids $ref in simple params, this should always yield an empty slice for a valid
+// Swagger 2.0 spec.
 func (s *Spec) AllItemsReferences() (result []string) {
 	for _, v := range s.references.items {
 		result = append(result, v.String())
@@ -801,7 +877,7 @@ func (s *Spec) AllItemsReferences() (result []string) {
 	return
 }
 
-// AllReferences returns all the references found in the document
+// AllReferences returns all the references found in the document, with possible duplicates
 func (s *Spec) AllReferences() (result []string) {
 	for _, v := range s.references.allRefs {
 		result = append(result, v.String())
@@ -827,6 +903,14 @@ func (s *Spec) AllRefs() (result []spec.Ref) {
 
 func cloneStringMap(source map[string]string) map[string]string {
 	res := make(map[string]string, len(source))
+	for k, v := range source {
+		res[k] = v
+	}
+	return res
+}
+
+func cloneEnumMap(source map[string][]interface{}) map[string][]interface{} {
+	res := make(map[string][]interface{}, len(source))
 	for k, v := range source {
 		res[k] = v
 	}
@@ -861,4 +945,34 @@ func (s *Spec) SchemaPatterns() map[string]string {
 // the map is cloned to avoid accidental changes
 func (s *Spec) AllPatterns() map[string]string {
 	return cloneStringMap(s.patterns.allPatterns)
+}
+
+// ParameterEnums returns all the enums found in parameters
+// the map is cloned to avoid accidental changes
+func (s *Spec) ParameterEnums() map[string][]interface{} {
+	return cloneEnumMap(s.enums.parameters)
+}
+
+// HeaderEnums returns all the enums found in response headers
+// the map is cloned to avoid accidental changes
+func (s *Spec) HeaderEnums() map[string][]interface{} {
+	return cloneEnumMap(s.enums.headers)
+}
+
+// ItemsEnums returns all the enums found in simple array items
+// the map is cloned to avoid accidental changes
+func (s *Spec) ItemsEnums() map[string][]interface{} {
+	return cloneEnumMap(s.enums.items)
+}
+
+// SchemaEnums returns all the enums found in schemas
+// the map is cloned to avoid accidental changes
+func (s *Spec) SchemaEnums() map[string][]interface{} {
+	return cloneEnumMap(s.enums.schemas)
+}
+
+// AllEnums returns all the enums found in the spec
+// the map is cloned to avoid accidental changes
+func (s *Spec) AllEnums() map[string][]interface{} {
+	return cloneEnumMap(s.enums.allEnums)
 }

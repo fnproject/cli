@@ -2,11 +2,12 @@ package config
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-	"io/ioutil"
 
+	"github.com/fnproject/fn_go"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
@@ -30,13 +31,41 @@ const (
 
 	EnvFnRegistry = "registry"
 	EnvFnContext  = "context"
+
+	OCI_CLI_AUTH_ENV_VAR            = "OCI_CLI_AUTH"
+	OCI_CLI_AUTH_INSTANCE_PRINCIPAL = "instance_principal"
+	OCI_CLI_AUTH_INSTANCE_OBO_USER  = "instance_obo_user"
 )
 
-var defaultRootConfigContents = &ContextMap{CurrentContext: "", CurrentCliVersion: ""}
-var DefaultContextConfigContents = &ContextMap{
-	ContextProvider:      DefaultProvider,
-	provider.CfgFnAPIURL: defaultLocalAPIURL,
-	EnvFnRegistry:        "",
+var defaultRootConfigContents = &ContextMap{CurrentContext: "default", CurrentCliVersion: Version}
+
+func DefaultContextConfigContents() (contextMap *ContextMap) {
+	//Read OCI_CLI_AUTH environment variable to determine what oracle provider to use
+	ociCliAuth := os.Getenv(OCI_CLI_AUTH_ENV_VAR)
+	//For the oracle cloudshell and instance principal providers,
+	//the default api url is determined by the provider by using the configured region in the environment
+
+	switch ociCliAuth {
+	case OCI_CLI_AUTH_INSTANCE_OBO_USER:
+		contextMap = &ContextMap{
+			ContextProvider: fn_go.OracleCSProvider,
+			EnvFnRegistry:   "",
+		}
+	case OCI_CLI_AUTH_INSTANCE_PRINCIPAL:
+		contextMap = &ContextMap{
+			ContextProvider: fn_go.OracleIPProvider,
+			EnvFnRegistry:   "",
+		}
+	default:
+		contextMap = &ContextMap{
+			ContextProvider:      fn_go.DefaultProvider,
+			provider.CfgFnAPIURL: defaultLocalAPIURL,
+			EnvFnRegistry:        "",
+		}
+		viper.SetDefault(provider.CfgFnAPIURL, defaultLocalAPIURL)
+	}
+
+	return contextMap
 }
 
 type ContextMap map[string]string
@@ -48,8 +77,6 @@ func Init() error {
 
 	replacer := strings.NewReplacer("-", "_")
 	viper.SetEnvKeyReplacer(replacer)
-
-	viper.SetDefault(provider.CfgFnAPIURL, defaultLocalAPIURL)
 
 	return ensureConfiguration()
 }
@@ -92,7 +119,7 @@ func ensureConfiguration() error {
 			return fmt.Errorf("error creating default.yaml context file %v", err)
 		}
 
-		err = WriteYamlFile(defaultContextPath, DefaultContextConfigContents)
+		err = WriteYamlFile(defaultContextPath, DefaultContextConfigContents())
 		if err != nil {
 			return err
 		}
@@ -204,7 +231,7 @@ func atomicwrite(file string, c *ContextMap) (err error) {
 
 	// replace file with the tempfile
 	err = os.Rename(f.Name(), file)
-	if err !=nil {
+	if err != nil {
 		return fmt.Errorf("error replacing file with tempfile")
 	}
 	return nil
