@@ -6,8 +6,6 @@ github.com/PuerkitoBio/urlesc
 github.com/asaskevich/govalidator
 # github.com/coreos/go-semver v0.3.0
 github.com/coreos/go-semver/semver
-# github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d
-github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
 github.com/fatih/color
 # github.com/fnproject/fn_go v0.5.2
@@ -95,10 +93,6 @@ github.com/oracle/oci-go-sdk/common
 github.com/oracle/oci-go-sdk/common/auth
 # github.com/pelletier/go-toml v1.4.0
 github.com/pelletier/go-toml
-# github.com/russross/blackfriday/v2 v2.0.1
-github.com/russross/blackfriday/v2
-# github.com/shurcooL/sanitized_anchor_name v1.0.0
-github.com/shurcooL/sanitized_anchor_name
 # github.com/spf13/afero v1.1.2
 github.com/spf13/afero
 github.com/spf13/afero/mem
@@ -112,7 +106,7 @@ github.com/spf13/pflag
 github.com/spf13/viper
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
-# github.com/urfave/cli v1.22.3
+# github.com/urfave/cli v1.20.0
 github.com/urfave/cli
 # github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 github.com/xeipuuv/gojsonpointer

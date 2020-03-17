@@ -1,4 +1,2 @@
 *.coverprofile
 node_modules/
-vendor
-.idea
