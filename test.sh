@@ -18,7 +18,7 @@ export fn="${CUR_DIR}/fn"
 
 
 #on CI these can take a while
-go test -v $(go list ./... |  grep -pv "^github.com/fnproject/cli/test$")
+go test -v $(go list ./... |  grep -v "^github.com/fnproject/cli/test$")
 
 
 # start fn
