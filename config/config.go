@@ -9,6 +9,7 @@ import (
 
 	"github.com/fnproject/fn_go"
 	"github.com/fnproject/fn_go/provider"
+	"github.com/fnproject/fn_go/provider/oracle"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
@@ -16,12 +17,13 @@ import (
 const (
 	rootConfigPathName = ".fn"
 
-	contextsPathName       = "contexts"
-	configName             = "config"
-	contextConfigFileName  = "config.yaml"
-	defaultContextFileName = "default.yaml"
-	defaultLocalAPIURL     = "http://localhost:8080"
-	DefaultProvider        = "default"
+	contextsPathName                       = "contexts"
+	configName                             = "config"
+	contextConfigFileName                  = "config.yaml"
+	defaultContextFileName                 = "default.yaml"
+	defaultOracleRegionContextFileNameTmpl = "%s.yaml"
+	defaultLocalAPIURL                     = "http://localhost:8080"
+	DefaultProvider                        = "default"
 
 	ReadWritePerms = os.FileMode(0755)
 
@@ -38,6 +40,40 @@ const (
 )
 
 var defaultRootConfigContents = &ContextMap{CurrentContext: "default", CurrentCliVersion: Version}
+
+type ViperConfigSource struct {
+}
+
+func (*ViperConfigSource) GetString(key string) string {
+	return viper.GetString(key)
+}
+
+func (*ViperConfigSource) GetBool(key string) bool {
+	return viper.GetBool(key)
+}
+func (*ViperConfigSource) IsSet(key string) bool {
+	return viper.IsSet(key)
+}
+
+func DefaultOracleCSRegionContextContents() (contextMap *ContextMap, err error) {
+
+	region, tenancy, err := oracle.GetOCIRegionTenancy()
+
+	if err != nil {
+		return nil, err
+	}
+
+	apiUrl := fmt.Sprintf(oracle.FunctionsAPIURLTmpl, region)
+
+	contextMap = &ContextMap{
+		ContextProvider:         fn_go.OracleCSProvider,
+		provider.CfgFnAPIURL:    apiUrl,
+		EnvFnRegistry:           "",
+		oracle.CfgCompartmentID: tenancy,
+	}
+
+	return contextMap, nil
+}
 
 func DefaultContextConfigContents() (contextMap *ContextMap) {
 	//Read OCI_CLI_AUTH environment variable to determine what oracle provider to use
@@ -86,6 +122,8 @@ func Init() error {
 func ensureConfiguration() error {
 	home := GetHomeDir()
 
+	rootConfigContents := defaultRootConfigContents
+
 	rootConfigPath := filepath.Join(home, rootConfigPathName)
 	if _, err := os.Stat(rootConfigPath); os.IsNotExist(err) {
 		if err = os.Mkdir(rootConfigPath, ReadWritePerms); err != nil {
@@ -93,18 +131,6 @@ func ensureConfiguration() error {
 		}
 	}
 
-	contextConfigFilePath := filepath.Join(rootConfigPath, contextConfigFileName)
-	if _, err := os.Stat(contextConfigFilePath); os.IsNotExist(err) {
-		file, err := os.Create(contextConfigFilePath)
-		if err != nil {
-			return fmt.Errorf("error creating config.yaml file %v", err)
-		}
-
-		err = WriteYamlFile(file.Name(), defaultRootConfigContents)
-		if err != nil {
-			return err
-		}
-	}
 	contextsPath := filepath.Join(rootConfigPath, contextsPathName)
 	if _, err := os.Stat(contextsPath); os.IsNotExist(err) {
 		if err = os.Mkdir(contextsPath, ReadWritePerms); err != nil {
@@ -120,6 +146,54 @@ func ensureConfiguration() error {
 		}
 
 		err = WriteYamlFile(defaultContextPath, DefaultContextConfigContents())
+		if err != nil {
+			return err
+		}
+	}
+
+	if os.Getenv(OCI_CLI_AUTH_ENV_VAR) == OCI_CLI_AUTH_INSTANCE_OBO_USER {
+		region, tenancy, err := oracle.GetOCIRegionTenancy()
+
+		if err != nil {
+			return err
+		}
+
+		defaultOracleRegionContextFileName := fmt.Sprintf(defaultOracleRegionContextFileNameTmpl, region)
+		defaultOracleRegionContextPath := filepath.Join(contextsPath, defaultOracleRegionContextFileName)
+		rootConfigContents = &ContextMap{CurrentContext: region, CurrentCliVersion: Version}
+
+		if _, err := os.Stat(defaultOracleRegionContextPath); os.IsNotExist(err) {
+			_, err = os.Create(defaultOracleRegionContextPath)
+
+			if err != nil {
+				return fmt.Errorf("error creating %s context file %v", defaultOracleRegionContextFileName, err)
+			}
+
+			apiUrl := fmt.Sprintf(oracle.FunctionsAPIURLTmpl, region)
+			contextMap := &ContextMap{
+				ContextProvider:         fn_go.OracleCSProvider,
+				provider.CfgFnAPIURL:    apiUrl,
+				EnvFnRegistry:           "",
+				oracle.CfgCompartmentID: tenancy,
+			}
+
+			err = WriteYamlFile(defaultOracleRegionContextPath, contextMap)
+
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
+	contextConfigFilePath := filepath.Join(rootConfigPath, contextConfigFileName)
+	if _, err := os.Stat(contextConfigFilePath); os.IsNotExist(err) {
+		file, err := os.Create(contextConfigFilePath)
+		if err != nil {
+			return fmt.Errorf("error creating config.yaml file %v", err)
+		}
+
+		err = WriteYamlFile(file.Name(), rootConfigContents)
 		if err != nil {
 			return err
 		}
