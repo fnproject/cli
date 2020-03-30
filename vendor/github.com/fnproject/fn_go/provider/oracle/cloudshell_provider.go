@@ -107,6 +107,24 @@ func NewCSProvider(configSource provider.ConfigSource, passphraseSource provider
 	}, nil
 }
 
+func GetOCIRegionTenancy() (region string, tenancy string, err error) {
+	var csConfig *CloudShellConfig
+	oraProfile := os.Getenv(OCI_CLI_PROFILE_ENV_VAR)
+	if oraProfile != "" {
+		csConfig, err = loadCSOracleConfig(oraProfile, &provider.TerminalPassPhraseSource{})
+		if err != nil {
+			return "", "", err
+		}
+		if csConfig.region == "" {
+			csConfig.region = oraProfile
+		}
+	} else {
+		csConfig = &CloudShellConfig{tenancyID: "", region: "", delegationToken: ""}
+	}
+
+	return csConfig.region, csConfig.tenancyID, nil
+}
+
 func loadCSOracleConfig(profileName string, passphrase provider.PassPhraseSource) (*CloudShellConfig, error) {
 	var err error
 	var cf oci.ConfigurationProvider
@@ -117,6 +135,11 @@ func loadCSOracleConfig(profileName string, passphrase provider.PassPhraseSource
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// if oci config file does not exist, proceed and use environment variables.
+	if os.IsNotExist(err) {
+		return &CloudShellConfig{tenancyID: "", region: "", delegationToken: ""}, nil
 	}
 
 	region, err := cf.Region()
