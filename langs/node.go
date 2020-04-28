@@ -117,6 +117,7 @@ func (h *NodeLangHelper) DockerfileCopyCmds() []string {
 	if exists("package.json") && !exists("node_modules") {
 		r = append(r, "COPY --from=build-stage /function/node_modules/ /function/node_modules/")
 	}
+	r = append(r, "RUN chmod -R o+r /function")
 
 	return r
 }
