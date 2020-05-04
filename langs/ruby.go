@@ -53,7 +53,8 @@ func (h *RubyLangHelper) DockerfileBuildCmds() []string {
 func (h *RubyLangHelper) DockerfileCopyCmds() []string {
 	return []string{
 		"COPY --from=build-stage /usr/lib/ruby/gems/ /usr/lib/ruby/gems/", // skip this if no Gemfile?  Does it matter?
-		"ADD . /function/",
+		"COPY . /function/",
+		"RUN chmod -R o+r /function",
 	}
 }
 

@@ -122,6 +122,7 @@ func (h *PythonLangHelper) DockerfileCopyCmds() []string {
 	return []string{
 		"COPY --from=build-stage /python /python",
 		"COPY --from=build-stage /function /function",
+		"RUN chmod -R o+r /python /function",
 		"ENV PYTHONPATH=/function:/python",
 	}
 }
