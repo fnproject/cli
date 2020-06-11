@@ -88,7 +88,8 @@ github.com/mattn/go-isatty
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
-# github.com/oracle/oci-go-sdk v15.8.0+incompatible
+# github.com/oracle/oci-go-sdk v20.0.0+incompatible
+github.com/oracle/oci-go-sdk/functions
 github.com/oracle/oci-go-sdk/common
 github.com/oracle/oci-go-sdk/common/auth
 # github.com/pelletier/go-toml v1.4.0
