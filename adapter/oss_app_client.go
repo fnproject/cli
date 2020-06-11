@@ -180,6 +180,6 @@ func convertV2AppsToAdapterApps(v2Apps []*modelsv2.App) []*App {
 }
 
 func convertV2AppToAdapterApp(v2App *modelsv2.App) *App {
-	resApps := &App{Name: v2App.Name, ID: v2App.ID}
-	return resApps
+	resApps := App{Name: v2App.Name, ID: v2App.ID, Annotations: v2App.Annotations, Config: v2App.Config, SyslogURL: v2App.SyslogURL}
+	return &resApps
 }

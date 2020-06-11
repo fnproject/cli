@@ -128,11 +128,11 @@ func Inspect() cli.Command {
 		Category:    "MANAGEMENT COMMAND",
 		Aliases:     []string{"apps", "a"},
 		Before: func(c *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClientv2()
+			a.clientAdapter = providerAdapter.GetClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name> [property.[key]]",

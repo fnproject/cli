@@ -69,45 +69,17 @@ func (a *appsCmd) list(c *cli.Context) error {
 	return printApps(c, resApps)
 }
 
-// getApps returns an array of all apps in the given context and client
-func getApps(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.App, error) {
-	params := &apiapps.ListAppsParams{Context: context.Background()}
-	var resApps []*modelsv2.App
-	for {
-		resp, err := client.Apps.ListApps(params)
-		if err != nil {
-			return nil, err
-		}
-
-		resApps = append(resApps, resp.Payload.Items...)
-
-		n := c.Int64("n")
-
-		howManyMore := n - int64(len(resApps)+len(resp.Payload.Items))
-		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
-			break
-		}
-
-		params.Cursor = &resp.Payload.NextCursor
-	}
-
-	if len(resApps) == 0 {
-		fmt.Fprint(os.Stderr, "No apps found\n")
-		return nil, nil
-	}
-	return resApps, nil
-}
 
 // BashCompleteApps can be called from a BashComplete function
 // to provide app completion suggestions (Does not check if the
 // current context already contains an app name as an argument.
 // This should be checked before calling this)
 func BashCompleteApps(c *cli.Context) {
-	provider, err := client.CurrentProvider()
+	providerAdapter, err := client.CurrentProviderAdapter()
 	if err != nil {
 		return
 	}
-	resp, err := getApps(c, provider.APIClientv2())
+	resp, err := providerAdapter.GetClientAdapter().GetAppsClient().ListApp(c)
 	if err != nil {
 		return
 	}
@@ -241,10 +213,9 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 		return errors.New("Missing app name after the inspect command")
 	}
 
-	appName := c.Args().First()
 	prop := c.Args().Get(1)
 
-	app, err := GetAppByName(a.client, appName)
+	app, err := a.clientAdapter.GetAppsClient().GetApp(c)
 	if err != nil {
 		return err
 	}
@@ -356,6 +327,7 @@ func PutApp(a *fnclient.Fn, appID string, app *modelsv2.App) (*modelsv2.App, err
 }
 
 // GetAppByName looks up an app by name using the given client
+// Used in many other places. To be removed
 func GetAppByName(client *fnclient.Fn, appName string) (*modelsv2.App, error) {
 	appsResp, err := client.Apps.ListApps(&apiapps.ListAppsParams{
 		Context: context.Background(),
