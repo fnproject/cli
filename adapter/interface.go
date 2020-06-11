@@ -1,32 +1,54 @@
+// Package adapter allows this CLI to switch between clients provided by fn_go and oci-go-sdk
+// https://en.wikipedia.org/wiki/Adapter_pattern
 package adapter
 
-import "github.com/urfave/cli"
+import (
+	"fmt"
+	"github.com/urfave/cli"
+)
 
-type Client interface {
-	getFnClient() 		FnClient
-	getAppsClient() 	AppClient
-	getTriggerClient() 	TriggerClient
+type ProviderAdapter interface {
+	GetClientAdapter() ClientAdapter
+}
+
+type ClientAdapter interface {
+	GetFnsClient() FnClient
+	GetAppsClient() AppClient
+	GetTriggersClient() TriggerClient
 }
 
 type FnClient interface {
-	create(c *cli.Context) error
-	update(c *cli.Context) error
-	list(c *cli.Context) error
-	delete(c *cli.Context) error
+	CreateFn(c *cli.Context) error
+	UpdateFn(c *cli.Context) error
+	GetFn(c *cli.Context) error
+	ListFn(c *cli.Context) error
+	DeleteFn(c *cli.Context) error
 }
 
 type AppClient interface {
-	create(c *cli.Context) error
-	get(c *cli.Context) error
-	update(c *cli.Context) error
-	list(c *cli.Context) error
-	delete(c *cli.Context) error
+	CreateApp(c *cli.Context) (*App, error)
+	GetApp(c *cli.Context) (*App, error)
+	UpdateApp(c *cli.Context) error
+	ListApp(c *cli.Context) ([]*App, error)
+	DeleteApp(c *cli.Context) error
 }
 
 type TriggerClient interface {
-
 }
 
-//TODO: InvokeFunction Client
+type App struct {
+	Name string
+	ID   string
+}
 
-//TODO: Version Client
+type Fn struct {
+}
+
+// NameNotFoundError error for app not found when looked up by name
+type NameNotFoundError struct {
+	Name string
+}
+
+func (n NameNotFoundError) Error() string {
+	return fmt.Sprintf("app %s not found", n.Name)
+}

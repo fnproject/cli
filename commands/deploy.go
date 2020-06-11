@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"fmt"
+	"github.com/fnproject/cli/adapter"
 	"os"
 	"path/filepath"
 	"strings"
@@ -160,7 +161,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 
 	// find and create/update app if required
 	app, err := apps.GetAppByName(p.clientV2, appName)
-	if _, ok := err.(apps.NameNotFoundError); ok && p.createApp {
+	if _, ok := err.(adapter.NameNotFoundError); ok && p.createApp {
 		app, err = apps.CreateApp(p.clientV2, &appfApp)
 		if err != nil {
 			return err

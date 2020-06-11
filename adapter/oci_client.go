@@ -1,19 +1,19 @@
 package adapter
 
-type ociClient struct{
-	ociFn 		*ociFnClient
-	ociApp 		*ociAppClient
-	ociTrigger 	*ociTriggerClient
+type OCIClient struct {
+	ociFn      *OCIFnClient
+	ociApp     *OCIAppClient
+	ociTrigger *OCITriggerClient
 }
 
-func (oci *ociClient) getFnClient() FnClient {
+func (oci *OCIClient) GetFnsClient() FnClient {
 	return oci.ociFn
 }
 
-func (oci *ociClient) getAppClient() AppClient {
+func (oci *OCIClient) GetAppsClient() AppClient {
 	return oci.ociApp
 }
 
-func (oci *ociClient) getTriggerClient() TriggerClient {
+func (oci *OCIClient) GetTriggersClient() TriggerClient {
 	return oci.ociTrigger
 }

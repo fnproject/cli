@@ -1,32 +1,35 @@
 package adapter
 
-import "github.com/urfave/cli"
+import (
+	"github.com/oracle/oci-go-sdk/functions"
+	"github.com/urfave/cli"
+)
 
-type ociFnClient struct{
-
+type OCIFnClient struct {
+	client *functions.FunctionsManagementClient
 }
 
-func (a *ociFnClient) create(c *cli.Context) error {
-	//TODO: call OSS client
+func (a *OCIFnClient) CreateFn(c *cli.Context) error {
+	//TODO: call OCI client
 	return nil
 }
 
-func (a *ociFnClient) get(c *cli.Context) error {
-	//TODO: call OSS client
+func (a *OCIFnClient) GetFn(c *cli.Context) error {
+	//TODO: call OCI client
 	return nil
 }
 
-func (a *ociFnClient) update(c *cli.Context) error {
-	//TODO: call OSS client
+func (a *OCIFnClient) UpdateFn(c *cli.Context) error {
+	//TODO: call OCI client
 	return nil
 }
 
-func (a *ociFnClient) delete(c *cli.Context) error {
-	//TODO: call OSS client
+func (a *OCIFnClient) DeleteFn(c *cli.Context) error {
+	//TODO: call OCI client
 	return nil
 }
 
-func (a *ociFnClient) list(c *cli.Context) error {
-	//TODO: call OSS client
+func (a *OCIFnClient) ListFn(c *cli.Context) error {
+	//TODO: call OCI client
 	return nil
 }

@@ -1,5 +1,4 @@
 package adapter
 
-type ociTriggerClient struct{
-
+type OCITriggerClient struct {
 }

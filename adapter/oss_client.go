@@ -1,19 +1,19 @@
 package adapter
 
-type ossClient struct {
-	ossFn 		*ossFnClient
-	ossApp 		*ossAppClient
-	ossTrigger 	*ossTriggerClient
+type OSSClient struct {
+	ossFn      *OSSFnClient
+	ossApp     *OSSAppClient
+	ossTrigger *OSSTriggerClient
 }
 
-func (oss ossClient) getFnClient() FnClient {
+func (oss *OSSClient) GetFnsClient() FnClient {
 	return oss.ossFn
 }
 
-func (oss ossClient) getAppClient() AppClient {
+func (oss *OSSClient) GetAppsClient() AppClient {
 	return oss.ossApp
 }
 
-func (oss ossClient) getTriggerClient() TriggerClient {
+func (oss *OSSClient) GetTriggersClient() TriggerClient {
 	return oss.ossTrigger
 }

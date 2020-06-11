@@ -5,31 +5,32 @@ import (
 	"github.com/urfave/cli"
 )
 
-type ossFnClient struct{
-	client	*oss.Fn
+type OSSFnClient struct {
+	Client *oss.Fn
 }
 
-func (a *ossFnClient) create(c *cli.Context) error {
-	//TODO: call OCI client
+func (a *OSSFnClient) CreateFn(c *cli.Context) error {
+	//TODO: call OSS client
+	// a.client.Fns.CreateFn()
 	return nil
 }
 
-func (a *ossFnClient) get(c *cli.Context) error {
-	//TODO: call OCI client
+func (a *OSSFnClient) GetFn(c *cli.Context) error {
+	//TODO: call OSS client
 	return nil
 }
 
-func (a *ossFnClient) update(c *cli.Context) error {
-	//TODO: call OCI client
+func (a *OSSFnClient) UpdateFn(c *cli.Context) error {
+	//TODO: call OSS client
 	return nil
 }
 
-func (a *ossFnClient) delete(c *cli.Context) error {
-	//TODO: call OCI client
+func (a *OSSFnClient) DeleteFn(c *cli.Context) error {
+	//TODO: call OSS client
 	return nil
 }
 
-func (a *ossFnClient) list(c *cli.Context) error {
-	//TODO: call OCI client
+func (a *OSSFnClient) ListFn(c *cli.Context) error {
+	//TODO: call OSS client
 	return nil
 }

@@ -18,11 +18,11 @@ func Create() cli.Command {
 		Description: "This command creates a new application.\n	Fn supports grouping functions into a set that defines an application (or API), making it easy to organize and deploy.\n	Applications define a namespace to organize functions and can contain configuration values that are shared across all functions in that application.",
 		Aliases: []string{"apps", "a"},
 		Before: func(c *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClientv2()
+			a.clientAdapter = providerAdapter.GetClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name>",
@@ -54,11 +54,11 @@ func List() cli.Command {
 		Description: "This command provides a list of defined applications.",
 		Aliases:     []string{"app", "a"},
 		Before: func(c *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClientv2()
+			a.clientAdapter = providerAdapter.GetClientAdapter()
 			return nil
 		},
 		Action: a.list,
@@ -177,11 +177,11 @@ func Update() cli.Command {
 		Description: "This command updates a created application.",
 		Aliases:     []string{"apps", "a"},
 		Before: func(c *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClientv2()
+			a.clientAdapter = providerAdapter.GetClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name>",

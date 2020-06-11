@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/fnproject/cli/adapter"
 	"os"
 	"text/tabwriter"
 
@@ -22,11 +23,13 @@ import (
 )
 
 type appsCmd struct {
-	provider provider.Provider
-	client   *fnclient.Fn
+	provider        provider.Provider
+	providerAdapter adapter.ProviderAdapter
+	client          *fnclient.Fn
+	clientAdapter   adapter.ClientAdapter
 }
 
-func printApps(c *cli.Context, apps []*modelsv2.App) error {
+func printApps(c *cli.Context, apps []*adapter.App) error {
 	outputFormat := strings.ToLower(c.String("output"))
 	if outputFormat == "json" {
 		var allApps []interface{}
@@ -59,7 +62,7 @@ func printApps(c *cli.Context, apps []*modelsv2.App) error {
 }
 
 func (a *appsCmd) list(c *cli.Context) error {
-	resApps, err := getApps(c, a.client)
+	resApps, err := a.clientAdapter.GetAppsClient().ListApp(c)
 	if err != nil {
 		return err
 	}
@@ -113,31 +116,14 @@ func BashCompleteApps(c *cli.Context) {
 	}
 }
 
-func appWithFlags(c *cli.Context, app *modelsv2.App) {
-	if c.IsSet("syslog-url") {
-		str := c.String("syslog-url")
-		app.SyslogURL = &str
-	}
-	if len(c.StringSlice("config")) > 0 {
-		app.Config = common.ExtractConfig(c.StringSlice("config"))
-	}
-	if len(c.StringSlice("annotation")) > 0 {
-		app.Annotations = common.ExtractAnnotations(c)
-	}
-}
 
 func (a *appsCmd) create(c *cli.Context) error {
-	app := &modelsv2.App{
-		Name: c.Args().Get(0),
-	}
-
-	appWithFlags(c, app)
-
-	_, err := CreateApp(a.client, app)
+	_, err := a.clientAdapter.GetAppsClient().CreateApp(c)
 	return err
 }
 
 // CreateApp creates a new app using the given client
+// This is used in deploy. To be removed
 func CreateApp(a *fnclient.Fn, app *modelsv2.App) (*modelsv2.App, error) {
 	resp, err := a.Apps.CreateApp(&apiapps.CreateAppParams{
 		Context: context.Background(),
@@ -159,20 +145,7 @@ func CreateApp(a *fnclient.Fn, app *modelsv2.App) (*modelsv2.App, error) {
 }
 
 func (a *appsCmd) update(c *cli.Context) error {
-	appName := c.Args().First()
-
-	app, err := GetAppByName(a.client, appName)
-	if err != nil {
-		return err
-	}
-
-	appWithFlags(c, app)
-
-	if _, err = PutApp(a.client, app.ID, app); err != nil {
-		return err
-	}
-
-	fmt.Println("app", appName, "updated")
+	a.clientAdapter.GetAppsClient().UpdateApp(c)
 	return nil
 }
 
@@ -382,15 +355,6 @@ func PutApp(a *fnclient.Fn, appID string, app *modelsv2.App) (*modelsv2.App, err
 	return resp.Payload, nil
 }
 
-// NameNotFoundError error for app not found when looked up by name
-type NameNotFoundError struct {
-	Name string
-}
-
-func (n NameNotFoundError) Error() string {
-	return fmt.Sprintf("app %s not found", n.Name)
-}
-
 // GetAppByName looks up an app by name using the given client
 func GetAppByName(client *fnclient.Fn, appName string) (*modelsv2.App, error) {
 	appsResp, err := client.Apps.ListApps(&apiapps.ListAppsParams{
@@ -405,7 +369,7 @@ func GetAppByName(client *fnclient.Fn, appName string) (*modelsv2.App, error) {
 	if len(appsResp.Payload.Items) > 0 {
 		app = appsResp.Payload.Items[0]
 	} else {
-		return nil, NameNotFoundError{appName}
+		return nil, adapter.NameNotFoundError{appName}
 	}
 
 	return app, nil

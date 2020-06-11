@@ -1,5 +1,4 @@
 package adapter
 
-type ossTriggerClient struct{
-
+type OSSTriggerClient struct {
 }
