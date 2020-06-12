@@ -142,11 +142,11 @@ func Inspect() cli.Command {
 			case 0:
 				BashCompleteApps(c)
 			case 1:
-				provider, err := client.CurrentProvider()
+				providerAdapter, err := client.CurrentProviderAdapter()
 				if err != nil {
 					return
 				}
-				app, err := GetAppByName(provider.APIClientv2(), c.Args()[0])
+				app, err := providerAdapter.GetClientAdapter().GetAppsClient().GetApp(c.Args()[0])
 				if err != nil {
 					return
 				}
@@ -219,11 +219,11 @@ func SetConfig() cli.Command {
 		Category:    "MANAGEMENT COMMAND",
 		Aliases:     []string{"apps", "a"},
 		Before: func(c *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClientv2()
+			a.clientAdapter = providerAdapter.GetClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name> <key> <value>",
@@ -247,11 +247,11 @@ func ListConfig() cli.Command {
 		Description: "This command lists the configuration of an application.",
 		Aliases:     []string{"apps", "a"},
 		Before: func(c *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClientv2()
+			a.clientAdapter = providerAdapter.GetClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name>",
@@ -275,11 +275,11 @@ func GetConfig() cli.Command {
 		Category:    "MANAGEMENT COMMAND",
 		Aliases:     []string{"apps", "a"},
 		Before: func(c *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClientv2()
+			a.clientAdapter = providerAdapter.GetClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name> <key>",
@@ -289,11 +289,11 @@ func GetConfig() cli.Command {
 			case 0:
 				BashCompleteApps(c)
 			case 1:
-				provider, err := client.CurrentProvider()
+				providerAdapter, err := client.CurrentProviderAdapter()
 				if err != nil {
 					return
 				}
-				app, err := GetAppByName(provider.APIClientv2(), c.Args()[0])
+				app, err := providerAdapter.GetClientAdapter().GetAppsClient().GetApp(c.Args()[0])
 				if err != nil {
 					return
 				}
@@ -315,11 +315,11 @@ func UnsetConfig() cli.Command {
 		Category:    "MANAGEMENT COMMAND",
 		Aliases:     []string{"apps", "a"},
 		Before: func(c *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClientv2()
+			a.clientAdapter = providerAdapter.GetClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name> <key>",
@@ -329,11 +329,11 @@ func UnsetConfig() cli.Command {
 			case 0:
 				BashCompleteApps(c)
 			case 1:
-				provider, err := client.CurrentProvider()
+				providerAdapter, err := client.CurrentProviderAdapter()
 				if err != nil {
 					return
 				}
-				app, err := GetAppByName(provider.APIClientv2(), c.Args()[0])
+				app, err := providerAdapter.GetClientAdapter().GetAppsClient().GetApp(c.Args()[0])
 				if err != nil {
 					return
 				}

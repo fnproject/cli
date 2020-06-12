@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/oracle/oci-go-sdk/functions"
 	"github.com/spf13/viper"
-	"github.com/urfave/cli"
 	"os"
 )
 
@@ -13,27 +12,27 @@ type OCIAppClient struct {
 	client *functions.FunctionsManagementClient
 }
 
-func (a *OCIAppClient) CreateApp(c *cli.Context) (*App, error) {
+func (a *OCIAppClient) CreateApp(app *App) (*App, error) {
 	//TODO: call OCI client
 	return nil, nil
 }
 
-func (a *OCIAppClient) GetApp(c *cli.Context) (*App, error) {
+func (a *OCIAppClient) GetApp(appName string) (*App, error) {
 	//TODO: call OCI client
 	return nil, nil
 }
 
-func (a *OCIAppClient) UpdateApp(c *cli.Context) error {
+func (a *OCIAppClient) UpdateApp(app *App) (*App, error) {
+	//TODO: call OCI client
+	return nil, nil
+}
+
+func (a *OCIAppClient) DeleteApp(appID string) error {
 	//TODO: call OCI client
 	return nil
 }
 
-func (a *OCIAppClient) DeleteApp(c *cli.Context) error {
-	//TODO: call OCI client
-	return nil
-}
-
-func (a *OCIAppClient) ListApp(c *cli.Context) ([]*App, error) {
+func (a *OCIAppClient) ListApp(limit int64) ([]*App, error) {
 	compartmentId := viper.GetString("oracle.compartment-id")
 	var resApps []*App
 	req := functions.ListApplicationsRequest{CompartmentId: &compartmentId,}
@@ -47,9 +46,7 @@ func (a *OCIAppClient) ListApp(c *cli.Context) ([]*App, error) {
 		adapterApps := convertOCIAppsToAdapterApps(&resp.Items)
 		resApps = append(resApps, adapterApps...)
 
-		n := c.Int64("n")
-
-		howManyMore := n - int64(len(resApps)+len(resp.Items))
+		howManyMore := limit - int64(len(resApps)+len(resp.Items))
 		if howManyMore <= 0 || resp.OpcNextPage == nil {
 			break
 		}

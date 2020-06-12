@@ -9,11 +9,10 @@ import (
 	"strings"
 	"time"
 
-	client "github.com/fnproject/cli/client"
-	common "github.com/fnproject/cli/common"
-	apps "github.com/fnproject/cli/objects/app"
+	"github.com/fnproject/cli/client"
+	"github.com/fnproject/cli/common"
 	function "github.com/fnproject/cli/objects/fn"
-	trigger "github.com/fnproject/cli/objects/trigger"
+	"github.com/fnproject/cli/objects/trigger"
 	v2Client "github.com/fnproject/fn_go/clientv2"
 	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/urfave/cli"
@@ -30,10 +29,12 @@ func DeployCommand() cli.Command {
 		Aliases: []string{"dp"},
 		Before: func(cxt *cli.Context) error {
 			provider, err := client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
 			cmd.clientV2 = provider.APIClientv2()
+			cmd.clientAdapter = providerAdapter.GetClientAdapter()
 			return nil
 		},
 		Category:    "DEVELOPMENT COMMANDS",
@@ -45,7 +46,8 @@ func DeployCommand() cli.Command {
 }
 
 type deploycmd struct {
-	clientV2 *v2Client.Fn
+	clientV2      *v2Client.Fn
+	clientAdapter adapter.ClientAdapter
 
 	appName   string
 	createApp bool
@@ -146,7 +148,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	}
 
 	// appfApp is used to create/update app, with app file additions if provided
-	appfApp := models.App{
+	appfApp := adapter.App{
 		Name: appName,
 	}
 	if appf != nil {
@@ -160,9 +162,9 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	}
 
 	// find and create/update app if required
-	app, err := apps.GetAppByName(p.clientV2, appName)
+	app, err := p.clientAdapter.GetAppsClient().GetApp(appName)
 	if _, ok := err.(adapter.NameNotFoundError); ok && p.createApp {
-		app, err = apps.CreateApp(p.clientV2, &appfApp)
+		app, err = p.clientAdapter.GetAppsClient().CreateApp(&appfApp)
 		if err != nil {
 			return err
 		}
@@ -170,7 +172,8 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 		return err
 	} else if appf != nil {
 		// app exists, but we need to update it if we have an app file
-		app, err = apps.PutApp(p.clientV2, app.ID, &appfApp)
+		appfApp.ID = app.ID
+		app, err = p.clientAdapter.GetAppsClient().UpdateApp(&appfApp)
 		if err != nil {
 			return fmt.Errorf("Failed to update app config: %v", err)
 		}
@@ -189,7 +192,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 
 // deploySingle deploys a single function, either the current directory or if in the context
 // of an app and user provides relative path as the first arg, it will deploy that function.
-func (p *deploycmd) deploySingle(c *cli.Context, app *models.App) error {
+func (p *deploycmd) deploySingle(c *cli.Context, app *adapter.App) error {
 	var dir string
 	wd := common.GetWd()
 
@@ -218,7 +221,7 @@ func (p *deploycmd) deploySingle(c *cli.Context, app *models.App) error {
 }
 
 // deployAll deploys all functions in an app.
-func (p *deploycmd) deployAll(c *cli.Context, app *models.App) error {
+func (p *deploycmd) deployAll(c *cli.Context, app *adapter.App) error {
 	var dir string
 	wd := common.GetWd()
 
@@ -275,7 +278,7 @@ func (p *deploycmd) deployAll(c *cli.Context, app *models.App) error {
 	return nil
 }
 
-func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfilePath string, funcfile *common.FuncFileV20180708) error {
+func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *adapter.App, funcfilePath string, funcfile *common.FuncFileV20180708) error {
 	if funcfile.Name == "" {
 		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
 	}

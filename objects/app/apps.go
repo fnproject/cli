@@ -62,7 +62,8 @@ func printApps(c *cli.Context, apps []*adapter.App) error {
 }
 
 func (a *appsCmd) list(c *cli.Context) error {
-	resApps, err := a.clientAdapter.GetAppsClient().ListApp(c)
+	n := c.Int64("n")
+	resApps, err := a.clientAdapter.GetAppsClient().ListApp(n)
 	if err != nil {
 		return err
 	}
@@ -79,7 +80,8 @@ func BashCompleteApps(c *cli.Context) {
 	if err != nil {
 		return
 	}
-	resp, err := providerAdapter.GetClientAdapter().GetAppsClient().ListApp(c)
+	n := c.Int64("n")
+	resp, err := providerAdapter.GetClientAdapter().GetAppsClient().ListApp(n)
 	if err != nil {
 		return
 	}
@@ -89,18 +91,33 @@ func BashCompleteApps(c *cli.Context) {
 }
 
 
+func appWithFlags(c *cli.Context, app *adapter.App) {
+	if c.IsSet("syslog-url") {
+		str := c.String("syslog-url")
+		app.SyslogURL = &str
+	}
+	if len(c.StringSlice("config")) > 0 {
+		app.Config = common.ExtractConfig(c.StringSlice("config"))
+	}
+	if len(c.StringSlice("annotation")) > 0 {
+		app.Annotations = common.ExtractAnnotations(c)
+	}
+}
+
 func (a *appsCmd) create(c *cli.Context) error {
-	_, err := a.clientAdapter.GetAppsClient().CreateApp(c)
+	app := &adapter.App{
+		Name: c.Args().Get(0),
+	}
+
+	appWithFlags(c, app)
+
+	_, err := CreateApp(a.clientAdapter.GetAppsClient(), app)
 	return err
 }
 
 // CreateApp creates a new app using the given client
-// This is used in deploy. To be removed
-func CreateApp(a *fnclient.Fn, app *modelsv2.App) (*modelsv2.App, error) {
-	resp, err := a.Apps.CreateApp(&apiapps.CreateAppParams{
-		Context: context.Background(),
-		Body:    app,
-	})
+func CreateApp(a adapter.AppClient, app *adapter.App) (*adapter.App, error) {
+	resp, err := a.CreateApp(app)
 
 	if err != nil {
 		switch e := err.(type) {
@@ -112,12 +129,25 @@ func CreateApp(a *fnclient.Fn, app *modelsv2.App) (*modelsv2.App, error) {
 		return nil, err
 	}
 
-	fmt.Println("Successfully created app: ", resp.Payload.Name)
-	return resp.Payload, nil
+	fmt.Println("Successfully created app: ", resp.Name)
+	return resp, nil
 }
 
 func (a *appsCmd) update(c *cli.Context) error {
-	a.clientAdapter.GetAppsClient().UpdateApp(c)
+	appName := c.Args().First()
+
+	app, err := a.clientAdapter.GetAppsClient().GetApp(appName)
+	if err != nil {
+		return err
+	}
+
+	appWithFlags(c, app)
+
+	if _, err = a.clientAdapter.GetAppsClient().UpdateApp(app); err != nil {
+		return err
+	}
+
+	fmt.Println("app", appName, "updated")
 	return nil
 }
 
@@ -126,7 +156,7 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	key := c.Args().Get(1)
 	value := c.Args().Get(2)
 
-	app, err := GetAppByName(a.client, appName)
+	app, err := a.clientAdapter.GetAppsClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
@@ -134,7 +164,7 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	app.Config = make(map[string]string)
 	app.Config[key] = value
 
-	if _, err = PutApp(a.client, app.ID, app); err != nil {
+	if _, err = a.clientAdapter.GetAppsClient().UpdateApp(app); err != nil {
 		return fmt.Errorf("Error updating app configuration: %v", err)
 	}
 
@@ -146,7 +176,7 @@ func (a *appsCmd) getConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
-	app, err := GetAppByName(a.client, appName)
+	app, err := a.clientAdapter.GetAppsClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
@@ -164,7 +194,7 @@ func (a *appsCmd) getConfig(c *cli.Context) error {
 func (a *appsCmd) listConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 
-	app, err := GetAppByName(a.client, appName)
+	app, err := a.clientAdapter.GetAppsClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
@@ -188,7 +218,7 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
-	app, err := GetAppByName(a.client, appName)
+	app, err := a.clientAdapter.GetAppsClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
@@ -199,7 +229,7 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	}
 	app.Config[key] = ""
 
-	_, err = PutApp(a.client, app.ID, app)
+	_, err = a.clientAdapter.GetAppsClient().UpdateApp(app)
 	if err != nil {
 		return err
 	}
@@ -213,9 +243,10 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 		return errors.New("Missing app name after the inspect command")
 	}
 
+	appName := c.Args().First()
 	prop := c.Args().Get(1)
 
-	app, err := a.clientAdapter.GetAppsClient().GetApp(c)
+	app, err := a.clientAdapter.GetAppsClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
@@ -307,24 +338,6 @@ func (a *appsCmd) delete(c *cli.Context) error {
 	return nil
 }
 
-// PutApp updates the app with the given ID using the content of the provided app
-func PutApp(a *fnclient.Fn, appID string, app *modelsv2.App) (*modelsv2.App, error) {
-	resp, err := a.Apps.UpdateApp(&apiapps.UpdateAppParams{
-		Context: context.Background(),
-		AppID:   appID,
-		Body:    app,
-	})
-
-	if err != nil {
-		switch e := err.(type) {
-		case *apiapps.UpdateAppBadRequest:
-			err = fmt.Errorf("%s", e.Payload.Message)
-		}
-		return nil, err
-	}
-
-	return resp.Payload, nil
-}
 
 // GetAppByName looks up an app by name using the given client
 // Used in many other places. To be removed
