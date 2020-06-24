@@ -13,7 +13,7 @@ type OSSAppClient struct {
 	client *oss.Fn
 }
 
-func (a *OSSAppClient) CreateApp(app *App) (*App, error) {
+func (a OSSAppClient) CreateApp(app *App) (*App, error) {
 
 	resp, err := a.client.Apps.CreateApp(&apiapps.CreateAppParams{
 		Context: context.Background(),
@@ -23,7 +23,7 @@ func (a *OSSAppClient) CreateApp(app *App) (*App, error) {
 	return convertV2AppToAdapterApp(resp.Payload), err
 }
 
-func (a *OSSAppClient) GetApp(appName string) (*App, error) {
+func (a OSSAppClient) GetApp(appName string) (*App, error) {
 	appsResp, err := a.client.Apps.ListApps(&apiapps.ListAppsParams{
 		Context: context.Background(),
 		Name:    &appName,
@@ -42,7 +42,7 @@ func (a *OSSAppClient) GetApp(appName string) (*App, error) {
 	return convertV2AppToAdapterApp(app), nil
 }
 
-func (a *OSSAppClient) UpdateApp(app *App) (*App, error) {
+func (a OSSAppClient) UpdateApp(app *App) (*App, error) {
 
 	resp, err := a.client.Apps.UpdateApp(&apiapps.UpdateAppParams{
 		Context: context.Background(),
@@ -61,13 +61,13 @@ func (a *OSSAppClient) UpdateApp(app *App) (*App, error) {
 	return convertV2AppToAdapterApp(resp.Payload), nil
 }
 
-func (a *OSSAppClient) DeleteApp(appID string) error {
+func (a OSSAppClient) DeleteApp(appID string) error {
 	//TODO: call OSS client
 	return nil
 }
 
 //ListApp returns an array of all apps in the given context and client
-func (a *OSSAppClient) ListApp(limit int64) ([]*App, error) {
+func (a OSSAppClient) ListApp(limit int64) ([]*App, error) {
 	params := &apiapps.ListAppsParams{Context: context.Background()}
 	var resApps []*App
 	for {

@@ -34,7 +34,7 @@ func DeployCommand() cli.Command {
 				return err
 			}
 			cmd.clientV2 = provider.APIClientv2()
-			cmd.clientAdapter = providerAdapter.GetClientAdapter()
+			cmd.apiClientAdapter = providerAdapter.APIClientAdapter()
 			return nil
 		},
 		Category:    "DEVELOPMENT COMMANDS",
@@ -47,7 +47,7 @@ func DeployCommand() cli.Command {
 
 type deploycmd struct {
 	clientV2      *v2Client.Fn
-	clientAdapter adapter.ClientAdapter
+	apiClientAdapter adapter.APIClientAdapter
 
 	appName   string
 	createApp bool
@@ -162,9 +162,9 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	}
 
 	// find and create/update app if required
-	app, err := p.clientAdapter.GetAppsClient().GetApp(appName)
+	app, err := p.apiClientAdapter.AppClient().GetApp(appName)
 	if _, ok := err.(adapter.NameNotFoundError); ok && p.createApp {
-		app, err = p.clientAdapter.GetAppsClient().CreateApp(&appfApp)
+		app, err = p.apiClientAdapter.AppClient().CreateApp(&appfApp)
 		if err != nil {
 			return err
 		}
@@ -173,7 +173,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 	} else if appf != nil {
 		// app exists, but we need to update it if we have an app file
 		appfApp.ID = app.ID
-		app, err = p.clientAdapter.GetAppsClient().UpdateApp(&appfApp)
+		app, err = p.apiClientAdapter.AppClient().UpdateApp(&appfApp)
 		if err != nil {
 			return fmt.Errorf("Failed to update app config: %v", err)
 		}

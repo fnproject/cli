@@ -6,14 +6,14 @@ type OSSClient struct {
 	ossTrigger *OSSTriggerClient
 }
 
-func (oss *OSSClient) GetFnsClient() FnClient {
+func (oss *OSSClient) FnClient() FnClient {
 	return oss.ossFn
 }
 
-func (oss *OSSClient) GetAppsClient() AppClient {
+func (oss *OSSClient) AppClient() AppClient {
 	return oss.ossApp
 }
 
-func (oss *OSSClient) GetTriggersClient() TriggerClient {
+func (oss *OSSClient) TriggerClient() TriggerClient {
 	return oss.ossTrigger
 }

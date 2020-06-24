@@ -23,10 +23,10 @@ import (
 )
 
 type appsCmd struct {
-	provider        provider.Provider
-	providerAdapter adapter.ProviderAdapter
-	client          *fnclient.Fn
-	clientAdapter   adapter.ClientAdapter
+	provider         provider.Provider
+	providerAdapter  adapter.ProviderAdapter
+	client           *fnclient.Fn
+	apiClientAdapter adapter.APIClientAdapter
 }
 
 func printApps(c *cli.Context, apps []*adapter.App) error {
@@ -63,7 +63,7 @@ func printApps(c *cli.Context, apps []*adapter.App) error {
 
 func (a *appsCmd) list(c *cli.Context) error {
 	n := c.Int64("n")
-	resApps, err := a.clientAdapter.GetAppsClient().ListApp(n)
+	resApps, err := a.apiClientAdapter.AppClient().ListApp(n)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func BashCompleteApps(c *cli.Context) {
 		return
 	}
 	n := c.Int64("n")
-	resp, err := providerAdapter.GetClientAdapter().GetAppsClient().ListApp(n)
+	resp, err := providerAdapter.APIClientAdapter().AppClient().ListApp(n)
 	if err != nil {
 		return
 	}
@@ -111,7 +111,7 @@ func (a *appsCmd) create(c *cli.Context) error {
 
 	appWithFlags(c, app)
 
-	_, err := CreateApp(a.clientAdapter.GetAppsClient(), app)
+	_, err := CreateApp(a.apiClientAdapter.AppClient(), app)
 	return err
 }
 
@@ -136,14 +136,14 @@ func CreateApp(a adapter.AppClient, app *adapter.App) (*adapter.App, error) {
 func (a *appsCmd) update(c *cli.Context) error {
 	appName := c.Args().First()
 
-	app, err := a.clientAdapter.GetAppsClient().GetApp(appName)
+	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
 
 	appWithFlags(c, app)
 
-	if _, err = a.clientAdapter.GetAppsClient().UpdateApp(app); err != nil {
+	if _, err = a.apiClientAdapter.AppClient().UpdateApp(app); err != nil {
 		return err
 	}
 
@@ -156,7 +156,7 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	key := c.Args().Get(1)
 	value := c.Args().Get(2)
 
-	app, err := a.clientAdapter.GetAppsClient().GetApp(appName)
+	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	app.Config = make(map[string]string)
 	app.Config[key] = value
 
-	if _, err = a.clientAdapter.GetAppsClient().UpdateApp(app); err != nil {
+	if _, err = a.apiClientAdapter.AppClient().UpdateApp(app); err != nil {
 		return fmt.Errorf("Error updating app configuration: %v", err)
 	}
 
@@ -176,7 +176,7 @@ func (a *appsCmd) getConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
-	app, err := a.clientAdapter.GetAppsClient().GetApp(appName)
+	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func (a *appsCmd) getConfig(c *cli.Context) error {
 func (a *appsCmd) listConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 
-	app, err := a.clientAdapter.GetAppsClient().GetApp(appName)
+	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
-	app, err := a.clientAdapter.GetAppsClient().GetApp(appName)
+	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
@@ -229,7 +229,7 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	}
 	app.Config[key] = ""
 
-	_, err = a.clientAdapter.GetAppsClient().UpdateApp(app)
+	_, err = a.apiClientAdapter.AppClient().UpdateApp(app)
 	if err != nil {
 		return err
 	}
@@ -246,7 +246,7 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 	appName := c.Args().First()
 	prop := c.Args().Get(1)
 
-	app, err := a.clientAdapter.GetAppsClient().GetApp(appName)
+	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}

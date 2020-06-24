@@ -12,27 +12,27 @@ type OCIAppClient struct {
 	client *functions.FunctionsManagementClient
 }
 
-func (a *OCIAppClient) CreateApp(app *App) (*App, error) {
+func (a OCIAppClient) CreateApp(app *App) (*App, error) {
 	//TODO: call OCI client
 	return nil, nil
 }
 
-func (a *OCIAppClient) GetApp(appName string) (*App, error) {
+func (a OCIAppClient) GetApp(appName string) (*App, error) {
 	//TODO: call OCI client
 	return nil, nil
 }
 
-func (a *OCIAppClient) UpdateApp(app *App) (*App, error) {
+func (a OCIAppClient) UpdateApp(app *App) (*App, error) {
 	//TODO: call OCI client
 	return nil, nil
 }
 
-func (a *OCIAppClient) DeleteApp(appID string) error {
+func (a OCIAppClient) DeleteApp(appID string) error {
 	//TODO: call OCI client
 	return nil
 }
 
-func (a *OCIAppClient) ListApp(limit int64) ([]*App, error) {
+func (a OCIAppClient) ListApp(limit int64) ([]*App, error) {
 	compartmentId := viper.GetString("oracle.compartment-id")
 	var resApps []*App
 	req := functions.ListApplicationsRequest{CompartmentId: &compartmentId,}

@@ -22,7 +22,7 @@ func Create() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.clientAdapter = providerAdapter.GetClientAdapter()
+			a.apiClientAdapter = providerAdapter.APIClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name>",
@@ -58,7 +58,7 @@ func List() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.clientAdapter = providerAdapter.GetClientAdapter()
+			a.apiClientAdapter = providerAdapter.APIClientAdapter()
 			return nil
 		},
 		Action: a.list,
@@ -132,7 +132,7 @@ func Inspect() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.clientAdapter = providerAdapter.GetClientAdapter()
+			a.apiClientAdapter = providerAdapter.APIClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name> [property.[key]]",
@@ -146,7 +146,7 @@ func Inspect() cli.Command {
 				if err != nil {
 					return
 				}
-				app, err := providerAdapter.GetClientAdapter().GetAppsClient().GetApp(c.Args()[0])
+				app, err := providerAdapter.APIClientAdapter().AppClient().GetApp(c.Args()[0])
 				if err != nil {
 					return
 				}
@@ -181,7 +181,7 @@ func Update() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.clientAdapter = providerAdapter.GetClientAdapter()
+			a.apiClientAdapter = providerAdapter.APIClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name>",
@@ -223,7 +223,7 @@ func SetConfig() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.clientAdapter = providerAdapter.GetClientAdapter()
+			a.apiClientAdapter = providerAdapter.APIClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name> <key> <value>",
@@ -251,7 +251,7 @@ func ListConfig() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.clientAdapter = providerAdapter.GetClientAdapter()
+			a.apiClientAdapter = providerAdapter.APIClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name>",
@@ -279,7 +279,7 @@ func GetConfig() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.clientAdapter = providerAdapter.GetClientAdapter()
+			a.apiClientAdapter = providerAdapter.APIClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name> <key>",
@@ -293,7 +293,7 @@ func GetConfig() cli.Command {
 				if err != nil {
 					return
 				}
-				app, err := providerAdapter.GetClientAdapter().GetAppsClient().GetApp(c.Args()[0])
+				app, err := providerAdapter.APIClientAdapter().AppClient().GetApp(c.Args()[0])
 				if err != nil {
 					return
 				}
@@ -319,7 +319,7 @@ func UnsetConfig() cli.Command {
 			if err != nil {
 				return err
 			}
-			a.clientAdapter = providerAdapter.GetClientAdapter()
+			a.apiClientAdapter = providerAdapter.APIClientAdapter()
 			return nil
 		},
 		ArgsUsage: "<app-name> <key>",
@@ -333,7 +333,7 @@ func UnsetConfig() cli.Command {
 				if err != nil {
 					return
 				}
-				app, err := providerAdapter.GetClientAdapter().GetAppsClient().GetApp(c.Args()[0])
+				app, err := providerAdapter.APIClientAdapter().AppClient().GetApp(c.Args()[0])
 				if err != nil {
 					return
 				}

@@ -6,7 +6,17 @@ type OCIProviderAdapter struct {
 	FMCClient *functions.FunctionsManagementClient
 }
 
-func (o *OCIProviderAdapter) GetClientAdapter() ClientAdapter {
+func (o OCIProviderAdapter) APIClientAdapter() APIClientAdapter {
 
 	return &OCIClient{ociFn: &OCIFnClient{client: o.FMCClient}, ociApp: &OCIAppClient{client: o.FMCClient},}
+}
+
+func (o OCIProviderAdapter) VersionClientAdapter() VersionClientAdapter {
+	// TODO: implement
+	return nil
+}
+
+func (o OCIProviderAdapter) FunctionInvokeClientAdapter() FunctionInvokeClientAdapter {
+	// TODO: implement
+	return nil
 }

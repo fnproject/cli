@@ -8,27 +8,27 @@ type OCIFnClient struct {
 	client *functions.FunctionsManagementClient
 }
 
-func (a *OCIFnClient) CreateFn(fn *Fn) (*Fn, error) {
+func (a OCIFnClient) CreateFn(fn *Fn) (*Fn, error) {
 	//TODO: call OCI client
 	return nil, nil
 }
 
-func (a *OCIFnClient) GetFn(appID string, fnName string) (*Fn, error) {
+func (a OCIFnClient) GetFn(appID string, fnName string) (*Fn, error) {
 	//TODO: call OCI client
 	return nil, nil
 }
 
-func (a *OCIFnClient) UpdateFn(fn *Fn) (*Fn, error) {
+func (a OCIFnClient) UpdateFn(fn *Fn) (*Fn, error) {
 	//TODO: call OCI client
 	return nil, nil
 }
 
-func (a *OCIFnClient) DeleteFn(fnID string) error {
+func (a OCIFnClient) DeleteFn(fnID string) error {
 	//TODO: call OCI client
 	return nil
 }
 
-func (a *OCIFnClient) ListFn(appID string, limit int64) error {
+func (a OCIFnClient) ListFn(appID string, limit int64) error {
 	//TODO: call OCI client
 	return nil
 }

@@ -6,14 +6,14 @@ type OCIClient struct {
 	ociTrigger *OCITriggerClient
 }
 
-func (oci *OCIClient) GetFnsClient() FnClient {
+func (oci *OCIClient) FnClient() FnClient {
 	return oci.ociFn
 }
 
-func (oci *OCIClient) GetAppsClient() AppClient {
+func (oci *OCIClient) AppClient() AppClient {
 	return oci.ociApp
 }
 
-func (oci *OCIClient) GetTriggersClient() TriggerClient {
+func (oci *OCIClient) TriggerClient() TriggerClient {
 	return oci.ociTrigger
 }
