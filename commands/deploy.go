@@ -34,7 +34,7 @@ func DeployCommand() cli.Command {
 				return err
 			}
 			cmd.clientV2 = provider.APIClientv2()
-			cmd.apiClientAdapter = providerAdapter.APIClientAdapter()
+			cmd.apiClientAdapter = providerAdapter.APIClient()
 			return nil
 		},
 		Category:    "DEVELOPMENT COMMANDS",
@@ -47,7 +47,7 @@ func DeployCommand() cli.Command {
 
 type deploycmd struct {
 	clientV2      *v2Client.Fn
-	apiClientAdapter adapter.APIClientAdapter
+	apiClientAdapter adapter.APIClient
 
 	appName   string
 	createApp bool

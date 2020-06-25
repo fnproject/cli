@@ -1,40 +1,41 @@
-package adapter
+package oci
 
 import (
 	"context"
 	"fmt"
+	"github.com/fnproject/cli/adapter"
 	"github.com/oracle/oci-go-sdk/functions"
 	"github.com/spf13/viper"
 	"os"
 )
 
-type OCIAppClient struct {
+type AppClient struct {
 	client *functions.FunctionsManagementClient
 }
 
-func (a OCIAppClient) CreateApp(app *App) (*App, error) {
+func (a AppClient) CreateApp(app *adapter.App) (*adapter.App, error) {
 	//TODO: call OCI client
 	return nil, nil
 }
 
-func (a OCIAppClient) GetApp(appName string) (*App, error) {
+func (a AppClient) GetApp(appName string) (*adapter.App, error) {
 	//TODO: call OCI client
 	return nil, nil
 }
 
-func (a OCIAppClient) UpdateApp(app *App) (*App, error) {
+func (a AppClient) UpdateApp(app *adapter.App) (*adapter.App, error) {
 	//TODO: call OCI client
 	return nil, nil
 }
 
-func (a OCIAppClient) DeleteApp(appID string) error {
+func (a AppClient) DeleteApp(appID string) error {
 	//TODO: call OCI client
 	return nil
 }
 
-func (a OCIAppClient) ListApp(limit int64) ([]*App, error) {
+func (a AppClient) ListApp(limit int64) ([]*adapter.App, error) {
 	compartmentId := viper.GetString("oracle.compartment-id")
-	var resApps []*App
+	var resApps []*adapter.App
 	req := functions.ListApplicationsRequest{CompartmentId: &compartmentId,}
 
 	for {
@@ -45,8 +46,8 @@ func (a OCIAppClient) ListApp(limit int64) ([]*App, error) {
 
 		adapterApps := convertOCIAppsToAdapterApps(&resp.Items)
 		resApps = append(resApps, adapterApps...)
-
 		howManyMore := limit - int64(len(resApps)+len(resp.Items))
+
 		if howManyMore <= 0 || resp.OpcNextPage == nil {
 			break
 		}
@@ -62,11 +63,10 @@ func (a OCIAppClient) ListApp(limit int64) ([]*App, error) {
 	return resApps, nil
 }
 
-func convertOCIAppsToAdapterApps(ociApps *[]functions.ApplicationSummary) []*App {
-	var resApps []*App
-
+func convertOCIAppsToAdapterApps(ociApps *[]functions.ApplicationSummary) []*adapter.App {
+	var resApps []*adapter.App
 	for _, ociApp := range *ociApps {
-		app := App{Name: *ociApp.DisplayName, ID: *ociApp.Id}
+		app := adapter.App{Name: *ociApp.DisplayName, ID: *ociApp.Id}
 		resApps = append(resApps, &app)
 	}
 

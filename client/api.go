@@ -2,6 +2,8 @@ package client
 
 import (
 	"github.com/fnproject/cli/adapter"
+	"github.com/fnproject/cli/adapter/oci"
+	"github.com/fnproject/cli/adapter/oss"
 	"github.com/fnproject/cli/config"
 	"github.com/fnproject/fn_go"
 	"github.com/fnproject/fn_go/provider"
@@ -15,22 +17,20 @@ func CurrentProvider() (provider.Provider, error) {
 	return fn_go.DefaultProviders.ProviderFromConfig(viper.GetString(config.ContextProvider), &config.ViperConfigSource{}, &provider.TerminalPassPhraseSource{})
 }
 
-func CurrentProviderAdapter() (adapter.ProviderAdapter, error) {
-
+func CurrentProviderAdapter() (adapter.Provider, error) {
 	ctxProvider := viper.GetString(config.ContextProvider)
 	currentProfile := viper.GetString("oracle.profile")
-
 	switch ctxProvider {
 	case "oracle":
 		fnClient, err := functions.NewFunctionsManagementClientWithConfigurationProvider(common.CustomProfileConfigProvider("", currentProfile))
-		return &adapter.OCIProviderAdapter{FMCClient: &fnClient}, err
+		return &oci.Provider{FMCClient: &fnClient}, err
 	case "oracle-ip":
 		provider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {
 			return nil, err
 		}
 		fnClient, err := functions.NewFunctionsManagementClientWithConfigurationProvider(provider)
-		return &adapter.OCIProviderAdapter{FMCClient: &fnClient}, err
+		return &oci.Provider{FMCClient: &fnClient}, err
 	case "oracle-cs":
 		provider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {
@@ -40,9 +40,9 @@ func CurrentProviderAdapter() (adapter.ProviderAdapter, error) {
 		// https://github.com/fnproject/fn_go/blob/master/provider/oracle/cloudshell_provider.go#L56
 		// https://github.com/fnproject/fn_go/blob/master/provider/oracle/cloudshell_provider.go#L155
 		fnClient, err := functions.NewFunctionsManagementClientWithOboToken(provider, "Fill me in")
-		return &adapter.OCIProviderAdapter{FMCClient: &fnClient}, err
+		return &oci.Provider{FMCClient: &fnClient}, err
 	default:
 		ossProvider, err := fn_go.DefaultProviders.ProviderFromConfig(ctxProvider, &config.ViperConfigSource{}, &provider.TerminalPassPhraseSource{})
-		return &adapter.OSSProviderAdapter{OSSProvider: ossProvider}, err
+		return &oss.Provider{OSSProvider: ossProvider}, err
 	}
 }

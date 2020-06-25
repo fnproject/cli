@@ -24,9 +24,9 @@ import (
 
 type appsCmd struct {
 	provider         provider.Provider
-	providerAdapter  adapter.ProviderAdapter
+	providerAdapter  adapter.Provider
 	client           *fnclient.Fn
-	apiClientAdapter adapter.APIClientAdapter
+	apiClientAdapter adapter.APIClient
 }
 
 func printApps(c *cli.Context, apps []*adapter.App) error {
@@ -81,7 +81,7 @@ func BashCompleteApps(c *cli.Context) {
 		return
 	}
 	n := c.Int64("n")
-	resp, err := providerAdapter.APIClientAdapter().AppClient().ListApp(n)
+	resp, err := providerAdapter.APIClient().AppClient().ListApp(n)
 	if err != nil {
 		return
 	}

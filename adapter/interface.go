@@ -6,13 +6,13 @@ import (
 	"fmt"
 )
 
-type ProviderAdapter interface {
-	APIClientAdapter() APIClientAdapter
-	VersionClientAdapter() VersionClientAdapter
-	FunctionInvokeClientAdapter() FunctionInvokeClientAdapter
+type Provider interface {
+	APIClient() APIClient
+	VersionClient() VersionClient
+	FunctionInvokeClient() FunctionInvokeClient
 }
 
-type APIClientAdapter interface {
+type APIClient interface {
 	FnClient() FnClient
 	AppClient() AppClient
 	TriggerClient() TriggerClient
@@ -37,16 +37,9 @@ type AppClient interface {
 type TriggerClient interface {
 }
 
-type VersionClientAdapter interface {
-	VersionClient() VersionClient
-}
 
 type VersionClient interface {
 	GetVersion() string
-}
-
-type FunctionInvokeClientAdapter interface {
-	FunctionInvokeClient() FunctionInvokeClient
 }
 
 type FunctionInvokeClient interface {
