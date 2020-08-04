@@ -11,7 +11,7 @@ type Provider struct {
 
 func (p Provider) APIClient() adapter.APIClient {
 	v2Client := p.OSSProvider.APIClientv2()
-	return &APIClient{fnClient: &FnClient{Client: v2Client}, appClient: &AppClient{client: v2Client},}
+	return &APIClient{fnClient: &FnClient{client: v2Client}, appClient: &AppClient{client: v2Client},}
 }
 
 func (p Provider) VersionClient() adapter.VersionClient {

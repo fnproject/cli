@@ -339,8 +339,8 @@ func (a *appsCmd) delete(c *cli.Context) error {
 }
 
 
-// GetAppByName looks up an app by name using the given client
-// Used in many other places. To be removed
+// TODO: GetAppByName looks up an app by name using the given client
+// TODO: Used in many other places. To be removed
 func GetAppByName(client *fnclient.Fn, appName string) (*modelsv2.App, error) {
 	appsResp, err := client.Apps.ListApps(&apiapps.ListAppsParams{
 		Context: context.Background(),
@@ -354,7 +354,7 @@ func GetAppByName(client *fnclient.Fn, appName string) (*modelsv2.App, error) {
 	if len(appsResp.Payload.Items) > 0 {
 		app = appsResp.Payload.Items[0]
 	} else {
-		return nil, adapter.NameNotFoundError{appName}
+		return nil, adapter.AppNameNotFoundError{appName}
 	}
 
 	return app, nil

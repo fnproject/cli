@@ -21,11 +21,11 @@ func Create() cli.Command {
 		Description: "This command creates a new function within an application.",
 		Before: func(c *cli.Context) error {
 			var err error
-			f.provider, err = client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			f.client = f.provider.APIClientv2()
+			f.apiClientAdapter = providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name> <function-name> <image>",
@@ -51,11 +51,11 @@ func List() cli.Command {
 		Description: "This command returns a list of functions for a created application.",
 		Before: func(c *cli.Context) error {
 			var err error
-			f.provider, err = client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			f.client = f.provider.APIClientv2()
+			f.apiClientAdapter = providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name>",
@@ -98,10 +98,12 @@ func Delete() cli.Command {
 		Before: func(c *cli.Context) error {
 			var err error
 			f.provider, err = client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
 			f.client = f.provider.APIClientv2()
+			f.apiClientAdapter = providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name> <function-name>",
@@ -139,11 +141,11 @@ func Inspect() cli.Command {
 		Description: "This command inspects properties of a function.",
 		Before: func(c *cli.Context) error {
 			var err error
-			f.provider, err = client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			f.client = f.provider.APIClientv2()
+			f.apiClientAdapter = providerAdapter.APIClient()
 			return nil
 		},
 		Flags: []cli.Flag{
@@ -194,11 +196,11 @@ func Update() cli.Command {
 		Description: "This command updates a function in an application.",
 		Before: func(c *cli.Context) error {
 			var err error
-			f.provider, err = client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			f.client = f.provider.APIClientv2()
+			f.apiClientAdapter = providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name> <function-name>",
@@ -227,11 +229,11 @@ func GetConfig() cli.Command {
 		Description: "This command gets the configuration of a specific function for an application.",
 		Before: func(c *cli.Context) error {
 			var err error
-			f.provider, err = client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			f.client = f.provider.APIClientv2()
+			f.apiClientAdapter = providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name> <function-name> <key>",
@@ -267,11 +269,11 @@ func SetConfig() cli.Command {
 		Description: "This command sets the configuration of a specific function for an application.",
 		Before: func(c *cli.Context) error {
 			var err error
-			f.provider, err = client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			f.client = f.provider.APIClientv2()
+			f.apiClientAdapter = providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name> <function-name> <key> <value>",
@@ -299,11 +301,11 @@ func ListConfig() cli.Command {
 		Description: "This command returns a list of configurations for a specific function.",
 		Before: func(c *cli.Context) error {
 			var err error
-			f.provider, err = client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			f.client = f.provider.APIClientv2()
+			f.apiClientAdapter = providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name> <function-name>",
@@ -331,11 +333,11 @@ func UnsetConfig() cli.Command {
 		Description: "This command removes a configuration of a specific function.",
 		Before: func(c *cli.Context) error {
 			var err error
-			f.provider, err = client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			f.client = f.provider.APIClientv2()
+			f.apiClientAdapter = providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name> <function-name> <key>",

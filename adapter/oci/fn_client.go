@@ -29,7 +29,7 @@ func (f FnClient) DeleteFn(fnID string) error {
 	return nil
 }
 
-func (f FnClient) ListFn(appID string, limit int64) error {
+func (f FnClient) ListFn(appID string, limit int64) ([]*adapter.Fn, error) {
 	//TODO: call OCI client
-	return nil
+	return nil, nil
 }

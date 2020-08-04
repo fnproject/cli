@@ -22,6 +22,7 @@ it will print an error message then exit.
 import (
 	"errors"
 	"fmt"
+	"github.com/fnproject/cli/adapter"
 	"os"
 	"path/filepath"
 	"sort"
@@ -30,7 +31,6 @@ import (
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/langs"
 	function "github.com/fnproject/cli/objects/fn"
-	modelsV2 "github.com/fnproject/fn_go/modelsv2"
 	"github.com/urfave/cli"
 )
 
@@ -144,7 +144,7 @@ func InitCommand() cli.Command {
 func (a *initFnCmd) init(c *cli.Context) error {
 	var err error
 	var dir string
-	var fn modelsV2.Fn
+	var fn adapter.Fn
 
 	dir = common.GetWd()
 	if a.wd != "" {
@@ -301,7 +301,7 @@ func (a *initFnCmd) generateBoilerplate(path, runtime string) error {
 	return nil
 }
 
-func (a *initFnCmd) bindFn(fn *modelsV2.Fn) {
+func (a *initFnCmd) bindFn(fn *adapter.Fn) {
 	ff := a.ff
 	if fn.Memory > 0 {
 		ff.Memory = fn.Memory

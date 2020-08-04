@@ -22,7 +22,7 @@ type FnClient interface {
 	CreateFn(fn *Fn) (*Fn, error)
 	UpdateFn(fn *Fn) (*Fn, error)
 	GetFn(appID string, fnName string) (*Fn, error)
-	ListFn(appID string, limit int64) error
+	ListFn(appID string, limit int64) ([]*Fn, error)
 	DeleteFn(fnID string) error
 }
 
@@ -47,10 +47,19 @@ type FunctionInvokeClient interface {
 }
 
 // NameNotFoundError error for app not found when looked up by name
-type NameNotFoundError struct {
+type AppNameNotFoundError struct {
 	Name string
 }
 
-func (n NameNotFoundError) Error() string {
+func (n AppNameNotFoundError) Error() string {
 	return fmt.Sprintf("app %s not found", n.Name)
+}
+
+// NameNotFoundError error for function not found when looked up by name
+type FunctionNameNotFoundError struct {
+	Name string
+}
+
+func (n FunctionNameNotFoundError) Error() string {
+	return fmt.Sprintf("function %s not found", n.Name)
 }

@@ -34,7 +34,7 @@ func (a AppClient) GetApp(appName string) (*adapter.App, error) {
 	if len(appsResp.Payload.Items) > 0 {
 		app = appsResp.Payload.Items[0]
 	} else {
-		return nil, adapter.NameNotFoundError{appName}
+		return nil, adapter.AppNameNotFoundError{appName}
 	}
 	return convertV2AppToAdapterApp(app), nil
 }

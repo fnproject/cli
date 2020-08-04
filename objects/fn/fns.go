@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/fnproject/cli/adapter"
 	"os"
 	"path"
 	"strings"
@@ -23,8 +24,10 @@ import (
 )
 
 type fnsCmd struct {
-	provider provider.Provider
-	client   *fnclient.Fn
+	provider 			provider.Provider
+	providerAdapter  	adapter.Provider
+	client   			*fnclient.Fn
+	apiClientAdapter 	adapter.APIClient
 }
 
 // FnFlags used to create/update functions
@@ -73,7 +76,7 @@ func WithoutSlash(p string) string {
 	return p
 }
 
-func printFunctions(c *cli.Context, fns []*models.Fn) error {
+func printFunctions(c *cli.Context, fns []*adapter.Fn) error {
 	outputFormat := strings.ToLower(c.String("output"))
 	if outputFormat == "json" {
 		var newFns []interface{}
@@ -108,42 +111,22 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 }
 
 func (f *fnsCmd) list(c *cli.Context) error {
-	resFns, err := getFns(c, f.client)
+	resFns, err := getFns(c, f.apiClientAdapter)
 	if err != nil {
 		return err
 	}
 	return printFunctions(c, resFns)
 }
 
-func getFns(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.Fn, error) {
+func getFns(c *cli.Context, apiClient adapter.APIClient) (fns []*adapter.Fn, err error) {
 	appName := c.Args().Get(0)
 
-	a, err := app.GetAppByName(client, appName)
+	app, err := apiClient.AppClient().GetApp(appName)
 	if err != nil {
 		return nil, err
 	}
-	params := &apifns.ListFnsParams{
-		Context: context.Background(),
-		AppID:   &a.ID,
-	}
 
-	var resFns []*models.Fn
-	for {
-		resp, err := client.Fns.ListFns(params)
-
-		if err != nil {
-			return nil, err
-		}
-		n := c.Int64("n")
-
-		resFns = append(resFns, resp.Payload.Items...)
-		howManyMore := n - int64(len(resFns)+len(resp.Payload.Items))
-		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
-			break
-		}
-
-		params.Cursor = &resp.Payload.NextCursor
-	}
+	resFns, err := apiClient.FnClient().ListFn(app.ID, c.Int64("n"))
 
 	if len(resFns) == 0 {
 		return nil, fmt.Errorf("no functions found for app: %s", appName)
@@ -156,11 +139,11 @@ func getFns(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.Fn, error) {
 // current context already contains an app name as an argument.
 // This should be confirmed before calling this)
 func BashCompleteFns(c *cli.Context) {
-	provider, err := client.CurrentProvider()
+	providerAdapter, err := client.CurrentProviderAdapter()
 	if err != nil {
 		return
 	}
-	resp, err := getFns(c, provider.APIClientv2())
+	resp, err := getFns(c, providerAdapter.APIClient())
 	if err != nil {
 		return
 	}
@@ -169,16 +152,16 @@ func BashCompleteFns(c *cli.Context) {
 	}
 }
 
-func getFnByAppAndFnName(appName, fnName string) (*models.Fn, error) {
-	provider, err := client.CurrentProvider()
+func getFnByAppAndFnName(appName, fnName string) (*adapter.Fn, error) {
+	providerAdapter, err := client.CurrentProviderAdapter()
 	if err != nil {
 		return nil, errors.New("could not get context")
 	}
-	app, err := app.GetAppByName(provider.APIClientv2(), appName)
+	app, err := providerAdapter.APIClient().AppClient().GetApp(appName)
 	if err != nil {
 		return nil, fmt.Errorf("could not get app %v", appName)
 	}
-	fn, err := GetFnByName(provider.APIClientv2(), app.ID, fnName)
+	fn, err := providerAdapter.APIClient().FnClient().GetFn(app.ID, fnName)
 	if err != nil {
 		return nil, fmt.Errorf("could not get function %v", fnName)
 	}
@@ -186,7 +169,7 @@ func getFnByAppAndFnName(appName, fnName string) (*models.Fn, error) {
 }
 
 // WithFlags returns a function with specified flags
-func WithFlags(c *cli.Context, fn *models.Fn) {
+func WithFlags(c *cli.Context, fn *adapter.Fn) {
 	if i := c.String("image"); i != "" {
 		fn.Image = i
 	}
@@ -210,7 +193,7 @@ func WithFlags(c *cli.Context, fn *models.Fn) {
 }
 
 // WithFuncFileV20180708 used when creating a function from a funcfile
-func WithFuncFileV20180708(ff *common.FuncFileV20180708, fn *models.Fn) error {
+func WithFuncFileV20180708(ff *common.FuncFileV20180708, fn *adapter.Fn) error {
 	var err error
 	if ff == nil {
 		_, ff, err = common.LoadFuncFileV20180708(".")
@@ -246,7 +229,7 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
-	fn := &models.Fn{}
+	fn := &adapter.Fn{}
 	fn.Name = fnName
 	fn.Image = c.Args().Get(2)
 
@@ -259,27 +242,25 @@ func (f *fnsCmd) create(c *cli.Context) error {
 		return errors.New("no image specified")
 	}
 
-	a, err := app.GetAppByName(f.client, appName)
+	a, err := f.apiClientAdapter.AppClient().GetApp(appName)
+
 	if err != nil {
 		return err
 	}
 
-	_, err = CreateFn(f.client, a.ID, fn)
+	_, err = CreateFn(f.apiClientAdapter.FnClient(), a.ID, fn)
 	return err
 }
 
 // CreateFn request
-func CreateFn(r *fnclient.Fn, appID string, fn *models.Fn) (*models.Fn, error) {
+func CreateFn(f adapter.FnClient, appID string, fn *adapter.Fn) (*adapter.Fn, error) {
 	fn.AppID = appID
 	err := common.ValidateTagImageName(fn.Image)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := r.Fns.CreateFn(&apifns.CreateFnParams{
-		Context: context.Background(),
-		Body:    fn,
-	})
+	resp, err := f.CreateFn(fn)
 
 	if err != nil {
 		switch e := err.(type) {
@@ -291,12 +272,12 @@ func CreateFn(r *fnclient.Fn, appID string, fn *models.Fn) (*models.Fn, error) {
 		return nil, err
 	}
 
-	fmt.Println("Successfully created function:", resp.Payload.Name, "with", resp.Payload.Image)
-	return resp.Payload, nil
+	fmt.Println("Successfully created function:", resp.Name, "with", resp.Image)
+	return resp, nil
 }
 
 // PutFn updates the fn with the given ID using the content of the provided fn
-func PutFn(f *fnclient.Fn, fnID string, fn *models.Fn) error {
+func PutFn(f adapter.FnClient, fnID string, fn *adapter.Fn) error {
 	if fn.Image != "" {
 		err := common.ValidateTagImageName(fn.Image)
 		if err != nil {
@@ -304,11 +285,8 @@ func PutFn(f *fnclient.Fn, fnID string, fn *models.Fn) error {
 		}
 	}
 
-	_, err := f.Fns.UpdateFn(&apifns.UpdateFnParams{
-		Context: context.Background(),
-		FnID:    fnID,
-		Body:    fn,
-	})
+	fn.ID = fnID
+	_, err := f.UpdateFn(fn)
 
 	if err != nil {
 		switch e := err.(type) {
@@ -332,6 +310,7 @@ func (n NameNotFoundError) Error() string {
 	return fmt.Sprintf("function %s not found", n.Name)
 }
 
+//TODO: Remove. Used in may places
 // GetFnByName looks up a fn by name using the given client
 func GetFnByName(client *fnclient.Fn, appID, fnName string) (*models.Fn, error) {
 	resp, err := client.Fns.ListFns(&apifns.ListFnsParams{
@@ -360,18 +339,18 @@ func (f *fnsCmd) update(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := f.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
-	fn, err := GetFnByName(f.client, app.ID, fnName)
+	fn, err := f.apiClientAdapter.FnClient().GetFn(app.ID, fnName)
 	if err != nil {
 		return err
 	}
 
 	WithFlags(c, fn)
 
-	err = PutFn(f.client, fn.ID, fn)
+	err = PutFn(f.apiClientAdapter.FnClient(), fn.ID, fn)
 	if err != nil {
 		return err
 	}
@@ -386,11 +365,11 @@ func (f *fnsCmd) setConfig(c *cli.Context) error {
 	key := c.Args().Get(2)
 	value := c.Args().Get(3)
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := f.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
-	fn, err := GetFnByName(f.client, app.ID, fnName)
+	fn, err := f.apiClientAdapter.FnClient().GetFn(app.ID, fnName)
 	if err != nil {
 		return err
 	}
@@ -398,7 +377,7 @@ func (f *fnsCmd) setConfig(c *cli.Context) error {
 	fn.Config = make(map[string]string)
 	fn.Config[key] = value
 
-	if err = PutFn(f.client, fn.ID, fn); err != nil {
+	if err = PutFn(f.apiClientAdapter.FnClient(), fn.ID, fn); err != nil {
 		return fmt.Errorf("Error updating function configuration: %v", err)
 	}
 
@@ -411,11 +390,11 @@ func (f *fnsCmd) getConfig(c *cli.Context) error {
 	fnName := c.Args().Get(1)
 	key := c.Args().Get(2)
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := f.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
-	fn, err := GetFnByName(f.client, app.ID, fnName)
+	fn, err := f.apiClientAdapter.FnClient().GetFn(app.ID, fnName)
 	if err != nil {
 		return err
 	}
@@ -434,11 +413,11 @@ func (f *fnsCmd) listConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := f.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
-	fn, err := GetFnByName(f.client, app.ID, fnName)
+	fn, err := f.apiClientAdapter.FnClient().GetFn(app.ID, fnName)
 	if err != nil {
 		return err
 	}
@@ -463,11 +442,11 @@ func (f *fnsCmd) unsetConfig(c *cli.Context) error {
 	fnName := WithoutSlash(c.Args().Get(1))
 	key := c.Args().Get(2)
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := f.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
-	fn, err := GetFnByName(f.client, app.ID, fnName)
+	fn, err := f.apiClientAdapter.FnClient().GetFn(app.ID, fnName)
 	if err != nil {
 		return err
 	}
@@ -478,7 +457,7 @@ func (f *fnsCmd) unsetConfig(c *cli.Context) error {
 	}
 	fn.Config[key] = ""
 
-	err = PutFn(f.client, fn.ID, fn)
+	err = PutFn(f.apiClientAdapter.FnClient(), fn.ID, fn)
 	if err != nil {
 		return err
 	}
@@ -492,11 +471,11 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	fnName := WithoutSlash(c.Args().Get(1))
 	prop := c.Args().Get(2)
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := f.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
-	fn, err := GetFnByName(f.client, app.ID, fnName)
+	fn, err := f.apiClientAdapter.FnClient().GetFn(app.ID, fnName)
 	if err != nil {
 		return err
 	}

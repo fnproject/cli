@@ -35,7 +35,7 @@ func (a AppClient) CreateApp(app *adapter.App) (*adapter.App, error) {
 
 	adapterApp := convertOCIAppTpAdapterApp(&res.Application)
 	return adapterApp, nil
-	}
+}
 
 func extractSubnetIds(Annotations map[string]interface{}) []string {
 	if len(Annotations) == 0 {
@@ -69,7 +69,7 @@ func (a AppClient) GetApp(appName string) (*adapter.App, error) {
 		adapterApp := convertOCIAppSummaryToAdapterApp(&resp.Items[0])
 		return adapterApp, nil
 	} else {
-		return nil, adapter.NameNotFoundError{ Name: appName}
+		return nil, adapter.AppNameNotFoundError{ Name: appName}
 	}
 }
 

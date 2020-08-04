@@ -163,7 +163,7 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 
 	// find and create/update app if required
 	app, err := p.apiClientAdapter.AppClient().GetApp(appName)
-	if _, ok := err.(adapter.NameNotFoundError); ok && p.createApp {
+	if _, ok := err.(adapter.AppNameNotFoundError); ok && p.createApp {
 		app, err = p.apiClientAdapter.AppClient().CreateApp(&appfApp)
 		if err != nil {
 			return err
@@ -312,15 +312,16 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *adapter.App, funcfi
 func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.FuncFileV20180708) error {
 	fmt.Printf("Updating function %s using image %s...\n", ff.Name, ff.ImageNameV20180708())
 
-	fn := &models.Fn{}
+	fn := &adapter.Fn{}
 	if err := function.WithFuncFileV20180708(ff, fn); err != nil {
 		return fmt.Errorf("Error getting function with funcfile: %s", err)
 	}
 
-	fnRes, err := function.GetFnByName(p.clientV2, appID, ff.Name)
-	if _, ok := err.(function.NameNotFoundError); ok {
+	fnRes, err := p.apiClientAdapter.FnClient().GetFn(appID, ff.Name)
+	if _, ok := err.(adapter.FunctionNameNotFoundError); ok {
 		fn.Name = ff.Name
-		fn, err = function.CreateFn(p.clientV2, appID, fn)
+		fn.AppID = appID
+		fn, err = p.apiClientAdapter.FnClient().CreateFn(fn)
 		if err != nil {
 			return err
 		}
@@ -329,7 +330,8 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 		return err
 	} else {
 		fn.ID = fnRes.ID
-		err = function.PutFn(p.clientV2, fn.ID, fn)
+		fn.AppID = appID
+		err = function.PutFn(p.apiClientAdapter.FnClient(), fn.ID, fn)
 		if err != nil {
 			return err
 		}
