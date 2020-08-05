@@ -22,6 +22,7 @@ type FnClient interface {
 	CreateFn(fn *Fn) (*Fn, error)
 	UpdateFn(fn *Fn) (*Fn, error)
 	GetFn(appID string, fnName string) (*Fn, error)
+	GetFnByFnID(fnID string) (*Fn, error)
 	ListFn(appID string, limit int64) ([]*Fn, error)
 	DeleteFn(fnID string) error
 }
@@ -35,6 +36,11 @@ type AppClient interface {
 }
 
 type TriggerClient interface {
+	CreateTrigger(trig *Trigger) (*Trigger, error)
+	UpdateTrigger(trig *Trigger) (*Trigger, error)
+	GetTrigger(appID string, fnID string, trigName string) (*Trigger, error)
+	ListTrigger(appID string, fnID string, limit int64) ([]*Trigger, error)
+	DeleteTrigger(trigID string) error
 }
 
 
@@ -62,4 +68,13 @@ type FunctionNameNotFoundError struct {
 
 func (n FunctionNameNotFoundError) Error() string {
 	return fmt.Sprintf("function %s not found", n.Name)
+}
+
+// NameNotFoundError error for trigger not found when looked up by name
+type TriggerNameNotFoundError struct {
+	Name string
+}
+
+func (n TriggerNameNotFoundError) Error() string {
+	return fmt.Sprintf("trigger %s not found", n.Name)
 }

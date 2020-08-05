@@ -22,11 +22,11 @@ func Create() cli.Command {
 		Description: "This command creates a new trigger.",
 		Before: func(ctx *cli.Context) error {
 			var err error
-			t.provider, err = client.CurrentProvider()
+			t.providerAdapter, err = client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			t.client = t.provider.APIClientv2()
+			t.apiClientAdapter = t.providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name> <function-name> <trigger-name>",
@@ -55,11 +55,11 @@ func List() cli.Command {
 		Usage:       "List all triggers",
 		Before: func(ctx *cli.Context) error {
 			var err error
-			t.provider, err = client.CurrentProvider()
+			t.providerAdapter, err = client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			t.client = t.provider.APIClientv2()
+			t.apiClientAdapter = t.providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name> [function-name]",
@@ -98,11 +98,11 @@ func Update() cli.Command {
 		Usage:       "Update a trigger",
 		Before: func(ctx *cli.Context) error {
 			var err error
-			t.provider, err = client.CurrentProvider()
+			t.providerAdapter, err = client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			t.client = t.provider.APIClientv2()
+			t.apiClientAdapter = t.providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name> <function-name> <trigger-name>",
@@ -138,11 +138,11 @@ func Delete() cli.Command {
 		Usage:       "Delete a trigger",
 		Before: func(ctx *cli.Context) error {
 			var err error
-			t.provider, err = client.CurrentProvider()
+			t.providerAdapter, err = client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			t.client = t.provider.APIClientv2()
+			t.apiClientAdapter = t.providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name> <function-name> <trigger-name>",
@@ -178,11 +178,11 @@ func Inspect() cli.Command {
 		},
 		Before: func(ctx *cli.Context) error {
 			var err error
-			t.provider, err = client.CurrentProvider()
+			t.providerAdapter, err = client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			t.client = t.provider.APIClientv2()
+			t.apiClientAdapter = t.providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name> <function-name> <trigger-name> [property[.key]]",

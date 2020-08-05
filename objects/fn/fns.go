@@ -6,14 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fnproject/cli/adapter"
+	"github.com/fnproject/cli/objects/app"
 	"os"
 	"path"
 	"strings"
 	"text/tabwriter"
 
-	client "github.com/fnproject/cli/client"
+	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
-	"github.com/fnproject/cli/objects/app"
 	fnclient "github.com/fnproject/fn_go/clientv2"
 	apifns "github.com/fnproject/fn_go/clientv2/fns"
 	"github.com/fnproject/fn_go/modelsv2"
@@ -24,10 +24,10 @@ import (
 )
 
 type fnsCmd struct {
-	provider 			provider.Provider
-	providerAdapter  	adapter.Provider
-	client   			*fnclient.Fn
-	apiClientAdapter 	adapter.APIClient
+	provider         provider.Provider
+	providerAdapter  adapter.Provider
+	client           *fnclient.Fn
+	apiClientAdapter adapter.APIClient
 }
 
 // FnFlags used to create/update functions

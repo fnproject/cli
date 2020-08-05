@@ -12,9 +12,7 @@ import (
 	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
 	function "github.com/fnproject/cli/objects/fn"
-	"github.com/fnproject/cli/objects/trigger"
 	v2Client "github.com/fnproject/fn_go/clientv2"
-	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/urfave/cli"
 )
 
@@ -339,7 +337,7 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 
 	if len(ff.Triggers) != 0 {
 		for _, t := range ff.Triggers {
-			trig := &models.Trigger{
+			trig := &adapter.Trigger{
 				AppID:  appID,
 				FnID:   fn.ID,
 				Name:   t.Name,
@@ -347,9 +345,9 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 				Type:   t.Type,
 			}
 
-			trigs, err := trigger.GetTriggerByName(p.clientV2, appID, fn.ID, t.Name)
-			if _, ok := err.(trigger.NameNotFoundError); ok {
-				err = trigger.CreateTrigger(p.clientV2, trig)
+			trigs, err := p.apiClientAdapter.TriggerClient().GetTrigger(appID, fn.ID, t.Name)
+			if _, ok := err.(adapter.TriggerNameNotFoundError); ok {
+				_, err = p.apiClientAdapter.TriggerClient().CreateTrigger(trig)
 				if err != nil {
 					return err
 				}
@@ -357,7 +355,7 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 				return err
 			} else {
 				trig.ID = trigs.ID
-				err = trigger.PutTrigger(p.clientV2, trig)
+				_, err := p.apiClientAdapter.TriggerClient().UpdateTrigger(trig)
 				if err != nil {
 					return err
 				}

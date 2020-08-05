@@ -19,6 +19,11 @@ func (f FnClient) GetFn(appID string, fnName string) (*adapter.Fn, error) {
 	return nil, nil
 }
 
+func (f FnClient) GetFnByFnID(fnID string) (*adapter.Fn, error) {
+	//TODO: call OCI client
+	return nil, nil
+}
+
 func (f FnClient) UpdateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 	//TODO: call OCI client
 	return nil, nil

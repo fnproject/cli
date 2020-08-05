@@ -1,32 +1,24 @@
 package trigger
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/fnproject/cli/adapter"
 	"os"
 	"strings"
 	"text/tabwriter"
-
-	"github.com/fnproject/fn_go/clientv2/fns"
 
 	"github.com/jmoiron/jsonq"
 
 	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
-	"github.com/fnproject/cli/objects/app"
-	"github.com/fnproject/cli/objects/fn"
-	fnclient "github.com/fnproject/fn_go/clientv2"
-	apiTriggers "github.com/fnproject/fn_go/clientv2/triggers"
-	models "github.com/fnproject/fn_go/modelsv2"
-	"github.com/fnproject/fn_go/provider"
 	"github.com/urfave/cli"
 )
 
 type triggersCmd struct {
-	provider provider.Provider
-	client   *fnclient.Fn
+	providerAdapter  adapter.Provider
+	apiClientAdapter adapter.APIClient
 }
 
 // TriggerFlags used to create/update triggers
@@ -50,17 +42,17 @@ func (t *triggersCmd) create(c *cli.Context) error {
 	fnName := c.Args().Get(1)
 	triggerName := c.Args().Get(2)
 
-	app, err := app.GetAppByName(t.client, appName)
+	app, err := t.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
 
-	fn, err := fn.GetFnByName(t.client, app.ID, fnName)
+	fn, err := t.apiClientAdapter.FnClient().GetFn(app.ID, fnName)
 	if err != nil {
 		return err
 	}
 
-	trigger := &models.Trigger{
+	trigger := &adapter.Trigger{
 		AppID: app.ID,
 		FnID:  fn.ID,
 	}
@@ -81,7 +73,8 @@ func (t *triggersCmd) create(c *cli.Context) error {
 		return errors.New("triggerName path is missing")
 	}
 
-	return CreateTrigger(t.client, trigger)
+	_, err = t.apiClientAdapter.TriggerClient().CreateTrigger(trigger)
+	return err
 }
 
 func validateTriggerSource(ts string) string {
@@ -91,34 +84,8 @@ func validateTriggerSource(ts string) string {
 	return ts
 }
 
-// CreateTrigger request
-func CreateTrigger(client *fnclient.Fn, trigger *models.Trigger) error {
-	resp, err := client.Triggers.CreateTrigger(&apiTriggers.CreateTriggerParams{
-		Context: context.Background(),
-		Body:    trigger,
-	})
-
-	if err != nil {
-		switch e := err.(type) {
-		case *apiTriggers.CreateTriggerBadRequest:
-			fmt.Println(e)
-			return fmt.Errorf("%s", e.Payload.Message)
-		case *apiTriggers.CreateTriggerConflict:
-			return fmt.Errorf("%s", e.Payload.Message)
-		default:
-			return err
-		}
-	}
-
-	fmt.Println("Successfully created trigger:", resp.Payload.Name)
-	endpoint := resp.Payload.Annotations["fnproject.io/trigger/httpEndpoint"]
-	fmt.Println("Trigger Endpoint:", endpoint)
-
-	return nil
-}
-
 func (t *triggersCmd) list(c *cli.Context) error {
-	resTriggers, err := getTriggers(c, t.client)
+	resTriggers, err := getTriggers(c, t.apiClientAdapter)
 	if err != nil {
 		return err
 	}
@@ -136,14 +103,11 @@ func (t *triggersCmd) list(c *cli.Context) error {
 		for _, trigger := range resTriggers {
 			endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
 
-			resp, err := t.client.Fns.GetFn(&fns.GetFnParams{
-				FnID:    trigger.FnID,
-				Context: context.Background(),
-			})
+			fn, err := t.apiClientAdapter.FnClient().GetFnByFnID(trigger.FnID)
 			if err != nil {
 				return err
 			}
-			fnName = resp.Payload.Name
+			fnName = fn.Name
 			fmt.Fprint(w, fnName, "\t", trigger.Name, "\t", trigger.ID, "\t", trigger.Type, "\t", trigger.Source, "\t", endpoint, "\n")
 		}
 	}
@@ -151,55 +115,28 @@ func (t *triggersCmd) list(c *cli.Context) error {
 	return nil
 }
 
-func getTriggers(c *cli.Context, client *fnclient.Fn) ([]*models.Trigger, error) {
+func getTriggers(c *cli.Context, apiClient adapter.APIClient) ([]*adapter.Trigger, error) {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
-	var params *apiTriggers.ListTriggersParams
+	limit := c.Int64("n")
 
-	app, err := app.GetAppByName(client, appName)
+	app, err := apiClient.AppClient().GetApp(appName)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(fnName) == 0 {
-		params = &apiTriggers.ListTriggersParams{
-			Context: context.Background(),
-			AppID:   &app.ID,
-		}
-
-	} else {
-
-		fn, err := fn.GetFnByName(client, app.ID, fnName)
+	var fnID string
+	if len(fnName) != 0 {
+		fn, err := apiClient.FnClient().GetFn(app.ID, fnName)
 		if err != nil {
 			return nil, err
 		}
-		params = &apiTriggers.ListTriggersParams{
-			Context: context.Background(),
-			AppID:   &app.ID,
-			FnID:    &fn.ID,
-		}
+		fnID = fn.ID
 	}
 
-	var resTriggers []*models.Trigger
-	for {
-
-		resp, err := client.Triggers.ListTriggers(params)
-		if err != nil {
-			return nil, err
-		}
-		n := c.Int64("n")
-
-		resTriggers = append(resTriggers, resp.Payload.Items...)
-		howManyMore := n - int64(len(resTriggers)+len(resp.Payload.Items))
-		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
-			break
-		}
-
-		params.Cursor = &resp.Payload.NextCursor
-	}
-
+	resTriggers, err := apiClient.TriggerClient().ListTrigger(app.ID, fnID, limit)
 	if len(resTriggers) == 0 {
-		if len(fnName) == 0 {
+		if len(fnID) == 0 {
 			return nil, fmt.Errorf("no triggers found for app: %s", appName)
 		}
 		return nil, fmt.Errorf("no triggers found for function: %s", fnName)
@@ -212,11 +149,11 @@ func getTriggers(c *cli.Context, client *fnclient.Fn) ([]*models.Trigger, error)
 // current context already contains an app name and a function name
 // as the first 2 arguments. This should be confirmed before calling this)
 func BashCompleteTriggers(c *cli.Context) {
-	provider, err := client.CurrentProvider()
+	providerAdapter, err := client.CurrentProviderAdapter()
 	if err != nil {
 		return
 	}
-	resp, err := getTriggers(c, provider.APIClientv2())
+	resp, err := getTriggers(c, providerAdapter.APIClient())
 	if err != nil {
 		return
 	}
@@ -230,39 +167,19 @@ func (t *triggersCmd) update(c *cli.Context) error {
 	fnName := c.Args().Get(1)
 	triggerName := c.Args().Get(2)
 
-	trigger, err := GetTrigger(t.client, appName, fnName, triggerName)
+	trigger, err := GetTrigger(t.apiClientAdapter, appName, fnName, triggerName)
 	if err != nil {
 		return err
 	}
 
 	WithFlags(c, trigger)
 
-	err = PutTrigger(t.client, trigger)
+	_, err = t.apiClientAdapter.TriggerClient().UpdateTrigger(trigger)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println(appName, fnName, triggerName, "updated")
-	return nil
-}
-
-// PutTrigger updates the provided trigger with new values
-func PutTrigger(t *fnclient.Fn, trigger *models.Trigger) error {
-	_, err := t.Triggers.UpdateTrigger(&apiTriggers.UpdateTriggerParams{
-		Context:   context.Background(),
-		TriggerID: trigger.ID,
-		Body:      trigger,
-	})
-
-	if err != nil {
-		switch e := err.(type) {
-		case *apiTriggers.UpdateTriggerBadRequest:
-			return fmt.Errorf("%s", e.Payload.Message)
-		default:
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -272,7 +189,7 @@ func (t *triggersCmd) inspect(c *cli.Context) error {
 	triggerName := c.Args().Get(2)
 	prop := c.Args().Get(3)
 
-	trigger, err := GetTrigger(t.client, appName, fnName, triggerName)
+	trigger, err := GetTrigger(t.apiClientAdapter, appName, fnName, triggerName)
 	if err != nil {
 		return err
 	}
@@ -320,15 +237,12 @@ func (t *triggersCmd) delete(c *cli.Context) error {
 	fnName := c.Args().Get(1)
 	triggerName := c.Args().Get(2)
 
-	trigger, err := GetTrigger(t.client, appName, fnName, triggerName)
+	trigger, err := GetTrigger(t.apiClientAdapter, appName, fnName, triggerName)
 	if err != nil {
 		return err
 	}
 
-	params := apiTriggers.NewDeleteTriggerParams()
-	params.TriggerID = trigger.ID
-
-	_, err = t.client.Triggers.DeleteTrigger(params)
+	err = t.apiClientAdapter.TriggerClient().DeleteTrigger(trigger.ID)
 	if err != nil {
 		return err
 	}
@@ -338,18 +252,18 @@ func (t *triggersCmd) delete(c *cli.Context) error {
 }
 
 // GetTrigger looks up a trigger using the provided client by app, function and trigger name
-func GetTrigger(client *fnclient.Fn, appName, fnName, triggerName string) (*models.Trigger, error) {
-	app, err := app.GetAppByName(client, appName)
+func GetTrigger(apiClient adapter.APIClient, appName, fnName, triggerName string) (*adapter.Trigger, error) {
+	app, err := apiClient.AppClient().GetApp(appName)
 	if err != nil {
 		return nil, err
 	}
 
-	fn, err := fn.GetFnByName(client, app.ID, fnName)
+	fn, err := apiClient.FnClient().GetFn(app.ID, fnName)
 	if err != nil {
 		return nil, err
 	}
 
-	trigger, err := GetTriggerByName(client, app.ID, fn.ID, triggerName)
+	trigger, err := apiClient.TriggerClient().GetTrigger(app.ID, fn.ID, triggerName)
 	if err != nil {
 		return nil, err
 	}
@@ -358,46 +272,18 @@ func GetTrigger(client *fnclient.Fn, appName, fnName, triggerName string) (*mode
 }
 
 // GetTriggerByAppFnAndTriggerNames looks up a trigger using app, fn and trigger names
-func GetTriggerByAppFnAndTriggerNames(appName, fnName, triggerName string) (*models.Trigger, error) {
-	provider, err := client.CurrentProvider()
+func GetTriggerByAppFnAndTriggerNames(appName, fnName, triggerName string) (*adapter.Trigger, error) {
+	providerAdapter, err := client.CurrentProviderAdapter()
 	if err != nil {
 		return nil, err
 	}
-	client := provider.APIClientv2()
+	client := providerAdapter.APIClient()
 	return GetTrigger(client, appName, fnName, triggerName)
 }
 
-// GetTriggerByName looks up a trigger using the provided client by app and function ID and trigger name
-func GetTriggerByName(client *fnclient.Fn, appID string, fnID string, triggerName string) (*models.Trigger, error) {
-	triggerList, err := client.Triggers.ListTriggers(&apiTriggers.ListTriggersParams{
-		Context: context.Background(),
-		AppID:   &appID,
-		FnID:    &fnID,
-		Name:    &triggerName,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	if len(triggerList.Payload.Items) == 0 {
-		return nil, NameNotFoundError{triggerName}
-	}
-
-	return triggerList.Payload.Items[0], nil
-}
-
 // WithFlags returns a trigger with the specified flags
-func WithFlags(c *cli.Context, t *models.Trigger) {
+func WithFlags(c *cli.Context, t *adapter.Trigger) {
 	if len(c.StringSlice("annotation")) > 0 {
 		t.Annotations = common.ExtractAnnotations(c)
 	}
-}
-
-// NameNotFoundError error for app not found when looked up by name
-type NameNotFoundError struct {
-	Name string
-}
-
-func (n NameNotFoundError) Error() string {
-	return fmt.Sprintf("trigger %s not found", n.Name)
 }
