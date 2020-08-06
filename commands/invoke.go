@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/fnproject/cli/adapter"
 	"io"
 	"net/http"
 	"os"
@@ -28,7 +29,9 @@ const (
 
 type invokeCmd struct {
 	provider provider.Provider
+	providerAdapter  adapter.Provider
 	client   *clientv2.Fn
+	apiClientAdapter adapter.APIClient
 }
 
 // InvokeFnFlags used to invoke and fn
@@ -61,10 +64,12 @@ func InvokeCommand() cli.Command {
 		Before: func(c *cli.Context) error {
 			var err error
 			cl.provider, err = client.CurrentProvider()
+			cl.providerAdapter, err = client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
 			cl.client = cl.provider.APIClientv2()
+			cl.apiClientAdapter = cl.providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage:   "[app-name] [function-name]",
@@ -97,11 +102,11 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 			return errors.New("missing app and function name")
 		}
 
-		app, err := app.GetAppByName(cl.client, appName)
+		app, err := cl.apiClientAdapter.AppClient().GetApp(appName)
 		if err != nil {
 			return err
 		}
-		fn, err := fn.GetFnByName(cl.client, app.ID, fnName)
+		fn, err := cl.apiClientAdapter.FnClient().GetFn(app.ID, fnName)
 		if err != nil {
 			return err
 		}

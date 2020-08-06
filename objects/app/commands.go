@@ -91,11 +91,11 @@ func Delete() cli.Command {
 		ArgsUsage:   "<app-name>",
 		Aliases:     []string{"apps", "a"},
 		Before: func(c *cli.Context) error {
-			provider, err := client.CurrentProvider()
+			providerAdapter, err := client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			a.client = provider.APIClientv2()
+			a.apiClientAdapter = providerAdapter.APIClient()
 			return nil
 		},
 		Action: a.delete,

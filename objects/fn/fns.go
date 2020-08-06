@@ -1,12 +1,10 @@
 package fn
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/fnproject/cli/adapter"
-	"github.com/fnproject/cli/objects/app"
 	"os"
 	"path"
 	"strings"
@@ -14,19 +12,13 @@ import (
 
 	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
-	fnclient "github.com/fnproject/fn_go/clientv2"
 	apifns "github.com/fnproject/fn_go/clientv2/fns"
-	"github.com/fnproject/fn_go/modelsv2"
-	models "github.com/fnproject/fn_go/modelsv2"
-	"github.com/fnproject/fn_go/provider"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
 )
 
 type fnsCmd struct {
-	provider         provider.Provider
 	providerAdapter  adapter.Provider
-	client           *fnclient.Fn
 	apiClientAdapter adapter.APIClient
 }
 
@@ -310,31 +302,6 @@ func (n NameNotFoundError) Error() string {
 	return fmt.Sprintf("function %s not found", n.Name)
 }
 
-//TODO: Remove. Used in may places
-// GetFnByName looks up a fn by name using the given client
-func GetFnByName(client *fnclient.Fn, appID, fnName string) (*models.Fn, error) {
-	resp, err := client.Fns.ListFns(&apifns.ListFnsParams{
-		Context: context.Background(),
-		AppID:   &appID,
-		Name:    &fnName,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var fn *models.Fn
-	for i := 0; i < len(resp.Payload.Items); i++ {
-		if resp.Payload.Items[i].Name == fnName {
-			fn = resp.Payload.Items[i]
-		}
-	}
-	if fn == nil {
-		return nil, NameNotFoundError{fnName}
-	}
-
-	return fn, nil
-}
-
 func (f *fnsCmd) update(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
@@ -520,19 +487,20 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 func (f *fnsCmd) delete(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
+	limit := c.Int64("n")
 
-	app, err := app.GetAppByName(f.client, appName)
+	app, err := f.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
-	fn, err := GetFnByName(f.client, app.ID, fnName)
+	fn, err := f.apiClientAdapter.FnClient().GetFn(app.ID, fnName)
 	if err != nil {
 		return err
 	}
 
 	//recursive delete of sub-objects
 	if c.Bool("recursive") {
-		triggers, err := common.ListTriggersInFunc(c, f.client, fn)
+		triggers, err := f.apiClientAdapter.TriggerClient().ListTrigger(app.ID, fn.ID, limit)
 		if err != nil {
 			return fmt.Errorf("Failed to get associated objects: %s", err)
 		}
@@ -542,11 +510,11 @@ func (f *fnsCmd) delete(c *cli.Context) error {
 		if c.Bool("force") {
 			shouldContinue = true
 		} else {
-			shouldContinue = common.UserConfirmedMultiResourceDeletion(nil, []*modelsv2.Fn{fn}, triggers)
+			shouldContinue = common.UserConfirmedMultiResourceDeletion(nil, []*adapter.Fn{fn}, triggers)
 		}
 
 		if shouldContinue {
-			err := common.DeleteTriggers(c, f.client, triggers)
+			err := common.DeleteTriggers(f.apiClientAdapter, triggers)
 			if err != nil {
 				return fmt.Errorf("Failed to delete associated objects: %s", err)
 			}
@@ -555,9 +523,7 @@ func (f *fnsCmd) delete(c *cli.Context) error {
 		}
 	}
 
-	params := apifns.NewDeleteFnParams()
-	params.FnID = fn.ID
-	_, err = f.client.Fns.DeleteFn(params)
+	err = f.apiClientAdapter.FnClient().DeleteFn(fn.ID)
 
 	if err != nil {
 		return err

@@ -73,8 +73,10 @@ func (f FnClient) UpdateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 }
 
 func (f FnClient) DeleteFn(fnID string) error {
-	//TODO: call OSS client
-	return nil
+	params := apifns.NewDeleteFnParams()
+	params.FnID = fnID
+	_, err := f.client.Fns.DeleteFn(params)
+	return err
 }
 
 func (f FnClient) ListFn(appID string, limit int64) ([]*adapter.Fn, error) {

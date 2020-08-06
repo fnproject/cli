@@ -8,24 +8,18 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"context"
 	"strings"
 
 	"github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
 
-	fnclient "github.com/fnproject/fn_go/clientv2"
 	apiapps "github.com/fnproject/fn_go/clientv2/apps"
-	"github.com/fnproject/fn_go/modelsv2"
-	"github.com/fnproject/fn_go/provider"
 	"github.com/jmoiron/jsonq"
 	"github.com/urfave/cli"
 )
 
 type appsCmd struct {
-	provider         provider.Provider
 	providerAdapter  adapter.Provider
-	client           *fnclient.Fn
 	apiClientAdapter adapter.APIClient
 }
 
@@ -287,14 +281,14 @@ func (a *appsCmd) delete(c *cli.Context) error {
 		//return errors.New("App name required to delete")
 	}
 
-	app, err := GetAppByName(a.client, appName)
+	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
 
 	//recursive delete of sub-objects
 	if c.Bool("recursive") {
-		fns, triggers, err := common.ListFnsAndTriggersInApp(c, a.client, app)
+		fns, triggers, err := common.ListFnsAndTriggersInApp(c, a.apiClientAdapter, app)
 		if err != nil {
 			return fmt.Errorf("Failed to get associated objects: %s", err)
 		}
@@ -304,15 +298,15 @@ func (a *appsCmd) delete(c *cli.Context) error {
 		if c.Bool("force") {
 			shouldContinue = true
 		} else {
-			shouldContinue = common.UserConfirmedMultiResourceDeletion([]*modelsv2.App{app}, fns, triggers)
+			shouldContinue = common.UserConfirmedMultiResourceDeletion([]*adapter.App{app}, fns, triggers)
 		}
 
 		if shouldContinue {
-			err := common.DeleteTriggers(c, a.client, triggers)
+			err := common.DeleteTriggers(a.apiClientAdapter, triggers)
 			if err != nil {
 				return fmt.Errorf("Failed to delete associated objects: %s", err)
 			}
-			err = common.DeleteFunctions(c, a.client, fns)
+			err = common.DeleteFunctions(a.apiClientAdapter, fns)
 			if err != nil {
 				return fmt.Errorf("Failed to delete associated objects: %s", err)
 			}
@@ -321,41 +315,10 @@ func (a *appsCmd) delete(c *cli.Context) error {
 		}
 	}
 
-	_, err = a.client.Apps.DeleteApp(&apiapps.DeleteAppParams{
-		Context: context.Background(),
-		AppID:   app.ID,
-	})
+	err = a.apiClientAdapter.AppClient().DeleteApp(app.ID)
 
-	if err != nil {
-		switch e := err.(type) {
-		case *apiapps.DeleteAppNotFound:
-			return errors.New(e.Payload.Message)
-		}
-		return err
+	if err == nil {
+		fmt.Println("App", appName, "deleted")
 	}
-
-	fmt.Println("App", appName, "deleted")
 	return nil
-}
-
-
-// TODO: GetAppByName looks up an app by name using the given client
-// TODO: Used in many other places. To be removed
-func GetAppByName(client *fnclient.Fn, appName string) (*modelsv2.App, error) {
-	appsResp, err := client.Apps.ListApps(&apiapps.ListAppsParams{
-		Context: context.Background(),
-		Name:    &appName,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var app *modelsv2.App
-	if len(appsResp.Payload.Items) > 0 {
-		app = appsResp.Payload.Items[0]
-	} else {
-		return nil, adapter.AppNameNotFoundError{appName}
-	}
-
-	return app, nil
 }

@@ -97,13 +97,11 @@ func Delete() cli.Command {
 		Usage:       "Delete a function from an application",
 		Before: func(c *cli.Context) error {
 			var err error
-			f.provider, err = client.CurrentProvider()
-			providerAdapter, err := client.CurrentProviderAdapter()
+			f.providerAdapter, err = client.CurrentProviderAdapter()
 			if err != nil {
 				return err
 			}
-			f.client = f.provider.APIClientv2()
-			f.apiClientAdapter = providerAdapter.APIClient()
+			f.apiClientAdapter = f.providerAdapter.APIClient()
 			return nil
 		},
 		ArgsUsage: "<app-name> <function-name>",

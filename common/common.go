@@ -4,10 +4,10 @@ import (
 	"archive/tar"
 	"bufio"
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/fnproject/cli/adapter"
 	"io"
 	"io/ioutil"
 	"log"
@@ -23,10 +23,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/fnproject/cli/config"
 	"github.com/fnproject/cli/langs"
-	fnclient "github.com/fnproject/fn_go/clientv2"
-	apifns "github.com/fnproject/fn_go/clientv2/fns"
-	apitriggers "github.com/fnproject/fn_go/clientv2/triggers"
-	"github.com/fnproject/fn_go/modelsv2"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
@@ -609,7 +605,7 @@ func GetFuncYamlVersion(oldFF map[string]interface{}) int {
 }
 
 // UserConfirmedMultiResourceDeletion will prompt the user for confirmation to delete all the the resources
-func UserConfirmedMultiResourceDeletion(aps []*modelsv2.App, fns []*modelsv2.Fn, trs []*modelsv2.Trigger) bool {
+func UserConfirmedMultiResourceDeletion(aps []*adapter.App, fns []*adapter.Fn, trs []*adapter.Trigger) bool {
 
 	apsLen := len(aps)
 	fnsLen := len(fns)
@@ -644,14 +640,14 @@ func UserConfirmedMultiResourceDeletion(aps []*modelsv2.App, fns []*modelsv2.Fn,
 }
 
 // ListFnsAndTriggersInApp lists all the functions associated with an app and all the triggers associated with each of those functions
-func ListFnsAndTriggersInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*modelsv2.Fn, []*modelsv2.Trigger, error) {
-	fns, err := ListFnsInApp(c, client, app)
+func ListFnsAndTriggersInApp(c *cli.Context, apiClient adapter.APIClient, app *adapter.App) ([]*adapter.Fn, []*adapter.Trigger, error) {
+	fns, err := apiClient.FnClient().ListFn(app.ID, c.Int64("n"))
 	if err != nil {
 		return nil, nil, err
 	}
-	var trs []*modelsv2.Trigger
+	var trs []*adapter.Trigger
 	for _, fn := range fns {
-		t, err := ListTriggersInFunc(c, client, fn)
+		t, err := apiClient.TriggerClient().ListTrigger(app.ID, fn.ID, c.Int64("n"))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -661,14 +657,12 @@ func ListFnsAndTriggersInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.
 }
 
 //DeleteFunctions deletes all the functions provided to it. if provided nil it is a no-op
-func DeleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) error {
+func DeleteFunctions(apiClient adapter.APIClient, fns []*adapter.Fn) error {
 	if fns == nil {
 		return nil
 	}
 	for _, fn := range fns {
-		params := apifns.NewDeleteFnParams()
-		params.FnID = fn.ID
-		_, err := client.Fns.DeleteFn(params)
+		err := apiClient.FnClient().DeleteFn(fn.ID)
 		if err != nil {
 			return fmt.Errorf("Failed to delete Function %s: %s", fn.Name, err)
 		}
@@ -678,74 +672,18 @@ func DeleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) er
 }
 
 //DeleteTriggers deletes all the triggers provided to it. if provided nil it is a no-op
-func DeleteTriggers(c *cli.Context, client *fnclient.Fn, triggers []*modelsv2.Trigger) error {
+func DeleteTriggers(apiClient adapter.APIClient, triggers []*adapter.Trigger) error {
 	if triggers == nil {
 		return nil
 	}
 	for _, t := range triggers {
-		params := apitriggers.NewDeleteTriggerParams()
-		params.TriggerID = t.ID
-		_, err := client.Triggers.DeleteTrigger(params)
+		err := apiClient.TriggerClient().DeleteTrigger(t.ID)
 		if err != nil {
 			return fmt.Errorf("Failed to Delete trigger %s: %s", t.Name, err)
 		}
 		fmt.Println("Trigger ", t.Name, " deleted")
 	}
 	return nil
-}
-
-//ListFnsInApp gets all the functions associated with an app
-func ListFnsInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*modelsv2.Fn, error) {
-	params := &apifns.ListFnsParams{
-		Context: context.Background(),
-		AppID:   &app.ID,
-	}
-
-	var resFns []*modelsv2.Fn
-	for {
-		resp, err := client.Fns.ListFns(params)
-
-		if err != nil {
-			return nil, fmt.Errorf("Could not list functions in application %s: %s", app.Name, err)
-		}
-		n := c.Int64("n")
-
-		resFns = append(resFns, resp.Payload.Items...)
-		howManyMore := n - int64(len(resFns)+len(resp.Payload.Items))
-		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
-			break
-		}
-
-		params.Cursor = &resp.Payload.NextCursor
-	}
-
-	return resFns, nil
-}
-
-//ListTriggersInFunc gets all the triggers associated with a function
-func ListTriggersInFunc(c *cli.Context, client *fnclient.Fn, fn *modelsv2.Fn) ([]*modelsv2.Trigger, error) {
-	params := &apitriggers.ListTriggersParams{
-		Context: context.Background(),
-		AppID:   &fn.AppID,
-		FnID:    &fn.ID,
-	}
-
-	var resTriggers []*modelsv2.Trigger
-	for {
-		resp, err := client.Triggers.ListTriggers(params)
-		if err != nil {
-			return nil, fmt.Errorf("Could not list triggers in function %s: %s", fn.Name, err)
-		}
-		n := c.Int64("n")
-
-		resTriggers = append(resTriggers, resp.Payload.Items...)
-		howManyMore := n - int64(len(resTriggers)+len(resp.Payload.Items))
-		if howManyMore <= 0 || resp.Payload.NextCursor == "" {
-			break
-		}
-		params.Cursor = &resp.Payload.NextCursor
-	}
-	return resTriggers, nil
 }
 
 func DockerRunInitImage(initImage string, fName string) error {

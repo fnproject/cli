@@ -2,6 +2,7 @@ package oss
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/fnproject/cli/adapter"
 	oss "github.com/fnproject/fn_go/clientv2"
@@ -56,7 +57,19 @@ func (a AppClient) UpdateApp(app *adapter.App) (*adapter.App, error) {
 }
 
 func (a AppClient) DeleteApp(appID string) error {
-	//TODO: call OSS client
+	_, err := a.client.Apps.DeleteApp(&apiapps.DeleteAppParams{
+		Context: context.Background(),
+		AppID:   appID,
+	})
+
+	if err != nil {
+		switch e := err.(type) {
+		case *apiapps.DeleteAppNotFound:
+			return errors.New(e.Payload.Message)
+		}
+		return err
+	}
+
 	return nil
 }
 
