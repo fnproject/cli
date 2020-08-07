@@ -21,19 +21,19 @@ func (a AppClient) CreateApp(app *adapter.App) (*adapter.App, error) {
 
 	body := functions.CreateApplicationDetails{
 		CompartmentId: &compartmentId,
-		Config: app.Config,
-		DisplayName: &app.Name,
-		SubnetIds: extractSubnetIds(app.Annotations),
+		Config:        app.Config,
+		DisplayName:   &app.Name,
+		SubnetIds:     extractSubnetIds(app.Annotations),
 	}
 	req := functions.CreateApplicationRequest{CreateApplicationDetails: body,}
 
-	res,err := a.client.CreateApplication(context.Background(), req)
+	res, err := a.client.CreateApplication(context.Background(), req)
 
 	if err != nil {
 		return nil, err
 	}
 
-	adapterApp := convertOCIAppTpAdapterApp(&res.Application)
+	adapterApp := convertOCIAppToAdapterApp(&res.Application)
 	return adapterApp, nil
 }
 
@@ -59,7 +59,7 @@ func extractSubnetIds(Annotations map[string]interface{}) []string {
 
 func (a AppClient) GetApp(appName string) (*adapter.App, error) {
 	compartmentId := viper.GetString("oracle.compartment-id")
-	req := functions.ListApplicationsRequest{CompartmentId: &compartmentId,}
+	req := functions.ListApplicationsRequest{CompartmentId: &compartmentId, DisplayName: &appName}
 	resp, err := a.client.ListApplications(context.Background(), req)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (a AppClient) GetApp(appName string) (*adapter.App, error) {
 		adapterApp := convertOCIAppSummaryToAdapterApp(&resp.Items[0])
 		return adapterApp, nil
 	} else {
-		return nil, adapter.AppNameNotFoundError{ Name: appName}
+		return nil, adapter.AppNameNotFoundError{Name: appName}
 	}
 }
 
@@ -85,13 +85,14 @@ func (a AppClient) UpdateApp(app *adapter.App) (*adapter.App, error) {
 		return nil, err
 	}
 
-	adapterApp := convertOCIAppTpAdapterApp(&res.Application)
+	adapterApp := convertOCIAppToAdapterApp(&res.Application)
 	return adapterApp, nil
 }
 
 func (a AppClient) DeleteApp(appID string) error {
-	//TODO: call OCI client
-	return nil
+	req := functions.DeleteApplicationRequest{ApplicationId: &appID,}
+	_, err := a.client.DeleteApplication(context.Background(), req)
+	return err
 }
 
 func (a AppClient) ListApp(limit int64) ([]*adapter.App, error) {
@@ -137,29 +138,29 @@ func convertOCIAppsToAdapterApps(ociApps *[]functions.ApplicationSummary) []*ada
 func convertOCIAppSummaryToAdapterApp(ociApp *functions.ApplicationSummary) *adapter.App {
 	annotationMap := make(map[string]interface{})
 	annotationMap["oracle.com/oci/subnetIds"] = ociApp.SubnetIds
-	createdAt,_ := strfmt.ParseDateTime(ociApp.TimeCreated.String())
-	updatedAt,_ := strfmt.ParseDateTime(ociApp.TimeUpdated.String())
+	createdAt, _ := strfmt.ParseDateTime(ociApp.TimeCreated.String())
+	updatedAt, _ := strfmt.ParseDateTime(ociApp.TimeUpdated.String())
 	return &adapter.App{
-		Name: *ociApp.DisplayName,
-		ID: *ociApp.Id,
+		Name:        *ociApp.DisplayName,
+		ID:          *ociApp.Id,
 		Annotations: annotationMap,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
+		CreatedAt:   createdAt,
+		UpdatedAt:   updatedAt,
 	}
 }
 
-func convertOCIAppTpAdapterApp(ociApp *functions.Application) *adapter.App {
-	createAt,_ := strfmt.ParseDateTime(ociApp.TimeCreated.String())
-	updatedAt,_ := strfmt.ParseDateTime(ociApp.TimeUpdated.String())
+func convertOCIAppToAdapterApp(ociApp *functions.Application) *adapter.App {
+	createAt, _ := strfmt.ParseDateTime(ociApp.TimeCreated.String())
+	updatedAt, _ := strfmt.ParseDateTime(ociApp.TimeUpdated.String())
 	annotationMap := make(map[string]interface{})
 	annotationMap["oracle.com/oci/subnetIds"] = ociApp.SubnetIds
 
 	return &adapter.App{
-		ID: *ociApp.Id,
-		Name: *ociApp.DisplayName,
-		CreatedAt: createAt,
-		UpdatedAt: updatedAt,
+		ID:          *ociApp.Id,
+		Name:        *ociApp.DisplayName,
+		CreatedAt:   createAt,
+		UpdatedAt:   updatedAt,
 		Annotations: annotationMap,
-		Config: ociApp.Config,
+		Config:      ociApp.Config,
 	}
 }
