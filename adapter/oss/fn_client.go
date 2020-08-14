@@ -18,6 +18,10 @@ func (f FnClient) CreateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 		Context: context.Background(),
 		Body:    convertAdapterFnToV2Fn(fn),
 	})
+
+	if err != nil {
+		return nil, err
+	}
 	return convertV2FnToAdapterFn(resp.Payload), err
 }
 

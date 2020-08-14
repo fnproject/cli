@@ -20,6 +20,10 @@ func (a AppClient) CreateApp(app *adapter.App) (*adapter.App, error) {
 		Context: context.Background(),
 		Body:    convertAdapterAppToV2App(app),
 	})
+
+	if err != nil {
+		return nil, err
+	}
 	return convertV2AppToAdapterApp(resp.Payload), err
 }
 
@@ -35,7 +39,7 @@ func (a AppClient) GetApp(appName string) (*adapter.App, error) {
 	if len(appsResp.Payload.Items) > 0 {
 		app = appsResp.Payload.Items[0]
 	} else {
-		return nil, adapter.AppNameNotFoundError{appName}
+		return nil, adapter.AppNameNotFoundError{ Name: appName}
 	}
 	return convertV2AppToAdapterApp(app), nil
 }

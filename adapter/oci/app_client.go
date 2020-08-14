@@ -4,12 +4,19 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/fnproject/cli/adapter"
 	"github.com/go-openapi/strfmt"
 	"github.com/oracle/oci-go-sdk/functions"
 	"github.com/spf13/viper"
 	"os"
+	"time"
+)
+
+const (
+	// AnnotationSubnet - Subnet used to indicate the placement of the function runtime
+	AnnotationSubnet = "oracle.com/oci/subnetIds"
 )
 
 type AppClient struct {
@@ -19,11 +26,16 @@ type AppClient struct {
 func (a AppClient) CreateApp(app *adapter.App) (*adapter.App, error) {
 	compartmentId := viper.GetString("oracle.compartment-id")
 
+	subnetIds, err := parseSubnetIds(app.Annotations)
+
+	if err != nil {
+		return nil, err
+	}
 	body := functions.CreateApplicationDetails{
 		CompartmentId: &compartmentId,
 		Config:        app.Config,
 		DisplayName:   &app.Name,
-		SubnetIds:     extractSubnetIds(app.Annotations),
+		SubnetIds:     subnetIds,
 	}
 	req := functions.CreateApplicationRequest{CreateApplicationDetails: body,}
 
@@ -37,24 +49,26 @@ func (a AppClient) CreateApp(app *adapter.App) (*adapter.App, error) {
 	return adapterApp, nil
 }
 
-func extractSubnetIds(Annotations map[string]interface{}) []string {
-	if len(Annotations) == 0 {
-		return nil
+func parseSubnetIds(annotations map[string]interface{}) ([]string, error) {
+	if annotations == nil || len(annotations) == 0 {
+		return nil, errors.New("Missing subnets annotation")
 	}
 
 	var subnets []string
-	subnetsInterface, ok := Annotations["oracle.com/oci/subnetIds"]
+	subnetsInterface, ok := annotations[AnnotationSubnet]
 	if ok {
 		// Typecast to byte
 		subnetsBytes := subnetsInterface.([]byte)
 
 		err := json.NewDecoder(bytes.NewReader(subnetsBytes)).Decode(&subnets)
 		if err != nil {
-			return nil
+			return nil, errors.New("Invalid subnets annotation")
 		}
+	} else {
+		return nil, errors.New("Missing subnets annotation")
 	}
 
-	return subnets
+	return subnets, nil
 }
 
 func (a AppClient) GetApp(appName string) (*adapter.App, error) {
@@ -136,10 +150,13 @@ func convertOCIAppsToAdapterApps(ociApps *[]functions.ApplicationSummary) []*ada
 }
 
 func convertOCIAppSummaryToAdapterApp(ociApp *functions.ApplicationSummary) *adapter.App {
+	createdAt, _ := strfmt.ParseDateTime(ociApp.TimeCreated.Format(time.RFC3339Nano))
+	updatedAt, _ := strfmt.ParseDateTime(ociApp.TimeUpdated.Format(time.RFC3339Nano))
+
 	annotationMap := make(map[string]interface{})
-	annotationMap["oracle.com/oci/subnetIds"] = ociApp.SubnetIds
-	createdAt, _ := strfmt.ParseDateTime(ociApp.TimeCreated.String())
-	updatedAt, _ := strfmt.ParseDateTime(ociApp.TimeUpdated.String())
+	annotationMap[AnnotationSubnet] = ociApp.SubnetIds
+	annotationMap[AnnotationCompartmentID] = ociApp.CompartmentId
+
 	return &adapter.App{
 		Name:        *ociApp.DisplayName,
 		ID:          *ociApp.Id,
@@ -150,10 +167,12 @@ func convertOCIAppSummaryToAdapterApp(ociApp *functions.ApplicationSummary) *ada
 }
 
 func convertOCIAppToAdapterApp(ociApp *functions.Application) *adapter.App {
-	createAt, _ := strfmt.ParseDateTime(ociApp.TimeCreated.String())
-	updatedAt, _ := strfmt.ParseDateTime(ociApp.TimeUpdated.String())
+	createAt, _ := strfmt.ParseDateTime(ociApp.TimeCreated.Format(time.RFC3339Nano))
+	updatedAt, _ := strfmt.ParseDateTime(ociApp.TimeUpdated.Format(time.RFC3339Nano))
+
 	annotationMap := make(map[string]interface{})
-	annotationMap["oracle.com/oci/subnetIds"] = ociApp.SubnetIds
+	annotationMap[AnnotationSubnet] = ociApp.SubnetIds
+	annotationMap[AnnotationCompartmentID] = ociApp.CompartmentId
 
 	return &adapter.App{
 		ID:          *ociApp.Id,
