@@ -2,7 +2,6 @@ package langs
 
 import (
 	"errors"
-	"fmt"
 	"os"
 )
 
@@ -116,8 +115,4 @@ func exists(name string) bool {
 		}
 	}
 	return true
-}
-
-func dockerBuildError(err error) error {
-	return fmt.Errorf("error running docker build: %v", err)
 }
