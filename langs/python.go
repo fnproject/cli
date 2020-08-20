@@ -100,7 +100,7 @@ import logging
 from fdk import response
 
 
-def handler(ctx, data: io.BytesIO=None):
+def handler(ctx, data: io.BytesIO = None):
     name = "World"
     try:
         body = json.loads(data.getvalue())
