@@ -15,8 +15,9 @@ func init() {
 	registerHelper(&JavaLangHelper{version: "8"})
 	registerHelper(&NodeLangHelper{})
 	// order matter, 'python' will pick up the first PythonLangHelper
-	registerHelper(&PythonLangHelper{Version: "3.6"})
+	registerHelper(&PythonLangHelper{Version: "3.8.5"})
 	registerHelper(&PythonLangHelper{Version: "3.7.1"})
+	registerHelper(&PythonLangHelper{Version: "3.6"})
 	registerHelper(&RubyLangHelper{})
 	registerHelper(&KotlinLangHelper{})
 }
