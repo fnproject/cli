@@ -2,7 +2,6 @@ package langs
 
 import (
 	"errors"
-	"fmt"
 	"os"
 )
 
@@ -16,8 +15,9 @@ func init() {
 	registerHelper(&JavaLangHelper{version: "8"})
 	registerHelper(&NodeLangHelper{})
 	// order matter, 'python' will pick up the first PythonLangHelper
-	registerHelper(&PythonLangHelper{Version: "3.6"})
+	registerHelper(&PythonLangHelper{Version: "3.8.5"})
 	registerHelper(&PythonLangHelper{Version: "3.7.1"})
+	registerHelper(&PythonLangHelper{Version: "3.6"})
 	registerHelper(&RubyLangHelper{})
 	registerHelper(&KotlinLangHelper{})
 }
@@ -116,8 +116,4 @@ func exists(name string) bool {
 		}
 	}
 	return true
-}
-
-func dockerBuildError(err error) error {
-	return fmt.Errorf("error running docker build: %v", err)
 }
