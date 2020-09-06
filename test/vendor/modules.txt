@@ -1,0 +1,2 @@
+# github.com/fnproject/fdk-go v0.0.0-20181025170718-26ed643bea68
+github.com/fnproject/fdk-go

@@ -75,8 +75,9 @@ func TestCreateAutoComplete(t *testing.T) {
 	appName1 := h.NewAppName()
 	funcName1 := h.NewFuncName(appName1)
 
-	h.Fn("create", "app", appName1).AssertSuccess()
-	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
+	withMinimalOCIApplication(h)
+	h.Fn("create", "app", appName1, "--annotation", h.GetSubnetAnnotation()).AssertSuccess()
+	h.Fn("create", "fn", appName1, funcName1, h.GetFnImage()).AssertSuccess()
 	//tests begin
 	//non auto-completed
 	h.Fn("create", "app", "--generate-bash-completion").AssertStdoutEmpty()
@@ -101,8 +102,9 @@ func TestConfigAutoComplete(t *testing.T) {
 	configKeyFunc := h.NewRandString(5)
 	configValFunc := h.NewRandString(5)
 
-	h.Fn("create", "app", appName1).AssertSuccess()
-	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
+	withMinimalOCIApplication(h)
+	h.Fn("create", "app", appName1, "--annotation", h.GetSubnetAnnotation()).AssertSuccess()
+	h.Fn("create", "fn", appName1, funcName1, h.GetFnImage()).AssertSuccess()
 	h.Fn("config", "app", appName1, configKeyApp, configValApp).AssertSuccess()
 	h.Fn("config", "function", appName1, funcName1, configKeyFunc, configValFunc).AssertSuccess()
 	//tests begin
@@ -146,9 +148,12 @@ func TestDeleteAutoComplete(t *testing.T) {
 	triggerName1 := h.NewTriggerName(appName1, funcName1)
 	contextName1 := h.NewContextName()
 
-	h.Fn("create", "app", appName1).AssertSuccess()
-	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
-	h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/trig").AssertSuccess()
+	withMinimalOCIApplication(h)
+	h.Fn("create", "app", appName1, "--annotation", h.GetSubnetAnnotation()).AssertSuccess()
+	h.Fn("create", "fn", appName1, funcName1, h.GetFnImage()).AssertSuccess()
+	if !h.IsOCITestMode() {
+		h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/trig").AssertSuccess()
+	}
 	h.Fn("create", "context", contextName1).AssertSuccess()
 	//tests begin
 	//delete app
@@ -158,11 +163,13 @@ func TestDeleteAutoComplete(t *testing.T) {
 	h.Fn("delete", "function", "--generate-bash-completion").AssertStdoutContains(appName1)
 	h.Fn("delete", "function", appName1, "--generate-bash-completion").AssertStdoutContains(funcName1)
 	h.Fn("delete", "function", appName1, funcName1, "--generate-bash-completion").AssertStdoutEmpty()
-	//delete trigger
-	h.Fn("delete", "trigger", "--generate-bash-completion").AssertStdoutContains(appName1)
-	h.Fn("delete", "trigger", appName1, "--generate-bash-completion").AssertStdoutContains(funcName1)
-	h.Fn("delete", "trigger", appName1, funcName1, "--generate-bash-completion").AssertStdoutContains(triggerName1)
-	h.Fn("delete", "trigger", appName1, funcName1, triggerName1, "--generate-bash-completion").AssertStdoutEmpty()
+	if !h.IsOCITestMode() {
+		//delete trigger
+		h.Fn("delete", "trigger", "--generate-bash-completion").AssertStdoutContains(appName1)
+		h.Fn("delete", "trigger", appName1, "--generate-bash-completion").AssertStdoutContains(funcName1)
+		h.Fn("delete", "trigger", appName1, funcName1, "--generate-bash-completion").AssertStdoutContains(triggerName1)
+		h.Fn("delete", "trigger", appName1, funcName1, triggerName1, "--generate-bash-completion").AssertStdoutEmpty()
+	}
 	//delete context
 	h.Fn("delete", "context", "--generate-bash-completion").AssertStdoutContains(contextName1)
 	h.Fn("delete", "context", contextName1, "--generate-bash-completion").AssertStdoutEmpty()
@@ -175,8 +182,9 @@ func TestGetAutoComplete(t *testing.T) {
 	appName1 := h.NewAppName()
 	funcName1 := h.NewFuncName(appName1)
 
-	h.Fn("create", "app", appName1).AssertSuccess()
-	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
+	withMinimalOCIApplication(h)
+	h.Fn("create", "app", appName1, "--annotation", h.GetSubnetAnnotation()).AssertSuccess()
+	h.Fn("create", "fn", appName1, funcName1, h.GetFnImage()).AssertSuccess()
 	//tests begin
 	//No tests for Config because covered by config tests
 }
@@ -194,9 +202,12 @@ func TestInspectAutoComplete(t *testing.T) {
 	fnProperties := []string{"app_id", "created_at", "id", "idle_timeout", "image", "memory", "name", "timeout", "updated_at"}
 	triggerProperties := []string{"app_id", "created_at", "id", "name", "source", "updated_at", "annotations", "fn_id", "type"}
 
-	h.Fn("create", "app", appName1).AssertSuccess()
-	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
-	h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/trig").AssertSuccess()
+	withMinimalOCIApplication(h)
+	h.Fn("create", "app", appName1, "--annotation", h.GetSubnetAnnotation()).AssertSuccess()
+	h.Fn("create", "fn", appName1, funcName1, h.GetFnImage()).AssertSuccess()
+	if !h.IsOCITestMode() {
+		h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/trig").AssertSuccess()
+	}
 	h.Fn("create", "context", contextName1).AssertSuccess()
 	//tests begin
 	//inspect app
@@ -209,11 +220,13 @@ func TestInspectAutoComplete(t *testing.T) {
 	h.Fn("inspect", "function", appName1, funcName1, "--generate-bash-completion").AssertStdoutContainsEach(fnProperties)
 	h.Fn("inspect", "function", appName1, funcName1, "id", "--generate-bash-completion").AssertStdoutEmpty()
 	//inspect trigger
-	h.Fn("inspect", "trigger", "--generate-bash-completion").AssertStdoutContains(appName1)
-	h.Fn("inspect", "trigger", appName1, "--generate-bash-completion").AssertStdoutContains(funcName1)
-	h.Fn("inspect", "trigger", appName1, funcName1, "--generate-bash-completion").AssertStdoutContains(triggerName1)
-	h.Fn("inspect", "trigger", appName1, funcName1, triggerName1, "--generate-bash-completion").AssertStdoutContainsEach(triggerProperties)
-	h.Fn("inspect", "trigger", appName1, funcName1, triggerName1, "id", "--generate-bash-completion").AssertStdoutEmpty()
+	if !h.IsOCITestMode() {
+		h.Fn("inspect", "trigger", "--generate-bash-completion").AssertStdoutContains(appName1)
+		h.Fn("inspect", "trigger", appName1, "--generate-bash-completion").AssertStdoutContains(funcName1)
+		h.Fn("inspect", "trigger", appName1, funcName1, "--generate-bash-completion").AssertStdoutContains(triggerName1)
+		h.Fn("inspect", "trigger", appName1, funcName1, triggerName1, "--generate-bash-completion").AssertStdoutContainsEach(triggerProperties)
+		h.Fn("inspect", "trigger", appName1, funcName1, triggerName1, "id", "--generate-bash-completion").AssertStdoutEmpty()
+	}
 	//inspect context
 	h.Fn("inspect", "context", "--generate-bash-completion").AssertStdoutContains(contextName1)
 	h.Fn("inspect", "context", contextName1, "--generate-bash-completion").AssertStdoutEmpty()
@@ -228,9 +241,12 @@ func TestListAutoComplete(t *testing.T) {
 	triggerName1 := h.NewTriggerName(appName1, funcName1)
 	contextName1 := h.NewContextName()
 
-	h.Fn("create", "app", appName1).AssertSuccess()
-	h.Fn("create", "fn", appName1, funcName1, "foo/someimage:0.0.1").AssertSuccess()
-	h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/trig").AssertSuccess()
+	withMinimalOCIApplication(h)
+	h.Fn("create", "app", appName1, "--annotation", h.GetSubnetAnnotation()).AssertSuccess()
+	h.Fn("create", "fn", appName1, funcName1, h.GetFnImage()).AssertSuccess()
+	if !h.IsOCITestMode() {
+		h.Fn("create", "trigger", appName1, funcName1, triggerName1, "--type", "http", "--source", "/trig").AssertSuccess()
+	}
 	h.Fn("create", "context", contextName1).AssertSuccess()
 	//tests begin
 	//non auto-completed
@@ -240,9 +256,11 @@ func TestListAutoComplete(t *testing.T) {
 	h.Fn("list", "functions", "--generate-bash-completion").AssertStdoutContains(appName1)
 	h.Fn("list", "functions", appName1, "--generate-bash-completion").AssertStdoutEmpty()
 	//list triggers
-	h.Fn("list", "triggers", "--generate-bash-completion").AssertStdoutContains(appName1)
-	h.Fn("list", "triggers", appName1, "--generate-bash-completion").AssertStdoutContains(funcName1)
-	h.Fn("list", "triggers", appName1, funcName1, "--generate-bash-completion").AssertStdoutEmpty()
+	if !h.IsOCITestMode() {
+		h.Fn("list", "triggers", "--generate-bash-completion").AssertStdoutContains(appName1)
+		h.Fn("list", "triggers", appName1, "--generate-bash-completion").AssertStdoutContains(funcName1)
+		h.Fn("list", "triggers", appName1, funcName1, "--generate-bash-completion").AssertStdoutEmpty()
+	}
 	//No tests for listing Config because covered by config tests
 }
 

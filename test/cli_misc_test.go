@@ -30,6 +30,21 @@ func withMinimalFunction(h *testharness.CLIHarness) {
 	})
 }
 
+func withMinimalOCIApplication(h *testharness.CLIHarness) {
+	if h.IsOCITestMode() {
+		h.CopyFiles(map[string]string{
+			"simpleapp/app.json":   "app.json",
+		})
+
+		h.CopyFilesToHomeDir(map[string]string{
+			"oci-auth/fn/config.yaml": 						".fn/config.yaml",
+			"oci-auth/fn/contexts/functions-test.yaml":    	".fn/contexts/functions-test.yaml",
+			"oci-auth/oci/config":   						".oci/config",
+			"docker":   									".docker",
+		})
+	}
+}
+
 // this is messy and nasty  as we generate different potential values for FN_API_URL based on its type
 func fnApiUrlVariations(t *testing.T) []string {
 
@@ -70,6 +85,7 @@ func TestFnApiUrlSupportsDifferentFormats(t *testing.T) {
 	h := testharness.Create(t)
 	defer h.Cleanup()
 
+	withMinimalOCIApplication(h)
 	for _, candidateUrl := range fnApiUrlVariations(t) {
 		h.WithEnv("FN_API_URL", candidateUrl)
 		h.Fn("list", "apps").AssertSuccess()
@@ -82,10 +98,11 @@ func TestSettingTimeoutWorks(t *testing.T) {
 
 	h := testharness.Create(t)
 	defer h.Cleanup()
-	h.WithEnv("FN_REGISTRY", "some_random_registry")
+	h.WithEnv("FN_REGISTRY", h.GetFnRegistry())
 
 	appName := h.NewAppName()
-	h.Fn("create", "app", appName).AssertSuccess()
+	withMinimalOCIApplication(h)
+	h.Fn("create", "app", appName, "--annotation", h.GetSubnetAnnotation()).AssertSuccess()
 	res := h.Fn("list", "apps")
 
 	if !strings.Contains(res.Stdout, fmt.Sprintf("%s", appName)) {
@@ -97,8 +114,9 @@ func TestSettingTimeoutWorks(t *testing.T) {
 	h.MkDir(funcName)
 	h.Cd(funcName)
 	withMinimalFunction(h)
+	withMinimalOCIApplication(h)
 	h.FileAppend("func.yaml", "\ntimeout: 50\n\nschema_version: 20180708\n")
-	h.Fn("--verbose", "deploy", "--app", appName, "--local").AssertSuccess()
+	h.Fn("deploy", "--app", appName).AssertSuccess()
 	h.Fn("invoke", appName, funcName).AssertSuccess()
 
 	inspectRes := h.Fn("inspect", "fn", appName, funcName)
@@ -107,9 +125,10 @@ func TestSettingTimeoutWorks(t *testing.T) {
 		t.Errorf("Expecting fn inspect to contain CPU %v", inspectRes)
 	}
 
-	h.Fn("create", "fn", appName, "another", "some_random_registry/"+funcName+":0.0.2").AssertSuccess()
+	anotherFuncName := h.NewFuncName(appName)
+	h.Fn("create", "fn", appName, anotherFuncName, h.GetFnImage()).AssertSuccess()
 
-	h.Fn("invoke", appName, "another").AssertSuccess()
+	h.Fn("invoke", appName, anotherFuncName).AssertSuccess()
 }
 
 //Memory doesn't seem to get persisted/returned
@@ -118,10 +137,11 @@ func TestSettingMemoryWorks(t *testing.T) {
 
 	h := testharness.Create(t)
 	defer h.Cleanup()
-	h.WithEnv("FN_REGISTRY", "some_random_registry")
+	h.WithEnv("FN_REGISTRY", h.GetFnRegistry())
 
 	appName := h.NewAppName()
-	h.Fn("create", "app", appName).AssertSuccess()
+	withMinimalOCIApplication(h)
+	h.Fn("create", "app", appName, "--annotation", h.GetSubnetAnnotation()).AssertSuccess()
 	res := h.Fn("list", "apps")
 
 	if !strings.Contains(res.Stdout, fmt.Sprintf("%s", appName)) {
@@ -133,19 +153,20 @@ func TestSettingMemoryWorks(t *testing.T) {
 	h.MkDir(funcName)
 	h.Cd(funcName)
 	withMinimalFunction(h)
-	h.FileAppend("func.yaml", "memory: 100\nschema_version: 20180708\n")
-	h.Fn("--verbose", "deploy", "--app", appName, "--local").AssertSuccess()
+	h.FileAppend("func.yaml", "memory: 128\nschema_version: 20180708\n")
+	h.Fn("deploy", "--app", appName).AssertSuccess()
 	h.Fn("invoke", appName, funcName).AssertSuccess()
 
 	inspectRes := h.Fn("inspect", "fn", appName, funcName)
 	inspectRes.AssertSuccess()
-	if !strings.Contains(inspectRes.Stdout, `"memory": 100`) {
+	if !strings.Contains(inspectRes.Stdout, `"memory": 128`) {
 		t.Errorf("Expecting fn inspect to contain CPU %v", inspectRes)
 	}
 
-	h.Fn("create", "fn", appName, "another", "some_random_registry/"+funcName+":0.0.2").AssertSuccess()
+	anotherFuncName := h.NewFuncName(appName)
+	h.Fn("create", "fn", appName, anotherFuncName, h.GetFnImage()).AssertSuccess()
 
-	h.Fn("invoke", appName, "another").AssertSuccess()
+	h.Fn("invoke", appName, anotherFuncName).AssertSuccess()
 }
 
 func TestAllMainCommandsExist(t *testing.T) {
@@ -168,12 +189,16 @@ func TestAllMainCommandsExist(t *testing.T) {
 		"push",
 		"run",
 		"set",
-		"start",
 		"test",
 		"unset",
 		"update",
 		"use",
 		"version",
+	}
+
+	if !h.IsOCITestMode() {
+		// start command refers to starting local fn server. Not Applicable to OCI test mode.
+		testCommands = append(testCommands, "start")
 	}
 
 	for _, cmd := range testCommands {
@@ -196,8 +221,9 @@ func TestAppYamlDeployFailNotExist(t *testing.T) {
 	h.MkDir(fnName)
 	h.Cd(fnName)
 	withMinimalFunction(h)
+	withMinimalOCIApplication(h)
 	h.Cd("")
-	h.Fn("deploy", "--all", "--local").AssertFailed().AssertStderrContains("app " + appName + " not found")
+	h.Fn("deploy", "--all").AssertFailed().AssertStderrContains("app " + appName + " not found")
 }
 
 func TestAppYamlDeployInspect(t *testing.T) {
@@ -212,34 +238,47 @@ func TestAppYamlDeployInspect(t *testing.T) {
 	h.WithFile("app.yaml", fmt.Sprintf(`
 name: %s
 syslog_url: tcp://example.com:42
+annotations:
+  oracle.com/oci/subnetIds:
+  - %s
 config:
   animal: giraffe
-`, appName), 0644)
+`, appName, h.GetSubnetID()), 0644)
 	h.MkDir(fnName)
 	h.Cd(fnName)
 	withMinimalFunction(h)
+	withMinimalOCIApplication(h)
 	h.Cd("")
-	h.Fn("deploy", "--all", "--local", "--create-app").AssertSuccess()
+	h.Fn("deploy", "--all", "--create-app").AssertSuccess()
 	// check config from app.yaml is set
 	inspect := h.Fn("inspect", "app", appName).AssertSuccess()
 	inspect.AssertStdoutContains(fmt.Sprintf(`"name": "%s"`, appName))
 	inspect.AssertStdoutContains(`"giraffe"`)
-	inspect.AssertStdoutContains(`"tcp://example.com:42"`)
+	if !h.IsOCITestMode() {
+		// No support for syslog_url in OCI test mode
+		inspect.AssertStdoutContains(`"tcp://example.com:42"`)
+	}
 
 	// now should exist, this should work too
 	h.WithFile("app.yaml", fmt.Sprintf(`
 name: %s
 syslog_url: tcp://example.com:443
+annotations:
+  oracle.com/oci/subnetIds:
+  - %s
 config:
   animal: giraffe
   tea: oolong
-`, appName), 0644)
-	h.Fn("deploy", "--all", "--local").AssertSuccess()
+`, appName, h.GetSubnetID()), 0644)
+	h.Fn("deploy", "--all").AssertSuccess()
 	// make sure config was updated
 	inspect = h.Fn("inspect", "app", appName).AssertSuccess()
 	inspect.AssertStdoutContains(fmt.Sprintf(`"name": "%s"`, appName))
 	inspect.AssertStdoutContains(`"oolong"`)
-	inspect.AssertStdoutContains(`"tcp://example.com:443"`)
+	if !h.IsOCITestMode() {
+		// No support for syslog_url in OCI test mode
+		inspect.AssertStdoutContains(`"tcp://example.com:443"`)
+	}
 }
 
 func TestAppYamlDeploy(t *testing.T) {
@@ -256,14 +295,18 @@ func TestAppYamlDeploy(t *testing.T) {
 	fnName := h.NewFuncName(appName)
 	h.WithFile("app.yaml", fmt.Sprintf(`
 name: %s
+annotations:
+  oracle.com/oci/subnetIds:
+  - %s
 config:
   animal: giraffe
-`, appName), 0644)
+`, appName, h.GetSubnetID()), 0644)
 	h.MkDir(fnName)
 	h.Cd(fnName)
 	withMinimalFunction(h)
+	withMinimalOCIApplication(h)
 	h.Cd("")
-	h.Fn("deploy", "--all", "--local", "--create-app").AssertSuccess()
+	h.Fn("deploy", "--all", "--create-app").AssertSuccess()
 	h.Fn("invoke", appName, fnName).AssertSuccess()
 	// check config from app.yaml is set
 	h.Fn("get", "config", "app", appName, "animal").AssertSuccess().AssertStdoutContains("giraffe")
@@ -271,11 +314,14 @@ config:
 	// now should exist, this should work too
 	h.WithFile("app.yaml", fmt.Sprintf(`
 name: %s
+annotations:
+  oracle.com/oci/subnetIds:
+  - %s
 config:
   animal: giraffe
   tea: oolong
-`, appName), 0644)
-	h.Fn("deploy", "--all", "--local").AssertSuccess()
+`, appName, h.GetSubnetID()), 0644)
+	h.Fn("deploy", "--all").AssertSuccess()
 	h.Fn("invoke", appName, fnName).AssertSuccess()
 	// make sure config was updated
 	h.Fn("get", "config", "app", appName, "tea").AssertSuccess().AssertStdoutContains("oolong")
@@ -294,7 +340,8 @@ func TestDeployCreateApp(t *testing.T) {
 	h.MkDir(fnName)
 	h.Cd(fnName)
 	withMinimalFunction(h)
-	h.Fn("deploy", "--local", "--app", appName, "--create-app").AssertSuccess()
+	withMinimalOCIApplication(h)
+	h.Fn("deploy", "--app", appName, "--create-app").AssertSuccess()
 }
 
 func TestBump(t *testing.T) {
@@ -312,7 +359,8 @@ func TestBump(t *testing.T) {
 	}
 
 	appName := h.NewAppName()
-	h.Fn("create", "app", appName).AssertSuccess()
+	withMinimalOCIApplication(h)
+	h.Fn("create", "app", appName, "--annotation", h.GetSubnetAnnotation()).AssertSuccess()
 	fnName := h.NewFuncName(appName)
 	h.MkDir(fnName)
 	h.Cd(fnName)
@@ -332,12 +380,12 @@ func TestBump(t *testing.T) {
 	h.Fn("bump", "--minor").AssertSuccess()
 	expectFuncYamlVersion("1.1.0")
 
-	h.Fn("deploy", "--local", "--app", appName).AssertSuccess()
+	h.Fn("deploy", "--app", appName).AssertSuccess()
 	expectFuncYamlVersion("1.1.1")
 
 	h.Fn("i", "function", appName, fnName).AssertSuccess().AssertStdoutContains(fmt.Sprintf(`%s:1.1.1`, fnName))
 
-	h.Fn("deploy", "--local", "--no-bump", "--app", appName).AssertSuccess()
+	h.Fn("deploy", "--no-bump", "--app", appName).AssertSuccess()
 	expectFuncYamlVersion("1.1.1")
 
 	h.Fn("i", "function", appName, fnName).AssertSuccess().AssertStdoutContains(fmt.Sprintf(`%s:1.1.1`, fnName))
@@ -355,12 +403,16 @@ func TestListID(t *testing.T) {
 	appName := h.NewAppName()
 	funcName := h.NewFuncName(appName)
 	triggerName := h.NewTriggerName(appName, funcName)
-	h.Fn("create", "app", appName).AssertSuccess()
-	h.Fn("create", "function", appName, funcName, "foo/duffimage:0.0.1").AssertSuccess()
-	h.Fn("create", "trigger", appName, funcName, triggerName, "--type", "http", "--source", "/mytrigger").AssertSuccess()
+	withMinimalFunction(h)
+	withMinimalOCIApplication(h)
+	h.Fn("create", "app", appName, "--annotation", h.GetSubnetAnnotation()).AssertSuccess()
+	h.Fn("create", "function", appName, funcName, h.GetFnImage()).AssertSuccess()
 
 	h.Fn("list", "apps", appName).AssertSuccess().AssertStdoutContains("ID")
 	h.Fn("list", "fn", appName).AssertSuccess().AssertStdoutContains("ID")
-	h.Fn("list", "triggers", appName).AssertSuccess().AssertStdoutContains("ID")
 
+	if !h.IsOCITestMode() {
+		h.Fn("create", "trigger", appName, funcName, triggerName, "--type", "http", "--source", "/mytrigger").AssertSuccess()
+		h.Fn("list", "triggers", appName).AssertSuccess().AssertStdoutContains("ID")
+	}
 }

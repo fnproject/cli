@@ -16,6 +16,9 @@ dep:
 test: build
 	./test.sh
 
+oci-test: build
+	./oci-test.sh
+
 release:
 	GOOS=linux go build -o fn_linux
 	GOOS=darwin go build -o fn_mac

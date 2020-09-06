@@ -25,6 +25,7 @@ go test -v $(go list ./... |  grep -v "^github.com/fnproject/cli/test$")
 CONTAINER_ID=$($fn start -d | tail -1)
 
 FN_API_URL="localhost:8080"
+FN_TEST_MODE="LEGACY"
 
 TRIES=15
 while [ ${TRIES} -gt 0 ]; do

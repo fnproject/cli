@@ -36,7 +36,8 @@ func TestDockerRuntimeInit(t *testing.T) {
 	defer tctx.Cleanup()
 
 	appName := tctx.NewAppName()
-	tctx.Fn("create", "app", appName).AssertSuccess()
+	withMinimalOCIApplication(tctx)
+	tctx.Fn("create", "app", appName, "--annotation", tctx.GetSubnetAnnotation()).AssertSuccess()
 	fnName := tctx.NewFuncName(appName)
 	tctx.MkDir(fnName)
 	tctx.Cd(fnName)
@@ -44,8 +45,8 @@ func TestDockerRuntimeInit(t *testing.T) {
 	tctx.WithFile("Dockerfile", dockerFile, 0644)
 
 	tctx.Fn("init").AssertSuccess()
-	tctx.Fn("--verbose", "build").AssertSuccess()
-	tctx.Fn("--registry", "test", "deploy", "--local", "--app", appName).AssertSuccess()
+	tctx.Fn("build").AssertSuccess()
+	tctx.Fn("--registry", tctx.GetFnRegistry(), "deploy", "--app", appName).AssertSuccess()
 	tctx.Fn("invoke", appName, fnName).AssertSuccess()
 }
 

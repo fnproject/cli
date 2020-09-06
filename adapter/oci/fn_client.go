@@ -1,9 +1,8 @@
 package oci
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/fnproject/cli/adapter"
 	"github.com/go-openapi/strfmt"
@@ -73,8 +72,7 @@ func (f FnClient) GetFn(appID string, fnName string) (*adapter.Fn, error) {
 	}
 
 	if len(resp.Items) > 0 {
-		adapterFn := convertOCIFnSummaryToAdapterFn(&resp.Items[0])
-		return adapterFn, nil
+		return f.GetFnByFnID(*resp.Items[0].Id)
 	} else {
 		return nil, adapter.FunctionNameNotFoundError{Name: fnName}
 	}
@@ -103,6 +101,15 @@ func (f FnClient) UpdateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 		return nil, err
 	}
 
+	//merge config
+	for k, v := range fn.Config {
+		if v == "" {
+			delete(fn.Config, k)
+		} else {
+			fn.Config[k] = v
+		}
+	}
+
 	body := functions.UpdateFunctionDetails{
 		Image:            &fn.Image,
 		TimeoutInSeconds: parseTimeout(fn.Timeout),
@@ -111,7 +118,7 @@ func (f FnClient) UpdateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 		ImageDigest:      digest,
 	}
 
-	req := functions.UpdateFunctionRequest{UpdateFunctionDetails: body,}
+	req := functions.UpdateFunctionRequest{UpdateFunctionDetails: body, FunctionId: &fn.ID}
 	res, err := f.client.UpdateFunction(context.Background(), req)
 
 	if err != nil {
@@ -244,12 +251,18 @@ func parseDigestAnnotation(fn *adapter.Fn) (*string, error) {
 		return nil, nil
 	}
 
-	var digest string
-	if digestInterface, found := fn.Annotations[AnnotationImageDigest]; found {
-		digestBytes := digestInterface.([]byte)
-		if err := json.NewDecoder(bytes.NewReader(digestBytes)).Decode(&digest); err != nil {
-			return nil, err
-		}
+	digestInterface, ok := fn.Annotations[AnnotationImageDigest]
+	if !ok {
+		// Missing ImageDigest
+		return nil, nil
 	}
+
+	// Typecast to string
+	digest, success := digestInterface.(string)
+
+	if !success {
+		return nil, errors.New("Invalid image digest")
+	}
+
 	return &digest, nil
 }

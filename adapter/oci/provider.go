@@ -10,7 +10,7 @@ type Provider struct {
 }
 
 func (p Provider) APIClient() adapter.APIClient {
-	return &APIClient{fnClient: &FnClient{client: p.FMCClient}, appClient: &AppClient{client: p.FMCClient},}
+	return &APIClient{fnClient: &FnClient{client: p.FMCClient}, appClient: &AppClient{client: p.FMCClient}, triggerClient: &TriggerClient{}}
 }
 
 func (p Provider) VersionClient() adapter.VersionClient {

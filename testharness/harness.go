@@ -186,7 +186,7 @@ func (h *CLIHarness) Cleanup() {
 		h.Fn("delete", "triggers", trigger.appName, trigger.funcName, trigger.triggerName)
 	}
 	for _, fn := range h.funcRefs {
-		h.Fn("delete", "functions", fn.appName, fn.funcName)
+		h.Fn("delete", "function", fn.appName, fn.funcName)
 	}
 	for _, app := range h.appNames {
 		h.Fn("delete", "apps", app)
@@ -202,7 +202,12 @@ func (h *CLIHarness) Cleanup() {
 
 //NewAppName creates a new, valid app name and registers it for deletion
 func (h *CLIHarness) NewAppName() string {
-	appName := randString(8)
+	return h.NewAppNameWithSuffix("")
+}
+
+//NewAppName creates a new, valid app name and registers it for deletion. This version takes in a suffix.
+func (h *CLIHarness) NewAppNameWithSuffix(suffix string) string {
+	appName := randString(8) + "_" + suffix
 	h.appNames = append(h.appNames, appName)
 	return appName
 }
@@ -210,6 +215,46 @@ func (h *CLIHarness) NewAppName() string {
 //WithEnv sets additional enironment variables in the test , these overlay the ambient environment
 func (h *CLIHarness) WithEnv(key string, value string) {
 	h.env[key] = value
+}
+
+func (h *CLIHarness) IsOCITestMode() bool {
+	return os.Getenv("FN_TEST_MODE") == "OCI"
+}
+
+func (h *CLIHarness) GetSubnetAnnotation() string{
+	return fmt.Sprintf("oracle.com/oci/subnetIds=[\"%s\"]", h.GetSubnetID())
+}
+
+func (h *CLIHarness) GetSubnetID() string{
+	subnet := os.Getenv("FN_SUBNET")
+	if subnet != "" && h.IsOCITestMode() {
+		return subnet
+	}
+	return "ocid1.subnet.oc1.iad.aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+}
+
+func (h *CLIHarness) GetFnRegistry() string{
+	registry := os.Getenv("FN_REGISTRY")
+	if registry != "" && h.IsOCITestMode() {
+		return registry
+	}
+	return "test"
+}
+
+func (h *CLIHarness) GetFnImage() string{
+	image := os.Getenv("FN_IMAGE")
+	if image != "" && h.IsOCITestMode() {
+		return image
+	}
+	return "bar/foobeer:0.0.1"
+}
+
+func (h *CLIHarness) GetAlternateFnImage() string{
+	image := os.Getenv("FN_IMAGE_2")
+	if image != "" && h.IsOCITestMode() {
+		return image
+	}
+	return "bar/duffbeer:0.1.2"
 }
 
 func copyAll(src, dest string) error {
@@ -278,6 +323,18 @@ func (h *CLIHarness) CopyFiles(files map[string]string) {
 
 }
 
+// CopyFiles copies files and directories from the test source dir into the home dir
+func (h *CLIHarness) CopyFilesToHomeDir(files map[string]string) {
+
+	for src, dest := range files {
+		h.pushHistoryf("cp -r %s %s", src, dest)
+		err := copyAll(src, path.Join(h.homeDir, dest))
+		if err != nil {
+			h.t.Fatalf("Failed to copy %s -> %s : %v", src, dest, err)
+		}
+	}
+}
+
 // WithFile creates a file relative to the cwd
 func (h *CLIHarness) WithFile(rPath string, content string, perm os.FileMode) {
 
@@ -295,6 +352,10 @@ func (h *CLIHarness) WithFile(rPath string, content string, perm os.FileMode) {
 // FnWithInput runs the Fn ClI with an input string
 // If a command takes more than a certain timeout then this will send a SIGQUIT to the process resulting in a stacktrace on stderr
 func (h *CLIHarness) FnWithInput(input string, args ...string) *CmdResult {
+	return h.FnWithTimeoutAndInput(input, commandTimeout, args...)
+}
+
+func (h *CLIHarness) FnWithTimeoutAndInput(input string, cmdTimeout time.Duration, args ...string) *CmdResult {
 
 	stdOut := bytes.Buffer{}
 	stdErr := bytes.Buffer{}
@@ -341,7 +402,7 @@ func (h *CLIHarness) FnWithInput(input string, args ...string) *CmdResult {
 		h.pushHistoryf("%s", cmdString)
 	}
 	done := make(chan interface{})
-	timer := time.NewTimer(commandTimeout)
+	timer := time.NewTimer(cmdTimeout)
 
 	// If the CLI stalls for more than commandTimeout we send a SIQQUIT which should result in a stack trace in stderr
 	go func() {

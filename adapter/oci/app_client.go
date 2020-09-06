@@ -1,9 +1,7 @@
 package oci
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/fnproject/cli/adapter"
@@ -56,16 +54,24 @@ func parseSubnetIds(annotations map[string]interface{}) ([]string, error) {
 
 	var subnets []string
 	subnetsInterface, ok := annotations[AnnotationSubnet]
-	if ok {
-		// Typecast to byte
-		subnetsBytes := subnetsInterface.([]byte)
+	if !ok {
+		return nil, errors.New("Missing subnets annotation")
+	}
 
-		err := json.NewDecoder(bytes.NewReader(subnetsBytes)).Decode(&subnets)
-		if err != nil {
+	// Typecast to []interface{}
+	subnetsArray, success := subnetsInterface.([]interface{})
+
+	if !success {
+		return nil, errors.New("Invalid subnets annotation")
+	}
+
+	for _,s := range subnetsArray {
+		// Typecast to string
+		subnetString, secondSuccess := s.(string)
+		if !secondSuccess {
 			return nil, errors.New("Invalid subnets annotation")
 		}
-	} else {
-		return nil, errors.New("Missing subnets annotation")
+		subnets = append(subnets, subnetString)
 	}
 
 	return subnets, nil
@@ -80,7 +86,14 @@ func (a AppClient) GetApp(appName string) (*adapter.App, error) {
 	}
 
 	if len(resp.Items) > 0 {
-		adapterApp := convertOCIAppSummaryToAdapterApp(&resp.Items[0])
+		getreq := functions.GetApplicationRequest{ApplicationId: resp.Items[0].Id}
+		getres,geterr := a.client.GetApplication(context.Background(), getreq)
+
+		if geterr != nil {
+			return nil, geterr
+		}
+
+		adapterApp := convertOCIAppToAdapterApp(&getres.Application)
 		return adapterApp, nil
 	} else {
 		return nil, adapter.AppNameNotFoundError{Name: appName}
@@ -88,11 +101,20 @@ func (a AppClient) GetApp(appName string) (*adapter.App, error) {
 }
 
 func (a AppClient) UpdateApp(app *adapter.App) (*adapter.App, error) {
+	//merge config
+	for k, v := range app.Config {
+		if v == "" {
+			delete(app.Config, k)
+		} else {
+			app.Config[k] = v
+		}
+	}
+
 	body := functions.UpdateApplicationDetails{
 		Config: app.Config,
 	}
 
-	req := functions.UpdateApplicationRequest{UpdateApplicationDetails: body,}
+	req := functions.UpdateApplicationRequest{UpdateApplicationDetails: body, ApplicationId: &app.ID}
 	res, err := a.client.UpdateApplication(context.Background(), req)
 
 	if err != nil {
@@ -163,6 +185,7 @@ func convertOCIAppSummaryToAdapterApp(ociApp *functions.ApplicationSummary) *ada
 		Annotations: annotationMap,
 		CreatedAt:   createdAt,
 		UpdatedAt:   updatedAt,
+		Config:		 ociApp.FreeformTags,
 	}
 }
 

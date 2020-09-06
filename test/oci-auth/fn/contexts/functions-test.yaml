@@ -1,0 +1,5 @@
+api-url: https://functions.us-ashburn-1.oraclecloud.com
+oracle.compartment-id: Fill me in
+oracle.profile: odx-jafar
+provider: oracle
+registry: Fill me in

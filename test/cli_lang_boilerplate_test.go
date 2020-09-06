@@ -2,9 +2,10 @@ package test
 
 import (
 	"fmt"
-	"testing"
-
 	"github.com/fnproject/cli/testharness"
+	"strconv"
+	"testing"
+	"time"
 )
 
 var Runtimes = []struct {
@@ -26,6 +27,7 @@ var Runtimes = []struct {
 func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 	t.Parallel()
 
+	i := 0
 	for _, runtimeI := range Runtimes {
 		rt := runtimeI
 		t.Run(fmt.Sprintf("%s runtime", rt.runtime), func(t *testing.T) {
@@ -33,8 +35,10 @@ func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 			h := testharness.Create(t)
 			defer h.Cleanup()
 
-			appName := h.NewAppName()
-			h.Fn("create", "app", appName).AssertSuccess()
+			appName := h.NewAppNameWithSuffix(strconv.Itoa(i))
+			i++
+			withMinimalOCIApplication(h)
+			h.Fn("create", "app", appName, "--annotation", h.GetSubnetAnnotation()).AssertSuccess()
 			funcName := h.NewFuncName(appName)
 
 			h.Fn("init", "--runtime", rt.runtime, funcName).AssertSuccess()
@@ -42,9 +46,14 @@ func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 			h.Cd(funcName)
 			h.Fn("build").AssertSuccess()
 
-			h.Fn("--registry", "test", "deploy", "--local", "--app", appName).AssertSuccess()
+			timeout := 5 * time.Minute
+			// Larger timeouts are required to allow this test to complete in OCI mode
+			if h.IsOCITestMode() {
+				timeout = 60 * time.Minute
+			}
 
-			h.FnWithInput(rt.callInput, "invoke", appName, funcName).AssertSuccess()
+			h.FnWithTimeoutAndInput("", timeout, "--registry", h.GetFnRegistry(), "deploy", "--app", appName).AssertSuccess()
+			h.FnWithTimeoutAndInput(rt.callInput, timeout, "invoke", appName, funcName).AssertSuccess()
 		})
 	}
 

@@ -1,6 +1,7 @@
 package context
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -47,7 +48,7 @@ func TestValidateAPIURL(t *testing.T) {
 		t.Run(tc.apiURL, func(t *testing.T) {
 			errString := ""
 			if err := ValidateAPIURL(tc.apiURL); err != nil {
-				errString = err.Error()
+				errString = strings.ReplaceAll(err.Error(), "\"", "")
 			}
 			if tc.expectedErr != errString {
 				t.Fatalf("Expected %s but got %s", tc.expectedErr, errString)

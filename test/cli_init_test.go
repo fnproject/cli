@@ -34,11 +34,13 @@ func TestInitImage(t *testing.T) {
 
 	t.Run("`fn init --init-image=<...>` should produce a working function template", func(t *testing.T) {
 		h := testharness.Create(t)
+		defer h.Cleanup()
 		var err error
 
 		// Create the init-image
 		appName := h.NewAppName()
-		h.Fn("create", "app", appName).AssertSuccess()
+		withMinimalOCIApplication(h)
+		h.Fn("create", "app", appName, "--annotation", h.GetSubnetAnnotation()).AssertSuccess()
 		origFuncName := h.NewFuncName(appName)
 		h.Fn("init", "--runtime", "go", origFuncName)
 		h.Cd(origFuncName)
@@ -73,7 +75,7 @@ func TestInitImage(t *testing.T) {
 
 		h.Fn("init", "--init-image", origFuncName+"-init", newFuncName)
 		h.Cd(newFuncName)
-		h.Fn("--registry", "test", "deploy", "--local", "--no-bump", "--app", appName).AssertSuccess()
+		h.Fn("--registry", h.GetFnRegistry(), "deploy", "--no-bump", "--app", appName).AssertSuccess()
 		h.Fn("invoke", appName, newFuncName).AssertSuccess()
 
 		newYaml := h.GetYamlFile("func.yaml")

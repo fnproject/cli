@@ -317,8 +317,10 @@ func (a *appsCmd) delete(c *cli.Context) error {
 
 	err = a.apiClientAdapter.AppClient().DeleteApp(app.ID)
 
-	if err == nil {
-		fmt.Println("App", appName, "deleted")
+	if err != nil {
+		return err
 	}
+
+	fmt.Println("App", appName, "deleted")
 	return nil
 }
