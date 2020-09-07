@@ -9,6 +9,12 @@ function cleanup {
 	if [ -d "$WORK_DIR" ]; then
 		rm -rf $WORK_DIR
 	fi
+
+	#More cleanup for docker artifacts
+	docker stop $(docker ps -aq)
+	docker rm $(docker ps -aq)
+	rm -rf ~/.fn/data/fn.db
+	rm -rf ~/.fn/iofs/*
 }
 trap cleanup EXIT
 
