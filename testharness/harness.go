@@ -355,12 +355,26 @@ func (h *CLIHarness) FnWithInput(input string, args ...string) *CmdResult {
 	return h.FnWithTimeoutAndInput(input, commandTimeout, args...)
 }
 
+func isDeployCmd(args []string) bool {
+	for _, a := range args {
+		if a == "deploy" {
+			return true
+		}
+	}
+	return false
+}
+
 func (h *CLIHarness) FnWithTimeoutAndInput(input string, cmdTimeout time.Duration, args ...string) *CmdResult {
 
 	stdOut := bytes.Buffer{}
 	stdErr := bytes.Buffer{}
 
 	args = append([]string{"--verbose"}, args...)
+
+	if !h.IsOCITestMode() && isDeployCmd(args) {
+		args = append(args, "--local")
+	}
+
 	cmd := exec.Command(h.cliPath, args...)
 	cmd.Stderr = &stdErr
 	cmd.Stdout = &stdOut
