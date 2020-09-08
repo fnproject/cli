@@ -77,7 +77,8 @@ func (h *PythonLangHelper) DockerfileBuildCmds() []string {
 		r = append(r, "ADD requirements.txt /function/")
 		r = append(r, fmt.Sprintf(`
 			%v -r requirements.txt &&\
-			 rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv`, pip_cmd))
+			    rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv &&\
+			    chmod -R o+r /python`, pip_cmd))
 	}
 	r = append(r, "ADD . /function/")
 	if exists("setup.py") {
@@ -100,7 +101,7 @@ import logging
 from fdk import response
 
 
-def handler(ctx, data: io.BytesIO=None):
+def handler(ctx, data: io.BytesIO = None):
     name = "World"
     try:
         body = json.loads(data.getvalue())
@@ -122,7 +123,7 @@ func (h *PythonLangHelper) DockerfileCopyCmds() []string {
 	return []string{
 		"COPY --from=build-stage /python /python",
 		"COPY --from=build-stage /function /function",
-		"RUN chmod -R o+r /python /function",
+		"RUN chmod -R o+r /function",
 		"ENV PYTHONPATH=/function:/python",
 	}
 }
