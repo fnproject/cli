@@ -1,16 +1,20 @@
 package client
 
 import (
+	"fmt"
 	"github.com/fnproject/cli/adapter"
 	"github.com/fnproject/cli/adapter/oci"
 	"github.com/fnproject/cli/adapter/oss"
 	"github.com/fnproject/cli/config"
 	"github.com/fnproject/fn_go"
 	"github.com/fnproject/fn_go/provider"
+	"github.com/fnproject/fn_go/provider/oracle"
 	"github.com/oracle/oci-go-sdk/common"
 	"github.com/oracle/oci-go-sdk/common/auth"
 	"github.com/oracle/oci-go-sdk/functions"
 	"github.com/spf13/viper"
+	"io/ioutil"
+	"os"
 )
 
 func CurrentProvider() (provider.Provider, error) {
@@ -36,10 +40,21 @@ func CurrentProviderAdapter() (adapter.Provider, error) {
 		if err != nil {
 			return nil, err
 		}
-		// TODO: The OBO token may be obtained by following the example code at:
-		// https://github.com/fnproject/fn_go/blob/master/provider/oracle/cloudshell_provider.go#L56
-		// https://github.com/fnproject/fn_go/blob/master/provider/oracle/cloudshell_provider.go#L155
-		fnClient, err := functions.NewFunctionsManagementClientWithOboToken(provider, "Fill me in")
+
+		var delegationToken string
+		delegationTokenFile := os.Getenv(oracle.OCI_CLI_DELEGATION_TOKEN_FILE_ENV_VAR)
+		if delegationTokenFile != "" {
+			fileContent, err := ioutil.ReadFile(delegationTokenFile)
+			if err != nil {
+				return nil, fmt.Errorf("Could not load delegation token from file due to error: %s\n", err)
+			}
+			delegationToken = string(fileContent)
+		}
+		if delegationToken == "" {
+			return nil, fmt.Errorf("Could not derive delegation token filepath from either config or environment.")
+		}
+
+		fnClient, err := functions.NewFunctionsManagementClientWithOboToken(provider, delegationToken)
 		return &oci.Provider{FMCClient: &fnClient}, err
 	default:
 		ossProvider, err := fn_go.DefaultProviders.ProviderFromConfig(ctxProvider, &config.ViperConfigSource{}, &provider.TerminalPassPhraseSource{})

@@ -8,8 +8,6 @@ import (
 
 type Provider interface {
 	APIClient() APIClient
-	VersionClient() VersionClient
-	FunctionInvokeClient() FunctionInvokeClient
 }
 
 type APIClient interface {
@@ -41,15 +39,6 @@ type TriggerClient interface {
 	GetTrigger(appID string, fnID string, trigName string) (*Trigger, error)
 	ListTrigger(appID string, fnID string, limit int64) ([]*Trigger, error)
 	DeleteTrigger(trigID string) error
-}
-
-
-type VersionClient interface {
-	GetVersion() string
-}
-
-type FunctionInvokeClient interface {
-	InvokeFunction(fn string)
 }
 
 // NameNotFoundError error for app not found when looked up by name

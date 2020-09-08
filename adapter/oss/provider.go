@@ -17,13 +17,3 @@ func (p Provider) APIClient() adapter.APIClient {
 		triggerClient: &TriggerClient{client: v2Client},
 	}
 }
-
-func (p Provider) VersionClient() adapter.VersionClient {
-	// TODO: implement
-	return nil
-}
-
-func (p Provider) FunctionInvokeClient() adapter.FunctionInvokeClient {
-	// TODO: implement
-	return nil
-}
