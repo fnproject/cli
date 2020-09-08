@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"github.com/fnproject/cli/testharness"
+	"math/rand"
 	"strconv"
 	"testing"
 	"time"
@@ -27,7 +28,7 @@ var Runtimes = []struct {
 func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 	t.Parallel()
 
-	i := 0
+	i := 1
 	for _, runtimeI := range Runtimes {
 		rt := runtimeI
 		t.Run(fmt.Sprintf("%s runtime", rt.runtime), func(t *testing.T) {
@@ -35,7 +36,7 @@ func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
 			h := testharness.Create(t)
 			defer h.Cleanup()
 
-			appName := h.NewAppNameWithSuffix(strconv.Itoa(i))
+			appName := h.NewAppNameWithSuffix(strconv.Itoa(i + rand.Intn(1000)))
 			i++
 			withMinimalOCIApplication(h)
 			h.Fn("create", "app", appName, "--annotation", h.GetSubnetAnnotation()).AssertSuccess()

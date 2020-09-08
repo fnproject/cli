@@ -30,4 +30,4 @@ export fn="${CUR_DIR}/fn"
 go test -v $(go list ./... |  grep -v "^github.com/fnproject/cli/test$")
 
 # run the CLI ign tests
-go test -timeout 40m  -v  github.com/fnproject/cli/test
+go test -timeout 60m  -v  github.com/fnproject/cli/test
