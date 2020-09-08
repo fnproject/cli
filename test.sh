@@ -13,8 +13,6 @@ function cleanup {
 	#More cleanup for docker artifacts
 	docker stop $(docker ps -aq)
 	docker rm $(docker ps -aq)
-	rm -rf ~/.fn/data/fn.db
-	rm -rf ~/.fn/iofs/*
 }
 trap cleanup EXIT
 
