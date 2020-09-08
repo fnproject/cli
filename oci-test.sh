@@ -7,6 +7,7 @@ export FN_TEST_MODE="OCI"
 # oci-auth/fn/config.yaml
 # oci-auth/fn/contexts/functions-test.yaml
 # oci-auth/oci/config
+# simpleapp/app.json
 export FN_API_URL="https://functions.us-ashburn-1.oraclecloud.com/20181201"
 export FN_SUBNET="Fill me in"
 export FN_IMAGE="Fill me in"

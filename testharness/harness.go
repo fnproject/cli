@@ -207,12 +207,15 @@ func (h *CLIHarness) NewAppName() string {
 
 //NewAppName creates a new, valid app name and registers it for deletion. This version takes in a suffix.
 func (h *CLIHarness) NewAppNameWithSuffix(suffix string) string {
-	appName := randString(8) + "_" + suffix
+	appName := randString(8)
+	if suffix != "" {
+		appName += "_" + suffix
+	}
 	h.appNames = append(h.appNames, appName)
 	return appName
 }
 
-//WithEnv sets additional enironment variables in the test , these overlay the ambient environment
+//WithEnv sets additional environment variables in the test , these overlay the ambient environment
 func (h *CLIHarness) WithEnv(key string, value string) {
 	h.env[key] = value
 }
