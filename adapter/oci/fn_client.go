@@ -60,8 +60,7 @@ func (f FnClient) CreateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 		return nil, err
 	}
 
-	adapterFn := convertOCIFnToAdapterFn(&res.Function)
-	return adapterFn, nil
+	return convertOCIFnToAdapterFn(&res.Function)
 }
 
 func (f FnClient) GetFn(appID string, fnName string) (*adapter.Fn, error) {
@@ -86,7 +85,7 @@ func (f FnClient) GetFnByFnID(fnID string) (*adapter.Fn, error) {
 		return nil, err
 	}
 
-	return convertOCIFnToAdapterFn(&resp.Function), nil
+	return convertOCIFnToAdapterFn(&resp.Function)
 }
 
 func (f FnClient) UpdateFn(fn *adapter.Fn) (*adapter.Fn, error) {
@@ -125,8 +124,7 @@ func (f FnClient) UpdateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 		return nil, err
 	}
 
-	adapterFn := convertOCIFnToAdapterFn(&res.Function)
-	return adapterFn, nil
+	return convertOCIFnToAdapterFn(&res.Function)
 }
 
 func (f FnClient) DeleteFn(fnID string) error {
@@ -145,7 +143,11 @@ func (f FnClient) ListFn(appID string, limit int64) ([]*adapter.Fn, error) {
 			return nil, err
 		}
 
-		adapterFns := convertOCIFnsToAdapterFns(&resp.Items)
+		adapterFns, err := convertOCIFnsToAdapterFns(&resp.Items)
+		if err != nil {
+			return nil, err
+		}
+
 		resFns = append(resFns, adapterFns...)
 		howManyMore := limit - int64(len(resFns)+len(resp.Items))
 
@@ -164,18 +166,28 @@ func (f FnClient) ListFn(appID string, limit int64) ([]*adapter.Fn, error) {
 	return resFns, nil
 }
 
-func convertOCIFnsToAdapterFns(ociFns *[]functions.FunctionSummary) []*adapter.Fn {
+func convertOCIFnsToAdapterFns(ociFns *[]functions.FunctionSummary) ([]*adapter.Fn, error) {
 	var resFns []*adapter.Fn
 	for _, ociFn := range *ociFns {
-		fn := convertOCIFnSummaryToAdapterFn(&ociFn)
+		fn, err := convertOCIFnSummaryToAdapterFn(&ociFn)
+		if err != nil {
+			return nil, err
+		}
 		resFns = append(resFns, fn)
 	}
-	return resFns
+	return resFns, nil
 }
 
-func convertOCIFnSummaryToAdapterFn(ociFn *functions.FunctionSummary) *adapter.Fn {
-	createdAt, _ := strfmt.ParseDateTime(ociFn.TimeCreated.Format(time.RFC3339Nano))
-	updatedAt, _ := strfmt.ParseDateTime(ociFn.TimeUpdated.Format(time.RFC3339Nano))
+func convertOCIFnSummaryToAdapterFn(ociFn *functions.FunctionSummary) (*adapter.Fn, error) {
+	createdAt, err := strfmt.ParseDateTime(ociFn.TimeCreated.Format(time.RFC3339Nano))
+	if err != nil {
+		return nil, errors.New("missing or invalid TimeCreated in function")
+	}
+
+	updatedAt, err := strfmt.ParseDateTime(ociFn.TimeUpdated.Format(time.RFC3339Nano))
+	if err != nil {
+		return nil, errors.New("missing or invalid TimeUpdated in function")
+	}
 
 	var timeoutPtr *int32
 	timeoutPtr = nil
@@ -202,12 +214,20 @@ func convertOCIFnSummaryToAdapterFn(ociFn *functions.FunctionSummary) *adapter.F
 		UpdatedAt:   updatedAt,
 		Annotations: annotationMap,
 		IDLETimeout: &defaultIdleTimeout,
-	}
+	}, nil
 }
 
-func convertOCIFnToAdapterFn(ociFn *functions.Function) *adapter.Fn {
-	createdAt, _ := strfmt.ParseDateTime(ociFn.TimeCreated.Format(time.RFC3339Nano))
-	updatedAt, _ := strfmt.ParseDateTime(ociFn.TimeUpdated.Format(time.RFC3339Nano))
+func convertOCIFnToAdapterFn(ociFn *functions.Function) (*adapter.Fn, error) {
+	createdAt, err := strfmt.ParseDateTime(ociFn.TimeCreated.Format(time.RFC3339Nano))
+	if err != nil {
+		return nil, errors.New("missing or invalid TimeCreated in function")
+	}
+
+	updatedAt, err := strfmt.ParseDateTime(ociFn.TimeUpdated.Format(time.RFC3339Nano))
+	if err != nil {
+		return nil, errors.New("missing or invalid TimeUpdated in function")
+	}
+
 
 	var timeoutPtr *int32
 	timeoutPtr = nil
@@ -235,7 +255,7 @@ func convertOCIFnToAdapterFn(ociFn *functions.Function) *adapter.Fn {
 		Config:      ociFn.Config,
 		Annotations: annotationMap,
 		IDLETimeout: &defaultIdleTimeout,
-	}
+	}, nil
 }
 
 func parseTimeout(timeout *int32) *int {

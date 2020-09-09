@@ -41,7 +41,7 @@ type TriggerClient interface {
 	DeleteTrigger(trigID string) error
 }
 
-// NameNotFoundError error for app not found when looked up by name
+// AppNameNotFoundError for app not found when looked up by name
 type AppNameNotFoundError struct {
 	Name string
 }
@@ -50,7 +50,7 @@ func (n AppNameNotFoundError) Error() string {
 	return fmt.Sprintf("app %s not found", n.Name)
 }
 
-// NameNotFoundError error for function not found when looked up by name
+// FunctionNameNotFoundError for function not found when looked up by name
 type FunctionNameNotFoundError struct {
 	Name string
 }
@@ -59,7 +59,7 @@ func (n FunctionNameNotFoundError) Error() string {
 	return fmt.Sprintf("function %s not found", n.Name)
 }
 
-// NameNotFoundError error for trigger not found when looked up by name
+// TriggerNameNotFoundError for trigger not found when looked up by name
 type TriggerNameNotFoundError struct {
 	Name string
 }

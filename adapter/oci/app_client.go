@@ -43,8 +43,7 @@ func (a AppClient) CreateApp(app *adapter.App) (*adapter.App, error) {
 		return nil, err
 	}
 
-	adapterApp := convertOCIAppToAdapterApp(&res.Application)
-	return adapterApp, nil
+	return convertOCIAppToAdapterApp(&res.Application)
 }
 
 func parseSubnetIds(annotations map[string]interface{}) ([]string, error) {
@@ -93,8 +92,7 @@ func (a AppClient) GetApp(appName string) (*adapter.App, error) {
 			return nil, geterr
 		}
 
-		adapterApp := convertOCIAppToAdapterApp(&getres.Application)
-		return adapterApp, nil
+		return convertOCIAppToAdapterApp(&getres.Application)
 	} else {
 		return nil, adapter.AppNameNotFoundError{Name: appName}
 	}
@@ -121,8 +119,7 @@ func (a AppClient) UpdateApp(app *adapter.App) (*adapter.App, error) {
 		return nil, err
 	}
 
-	adapterApp := convertOCIAppToAdapterApp(&res.Application)
-	return adapterApp, nil
+	return convertOCIAppToAdapterApp(&res.Application)
 }
 
 func (a AppClient) DeleteApp(appID string) error {
@@ -142,7 +139,11 @@ func (a AppClient) ListApp(limit int64) ([]*adapter.App, error) {
 			return nil, err
 		}
 
-		adapterApps := convertOCIAppsToAdapterApps(&resp.Items)
+		adapterApps, err := convertOCIAppsToAdapterApps(&resp.Items)
+		if err != nil {
+			return nil, err
+		}
+
 		resApps = append(resApps, adapterApps...)
 		howManyMore := limit - int64(len(resApps)+len(resp.Items))
 
@@ -161,19 +162,29 @@ func (a AppClient) ListApp(limit int64) ([]*adapter.App, error) {
 	return resApps, nil
 }
 
-func convertOCIAppsToAdapterApps(ociApps *[]functions.ApplicationSummary) []*adapter.App {
+func convertOCIAppsToAdapterApps(ociApps *[]functions.ApplicationSummary) ([]*adapter.App, error) {
 	var resApps []*adapter.App
 	for _, ociApp := range *ociApps {
-		app := convertOCIAppSummaryToAdapterApp(&ociApp)
+		app, err := convertOCIAppSummaryToAdapterApp(&ociApp)
+		if err != nil {
+			return nil, err
+		}
 		resApps = append(resApps, app)
 	}
 
-	return resApps
+	return resApps, nil
 }
 
-func convertOCIAppSummaryToAdapterApp(ociApp *functions.ApplicationSummary) *adapter.App {
-	createdAt, _ := strfmt.ParseDateTime(ociApp.TimeCreated.Format(time.RFC3339Nano))
-	updatedAt, _ := strfmt.ParseDateTime(ociApp.TimeUpdated.Format(time.RFC3339Nano))
+func convertOCIAppSummaryToAdapterApp(ociApp *functions.ApplicationSummary) (*adapter.App, error) {
+	createdAt, err := strfmt.ParseDateTime(ociApp.TimeCreated.Format(time.RFC3339Nano))
+	if err != nil {
+		return nil, errors.New("missing or invalid TimeCreated in application")
+	}
+
+	updatedAt, err := strfmt.ParseDateTime(ociApp.TimeUpdated.Format(time.RFC3339Nano))
+	if err != nil {
+		return nil, errors.New("missing or invalid TimeUpdated in application")
+	}
 
 	annotationMap := make(map[string]interface{})
 	annotationMap[AnnotationSubnet] = ociApp.SubnetIds
@@ -186,12 +197,19 @@ func convertOCIAppSummaryToAdapterApp(ociApp *functions.ApplicationSummary) *ada
 		CreatedAt:   createdAt,
 		UpdatedAt:   updatedAt,
 		Config:		 ociApp.FreeformTags,
-	}
+	}, nil
 }
 
-func convertOCIAppToAdapterApp(ociApp *functions.Application) *adapter.App {
-	createAt, _ := strfmt.ParseDateTime(ociApp.TimeCreated.Format(time.RFC3339Nano))
-	updatedAt, _ := strfmt.ParseDateTime(ociApp.TimeUpdated.Format(time.RFC3339Nano))
+func convertOCIAppToAdapterApp(ociApp *functions.Application) (*adapter.App, error) {
+	createAt, err := strfmt.ParseDateTime(ociApp.TimeCreated.Format(time.RFC3339Nano))
+	if err != nil {
+		return nil, errors.New("missing or invalid TimeCreated in application")
+	}
+
+	updatedAt, err := strfmt.ParseDateTime(ociApp.TimeUpdated.Format(time.RFC3339Nano))
+	if err != nil {
+		return nil, errors.New("missing or invalid TimeUpdated in application")
+	}
 
 	annotationMap := make(map[string]interface{})
 	annotationMap[AnnotationSubnet] = ociApp.SubnetIds
@@ -204,5 +222,5 @@ func convertOCIAppToAdapterApp(ociApp *functions.Application) *adapter.App {
 		UpdatedAt:   updatedAt,
 		Annotations: annotationMap,
 		Config:      ociApp.Config,
-	}
+	}, nil
 }

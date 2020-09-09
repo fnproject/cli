@@ -6,9 +6,9 @@ import (
 )
 
 type Provider struct {
-	FMCClient *functions.FunctionsManagementClient
+	FMClient *functions.FunctionsManagementClient
 }
 
 func (p Provider) APIClient() adapter.APIClient {
-	return &APIClient{fnClient: &FnClient{client: p.FMCClient}, appClient: &AppClient{client: p.FMCClient}, triggerClient: &TriggerClient{}}
+	return &APIClient{fnClient: &FnClient{client: p.FMClient}, appClient: &AppClient{client: p.FMClient}, triggerClient: &TriggerClient{}}
 }

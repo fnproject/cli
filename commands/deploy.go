@@ -44,7 +44,7 @@ func DeployCommand() cli.Command {
 }
 
 type deploycmd struct {
-	clientV2      *v2Client.Fn
+	clientV2         *v2Client.Fn
 	apiClientAdapter adapter.APIClient
 
 	appName   string

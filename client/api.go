@@ -27,14 +27,14 @@ func CurrentProviderAdapter() (adapter.Provider, error) {
 	switch ctxProvider {
 	case "oracle":
 		fnClient, err := functions.NewFunctionsManagementClientWithConfigurationProvider(common.CustomProfileConfigProvider("", currentProfile))
-		return &oci.Provider{FMCClient: &fnClient}, err
+		return &oci.Provider{FMClient: &fnClient}, err
 	case "oracle-ip":
 		provider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {
 			return nil, err
 		}
 		fnClient, err := functions.NewFunctionsManagementClientWithConfigurationProvider(provider)
-		return &oci.Provider{FMCClient: &fnClient}, err
+		return &oci.Provider{FMClient: &fnClient}, err
 	case "oracle-cs":
 		provider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {
@@ -55,7 +55,7 @@ func CurrentProviderAdapter() (adapter.Provider, error) {
 		}
 
 		fnClient, err := functions.NewFunctionsManagementClientWithOboToken(provider, delegationToken)
-		return &oci.Provider{FMCClient: &fnClient}, err
+		return &oci.Provider{FMClient: &fnClient}, err
 	default:
 		ossProvider, err := fn_go.DefaultProviders.ProviderFromConfig(ctxProvider, &config.ViperConfigSource{}, &provider.TerminalPassPhraseSource{})
 		return &oss.Provider{OSSProvider: ossProvider}, err
