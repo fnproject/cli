@@ -102,11 +102,11 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 			return errors.New("missing app and function name")
 		}
 
-		app, err := cl.apiClientAdapter.AppClient().GetApp(appName)
+		app, _, err := cl.apiClientAdapter.AppClient().GetApp(appName)
 		if err != nil {
 			return err
 		}
-		fn, err := cl.apiClientAdapter.FnClient().GetFn(app.ID, fnName)
+		fn, _, err := cl.apiClientAdapter.FnClient().GetFn(app.ID, fnName)
 		if err != nil {
 			return err
 		}

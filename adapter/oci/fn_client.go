@@ -8,6 +8,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/oracle/oci-go-sdk/functions"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -63,32 +64,33 @@ func (f FnClient) CreateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 	return convertOCIFnToAdapterFn(&res.Function)
 }
 
-func (f FnClient) GetFn(appID string, fnName string) (*adapter.Fn, error) {
+func (f FnClient) GetFn(appID string, fnName string) (*adapter.Fn, *string, error) {
 	req := functions.ListFunctionsRequest{ApplicationId: &appID, DisplayName: &fnName}
 	resp, err := f.client.ListFunctions(context.Background(), req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if len(resp.Items) > 0 {
 		return f.GetFnByFnID(*resp.Items[0].Id)
 	} else {
-		return nil, adapter.FunctionNameNotFoundError{Name: fnName}
+		return nil, nil, adapter.FunctionNameNotFoundError{Name: fnName}
 	}
 }
 
-func (f FnClient) GetFnByFnID(fnID string) (*adapter.Fn, error) {
+func (f FnClient) GetFnByFnID(fnID string) (*adapter.Fn, *string, error) {
 	req := functions.GetFunctionRequest{FunctionId: &fnID}
 	resp, err := f.client.GetFunction(context.Background(), req)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return convertOCIFnToAdapterFn(&resp.Function)
+	fn, err := convertOCIFnToAdapterFn(&resp.Function)
+	return fn, resp.Etag, err
 }
 
-func (f FnClient) UpdateFn(fn *adapter.Fn) (*adapter.Fn, error) {
+func (f FnClient) UpdateFn(fn *adapter.Fn, lock *string) (*adapter.Fn, error) {
 	memory := int64(fn.Memory)
 	var memoryPtr *int64
 	if memory != 0 {
@@ -100,14 +102,7 @@ func (f FnClient) UpdateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 		return nil, err
 	}
 
-	//merge config
-	for k, v := range fn.Config {
-		if v == "" {
-			delete(fn.Config, k)
-		} else {
-			fn.Config[k] = v
-		}
-	}
+	mergeConfig(fn.Config)
 
 	body := functions.UpdateFunctionDetails{
 		Image:            &fn.Image,
@@ -117,7 +112,7 @@ func (f FnClient) UpdateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 		ImageDigest:      digest,
 	}
 
-	req := functions.UpdateFunctionRequest{UpdateFunctionDetails: body, FunctionId: &fn.ID}
+	req := functions.UpdateFunctionRequest{UpdateFunctionDetails: body, FunctionId: &fn.ID, IfMatch: lock}
 	res, err := f.client.UpdateFunction(context.Background(), req)
 
 	if err != nil {
@@ -125,6 +120,22 @@ func (f FnClient) UpdateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 	}
 
 	return convertOCIFnToAdapterFn(&res.Function)
+}
+
+func (a FnClient) HandleRetry(atomicOperation func() error) error {
+	var err error
+
+	for i:= 0; i < NoEtagMatchRetryCount; i++ {
+		err = atomicOperation()
+
+		if err == nil || !strings.Contains(err.Error(), NoEtagMatchErrorString) {
+			// Break here and do not retry if there is no error or if error is not `NoEtagMatch`
+			// See: https://docs.cloud.oracle.com/en-us/iaas/Content/API/References/apierrors.htm
+			break
+		}
+	}
+
+	return err
 }
 
 func (f FnClient) DeleteFn(fnID string) error {

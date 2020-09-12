@@ -27,24 +27,24 @@ func (a AppClient) CreateApp(app *adapter.App) (*adapter.App, error) {
 	return convertV2AppToAdapterApp(resp.Payload), err
 }
 
-func (a AppClient) GetApp(appName string) (*adapter.App, error) {
+func (a AppClient) GetApp(appName string) (*adapter.App, *string, error) {
 	appsResp, err := a.client.Apps.ListApps(&apiapps.ListAppsParams{
 		Context: context.Background(),
 		Name:    &appName,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var app *modelsv2.App
 	if len(appsResp.Payload.Items) > 0 {
 		app = appsResp.Payload.Items[0]
 	} else {
-		return nil, adapter.AppNameNotFoundError{ Name: appName}
+		return nil, nil, adapter.AppNameNotFoundError{ Name: appName}
 	}
-	return convertV2AppToAdapterApp(app), nil
+	return convertV2AppToAdapterApp(app), nil, nil
 }
 
-func (a AppClient) UpdateApp(app *adapter.App) (*adapter.App, error) {
+func (a AppClient) UpdateApp(app *adapter.App, lock *string) (*adapter.App, error) {
 	resp, err := a.client.Apps.UpdateApp(&apiapps.UpdateAppParams{
 		Context: context.Background(),
 		AppID:   app.ID,
@@ -58,6 +58,11 @@ func (a AppClient) UpdateApp(app *adapter.App) (*adapter.App, error) {
 		return nil, err
 	}
 	return convertV2AppToAdapterApp(resp.Payload), nil
+}
+
+func (a AppClient) HandleRetry(atomicOperation func() (*adapter.App, error)) (*adapter.App, error) {
+	// No retry handling in the Open Source client
+	return atomicOperation()
 }
 
 func (a AppClient) DeleteApp(appID string) error {

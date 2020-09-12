@@ -15,9 +15,14 @@ func TestFnAppUpdateCycle(t *testing.T) {
 	t.Parallel()
 
 	h := testharness.Create(t)
-	defer h.Cleanup()
-
 	appName := h.NewAppName()
+	defer h.Cleanup()
+	defer func () {
+		for i := 0; i < 50; i++ {
+			h.Fn("delete", "app", fmt.Sprintf("%s%d", appName, i)).AssertSuccess()
+		}
+	}()
+
 	withMinimalOCIApplication(h)
 
 	// can't create an app twice
@@ -36,9 +41,6 @@ func TestFnAppUpdateCycle(t *testing.T) {
 	h.Fn("get", "config", "app", appName, "fooConfig").AssertFailed()
 	h.Fn("list", "config", "app", appName).AssertSuccess().AssertStdoutEmpty()
 	h.Fn("delete", "app", appName).AssertSuccess()
-	for i := 0; i < 50; i++ {
-		h.Fn("delete", "app", fmt.Sprintf("%s%d", appName, i)).AssertSuccess()
-	}
 }
 
 // func

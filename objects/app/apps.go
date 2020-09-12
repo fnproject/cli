@@ -130,14 +130,22 @@ func CreateApp(a adapter.AppClient, app *adapter.App) (*adapter.App, error) {
 func (a *appsCmd) update(c *cli.Context) error {
 	appName := c.Args().First()
 
-	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
+	_, err := a.apiClientAdapter.AppClient().HandleRetry(func() (*adapter.App, error) {
+		app, etag, err := a.apiClientAdapter.AppClient().GetApp(appName)
+		if err != nil {
+			return nil, err
+		}
+
+		appWithFlags(c, app)
+
+		if app, err = a.apiClientAdapter.AppClient().UpdateApp(app, etag); err != nil {
+			return nil, err
+		}
+
+		return app, nil
+	})
+
 	if err != nil {
-		return err
-	}
-
-	appWithFlags(c, app)
-
-	if _, err = a.apiClientAdapter.AppClient().UpdateApp(app); err != nil {
 		return err
 	}
 
@@ -150,16 +158,24 @@ func (a *appsCmd) setConfig(c *cli.Context) error {
 	key := c.Args().Get(1)
 	value := c.Args().Get(2)
 
-	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
+	_, err := a.apiClientAdapter.AppClient().HandleRetry(func() (*adapter.App, error) {
+		app, etag, err := a.apiClientAdapter.AppClient().GetApp(appName)
+		if err != nil {
+			return nil, err
+		}
+
+		app.Config = make(map[string]string)
+		app.Config[key] = value
+
+		if app, err = a.apiClientAdapter.AppClient().UpdateApp(app, etag); err != nil {
+			return nil, fmt.Errorf("Error updating app configuration: %v", err)
+		}
+
+		return app, nil
+	})
+
 	if err != nil {
 		return err
-	}
-
-	app.Config = make(map[string]string)
-	app.Config[key] = value
-
-	if _, err = a.apiClientAdapter.AppClient().UpdateApp(app); err != nil {
-		return fmt.Errorf("Error updating app configuration: %v", err)
 	}
 
 	fmt.Println(appName, "updated", key, "with", value)
@@ -170,7 +186,7 @@ func (a *appsCmd) getConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
-	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
+	app, _, err := a.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
@@ -188,7 +204,7 @@ func (a *appsCmd) getConfig(c *cli.Context) error {
 func (a *appsCmd) listConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 
-	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
+	app, _, err := a.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
@@ -212,18 +228,21 @@ func (a *appsCmd) unsetConfig(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	key := c.Args().Get(1)
 
-	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
-	if err != nil {
-		return err
-	}
-	_, ok := app.Config[key]
-	if !ok {
-		fmt.Printf("Config key '%s' does not exist. Nothing to do.\n", key)
-		return nil
-	}
-	app.Config[key] = ""
+	_, err := a.apiClientAdapter.AppClient().HandleRetry(func() (*adapter.App, error) {
+		app, etag, err := a.apiClientAdapter.AppClient().GetApp(appName)
+		if err != nil {
+			return nil, err
+		}
+		_, ok := app.Config[key]
+		if !ok {
+			fmt.Printf("Config key '%s' does not exist. Nothing to do.\n", key)
+			return nil, nil
+		}
+		app.Config[key] = ""
 
-	_, err = a.apiClientAdapter.AppClient().UpdateApp(app)
+		return a.apiClientAdapter.AppClient().UpdateApp(app, etag)
+	})
+
 	if err != nil {
 		return err
 	}
@@ -240,7 +259,7 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 	appName := c.Args().First()
 	prop := c.Args().Get(1)
 
-	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
+	app, _, err := a.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
@@ -281,7 +300,7 @@ func (a *appsCmd) delete(c *cli.Context) error {
 		//return errors.New("App name required to delete")
 	}
 
-	app, err := a.apiClientAdapter.AppClient().GetApp(appName)
+	app, _, err := a.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}

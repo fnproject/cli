@@ -43,18 +43,20 @@ The test harness runs a specified CLI  binary(either "../fn" or "TEST_CLI_BINARY
 ### Pre-req: #### 
 1. You need an OCI account.
 2. You need OCI CLI profile setup and working with OCI Fn API. 
-3. You need a VCN subnet and it subnet IDs.
+3. You need a VCN subnet and it's subnet IDs.
+4. You need two Fn images in the registry.
 
 ### WARNING: ####
 1. The integration test against OCI API may take 40-60 mins.
-2. The integration tests create new container repositories that need to be manually cleaned up. Approx 10 are created per run.
-3. If the test is interrupted using `Ctrl+C`, you may find Fn Apps left behind that need to be manually cleaned up.
+2. The integration tests create new container repositories that need to be manually cleaned up after each run. Approx 10 are created per run.
+3. If the test is interrupted using `Ctrl+C`, you may find Fn Apps left behind that need to be manually cleaned up in addition to the container repositories.
 
-Follow the steps below to run CLI integration tests against OCI APIs:
+Follow the steps below to run Fn CLI integration tests against OCI APIs:
 
 1. Update the `oci-test.sh` file with:
     ```
     FN_API_URL
+    FN_SUBNET
     FN_IMAGE
     FN_IMAGE_2
     FN_REGISTRY

@@ -18,17 +18,19 @@ type APIClient interface {
 
 type FnClient interface {
 	CreateFn(fn *Fn) (*Fn, error)
-	UpdateFn(fn *Fn) (*Fn, error)
-	GetFn(appID string, fnName string) (*Fn, error)
-	GetFnByFnID(fnID string) (*Fn, error)
+	UpdateFn(fn *Fn, lock *string) (*Fn, error)
+	HandleRetry(atomicOperation func() error) error
+	GetFn(appID string, fnName string) (*Fn, *string, error)
+	GetFnByFnID(fnID string) (*Fn, *string, error)
 	ListFn(appID string, limit int64) ([]*Fn, error)
 	DeleteFn(fnID string) error
 }
 
 type AppClient interface {
 	CreateApp(app *App) (*App, error)
-	GetApp(appName string) (*App, error)
-	UpdateApp(app *App) (*App, error)
+	GetApp(appName string) (*App, *string, error)
+	UpdateApp(app *App, lock *string) (*App, error)
+	HandleRetry(atomicOperation func() (*App, error)) (*App, error)
 	ListApp(limit int64) ([]*App, error)
 	DeleteApp(appID string) error
 }

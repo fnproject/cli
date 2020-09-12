@@ -9,12 +9,20 @@ import (
 	"github.com/oracle/oci-go-sdk/functions"
 	"github.com/spf13/viper"
 	"os"
+	"strings"
 	"time"
 )
 
 const (
 	// AnnotationSubnet - Subnet used to indicate the placement of the function runtime
 	AnnotationSubnet = "oracle.com/oci/subnetIds"
+
+	// Number of retries when optimistic concurrency fails
+	NoEtagMatchRetryCount = 3
+
+	// Error string for No Etag Match
+	// See: https://docs.cloud.oracle.com/en-us/iaas/Content/API/References/apierrors.htm
+	NoEtagMatchErrorString = "Service error:NoEtagMatch"
 )
 
 type AppClient struct {
@@ -76,12 +84,12 @@ func parseSubnetIds(annotations map[string]interface{}) ([]string, error) {
 	return subnets, nil
 }
 
-func (a AppClient) GetApp(appName string) (*adapter.App, error) {
+func (a AppClient) GetApp(appName string) (*adapter.App, *string, error) {
 	compartmentId := viper.GetString("oracle.compartment-id")
 	req := functions.ListApplicationsRequest{CompartmentId: &compartmentId, DisplayName: &appName}
 	resp, err := a.client.ListApplications(context.Background(), req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if len(resp.Items) > 0 {
@@ -89,30 +97,34 @@ func (a AppClient) GetApp(appName string) (*adapter.App, error) {
 		getres,geterr := a.client.GetApplication(context.Background(), getreq)
 
 		if geterr != nil {
-			return nil, geterr
+			return nil, nil, geterr
 		}
 
-		return convertOCIAppToAdapterApp(&getres.Application)
+		app, err := convertOCIAppToAdapterApp(&getres.Application)
+		return app, getres.Etag, err
 	} else {
-		return nil, adapter.AppNameNotFoundError{Name: appName}
+		return nil, nil, adapter.AppNameNotFoundError{Name: appName}
 	}
 }
 
-func (a AppClient) UpdateApp(app *adapter.App) (*adapter.App, error) {
-	//merge config
-	for k, v := range app.Config {
+func mergeConfig(config map[string]string) {
+	for k, v := range config {
 		if v == "" {
-			delete(app.Config, k)
+			delete(config, k)
 		} else {
-			app.Config[k] = v
+			config[k] = v
 		}
 	}
+}
+
+func (a AppClient) UpdateApp(app *adapter.App, lock *string) (*adapter.App, error) {
+	mergeConfig(app.Config)
 
 	body := functions.UpdateApplicationDetails{
 		Config: app.Config,
 	}
 
-	req := functions.UpdateApplicationRequest{UpdateApplicationDetails: body, ApplicationId: &app.ID}
+	req := functions.UpdateApplicationRequest{UpdateApplicationDetails: body, ApplicationId: &app.ID, IfMatch: lock}
 	res, err := a.client.UpdateApplication(context.Background(), req)
 
 	if err != nil {
@@ -120,6 +132,27 @@ func (a AppClient) UpdateApp(app *adapter.App) (*adapter.App, error) {
 	}
 
 	return convertOCIAppToAdapterApp(&res.Application)
+}
+
+func (a AppClient) HandleRetry(atomicOperation func() (*adapter.App, error)) (*adapter.App, error) {
+	var app *adapter.App
+	var err error
+
+	for i:= 0; i < NoEtagMatchRetryCount; i++ {
+		app, err = atomicOperation()
+
+		if err == nil || !strings.Contains(err.Error(), NoEtagMatchErrorString) {
+			// Break here and do not retry if there is no error or if error is not `NoEtagMatch`
+			// See: https://docs.cloud.oracle.com/en-us/iaas/Content/API/References/apierrors.htm
+			break
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return app, nil
 }
 
 func (a AppClient) DeleteApp(appID string) error {
