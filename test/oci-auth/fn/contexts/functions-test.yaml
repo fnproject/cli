@@ -1,4 +1,4 @@
-api-url: Fill me in
+api-url: https://functions.us-ashburn-1.oraclecloud.com
 oracle.compartment-id: Fill me in
 oracle.profile: Fill me in: PROFILE NAME
 provider: oracle

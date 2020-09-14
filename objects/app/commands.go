@@ -146,7 +146,7 @@ func Inspect() cli.Command {
 				if err != nil {
 					return
 				}
-				app, _, err := providerAdapter.APIClient().AppClient().GetApp(c.Args()[0])
+				app, err := providerAdapter.APIClient().AppClient().GetApp(c.Args()[0])
 				if err != nil {
 					return
 				}
@@ -293,7 +293,7 @@ func GetConfig() cli.Command {
 				if err != nil {
 					return
 				}
-				app, _, err := providerAdapter.APIClient().AppClient().GetApp(c.Args()[0])
+				app, err := providerAdapter.APIClient().AppClient().GetApp(c.Args()[0])
 				if err != nil {
 					return
 				}
@@ -333,7 +333,7 @@ func UnsetConfig() cli.Command {
 				if err != nil {
 					return
 				}
-				app, _, err := providerAdapter.APIClient().AppClient().GetApp(c.Args()[0])
+				app, err := providerAdapter.APIClient().AppClient().GetApp(c.Args()[0])
 				if err != nil {
 					return
 				}

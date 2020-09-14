@@ -159,29 +159,22 @@ func (p *deploycmd) deploy(c *cli.Context) error {
 		}
 	}
 
-	app, err := p.apiClientAdapter.AppClient().HandleRetry(func() (*adapter.App, error) {
-		// find and create/update app if required
-		app, etag, err := p.apiClientAdapter.AppClient().GetApp(appName)
-		if _, ok := err.(adapter.AppNameNotFoundError); ok && p.createApp {
-			app, err = p.apiClientAdapter.AppClient().CreateApp(&appfApp)
-			if err != nil {
-				return nil, err
-			}
-		} else if err != nil {
-			return nil, err
-		} else if appf != nil {
-			// app exists, but we need to update it if we have an app file
-			appfApp.ID = app.ID
-			app, err = p.apiClientAdapter.AppClient().UpdateApp(&appfApp, etag)
-			if err != nil {
-				return nil, fmt.Errorf("Failed to update app config: %v", err)
-			}
+	// find and create/update app if required
+	app, err := p.apiClientAdapter.AppClient().GetApp(appName)
+	if _, ok := err.(adapter.AppNameNotFoundError); ok && p.createApp {
+		app, err = p.apiClientAdapter.AppClient().CreateApp(&appfApp)
+		if err != nil {
+			return err
 		}
-		return app, nil
-	})
-
-	if err != nil {
+	} else if err != nil {
 		return err
+	} else if appf != nil {
+		// app exists, but we need to update it if we have an app file
+		appfApp.ID = app.ID
+		app, err = p.apiClientAdapter.AppClient().UpdateApp(&appfApp)
+		if err != nil {
+			return fmt.Errorf("Failed to update app config: %v", err)
+		}
 	}
 
 	if app == nil {
@@ -322,31 +315,24 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 		return fmt.Errorf("Error getting function with funcfile: %s", err)
 	}
 
-	err := p.apiClientAdapter.FnClient().HandleRetry(func() error {
-		fnRes, etag, err := p.apiClientAdapter.FnClient().GetFn(appID, ff.Name)
-		if _, ok := err.(adapter.FunctionNameNotFoundError); ok {
-			fn.Name = ff.Name
-			fn.AppID = appID
-			fn, err = p.apiClientAdapter.FnClient().CreateFn(fn)
-			if err != nil {
-				return err
-			}
-		} else if err != nil {
-			// probably service is down or something...
+	fnRes, err := p.apiClientAdapter.FnClient().GetFn(appID, ff.Name)
+	if _, ok := err.(adapter.FunctionNameNotFoundError); ok {
+		fn.Name = ff.Name
+		fn.AppID = appID
+		fn, err = p.apiClientAdapter.FnClient().CreateFn(fn)
+		if err != nil {
 			return err
-		} else {
-			fn.ID = fnRes.ID
-			fn.AppID = appID
-			err = function.PutFn(p.apiClientAdapter.FnClient(), fn.ID, fn, etag)
-			if err != nil {
-				return err
-			}
 		}
-		return nil
-	})
-
-	if err != nil {
+	} else if err != nil {
+		// probably service is down or something...
 		return err
+	} else {
+		fn.ID = fnRes.ID
+		fn.AppID = appID
+		err = function.PutFn(p.apiClientAdapter.FnClient(), fn.ID, fn)
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(ff.Triggers) != 0 {

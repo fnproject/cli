@@ -42,12 +42,12 @@ func (t *triggersCmd) create(c *cli.Context) error {
 	fnName := c.Args().Get(1)
 	triggerName := c.Args().Get(2)
 
-	app, _, err := t.apiClientAdapter.AppClient().GetApp(appName)
+	app, err := t.apiClientAdapter.AppClient().GetApp(appName)
 	if err != nil {
 		return err
 	}
 
-	fn, _, err := t.apiClientAdapter.FnClient().GetFn(app.ID, fnName)
+	fn, err := t.apiClientAdapter.FnClient().GetFn(app.ID, fnName)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (t *triggersCmd) list(c *cli.Context) error {
 		for _, trigger := range resTriggers {
 			endpoint := trigger.Annotations["fnproject.io/trigger/httpEndpoint"]
 
-			fn, _, err := t.apiClientAdapter.FnClient().GetFnByFnID(trigger.FnID)
+			fn, err := t.apiClientAdapter.FnClient().GetFnByFnID(trigger.FnID)
 			if err != nil {
 				return err
 			}
@@ -120,14 +120,14 @@ func getTriggers(c *cli.Context, apiClient adapter.APIClient) ([]*adapter.Trigge
 	fnName := c.Args().Get(1)
 	limit := c.Int64("n")
 
-	app, _, err := apiClient.AppClient().GetApp(appName)
+	app, err := apiClient.AppClient().GetApp(appName)
 	if err != nil {
 		return nil, err
 	}
 
 	var fnID string
 	if len(fnName) != 0 {
-		fn, _, err := apiClient.FnClient().GetFn(app.ID, fnName)
+		fn, err := apiClient.FnClient().GetFn(app.ID, fnName)
 		if err != nil {
 			return nil, err
 		}
@@ -253,12 +253,12 @@ func (t *triggersCmd) delete(c *cli.Context) error {
 
 // GetTrigger looks up a trigger using the provided client by app, function and trigger name
 func GetTrigger(apiClient adapter.APIClient, appName, fnName, triggerName string) (*adapter.Trigger, error) {
-	app, _, err := apiClient.AppClient().GetApp(appName)
+	app, err := apiClient.AppClient().GetApp(appName)
 	if err != nil {
 		return nil, err
 	}
 
-	fn, _, err := apiClient.FnClient().GetFn(app.ID, fnName)
+	fn, err := apiClient.FnClient().GetFn(app.ID, fnName)
 	if err != nil {
 		return nil, err
 	}

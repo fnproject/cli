@@ -25,14 +25,14 @@ func (f FnClient) CreateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 	return convertV2FnToAdapterFn(resp.Payload), err
 }
 
-func (f FnClient) GetFn(appID string, fnName string) (*adapter.Fn, *string, error) {
+func (f FnClient) GetFn(appID string, fnName string) (*adapter.Fn, error) {
 	resp, err := f.client.Fns.ListFns(&apifns.ListFnsParams{
 		Context: context.Background(),
 		AppID:   &appID,
 		Name:    &fnName,
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	var fn *modelsv2.Fn
@@ -42,25 +42,25 @@ func (f FnClient) GetFn(appID string, fnName string) (*adapter.Fn, *string, erro
 		}
 	}
 	if fn == nil {
-		return nil, nil, adapter.FunctionNameNotFoundError{ Name: fnName}
+		return nil, adapter.FunctionNameNotFoundError{ Name: fnName}
 	}
-	return convertV2FnToAdapterFn(fn), nil, nil
+	return convertV2FnToAdapterFn(fn), nil
 }
 
-func (f FnClient) GetFnByFnID(fnID string) (*adapter.Fn, *string, error) {
+func (f FnClient) GetFnByFnID(fnID string) (*adapter.Fn, error) {
 	resp, err := f.client.Fns.GetFn(&apifns.GetFnParams{
 		FnID:		fnID,
 		Context: 	context.Background(),
 	})
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return convertV2FnToAdapterFn(resp.Payload), nil, nil
+	return convertV2FnToAdapterFn(resp.Payload), nil
 }
 
-func (f FnClient) UpdateFn(fn *adapter.Fn, lock *string) (*adapter.Fn, error) {
+func (f FnClient) UpdateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 	resp, err := f.client.Fns.UpdateFn(&apifns.UpdateFnParams{
 		Context: context.Background(),
 		FnID:   fn.ID,
@@ -74,11 +74,6 @@ func (f FnClient) UpdateFn(fn *adapter.Fn, lock *string) (*adapter.Fn, error) {
 		return nil, err
 	}
 	return convertV2FnToAdapterFn(resp.Payload), nil
-}
-
-func (f FnClient) HandleRetry(atomicOperation func() error) error {
-	// No retry handling in the Open Source client
-	return atomicOperation()
 }
 
 func (f FnClient) DeleteFn(fnID string) error {
