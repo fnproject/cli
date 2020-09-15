@@ -8,11 +8,12 @@ export FN_TEST_MODE="OCI"
 # oci-auth/fn/contexts/functions-test.yaml
 # oci-auth/oci/config
 # simpleapp/app.json
-export FN_API_URL="Fill me in"
-export FN_SUBNET="Fill me in"
-export FN_IMAGE="Fill me in"
-export FN_IMAGE_2="Fill me in"
-export FN_REGISTRY="Fill me in"
+# docker/config.json
+export FN_API_URL="https://functions.us-ashburn-1.oci.oraclecloud.com/20181201"
+export FN_SUBNET="ocid1.subnet.oc1.iad.aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+export FN_IMAGE="iad.ocir.io/registry-name/repo-name/func-image-name:0.0.3"
+export FN_IMAGE_2="iad.ocir.io/registry-name/repo-name/another-func-image-name:0.0.1"
+export FN_REGISTRY="iad.ocir.io/registry-name/repo-name/"
 
 function cleanup {
 	if [ -d "$WORK_DIR" ]; then

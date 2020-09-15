@@ -1,7 +1,7 @@
 {
     "annotations": {
 		"oracle.com/oci/subnetIds": [
-			"Fill me in"
+			"ocid1.subnet.oc1.iad.aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 		]
 	}
 }

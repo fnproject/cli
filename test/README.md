@@ -47,13 +47,14 @@ The test harness runs a specified CLI  binary(either "../fn" or "TEST_CLI_BINARY
 
 ### WARNING: ####
 1. The integration test against OCI API may take 40-60 mins.
-2. The integration tests create new container repositories that need to be manually cleaned up. Approx 10 are created per run.
-3. If the test is interrupted using `Ctrl+C`, you may find Fn Apps left behind that need to be manually cleaned up.
+2. The integration tests create new container repositories that need to be manually cleaned up after each run. Approx 10 are created per run.
+3. If the test is interrupted using `Ctrl+C`, you may find Fn Apps left behind that need to be manually cleaned up in addition to the container repositories.
 
 Follow the steps below to run CLI integration tests against OCI APIs:
 
 1. Update the `oci-test.sh` file with:
     ```
+    FN_API_URL
     FN_API_URL
     FN_IMAGE
     FN_IMAGE_2
@@ -65,6 +66,7 @@ Follow the steps below to run CLI integration tests against OCI APIs:
     oci-auth/fn/contexts/functions-test.yaml
     oci-auth/oci/config
     simpleapp/app.json
+    docker/config.json
     ```
 
 3. Run `make oci-test`

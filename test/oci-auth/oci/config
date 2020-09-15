@@ -1,6 +1,6 @@
-[Fill me in: PROFILE NAME]
-user=Fill me in
-fingerprint=Fill me in
-key_file=Fill me in
-tenancy=Fill me in
-region=Fill me in
+[oracle-profile-name]
+user=ocid1.user.oc1..aaaaaaaauuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
+fingerprint=20:6f:5f:22:df:99:1b:41:99:c9:5a:93:c5:0f:f3:71
+key_file=/Users/guid/.oci/oci_api_key.pem
+tenancy=ocid1.tenancy.oc1..aaaaaaaatttttttttttttttttttttttttttttttttttttttttttttttttttt
+region=us-ashburn-1

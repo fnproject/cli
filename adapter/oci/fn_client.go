@@ -78,14 +78,18 @@ func (f FnClient) GetFn(appID string, fnName string) (*adapter.Fn, error) {
 }
 
 func (f FnClient) GetFnByFnID(fnID string) (*adapter.Fn, error) {
-	req := functions.GetFunctionRequest{FunctionId: &fnID}
-	resp, err := f.client.GetFunction(context.Background(), req)
+	resp, err := f.getFnByFnIDRaw(fnID)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return convertOCIFnToAdapterFn(&resp.Function)
+}
+
+func (f FnClient) getFnByFnIDRaw(fnID string) (functions.GetFunctionResponse, error) {
+	req := functions.GetFunctionRequest{FunctionId: &fnID}
+	return f.client.GetFunction(context.Background(), req)
 }
 
 func (f FnClient) UpdateFn(fn *adapter.Fn) (*adapter.Fn, error) {
@@ -100,31 +104,39 @@ func (f FnClient) UpdateFn(fn *adapter.Fn) (*adapter.Fn, error) {
 		return nil, err
 	}
 
-	//merge config
-	for k, v := range fn.Config {
-		if v == "" {
-			delete(fn.Config, k)
-		} else {
-			fn.Config[k] = v
+	var updateRes functions.UpdateFunctionResponse
+	var updateErr error
+
+	for i := 0; i < NoEtagMatchRetryCount; i++ {
+		getRes, getErr := f.getFnByFnIDRaw(fn.ID)
+
+		if getErr != nil {
+			return nil, getErr
+		}
+
+		body := functions.UpdateFunctionDetails{
+			Image:            &fn.Image,
+			TimeoutInSeconds: parseTimeout(fn.Timeout),
+			MemoryInMBs:      memoryPtr,
+			Config:           mergeConfig(getRes.Config, fn.Config),
+			ImageDigest:      digest,
+		}
+
+		req := functions.UpdateFunctionRequest{UpdateFunctionDetails: body, FunctionId: &fn.ID, IfMatch: getRes.Etag}
+		updateRes, updateErr = f.client.UpdateFunction(context.Background(), req)
+
+		if updateErr == nil || updateRes.HTTPResponse().StatusCode != NoEtagMatchStatusCode {
+			// Break here and do not retry if there is no error or if error is not `NoEtagMatch`
+			// See: https://docs.cloud.oracle.com/en-us/iaas/Content/API/References/apierrors.htm
+			break
 		}
 	}
 
-	body := functions.UpdateFunctionDetails{
-		Image:            &fn.Image,
-		TimeoutInSeconds: parseTimeout(fn.Timeout),
-		MemoryInMBs:      memoryPtr,
-		Config:           fn.Config,
-		ImageDigest:      digest,
-	}
-
-	req := functions.UpdateFunctionRequest{UpdateFunctionDetails: body, FunctionId: &fn.ID}
-	res, err := f.client.UpdateFunction(context.Background(), req)
-
-	if err != nil {
+	if updateErr != nil {
 		return nil, err
 	}
 
-	return convertOCIFnToAdapterFn(&res.Function)
+	return convertOCIFnToAdapterFn(&updateRes.Function)
 }
 
 func (f FnClient) DeleteFn(fnID string) error {

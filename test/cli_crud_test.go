@@ -15,9 +15,14 @@ func TestFnAppUpdateCycle(t *testing.T) {
 	t.Parallel()
 
 	h := testharness.Create(t)
-	defer h.Cleanup()
-
 	appName := h.NewAppName()
+	defer h.Cleanup()
+	defer func () {
+		for i := 0; i < 50; i++ {
+			h.Fn("delete", "app", fmt.Sprintf("%s%d", appName, i)).AssertSuccess()
+		}
+	}()
+
 	withMinimalOCIApplication(h)
 
 	// can't create an app twice
@@ -30,15 +35,17 @@ func TestFnAppUpdateCycle(t *testing.T) {
 	}
 	h.Fn("inspect", "app", appName).AssertSuccess().AssertStdoutContains(fmt.Sprintf(`"name": "%s"`, appName))
 	h.Fn("config", "app", appName, "fooConfig", "barval").AssertSuccess()
+	h.Fn("config", "app", appName, "xyzConfig", "pqrval").AssertSuccess()
+	h.Fn("get", "config", "app", appName, "xyzConfig").AssertSuccess().AssertStdoutContains("pqrval")
+	h.Fn("config", "app", appName, "xyzConfig", "rstval").AssertSuccess()
+	h.Fn("get", "config", "app", appName, "xyzConfig").AssertSuccess().AssertStdoutContains("rstval")
 	h.Fn("get", "config", "app", appName, "fooConfig").AssertSuccess().AssertStdoutContains("barval")
 	h.Fn("list", "config", "app", appName).AssertSuccess().AssertStdoutContains("barval")
 	h.Fn("unset", "config", "app", appName, "fooConfig").AssertSuccess()
 	h.Fn("get", "config", "app", appName, "fooConfig").AssertFailed()
+	h.Fn("unset", "config", "app", appName, "xyzConfig").AssertSuccess()
 	h.Fn("list", "config", "app", appName).AssertSuccess().AssertStdoutEmpty()
 	h.Fn("delete", "app", appName).AssertSuccess()
-	for i := 0; i < 50; i++ {
-		h.Fn("delete", "app", fmt.Sprintf("%s%d", appName, i)).AssertSuccess()
-	}
 }
 
 // func
@@ -170,14 +177,16 @@ func TestFnUpdateValues(t *testing.T) {
 		{"--memory", "wibble"},
 		{"--type", "blancmange"},
 		{"--headers", "potatocakes"},
-		{"--timeout", "86400"},
 		{"--timeout", "sit_in_the_corner"},
 		{"--idle-timeout", "yawn"},
 	}
 
 	if !initialHarness.IsOCITestMode() {
-		invalidCaseIdleTimeout := []string{"--idle-timeout", "86000"}
-		invalidCases = append(invalidCases, invalidCaseIdleTimeout)
+		additionalInvalidCases := [][]string{
+			{"--timeout", "86400"},
+			{"--idle-timeout", "86000"},
+		}
+		invalidCases = append(invalidCases, additionalInvalidCases...)
 	}
 
 	for i, tcI := range invalidCases {
