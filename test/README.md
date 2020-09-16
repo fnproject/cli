@@ -68,5 +68,11 @@ Follow the steps below to run CLI integration tests against OCI APIs:
     simpleapp/app.json
     docker/config.json
     ```
+3. Note that the `auth` token in the `docker/config.json` file is obtained by applying base64 encoding to your docker username and password separated by a colon.
+On a mac, you may obtain it as follows:
+    ```bash
+    $ echo "bmc_operator_access/john:+a123456C+k{Z.DBH5" | base64
+    $ Yn1jC23wZXTheU9yX3FfR2Vzdy5hZVljaIOy1iteM22LI1l0FlRCP2lmWC12745Nc==
+    ```
 
-3. Run `make oci-test`
+4. Run `make oci-test`
