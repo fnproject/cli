@@ -69,7 +69,11 @@ func NewCSProvider(configSource provider.ConfigSource, passphraseSource provider
 	// production url form and the configured region from environment.
 	cfgApiUrl := configSource.GetString(provider.CfgFnAPIURL)
 	if cfgApiUrl == "" {
-		cfgApiUrl = fmt.Sprintf(FunctionsAPIURLTmpl, csConfig.region)
+		domain, err := GetRealmDomain()
+		if err != nil {
+			return nil, err
+		}
+		cfgApiUrl = fmt.Sprintf(FunctionsAPIURLTmpl, csConfig.region, domain)
 	}
 	apiUrl, err := provider.CanonicalFnAPIUrl(cfgApiUrl)
 	if err != nil {

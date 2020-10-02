@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -24,7 +25,8 @@ const (
 	CfgCompartmentID                      = "oracle.compartment-id"
 	CfgDisableCerts                       = "oracle.disable-certs"
 	CompartmentMetadata                   = "http://169.254.169.254/opc/v1/instance/compartmentId"
-	FunctionsAPIURLTmpl                   = "https://functions.%s.oraclecloud.com"
+	FunctionsAPIURLTmpl                   = "https://functions.%s.oci.%s"
+	realmDomainMetadata                   = "http://169.254.169.254/opc/v1/instance/regionInfo/realmDomainComponent"
 	requestHeaderOpcRequestID             = "Opc-Request-Id"
 	requestHeaderOpcCompId                = "opc-compartment-id"
 	requestHeaderOpcOboToken              = "opc-obo-token"
@@ -204,4 +206,20 @@ func getEnv(key, fallback string) string {
 		value = fallback
 	}
 	return value
+}
+
+// Retrieve second-level domain for the current realm from IMDS
+func GetRealmDomain() (string, error) {
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
+	resp, err := client.Get(realmDomainMetadata)
+	if err != nil {
+		return "", fmt.Errorf("problem fetching realm domain from metadata endpoint %s", err)
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("problem reading body when fetching realm domain from metadata endpoint %s", err)
+	}
+	return string(body), nil
 }

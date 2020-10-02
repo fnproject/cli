@@ -55,26 +55,6 @@ func (*ViperConfigSource) IsSet(key string) bool {
 	return viper.IsSet(key)
 }
 
-func DefaultOracleCSRegionContextContents() (contextMap *ContextMap, err error) {
-
-	region, tenancy, err := oracle.GetOCIRegionTenancy()
-
-	if err != nil {
-		return nil, err
-	}
-
-	apiUrl := fmt.Sprintf(oracle.FunctionsAPIURLTmpl, region)
-
-	contextMap = &ContextMap{
-		ContextProvider:         fn_go.OracleCSProvider,
-		provider.CfgFnAPIURL:    apiUrl,
-		EnvFnRegistry:           "",
-		oracle.CfgCompartmentID: tenancy,
-	}
-
-	return contextMap, nil
-}
-
 func DefaultContextConfigContents() (contextMap *ContextMap) {
 	//Read OCI_CLI_AUTH environment variable to determine what oracle provider to use
 	ociCliAuth := os.Getenv(OCI_CLI_AUTH_ENV_VAR)
@@ -169,7 +149,12 @@ func ensureConfiguration() error {
 				return fmt.Errorf("error creating %s context file %v", defaultOracleRegionContextFileName, err)
 			}
 
-			apiUrl := fmt.Sprintf(oracle.FunctionsAPIURLTmpl, region)
+			domain, err := oracle.GetRealmDomain()
+			if err != nil {
+				return fmt.Errorf("error creating %s context file %v", defaultOracleRegionContextFileName, err)
+			}
+
+			apiUrl := fmt.Sprintf(oracle.FunctionsAPIURLTmpl, region, domain)
 			contextMap := &ContextMap{
 				ContextProvider:         fn_go.OracleCSProvider,
 				provider.CfgFnAPIURL:    apiUrl,
