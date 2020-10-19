@@ -25,7 +25,11 @@ func NewIPProvider(configSource provider.ConfigSource, passphraseSource provider
 		if err != nil {
 			return nil, err
 		}
-		cfgApiUrl = fmt.Sprintf(FunctionsAPIURLTmpl, region)
+		domain, err := GetRealmDomain()
+		if err != nil {
+			return nil, err
+		}
+		cfgApiUrl = fmt.Sprintf(FunctionsAPIURLTmpl, region, domain)
 	}
 	apiUrl, err := provider.CanonicalFnAPIUrl(cfgApiUrl)
 	if err != nil {
