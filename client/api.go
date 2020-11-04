@@ -29,6 +29,7 @@ func CurrentProviderAdapter() (adapter.Provider, error) {
 		fnClient, err := functions.NewFunctionsManagementClientWithConfigurationProvider(common.CustomProfileConfigProvider("", currentProfile))
 		return &oci.Provider{FMClient: &fnClient}, err
 	case "oracle-ip":
+		common.EnableInstanceMetadataServiceLookup()
 		provider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {
 			return nil, err
@@ -36,6 +37,7 @@ func CurrentProviderAdapter() (adapter.Provider, error) {
 		fnClient, err := functions.NewFunctionsManagementClientWithConfigurationProvider(provider)
 		return &oci.Provider{FMClient: &fnClient}, err
 	case "oracle-cs":
+		common.EnableInstanceMetadataServiceLookup()
 		provider, err := auth.InstancePrincipalConfigurationProvider()
 		if err != nil {
 			return nil, err
