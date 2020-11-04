@@ -1,16 +1,19 @@
+// Copyright (c) 2016, 2018, 2020, Oracle and/or its affiliates.  All rights reserved.
+// This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+
 package auth
 
 import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
-	"github.com/oracle/oci-go-sdk/common"
+	"github.com/oracle/oci-go-sdk/v27/common"
 	"os"
 	"path"
 )
 
 const (
-	//ResourcePrincipalVersion2_2 supported version for resource principals
+	//ResourcePrincipalVersion2_2 is a supported version for resource principals
 	ResourcePrincipalVersion2_2 = "2.2"
 	//ResourcePrincipalVersionEnvVar environment var name for version
 	ResourcePrincipalVersionEnvVar = "OCI_RESOURCE_PRINCIPAL_VERSION"
@@ -22,6 +25,13 @@ const (
 	ResourcePrincipalPrivatePEMPassphraseEnvVar = "OCI_RESOURCE_PRINCIPAL_PRIVATE_PEM_PASSPHRASE"
 	//ResourcePrincipalRegionEnvVar environment variable holding a region
 	ResourcePrincipalRegionEnvVar = "OCI_RESOURCE_PRINCIPAL_REGION"
+
+	//ResourcePrincipalVersion1_1 is a supported version for resource principals
+	ResourcePrincipalVersion1_1 = "1.1"
+	//ResourcePrincipalSessionTokenEndpoint endpoint for retrieving the Resource Principal Session Token
+	ResourcePrincipalSessionTokenEndpoint = "OCI_RESOURCE_PRINCIPAL_RPST_ENDPOINT"
+	//ResourcePrincipalTokenEndpoint endpoint for retrieving the Resource Principal Token
+	ResourcePrincipalTokenEndpoint = "OCI_RESOURCE_PRINCIPAL_RPT_ENDPOINT"
 
 	// TenancyOCIDClaimKey is the key used to look up the resource tenancy in an RPST
 	TenancyOCIDClaimKey = "res_tenant"
@@ -62,9 +72,43 @@ func ResourcePrincipalConfigurationProvider() (ConfigurationProviderWithClaimAcc
 		}
 		return newResourcePrincipalKeyProvider22(
 			*rpst, *private, passphrase, *region)
+	case ResourcePrincipalVersion1_1:
+		return newResourcePrincipalKeyProvider11(DefaultRptPathProvider{})
 	default:
 		return nil, fmt.Errorf("can not create resource principal, environment variable: %s, must be valid", ResourcePrincipalVersionEnvVar)
 	}
+}
+
+// ResourcePrincipalConfigurationProviderWithPathProvider returns a resource principal configuration provider using path provider.
+func ResourcePrincipalConfigurationProviderWithPathProvider(pathProvider PathProvider) (ConfigurationProviderWithClaimAccess, error) {
+	var version string
+	var ok bool
+	if version, ok = os.LookupEnv(ResourcePrincipalVersionEnvVar); !ok {
+		return nil, fmt.Errorf("can not create resource principal, environment variable: %s, not present", ResourcePrincipalVersionEnvVar)
+	} else if version != ResourcePrincipalVersion1_1 {
+		return nil, fmt.Errorf("can not create resource principal, environment variable: %s, must be %s", ResourcePrincipalVersionEnvVar, ResourcePrincipalVersion1_1)
+	}
+	return newResourcePrincipalKeyProvider11(pathProvider)
+}
+
+func newResourcePrincipalKeyProvider11(pathProvider PathProvider) (ConfigurationProviderWithClaimAccess, error) {
+	rptEndpoint := requireEnv(ResourcePrincipalTokenEndpoint)
+	if rptEndpoint == nil {
+		return nil, fmt.Errorf("can not create resource principal, environment variable: %s, not present", ResourcePrincipalTokenEndpoint)
+	}
+	rptPath, err := pathProvider.Path()
+	if err != nil {
+		return nil, fmt.Errorf("can not create resource principal, due to: %s ", err.Error())
+	}
+	resourceID, err := pathProvider.ResourceID()
+	if err != nil {
+		return nil, fmt.Errorf("can not create resource principal, due to: %s ", err.Error())
+	}
+	rp, err := resourcePrincipalConfigurationProviderV1(*rptEndpoint+*rptPath, *resourceID)
+	if err != nil {
+		return nil, fmt.Errorf("can not create resource principal, due to: %s ", err.Error())
+	}
+	return rp, nil
 }
 
 func requireEnv(key string) *string {
@@ -174,6 +218,10 @@ func (p *resourcePrincipalKeyProvider) KeyFingerprint() (string, error) {
 
 func (p *resourcePrincipalKeyProvider) UserOCID() (string, error) {
 	return "", nil
+}
+
+func (p *resourcePrincipalKeyProvider) AuthType() (common.AuthConfig, error) {
+	return common.AuthConfig{common.UnknownAuthenticationType, false, nil}, fmt.Errorf("unsupported, keep the interface")
 }
 
 // By contract for the the content of a resource principal to be considered path, it needs to be

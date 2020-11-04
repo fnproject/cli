@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/fnproject/fn_go/provider"
-	oci "github.com/oracle/oci-go-sdk/common"
-	"github.com/oracle/oci-go-sdk/common/auth"
+	oci "github.com/oracle/oci-go-sdk/v27/common"
+	"github.com/oracle/oci-go-sdk/v27/common/auth"
 )
 
 const (
@@ -86,6 +86,9 @@ func NewCSProvider(configSource provider.ConfigSource, passphraseSource provider
 	if compartmentID == "" {
 		compartmentID = csConfig.tenancyID
 	}
+
+	// Set OCI SDK to use IMDS to fetch region info (second-level domain etc.)
+	oci.EnableInstanceMetadataServiceLookup()
 
 	provider, err := auth.InstancePrincipalConfigurationProvider()
 	if err != nil {

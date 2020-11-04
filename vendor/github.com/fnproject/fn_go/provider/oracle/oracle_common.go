@@ -16,7 +16,7 @@ import (
 	"github.com/fnproject/fn_go/provider"
 	openapi "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	"github.com/oracle/oci-go-sdk/common"
+	"github.com/oracle/oci-go-sdk/v27/common"
 )
 
 const (
