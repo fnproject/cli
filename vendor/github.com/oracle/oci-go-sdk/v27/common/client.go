@@ -1,11 +1,15 @@
-// Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2016, 2018, 2020, Oracle and/or its affiliates.  All rights reserved.
+// This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 
 // Package common provides supporting functions and structs used by service packages
 package common
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/http/httputil"
@@ -59,6 +63,9 @@ const (
 	// requestHeaderXContentSHA256 The key for passing a header to indicate SHA256 hash
 	requestHeaderXContentSHA256 = "X-Content-SHA256"
 
+	// requestHeaderOpcOboToken The key for passing a header to use obo token
+	requestHeaderOpcOboToken = "opc-obo-token"
+
 	// private constants
 	defaultScheme            = "https"
 	defaultSDKMarker         = "Oracle-GoSDK"
@@ -66,8 +73,10 @@ const (
 	defaultTimeout           = 60 * time.Second
 	defaultConfigFileName    = "config"
 	defaultConfigDirName     = ".oci"
-	secondaryConfigDirName   = ".oraclebmc"
-	maxBodyLenForDebug       = 1024 * 1000
+	configFilePathEnvVarName = "OCI_CONFIG_FILE"
+
+	secondaryConfigDirName = ".oraclebmc"
+	maxBodyLenForDebug     = 1024 * 1000
 )
 
 // RequestInterceptor function used to customize the request before calling the underlying service
@@ -77,6 +86,11 @@ type RequestInterceptor func(*http.Request) error
 // http.Client.Do, but can be customized for testing
 type HTTPRequestDispatcher interface {
 	Do(req *http.Request) (*http.Response, error)
+}
+
+// CustomClientConfiguration contains configurations set at client level, currently it only includes RetryPolicy
+type CustomClientConfiguration struct {
+	RetryPolicy *RetryPolicy
 }
 
 // BaseClient struct implements all basic operations to call oci web services.
@@ -98,6 +112,28 @@ type BaseClient struct {
 
 	//Base path for all operations of this client
 	BasePath string
+
+	Configuration CustomClientConfiguration
+}
+
+// SetCustomClientConfiguration sets client with retry and other custom configurations
+func (client *BaseClient) SetCustomClientConfiguration(config CustomClientConfiguration) {
+	client.Configuration = config
+}
+
+// RetryPolicy returns the retryPolicy configured for client
+func (client *BaseClient) RetryPolicy() *RetryPolicy {
+	return client.Configuration.RetryPolicy
+}
+
+// Endpoint returns the enpoint configured for client
+func (client *BaseClient) Endpoint() string {
+	host := client.Host
+	if !strings.Contains(host, "http") &&
+		!strings.Contains(host, "https") {
+		host = fmt.Sprintf("%s://%s", defaultScheme, host)
+	}
+	return host
 }
 
 func defaultUserAgent() string {
@@ -152,7 +188,37 @@ func NewClientWithConfig(configProvider ConfigurationProvider) (client BaseClien
 	}
 
 	client = defaultBaseClient(configProvider)
+
+	if authConfig, e := configProvider.AuthType(); e == nil && authConfig.OboToken != nil {
+		Debugf("authConfig's authType is %s, and token content is %s", authConfig.AuthType, *authConfig.OboToken)
+		signOboToken(&client, *authConfig.OboToken, configProvider)
+	}
+
 	return
+}
+
+// NewClientWithOboToken Create a new client that will use oboToken for auth
+func NewClientWithOboToken(configProvider ConfigurationProvider, oboToken string) (client BaseClient, err error) {
+	client, err = NewClientWithConfig(configProvider)
+	if err != nil {
+		return
+	}
+
+	signOboToken(&client, oboToken, configProvider)
+
+	return
+}
+
+// Add obo token header to Interceptor and sign to client
+func signOboToken(client *BaseClient, oboToken string, configProvider ConfigurationProvider) {
+	// Interceptor to add obo token header
+	client.Interceptor = func(request *http.Request) error {
+		request.Header.Add(requestHeaderOpcOboToken, oboToken)
+		return nil
+	}
+	// Obo token will also be signed
+	defaultHeaders := append(DefaultGenericHeaders(), requestHeaderOpcOboToken)
+	client.Signer = RequestSigner(configProvider, defaultHeaders, DefaultBodyHeaders())
 }
 
 func getHomeFolder() string {
@@ -172,9 +238,11 @@ func getHomeFolder() string {
 // will look for configurations in 3 places: file in $HOME/.oci/config, HOME/.obmcs/config and
 // variables names starting with the string TF_VAR. If the same configuration is found in multiple
 // places the provider will prefer the first one.
+// If the config file is not placed in the default location, the environment variable
+// OCI_CONFIG_FILE can provide the config file location.
 func DefaultConfigProvider() ConfigurationProvider {
+	defaultConfigFile := getDefaultConfigFilePath()
 	homeFolder := getHomeFolder()
-	defaultConfigFile := path.Join(homeFolder, defaultConfigDirName, defaultConfigFileName)
 	secondaryConfigFile := path.Join(homeFolder, secondaryConfigDirName, defaultConfigFileName)
 
 	defaultFileProvider, _ := ConfigurationProviderFromFile(defaultConfigFile, "")
@@ -184,6 +252,26 @@ func DefaultConfigProvider() ConfigurationProvider {
 	provider, _ := ComposingConfigurationProvider([]ConfigurationProvider{defaultFileProvider, secondaryFileProvider, environmentProvider})
 	Debugf("Configuration provided by: %s", provider)
 	return provider
+}
+
+func getDefaultConfigFilePath() string {
+	homeFolder := getHomeFolder()
+	defaultConfigFile := path.Join(homeFolder, defaultConfigDirName, defaultConfigFileName)
+	if _, err := os.Stat(defaultConfigFile); err == nil {
+		return defaultConfigFile
+	}
+	Debugf("The %s does not exist, will check env var %s for file path.", defaultConfigFile, configFilePathEnvVarName)
+	// Read configuration file path from OCI_CONFIG_FILE env var
+	fallbackConfigFile, existed := os.LookupEnv(configFilePathEnvVarName)
+	if !existed {
+		Debugf("The env var %s does not exist...", configFilePathEnvVarName)
+		return defaultConfigFile
+	}
+	if _, err := os.Stat(fallbackConfigFile); os.IsNotExist(err) {
+		Debugf("The specified cfg file path in the env var %s does not exist: %s", configFilePathEnvVarName, fallbackConfigFile)
+		return defaultConfigFile
+	}
+	return fallbackConfigFile
 }
 
 // CustomProfileConfigProvider returns the config provider of given profile. The custom profile config provider
@@ -238,12 +326,70 @@ func (client BaseClient) intercept(request *http.Request) (err error) {
 	return
 }
 
-func checkForSuccessfulResponse(res *http.Response) error {
+// checkForSuccessfulResponse checks if the response is successful
+// If Error Code is 4XX/5XX and debug level is set to info, will log the request and response
+func checkForSuccessfulResponse(res *http.Response, requestBody *io.ReadCloser) error {
 	familyStatusCode := res.StatusCode / 100
 	if familyStatusCode == 4 || familyStatusCode == 5 {
+		IfInfo(func() {
+			// If debug level is set to verbose, the request and request body will be dumped and logged under debug level, this is to avoid duplicate logging
+			if defaultLogger.LogLevel() < verboseLogging {
+				logRequest(res.Request, Logf, noLogging)
+				if requestBody != nil && *requestBody != http.NoBody {
+					bodyContent, _ := ioutil.ReadAll(*requestBody)
+					Logf("Dump Request Body: \n%s", string(bodyContent))
+				}
+			}
+			logResponse(res, Logf, infoLogging)
+		})
 		return newServiceFailureFromResponse(res)
 	}
+	IfDebug(func() {
+		logResponse(res, Debugf, verboseLogging)
+	})
 	return nil
+}
+
+func logRequest(request *http.Request, fn func(format string, v ...interface{}), bodyLoggingLevel int) {
+	if request == nil {
+		return
+	}
+	dumpBody := true
+	if checkBodyLengthExceedLimit(request.ContentLength) {
+		fn("not dumping body too big\n")
+		dumpBody = false
+	}
+
+	dumpBody = dumpBody && defaultLogger.LogLevel() >= bodyLoggingLevel && bodyLoggingLevel != noLogging
+	if dump, e := httputil.DumpRequestOut(request, dumpBody); e == nil {
+		fn("Dump Request %s", string(dump))
+	} else {
+		fn("%v\n", e)
+	}
+}
+
+func logResponse(response *http.Response, fn func(format string, v ...interface{}), bodyLoggingLevel int) {
+	if response == nil {
+		return
+	}
+	dumpBody := true
+	if checkBodyLengthExceedLimit(response.ContentLength) {
+		fn("not dumping body too big\n")
+		dumpBody = false
+	}
+	dumpBody = dumpBody && defaultLogger.LogLevel() >= bodyLoggingLevel && bodyLoggingLevel != noLogging
+	if dump, e := httputil.DumpResponse(response, dumpBody); e == nil {
+		fn("Dump Response %s", string(dump))
+	} else {
+		fn("%v\n", e)
+	}
+}
+
+func checkBodyLengthExceedLimit(contentLength int64) bool {
+	if contentLength > maxBodyLenForDebug {
+		return true
+	}
+	return false
 }
 
 // OCIRequest is any request made to an OCI service.
@@ -302,48 +448,28 @@ func (client BaseClient) CallWithDetails(ctx context.Context, request *http.Requ
 		return
 	}
 
+	//Copy request body and save for logging
+	dumpRequestBody := ioutil.NopCloser(bytes.NewBuffer(nil))
+	if request.Body != nil && !checkBodyLengthExceedLimit(request.ContentLength) {
+		if dumpRequestBody, request.Body, err = drainBody(request.Body); err != nil {
+			dumpRequestBody = ioutil.NopCloser(bytes.NewBuffer(nil))
+		}
+	}
 	IfDebug(func() {
-		dumpBody := true
-		if request.ContentLength > maxBodyLenForDebug {
-			Debugf("not dumping body too big\n")
-			dumpBody = false
-		}
-		dumpBody = dumpBody && defaultLogger.LogLevel() == verboseLogging
-		if dump, e := httputil.DumpRequestOut(request, dumpBody); e == nil {
-			Debugf("Dump Request %s", string(dump))
-		} else {
-			Debugf("%v\n", e)
-		}
+		logRequest(request, Debugf, verboseLogging)
 	})
 
 	//Execute the http request
 	response, err = client.HTTPClient.Do(request)
 
-	IfDebug(func() {
-		if err != nil {
-			Debugf("%v\n", err)
-			return
-		}
-
-		dumpBody := true
-		if response.ContentLength > maxBodyLenForDebug {
-			Debugf("not dumping body too big\n")
-			dumpBody = false
-		}
-
-		dumpBody = dumpBody && defaultLogger.LogLevel() == verboseLogging
-		if dump, e := httputil.DumpResponse(response, dumpBody); e == nil {
-			Debugf("Dump Response %s", string(dump))
-		} else {
-			Debugf("%v\n", e)
-		}
-	})
-
 	if err != nil {
+		IfInfo(func() {
+			Logf("%v\n", err)
+		})
 		return
 	}
 
-	err = checkForSuccessfulResponse(response)
+	err = checkForSuccessfulResponse(response, &dumpRequestBody)
 	return
 }
 
