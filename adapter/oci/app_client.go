@@ -40,6 +40,7 @@ func (a AppClient) CreateApp(app *adapter.App) (*adapter.App, error) {
 		Config:        app.Config,
 		DisplayName:   &app.Name,
 		SubnetIds:     subnetIds,
+		SyslogUrl:     app.SyslogURL,
 	}
 	req := functions.CreateApplicationRequest{CreateApplicationDetails: body,}
 
@@ -142,6 +143,7 @@ func (a AppClient) UpdateApp(app *adapter.App) (*adapter.App, error) {
 
 		body := functions.UpdateApplicationDetails{
 			Config: mergeConfig(getRes.Config, app.Config),
+			SyslogUrl: app.SyslogURL,
 		}
 
 		req := functions.UpdateApplicationRequest{UpdateApplicationDetails: body, ApplicationId: &app.ID, IfMatch: getRes.Etag}
@@ -261,5 +263,6 @@ func convertOCIAppToAdapterApp(ociApp *functions.Application) (*adapter.App, err
 		UpdatedAt:   updatedAt,
 		Annotations: annotationMap,
 		Config:      ociApp.Config,
+		SyslogURL:   ociApp.SyslogUrl,
 	}, nil
 }

@@ -254,10 +254,7 @@ config:
 	inspect := h.Fn("inspect", "app", appName).AssertSuccess()
 	inspect.AssertStdoutContains(fmt.Sprintf(`"name": "%s"`, appName))
 	inspect.AssertStdoutContains(`"giraffe"`)
-	if !h.IsOCITestMode() {
-		// No support for syslog_url in OCI test mode
-		inspect.AssertStdoutContains(`"tcp://example.com:42"`)
-	}
+	inspect.AssertStdoutContains(`"tcp://example.com:42"`)
 
 	// now should exist, this should work too
 	h.WithFile("app.yaml", fmt.Sprintf(`
@@ -275,10 +272,7 @@ config:
 	inspect = h.Fn("inspect", "app", appName).AssertSuccess()
 	inspect.AssertStdoutContains(fmt.Sprintf(`"name": "%s"`, appName))
 	inspect.AssertStdoutContains(`"oolong"`)
-	if !h.IsOCITestMode() {
-		// No support for syslog_url in OCI test mode
-		inspect.AssertStdoutContains(`"tcp://example.com:443"`)
-	}
+	inspect.AssertStdoutContains(`"tcp://example.com:443"`)
 }
 
 func TestAppYamlDeploy(t *testing.T) {
