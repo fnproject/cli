@@ -8,7 +8,7 @@ github.com/asaskevich/govalidator
 github.com/coreos/go-semver/semver
 # github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
 github.com/fatih/color
-# github.com/fnproject/fn_go v0.5.3
+# github.com/fnproject/fn_go v0.7.0
 github.com/fnproject/fn_go
 github.com/fnproject/fn_go/client/version
 github.com/fnproject/fn_go/clientv2
@@ -88,10 +88,10 @@ github.com/mattn/go-isatty
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
-# github.com/oracle/oci-go-sdk v20.0.0+incompatible
-github.com/oracle/oci-go-sdk/functions
-github.com/oracle/oci-go-sdk/common
-github.com/oracle/oci-go-sdk/common/auth
+# github.com/oracle/oci-go-sdk/v27 v27.3.0
+github.com/oracle/oci-go-sdk/v27/common
+github.com/oracle/oci-go-sdk/v27/common/auth
+github.com/oracle/oci-go-sdk/v27/functions
 # github.com/pelletier/go-toml v1.4.0
 github.com/pelletier/go-toml
 # github.com/spf13/afero v1.1.2

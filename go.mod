@@ -3,11 +3,12 @@ module github.com/fnproject/cli
 require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
-	github.com/fnproject/fn_go v0.5.3
+	github.com/fnproject/fn_go v0.7.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/giantswarm/semver-bump v0.0.0-20140912095342-88e6c9f2fe39
 	github.com/go-openapi/loads v0.19.5 // indirect
 	github.com/go-openapi/runtime v0.19.12
+	github.com/go-openapi/strfmt v0.19.4
 	github.com/go-openapi/validate v0.19.7 // indirect
 	github.com/jmoiron/jsonq v0.0.0-20150511023944-e874b168d07e
 	github.com/juju/errgo v0.0.0-20140925100237-08cceb5d0b53 // indirect
@@ -15,7 +16,7 @@ require (
 	github.com/mattn/go-isatty v0.0.3
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/oracle/oci-go-sdk v20.0.0+incompatible
+	github.com/oracle/oci-go-sdk/v27 v27.3.0
 	github.com/spf13/viper v1.6.2
 	github.com/urfave/cli v1.20.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect

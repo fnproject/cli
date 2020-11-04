@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/fnproject/fn_go/provider"
-	oci "github.com/oracle/oci-go-sdk/common"
-	"github.com/oracle/oci-go-sdk/common/auth"
+	oci "github.com/oracle/oci-go-sdk/v27/common"
+	"github.com/oracle/oci-go-sdk/v27/common/auth"
 )
 
 const (
@@ -69,7 +69,11 @@ func NewCSProvider(configSource provider.ConfigSource, passphraseSource provider
 	// production url form and the configured region from environment.
 	cfgApiUrl := configSource.GetString(provider.CfgFnAPIURL)
 	if cfgApiUrl == "" {
-		cfgApiUrl = fmt.Sprintf(FunctionsAPIURLTmpl, csConfig.region)
+		domain, err := GetRealmDomain()
+		if err != nil {
+			return nil, err
+		}
+		cfgApiUrl = fmt.Sprintf(FunctionsAPIURLTmpl, csConfig.region, domain)
 	}
 	apiUrl, err := provider.CanonicalFnAPIUrl(cfgApiUrl)
 	if err != nil {
@@ -82,6 +86,9 @@ func NewCSProvider(configSource provider.ConfigSource, passphraseSource provider
 	if compartmentID == "" {
 		compartmentID = csConfig.tenancyID
 	}
+
+	// Set OCI SDK to use IMDS to fetch region info (second-level domain etc.)
+	oci.EnableInstanceMetadataServiceLookup()
 
 	provider, err := auth.InstancePrincipalConfigurationProvider()
 	if err != nil {

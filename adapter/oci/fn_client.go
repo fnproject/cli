@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/fnproject/cli/adapter"
 	"github.com/go-openapi/strfmt"
-	"github.com/oracle/oci-go-sdk/functions"
+	"github.com/oracle/oci-go-sdk/v27/functions"
 	"os"
 	"time"
 )

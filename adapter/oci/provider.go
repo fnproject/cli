@@ -2,7 +2,7 @@ package oci
 
 import (
 	"github.com/fnproject/cli/adapter"
-	"github.com/oracle/oci-go-sdk/functions"
+	"github.com/oracle/oci-go-sdk/v27/functions"
 )
 
 type Provider struct {

@@ -5,13 +5,16 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/oracle/oci-go-sdk/common"
-	"github.com/oracle/oci-go-sdk/common/auth"
+	"github.com/oracle/oci-go-sdk/v27/common"
+	"github.com/oracle/oci-go-sdk/v27/common/auth"
 
 	"github.com/fnproject/fn_go/provider"
 )
 
 func NewIPProvider(configSource provider.ConfigSource, passphraseSource provider.PassPhraseSource) (provider.Provider, error) {
+	// Set OCI SDK to use IMDS to fetch region info (second-level domain etc.)
+	common.EnableInstanceMetadataServiceLookup()
+
 	ip, err := auth.InstancePrincipalConfigurationProvider()
 	if err != nil {
 		return nil, err
@@ -25,7 +28,11 @@ func NewIPProvider(configSource provider.ConfigSource, passphraseSource provider
 		if err != nil {
 			return nil, err
 		}
-		cfgApiUrl = fmt.Sprintf(FunctionsAPIURLTmpl, region)
+		domain, err := GetRealmDomain()
+		if err != nil {
+			return nil, err
+		}
+		cfgApiUrl = fmt.Sprintf(FunctionsAPIURLTmpl, region, domain)
 	}
 	apiUrl, err := provider.CanonicalFnAPIUrl(cfgApiUrl)
 	if err != nil {
