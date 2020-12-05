@@ -1,5 +1,7 @@
 module github.com/fnproject/cli
 
+go 1.13
+
 require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
