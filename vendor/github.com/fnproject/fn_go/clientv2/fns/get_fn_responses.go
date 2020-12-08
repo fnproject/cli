@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	modelsv2 "github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnproject/fn_go/modelsv2"
 )
 
 // GetFnReader is a Reader for the GetFn structure.
@@ -24,21 +23,18 @@ type GetFnReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *GetFnReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewGetFnOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 404:
 		result := NewGetFnNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
 		result := NewGetFnDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -68,6 +64,10 @@ func (o *GetFnOK) Error() string {
 	return fmt.Sprintf("[GET /fns/{fnID}][%d] getFnOK  %+v", 200, o.Payload)
 }
 
+func (o *GetFnOK) GetPayload() *modelsv2.Fn {
+	return o.Payload
+}
+
 func (o *GetFnOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(modelsv2.Fn)
@@ -95,6 +95,10 @@ type GetFnNotFound struct {
 
 func (o *GetFnNotFound) Error() string {
 	return fmt.Sprintf("[GET /fns/{fnID}][%d] getFnNotFound  %+v", 404, o.Payload)
+}
+
+func (o *GetFnNotFound) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *GetFnNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -133,6 +137,10 @@ func (o *GetFnDefault) Code() int {
 
 func (o *GetFnDefault) Error() string {
 	return fmt.Sprintf("[GET /fns/{fnID}][%d] GetFn default  %+v", o._statusCode, o.Payload)
+}
+
+func (o *GetFnDefault) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *GetFnDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

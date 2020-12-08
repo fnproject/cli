@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	modelsv2 "github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnproject/fn_go/modelsv2"
 )
 
 // CreateTriggerReader is a Reader for the CreateTrigger structure.
@@ -24,28 +23,30 @@ type CreateTriggerReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *CreateTriggerReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewCreateTriggerOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewCreateTriggerBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
+	case 404:
+		result := NewCreateTriggerNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewCreateTriggerConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
 		result := NewCreateTriggerDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -73,6 +74,10 @@ type CreateTriggerOK struct {
 
 func (o *CreateTriggerOK) Error() string {
 	return fmt.Sprintf("[POST /triggers][%d] createTriggerOK  %+v", 200, o.Payload)
+}
+
+func (o *CreateTriggerOK) GetPayload() *modelsv2.Trigger {
+	return o.Payload
 }
 
 func (o *CreateTriggerOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -104,7 +109,44 @@ func (o *CreateTriggerBadRequest) Error() string {
 	return fmt.Sprintf("[POST /triggers][%d] createTriggerBadRequest  %+v", 400, o.Payload)
 }
 
+func (o *CreateTriggerBadRequest) GetPayload() *modelsv2.Error {
+	return o.Payload
+}
+
 func (o *CreateTriggerBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(modelsv2.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewCreateTriggerNotFound creates a CreateTriggerNotFound with default headers values
+func NewCreateTriggerNotFound() *CreateTriggerNotFound {
+	return &CreateTriggerNotFound{}
+}
+
+/*CreateTriggerNotFound handles this case with default header values.
+
+Related object does not exist.
+*/
+type CreateTriggerNotFound struct {
+	Payload *modelsv2.Error
+}
+
+func (o *CreateTriggerNotFound) Error() string {
+	return fmt.Sprintf("[POST /triggers][%d] createTriggerNotFound  %+v", 404, o.Payload)
+}
+
+func (o *CreateTriggerNotFound) GetPayload() *modelsv2.Error {
+	return o.Payload
+}
+
+func (o *CreateTriggerNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(modelsv2.Error)
 
@@ -131,6 +173,10 @@ type CreateTriggerConflict struct {
 
 func (o *CreateTriggerConflict) Error() string {
 	return fmt.Sprintf("[POST /triggers][%d] createTriggerConflict  %+v", 409, o.Payload)
+}
+
+func (o *CreateTriggerConflict) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *CreateTriggerConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -169,6 +215,10 @@ func (o *CreateTriggerDefault) Code() int {
 
 func (o *CreateTriggerDefault) Error() string {
 	return fmt.Sprintf("[POST /triggers][%d] CreateTrigger default  %+v", o._statusCode, o.Payload)
+}
+
+func (o *CreateTriggerDefault) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *CreateTriggerDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

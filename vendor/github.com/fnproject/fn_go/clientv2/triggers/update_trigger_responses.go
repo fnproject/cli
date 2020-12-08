@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	modelsv2 "github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnproject/fn_go/modelsv2"
 )
 
 // UpdateTriggerReader is a Reader for the UpdateTrigger structure.
@@ -24,28 +23,24 @@ type UpdateTriggerReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *UpdateTriggerReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewUpdateTriggerOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewUpdateTriggerBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewUpdateTriggerNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
 		result := NewUpdateTriggerDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -73,6 +68,10 @@ type UpdateTriggerOK struct {
 
 func (o *UpdateTriggerOK) Error() string {
 	return fmt.Sprintf("[PUT /triggers/{triggerID}][%d] updateTriggerOK  %+v", 200, o.Payload)
+}
+
+func (o *UpdateTriggerOK) GetPayload() *modelsv2.Trigger {
+	return o.Payload
 }
 
 func (o *UpdateTriggerOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -104,6 +103,10 @@ func (o *UpdateTriggerBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /triggers/{triggerID}][%d] updateTriggerBadRequest  %+v", 400, o.Payload)
 }
 
+func (o *UpdateTriggerBadRequest) GetPayload() *modelsv2.Error {
+	return o.Payload
+}
+
 func (o *UpdateTriggerBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(modelsv2.Error)
@@ -131,6 +134,10 @@ type UpdateTriggerNotFound struct {
 
 func (o *UpdateTriggerNotFound) Error() string {
 	return fmt.Sprintf("[PUT /triggers/{triggerID}][%d] updateTriggerNotFound  %+v", 404, o.Payload)
+}
+
+func (o *UpdateTriggerNotFound) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *UpdateTriggerNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -169,6 +176,10 @@ func (o *UpdateTriggerDefault) Code() int {
 
 func (o *UpdateTriggerDefault) Error() string {
 	return fmt.Sprintf("[PUT /triggers/{triggerID}][%d] UpdateTrigger default  %+v", o._statusCode, o.Payload)
+}
+
+func (o *UpdateTriggerDefault) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *UpdateTriggerDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

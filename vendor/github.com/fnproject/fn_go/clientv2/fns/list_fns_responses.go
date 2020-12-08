@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	modelsv2 "github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnproject/fn_go/modelsv2"
 )
 
 // ListFnsReader is a Reader for the ListFns structure.
@@ -24,14 +23,12 @@ type ListFnsReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *ListFnsReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewListFnsOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	default:
 		result := NewListFnsDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -59,6 +56,10 @@ type ListFnsOK struct {
 
 func (o *ListFnsOK) Error() string {
 	return fmt.Sprintf("[GET /fns][%d] listFnsOK  %+v", 200, o.Payload)
+}
+
+func (o *ListFnsOK) GetPayload() *modelsv2.FnList {
+	return o.Payload
 }
 
 func (o *ListFnsOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -97,6 +98,10 @@ func (o *ListFnsDefault) Code() int {
 
 func (o *ListFnsDefault) Error() string {
 	return fmt.Sprintf("[GET /fns][%d] ListFns default  %+v", o._statusCode, o.Payload)
+}
+
+func (o *ListFnsDefault) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *ListFnsDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

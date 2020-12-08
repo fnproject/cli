@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	modelsv2 "github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnproject/fn_go/modelsv2"
 )
 
 // CreateAppReader is a Reader for the CreateApp structure.
@@ -24,28 +23,24 @@ type CreateAppReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *CreateAppReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewCreateAppOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewCreateAppBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 409:
 		result := NewCreateAppConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
 		result := NewCreateAppDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -73,6 +68,10 @@ type CreateAppOK struct {
 
 func (o *CreateAppOK) Error() string {
 	return fmt.Sprintf("[POST /apps][%d] createAppOK  %+v", 200, o.Payload)
+}
+
+func (o *CreateAppOK) GetPayload() *modelsv2.App {
+	return o.Payload
 }
 
 func (o *CreateAppOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -104,6 +103,10 @@ func (o *CreateAppBadRequest) Error() string {
 	return fmt.Sprintf("[POST /apps][%d] createAppBadRequest  %+v", 400, o.Payload)
 }
 
+func (o *CreateAppBadRequest) GetPayload() *modelsv2.Error {
+	return o.Payload
+}
+
 func (o *CreateAppBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(modelsv2.Error)
@@ -131,6 +134,10 @@ type CreateAppConflict struct {
 
 func (o *CreateAppConflict) Error() string {
 	return fmt.Sprintf("[POST /apps][%d] createAppConflict  %+v", 409, o.Payload)
+}
+
+func (o *CreateAppConflict) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *CreateAppConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -169,6 +176,10 @@ func (o *CreateAppDefault) Code() int {
 
 func (o *CreateAppDefault) Error() string {
 	return fmt.Sprintf("[POST /apps][%d] CreateApp default  %+v", o._statusCode, o.Payload)
+}
+
+func (o *CreateAppDefault) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *CreateAppDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

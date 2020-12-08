@@ -205,7 +205,7 @@ func WithFlags(c *cli.Context, fn *models.Fn) {
 	}
 	if t := c.Int("idle-timeout"); t > 0 {
 		to := int32(t)
-		fn.IDLETimeout = &to
+		fn.IdleTimeout = &to
 	}
 }
 
@@ -228,7 +228,7 @@ func WithFuncFileV20180708(ff *common.FuncFileV20180708, fn *models.Fn) error {
 		fn.Memory = ff.Memory
 	}
 	if ff.IDLE_timeout != nil {
-		fn.IDLETimeout = ff.IDLE_timeout
+		fn.IdleTimeout = ff.IDLE_timeout
 	}
 
 	if len(ff.Config) != 0 {

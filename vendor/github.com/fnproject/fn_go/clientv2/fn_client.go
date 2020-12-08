@@ -8,13 +8,10 @@ package clientv2
 import (
 	"github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 
 	"github.com/fnproject/fn_go/clientv2/apps"
-	"github.com/fnproject/fn_go/clientv2/call"
 	"github.com/fnproject/fn_go/clientv2/fns"
-	"github.com/fnproject/fn_go/clientv2/operations"
 	"github.com/fnproject/fn_go/clientv2/triggers"
 )
 
@@ -60,17 +57,9 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *Fn {
 
 	cli := new(Fn)
 	cli.Transport = transport
-
 	cli.Apps = apps.New(transport, formats)
-
-	cli.Call = call.New(transport, formats)
-
 	cli.Fns = fns.New(transport, formats)
-
-	cli.Operations = operations.New(transport, formats)
-
 	cli.Triggers = triggers.New(transport, formats)
-
 	return cli
 }
 
@@ -115,15 +104,11 @@ func (cfg *TransportConfig) WithSchemes(schemes []string) *TransportConfig {
 
 // Fn is a client for fn
 type Fn struct {
-	Apps *apps.Client
+	Apps apps.ClientService
 
-	Call *call.Client
+	Fns fns.ClientService
 
-	Fns *fns.Client
-
-	Operations *operations.Client
-
-	Triggers *triggers.Client
+	Triggers triggers.ClientService
 
 	Transport runtime.ClientTransport
 }
@@ -131,15 +116,7 @@ type Fn struct {
 // SetTransport changes the transport on the client and all its subresources
 func (c *Fn) SetTransport(transport runtime.ClientTransport) {
 	c.Transport = transport
-
 	c.Apps.SetTransport(transport)
-
-	c.Call.SetTransport(transport)
-
 	c.Fns.SetTransport(transport)
-
-	c.Operations.SetTransport(transport)
-
 	c.Triggers.SetTransport(transport)
-
 }

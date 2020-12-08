@@ -2,13 +2,14 @@ package oracle
 
 import (
 	"fmt"
+	"github.com/oracle/oci-go-sdk/v28/functions"
 	"io/ioutil"
 	"net/http"
 	"os"
 
 	"github.com/fnproject/fn_go/provider"
-	oci "github.com/oracle/oci-go-sdk/v27/common"
-	"github.com/oracle/oci-go-sdk/v27/common/auth"
+	oci "github.com/oracle/oci-go-sdk/v28/common"
+	"github.com/oracle/oci-go-sdk/v28/common/auth"
 )
 
 const (
@@ -90,7 +91,7 @@ func NewCSProvider(configSource provider.ConfigSource, passphraseSource provider
 	// Set OCI SDK to use IMDS to fetch region info (second-level domain etc.)
 	oci.EnableInstanceMetadataServiceLookup()
 
-	provider, err := auth.InstancePrincipalConfigurationProvider()
+	configProvider, err := auth.InstancePrincipalDelegationTokenConfigurationProvider(&csConfig.delegationToken)
 	if err != nil {
 		return nil, err
 	}
@@ -103,14 +104,30 @@ func NewCSProvider(configSource provider.ConfigSource, passphraseSource provider
 
 	// Obo token will also be signed
 	defaultHeaders := append(oci.DefaultGenericHeaders(), requestHeaderOpcOboToken)
-	signer := oci.RequestSigner(provider, defaultHeaders, oci.DefaultBodyHeaders())
+	signer := oci.RequestSigner(configProvider, defaultHeaders, oci.DefaultBodyHeaders())
+
+	ociClient, err := functions.NewFunctionsManagementClientWithConfigurationProvider(configProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	ociClient.UserAgent = fmt.Sprintf("%s %s", userAgentPrefixCs, ociClient.UserAgent)
+
+	disableCerts := configSource.GetBool(CfgDisableCerts)
+	if disableCerts {
+		c := ociClient.HTTPClient.(*http.Client)
+		c.Transport = InsecureRoundTripper(c.Transport)
+	}
+
+	ociClient.Host = apiUrl.String()
 
 	return &OracleProvider{
 		FnApiUrl:      apiUrl,
 		Signer:        signer,
 		Interceptor:   interceptor,
-		DisableCerts:  configSource.GetBool(CfgDisableCerts),
+		DisableCerts:  disableCerts,
 		CompartmentID: compartmentID,
+		ociClient:     ociClient,
 	}, nil
 }
 

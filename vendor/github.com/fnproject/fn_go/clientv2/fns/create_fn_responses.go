@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	modelsv2 "github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnproject/fn_go/modelsv2"
 )
 
 // CreateFnReader is a Reader for the CreateFn structure.
@@ -24,28 +23,30 @@ type CreateFnReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *CreateFnReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewCreateFnOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewCreateFnBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
+	case 404:
+		result := NewCreateFnNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewCreateFnConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
 		result := NewCreateFnDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -73,6 +74,10 @@ type CreateFnOK struct {
 
 func (o *CreateFnOK) Error() string {
 	return fmt.Sprintf("[POST /fns][%d] createFnOK  %+v", 200, o.Payload)
+}
+
+func (o *CreateFnOK) GetPayload() *modelsv2.Fn {
+	return o.Payload
 }
 
 func (o *CreateFnOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -104,7 +109,44 @@ func (o *CreateFnBadRequest) Error() string {
 	return fmt.Sprintf("[POST /fns][%d] createFnBadRequest  %+v", 400, o.Payload)
 }
 
+func (o *CreateFnBadRequest) GetPayload() *modelsv2.Error {
+	return o.Payload
+}
+
 func (o *CreateFnBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(modelsv2.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewCreateFnNotFound creates a CreateFnNotFound with default headers values
+func NewCreateFnNotFound() *CreateFnNotFound {
+	return &CreateFnNotFound{}
+}
+
+/*CreateFnNotFound handles this case with default header values.
+
+Related app does not exist.
+*/
+type CreateFnNotFound struct {
+	Payload *modelsv2.Error
+}
+
+func (o *CreateFnNotFound) Error() string {
+	return fmt.Sprintf("[POST /fns][%d] createFnNotFound  %+v", 404, o.Payload)
+}
+
+func (o *CreateFnNotFound) GetPayload() *modelsv2.Error {
+	return o.Payload
+}
+
+func (o *CreateFnNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(modelsv2.Error)
 
@@ -131,6 +173,10 @@ type CreateFnConflict struct {
 
 func (o *CreateFnConflict) Error() string {
 	return fmt.Sprintf("[POST /fns][%d] createFnConflict  %+v", 409, o.Payload)
+}
+
+func (o *CreateFnConflict) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *CreateFnConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -169,6 +215,10 @@ func (o *CreateFnDefault) Code() int {
 
 func (o *CreateFnDefault) Error() string {
 	return fmt.Sprintf("[POST /fns][%d] CreateFn default  %+v", o._statusCode, o.Payload)
+}
+
+func (o *CreateFnDefault) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *CreateFnDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
