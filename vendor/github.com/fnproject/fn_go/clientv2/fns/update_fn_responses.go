@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	modelsv2 "github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnproject/fn_go/modelsv2"
 )
 
 // UpdateFnReader is a Reader for the UpdateFn structure.
@@ -24,28 +23,24 @@ type UpdateFnReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *UpdateFnReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewUpdateFnOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewUpdateFnBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewUpdateFnNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
 		result := NewUpdateFnDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -73,6 +68,10 @@ type UpdateFnOK struct {
 
 func (o *UpdateFnOK) Error() string {
 	return fmt.Sprintf("[PUT /fns/{fnID}][%d] updateFnOK  %+v", 200, o.Payload)
+}
+
+func (o *UpdateFnOK) GetPayload() *modelsv2.Fn {
+	return o.Payload
 }
 
 func (o *UpdateFnOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -104,6 +103,10 @@ func (o *UpdateFnBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /fns/{fnID}][%d] updateFnBadRequest  %+v", 400, o.Payload)
 }
 
+func (o *UpdateFnBadRequest) GetPayload() *modelsv2.Error {
+	return o.Payload
+}
+
 func (o *UpdateFnBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(modelsv2.Error)
@@ -131,6 +134,10 @@ type UpdateFnNotFound struct {
 
 func (o *UpdateFnNotFound) Error() string {
 	return fmt.Sprintf("[PUT /fns/{fnID}][%d] updateFnNotFound  %+v", 404, o.Payload)
+}
+
+func (o *UpdateFnNotFound) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *UpdateFnNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -169,6 +176,10 @@ func (o *UpdateFnDefault) Code() int {
 
 func (o *UpdateFnDefault) Error() string {
 	return fmt.Sprintf("[PUT /fns/{fnID}][%d] UpdateFn default  %+v", o._statusCode, o.Payload)
+}
+
+func (o *UpdateFnDefault) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *UpdateFnDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

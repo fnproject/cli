@@ -1,14 +1,14 @@
 package oracle
 
 import (
-	"crypto/rsa"
 	"crypto/tls"
 	"fmt"
+	"github.com/fnproject/fn_go/provider/oracle/shim"
+	"github.com/oracle/oci-go-sdk/v28/functions"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"time"
 
 	"github.com/fnproject/fn_go/client/version"
@@ -16,7 +16,7 @@ import (
 	"github.com/fnproject/fn_go/provider"
 	openapi "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	"github.com/oracle/oci-go-sdk/v27/common"
+	"github.com/oracle/oci-go-sdk/v28/common"
 )
 
 const (
@@ -38,6 +38,10 @@ const (
 	OCI_CLI_USER_ENV_VAR                  = "OCI_CLI_USER"
 	OCI_CLI_FINGERPRINT_ENV_VAR           = "OCI_CLI_FINGERPRINT"
 	OCI_CLI_KEY_FILE_ENV_VAR              = "OCI_CLI_KEY_FILE"
+
+	userAgentPrefixUser = "fn_go-oracle"
+	userAgentPrefixIp   = "fn_go-oracle-ip"
+	userAgentPrefixCs   = "fn_go-oracle-cs"
 )
 
 type Response struct {
@@ -67,22 +71,11 @@ type OracleProvider struct {
 
 	// CompartmentID is the ocid of the functions compartment ID for a given function
 	CompartmentID string
+
+	ociClient functions.FunctionsManagementClient
 }
 
 //-- Provider interface impl ----------------------------------------------------------------------------------
-
-type ociKeyProvider struct {
-	ID  string
-	key *rsa.PrivateKey
-}
-
-func (kp ociKeyProvider) PrivateRSAKey() (*rsa.PrivateKey, error) {
-	return kp.key, nil
-}
-
-func (kp ociKeyProvider) KeyID() (string, error) {
-	return kp.ID, nil
-}
 
 type ociSigningRoundTripper struct {
 	signer        common.HTTPRequestSigner
@@ -165,10 +158,11 @@ func InsecureRoundTripper(roundTripper http.RoundTripper) http.RoundTripper {
 //-- Provider interface impl ----------------------------------------------------------------------------------
 
 func (op *OracleProvider) APIClientv2() *clientv2.Fn {
-	runtime := openapi.New(op.FnApiUrl.Host, path.Join(op.FnApiUrl.Path, clientv2.DefaultBasePath),
-		[]string{op.FnApiUrl.Scheme})
-	runtime.Transport = op.WrapCallTransport(runtime.Transport)
-	return clientv2.New(runtime, strfmt.Default)
+	return &clientv2.Fn{
+		Apps:     shim.NewAppsShim(op.ociClient, op.CompartmentID),
+		Fns:      shim.NewFnsShim(op.ociClient),
+		Triggers: shim.NewTriggersShim(),
+	}
 }
 
 func (op *OracleProvider) APIURL() *url.URL {

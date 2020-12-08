@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	modelsv2 "github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnproject/fn_go/modelsv2"
 )
 
 // ListTriggersReader is a Reader for the ListTriggers structure.
@@ -24,14 +23,12 @@ type ListTriggersReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *ListTriggersReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewListTriggersOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	default:
 		result := NewListTriggersDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -59,6 +56,10 @@ type ListTriggersOK struct {
 
 func (o *ListTriggersOK) Error() string {
 	return fmt.Sprintf("[GET /triggers][%d] listTriggersOK  %+v", 200, o.Payload)
+}
+
+func (o *ListTriggersOK) GetPayload() *modelsv2.TriggerList {
+	return o.Payload
 }
 
 func (o *ListTriggersOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -97,6 +98,10 @@ func (o *ListTriggersDefault) Code() int {
 
 func (o *ListTriggersDefault) Error() string {
 	return fmt.Sprintf("[GET /triggers][%d] ListTriggers default  %+v", o._statusCode, o.Payload)
+}
+
+func (o *ListTriggersDefault) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *ListTriggersDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

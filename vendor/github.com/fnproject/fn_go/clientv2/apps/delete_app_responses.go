@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	modelsv2 "github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnproject/fn_go/modelsv2"
 )
 
 // DeleteAppReader is a Reader for the DeleteApp structure.
@@ -24,21 +23,18 @@ type DeleteAppReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *DeleteAppReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 204:
 		result := NewDeleteAppNoContent()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 404:
 		result := NewDeleteAppNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
 		result := NewDeleteAppDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -89,6 +85,10 @@ func (o *DeleteAppNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /apps/{appID}][%d] deleteAppNotFound  %+v", 404, o.Payload)
 }
 
+func (o *DeleteAppNotFound) GetPayload() *modelsv2.Error {
+	return o.Payload
+}
+
 func (o *DeleteAppNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(modelsv2.Error)
@@ -125,6 +125,10 @@ func (o *DeleteAppDefault) Code() int {
 
 func (o *DeleteAppDefault) Error() string {
 	return fmt.Sprintf("[DELETE /apps/{appID}][%d] DeleteApp default  %+v", o._statusCode, o.Payload)
+}
+
+func (o *DeleteAppDefault) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *DeleteAppDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

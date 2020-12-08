@@ -309,8 +309,8 @@ func (a *initFnCmd) bindFn(fn *modelsV2.Fn) {
 	if fn.Timeout != nil {
 		ff.Timeout = fn.Timeout
 	}
-	if fn.IDLETimeout != nil {
-		ff.IDLE_timeout = fn.IDLETimeout
+	if fn.IdleTimeout != nil {
+		ff.IDLE_timeout = fn.IdleTimeout
 	}
 }
 

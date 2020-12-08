@@ -7,12 +7,11 @@ package fns
 
 import (
 	"github.com/go-openapi/runtime"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new fns API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,10 +23,25 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
-/*
-CreateFn creates a new function
+// ClientService is the interface for Client methods
+type ClientService interface {
+	CreateFn(params *CreateFnParams) (*CreateFnOK, error)
 
-Creates a new Function, returning the complete entity.
+	DeleteFn(params *DeleteFnParams) (*DeleteFnNoContent, error)
+
+	GetFn(params *GetFnParams) (*GetFnOK, error)
+
+	ListFns(params *ListFnsParams) (*ListFnsOK, error)
+
+	UpdateFn(params *UpdateFnParams) (*UpdateFnOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
+/*
+  CreateFn creates a new function
+
+  Creates a new Function, returning the complete entity.
 */
 func (a *Client) CreateFn(params *CreateFnParams) (*CreateFnOK, error) {
 	// TODO: Validate the params before sending
@@ -50,14 +64,19 @@ func (a *Client) CreateFn(params *CreateFnParams) (*CreateFnOK, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result.(*CreateFnOK), nil
-
+	success, ok := result.(*CreateFnOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*CreateFnDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
-DeleteFn deletes a function
+  DeleteFn deletes a function
 
-Delete the specified Function.
+  Delete the specified Function.
 */
 func (a *Client) DeleteFn(params *DeleteFnParams) (*DeleteFnNoContent, error) {
 	// TODO: Validate the params before sending
@@ -80,14 +99,19 @@ func (a *Client) DeleteFn(params *DeleteFnParams) (*DeleteFnNoContent, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result.(*DeleteFnNoContent), nil
-
+	success, ok := result.(*DeleteFnNoContent)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*DeleteFnDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
-GetFn gets definition of a function
+  GetFn gets definition of a function
 
-Gets the definition for the Function with the specified ID.
+  Gets the definition for the Function with the specified ID.
 */
 func (a *Client) GetFn(params *GetFnParams) (*GetFnOK, error) {
 	// TODO: Validate the params before sending
@@ -110,14 +134,19 @@ func (a *Client) GetFn(params *GetFnParams) (*GetFnOK, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result.(*GetFnOK), nil
-
+	success, ok := result.(*GetFnOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*GetFnDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
-ListFns gets a list of functions within an application
+  ListFns gets a list of functions within an application
 
-Get a filtered list of Functions for an Application, in alphabetical order.
+  Get a filtered list of Functions for an Application, in alphabetical order.
 */
 func (a *Client) ListFns(params *ListFnsParams) (*ListFnsOK, error) {
 	// TODO: Validate the params before sending
@@ -140,14 +169,19 @@ func (a *Client) ListFns(params *ListFnsParams) (*ListFnsOK, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ListFnsOK), nil
-
+	success, ok := result.(*ListFnsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*ListFnsDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
-UpdateFn updates a function
+  UpdateFn updates a function
 
-Updates a Function via merging the provided values.
+  Updates a Function via merging the provided values.
 */
 func (a *Client) UpdateFn(params *UpdateFnParams) (*UpdateFnOK, error) {
 	// TODO: Validate the params before sending
@@ -170,8 +204,13 @@ func (a *Client) UpdateFn(params *UpdateFnParams) (*UpdateFnOK, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result.(*UpdateFnOK), nil
-
+	success, ok := result.(*UpdateFnOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*UpdateFnDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 // SetTransport changes the transport on the client

@@ -7,12 +7,11 @@ package triggers
 
 import (
 	"github.com/go-openapi/runtime"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new triggers API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,10 +23,25 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
-/*
-CreateTrigger creates a new trigger
+// ClientService is the interface for Client methods
+type ClientService interface {
+	CreateTrigger(params *CreateTriggerParams) (*CreateTriggerOK, error)
 
-Creates a new Trigger, returning the complete entity.
+	DeleteTrigger(params *DeleteTriggerParams) (*DeleteTriggerNoContent, error)
+
+	GetTrigger(params *GetTriggerParams) (*GetTriggerOK, error)
+
+	ListTriggers(params *ListTriggersParams) (*ListTriggersOK, error)
+
+	UpdateTrigger(params *UpdateTriggerParams) (*UpdateTriggerOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
+/*
+  CreateTrigger creates a new trigger
+
+  Creates a new Trigger, returning the complete entity.
 */
 func (a *Client) CreateTrigger(params *CreateTriggerParams) (*CreateTriggerOK, error) {
 	// TODO: Validate the params before sending
@@ -50,14 +64,19 @@ func (a *Client) CreateTrigger(params *CreateTriggerParams) (*CreateTriggerOK, e
 	if err != nil {
 		return nil, err
 	}
-	return result.(*CreateTriggerOK), nil
-
+	success, ok := result.(*CreateTriggerOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*CreateTriggerDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
-DeleteTrigger deletes a trigger
+  DeleteTrigger deletes a trigger
 
-Delete the specified Trigger.
+  Delete the specified Trigger.
 */
 func (a *Client) DeleteTrigger(params *DeleteTriggerParams) (*DeleteTriggerNoContent, error) {
 	// TODO: Validate the params before sending
@@ -80,14 +99,19 @@ func (a *Client) DeleteTrigger(params *DeleteTriggerParams) (*DeleteTriggerNoCon
 	if err != nil {
 		return nil, err
 	}
-	return result.(*DeleteTriggerNoContent), nil
-
+	success, ok := result.(*DeleteTriggerNoContent)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*DeleteTriggerDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
-GetTrigger gets definition of a trigger
+  GetTrigger gets definition of a trigger
 
-Gets the definition for the Trigger with the specified ID.
+  Gets the definition for the Trigger with the specified ID.
 */
 func (a *Client) GetTrigger(params *GetTriggerParams) (*GetTriggerOK, error) {
 	// TODO: Validate the params before sending
@@ -110,14 +134,19 @@ func (a *Client) GetTrigger(params *GetTriggerParams) (*GetTriggerOK, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result.(*GetTriggerOK), nil
-
+	success, ok := result.(*GetTriggerOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*GetTriggerDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
-ListTriggers gets a list of triggers within an application or function
+  ListTriggers gets a list of triggers within an application or function
 
-This will list all Triggers for a particular Application or Function, returned in name alphabetical order.
+  This will list all Triggers for a particular Application or Function, returned in name alphabetical order.
 */
 func (a *Client) ListTriggers(params *ListTriggersParams) (*ListTriggersOK, error) {
 	// TODO: Validate the params before sending
@@ -140,14 +169,19 @@ func (a *Client) ListTriggers(params *ListTriggersParams) (*ListTriggersOK, erro
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ListTriggersOK), nil
-
+	success, ok := result.(*ListTriggersOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*ListTriggersDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
-UpdateTrigger updates a trigger
+  UpdateTrigger updates a trigger
 
-Updates a Trigger by merging the provided values.
+  Updates a Trigger by merging the provided values.
 */
 func (a *Client) UpdateTrigger(params *UpdateTriggerParams) (*UpdateTriggerOK, error) {
 	// TODO: Validate the params before sending
@@ -170,8 +204,13 @@ func (a *Client) UpdateTrigger(params *UpdateTriggerParams) (*UpdateTriggerOK, e
 	if err != nil {
 		return nil, err
 	}
-	return result.(*UpdateTriggerOK), nil
-
+	success, ok := result.(*UpdateTriggerOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*UpdateTriggerDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 // SetTransport changes the transport on the client

@@ -2,11 +2,13 @@ package oracle
 
 import (
 	"fmt"
+	"github.com/oracle/oci-go-sdk/v28/functions"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 
-	"github.com/oracle/oci-go-sdk/v27/common"
-	"github.com/oracle/oci-go-sdk/v27/common/auth"
+	"github.com/oracle/oci-go-sdk/v28/common"
+	"github.com/oracle/oci-go-sdk/v28/common/auth"
 
 	"github.com/fnproject/fn_go/provider"
 )
@@ -15,26 +17,7 @@ func NewIPProvider(configSource provider.ConfigSource, passphraseSource provider
 	// Set OCI SDK to use IMDS to fetch region info (second-level domain etc.)
 	common.EnableInstanceMetadataServiceLookup()
 
-	ip, err := auth.InstancePrincipalConfigurationProvider()
-	if err != nil {
-		return nil, err
-	}
-
-	// If we have an explicit api-url configured then use that, otherwise compute the url from the standard
-	// production url template and the configured region from environment.
-	cfgApiUrl := configSource.GetString(provider.CfgFnAPIURL)
-	if cfgApiUrl == "" {
-		region, err := ip.Region()
-		if err != nil {
-			return nil, err
-		}
-		domain, err := GetRealmDomain()
-		if err != nil {
-			return nil, err
-		}
-		cfgApiUrl = fmt.Sprintf(FunctionsAPIURLTmpl, region, domain)
-	}
-	apiUrl, err := provider.CanonicalFnAPIUrl(cfgApiUrl)
+	configProvider, err := auth.InstancePrincipalConfigurationProvider()
 	if err != nil {
 		return nil, err
 	}
@@ -52,11 +35,44 @@ func NewIPProvider(configSource provider.ConfigSource, passphraseSource provider
 		}
 		compartmentID = string(body)
 	}
+
+	ociClient, err := functions.NewFunctionsManagementClientWithConfigurationProvider(configProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	ociClient.UserAgent = fmt.Sprintf("%s %s", userAgentPrefixIp, ociClient.UserAgent)
+
+	disableCerts := configSource.GetBool(CfgDisableCerts)
+	if disableCerts {
+		c := ociClient.HTTPClient.(*http.Client)
+		c.Transport = InsecureRoundTripper(c.Transport)
+	}
+
+	// If we have an explicit api-url configured then use that, otherwise let OCI client compute the url from the standard
+	// production url template and the configured region from environment.
+	cfgApiUrl := configSource.GetString(provider.CfgFnAPIURL)
+	var apiUrl *url.URL
+	if cfgApiUrl != "" {
+		apiUrl, err = provider.CanonicalFnAPIUrl(cfgApiUrl)
+		if err != nil {
+			return nil, err
+		}
+		ociClient.Host = apiUrl.String()
+	} else {
+		// Even if URL is computed by OCI SDK itself, we still populate FnApiUrl in the Provider for compatibility's sake
+		apiUrl, err = provider.CanonicalFnAPIUrl(ociClient.Host)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &OracleProvider{
 		FnApiUrl:      apiUrl,
-		Signer:        common.DefaultRequestSigner(ip),
+		Signer:        common.DefaultRequestSigner(configProvider),
 		Interceptor:   nil,
-		DisableCerts:  configSource.GetBool(CfgDisableCerts),
+		DisableCerts:  disableCerts,
 		CompartmentID: compartmentID,
+		ociClient:     ociClient,
 	}, nil
 }
