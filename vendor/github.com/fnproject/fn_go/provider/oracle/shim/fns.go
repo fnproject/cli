@@ -230,6 +230,10 @@ func parseDigestAnnotation(annotations map[string]interface{}) (*string, error) 
 		return nil, fmt.Errorf("invalid image digest")
 	}
 
+	if digest == "" {
+		return nil, nil
+	}
+
 	return &digest, nil
 }
 

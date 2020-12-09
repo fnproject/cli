@@ -42,8 +42,8 @@ github.com/docker/go-units v0.3.3/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDD
 github.com/docker/go-units v0.4.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/fatih/color v0.0.0-20170926111411-5df930a27be2 h1:40J76vs1Y7oiHFqTrQHQ6A5u8vbXJdLaMkC9iHU/uMw=
 github.com/fatih/color v0.0.0-20170926111411-5df930a27be2/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
-github.com/fnproject/fn_go v0.8.0 h1:rTErUTuqjJplweDAY7F5Nw1UyaY17HZgwMkWu8ZN2FY=
-github.com/fnproject/fn_go v0.8.0/go.mod h1:xmSLdSo2aP1Asnr8Jcv3deB4WqZHzdkqQwtOifBpv0Q=
+github.com/fnproject/fn_go v0.8.1 h1:Jr58UNk6nF897gIPTlaa3lAZ85lJ7gQv9+zSPS2nqrI=
+github.com/fnproject/fn_go v0.8.1/go.mod h1:xmSLdSo2aP1Asnr8Jcv3deB4WqZHzdkqQwtOifBpv0Q=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=

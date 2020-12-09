@@ -329,6 +329,9 @@ func NewMockFunctionsManagementClientBasic(ctrl *gomock.Controller) FunctionsMan
 				digest := "OriginalFunctionDigest"
 				if request.ImageDigest != nil {
 					digest = *request.ImageDigest
+					if digest == "" {
+						return functions.UpdateFunctionResponse{}, fmt.Errorf("invalid image digest")
+					}
 				}
 				memory := int64(128)
 				if request.MemoryInMBs != nil {
