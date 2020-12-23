@@ -5,15 +5,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 )
 
 // BuildCommand returns build cli.command
-func BuildCommand() cli.Command {
+func BuildCommand() *cli.Command {
 	cmd := buildcmd{}
 	flags := append([]cli.Flag{}, cmd.flags()...)
-	return cli.Command{
+	return &cli.Command{
 		Name:        "build",
 		Usage:       "\tBuild function version",
 		Category:    "DEVELOPMENT COMMANDS",
@@ -31,21 +31,21 @@ type buildcmd struct {
 
 func (b *buildcmd) flags() []cli.Flag {
 	return []cli.Flag{
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "verbose, v",
 			Usage:       "Verbose mode",
 			Destination: &common.CommandVerbose,
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "no-cache",
 			Usage:       "Don't use docker cache",
 			Destination: &b.noCache,
 		},
-		cli.StringSliceFlag{
+		&cli.StringSliceFlag{
 			Name:  "build-arg",
 			Usage: "Set build-time variables",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "working-dir, w",
 			Usage: "Specify the working directory to build a function, must be the full path.",
 		},

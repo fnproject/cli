@@ -1,13 +1,13 @@
 package commands
 
 import (
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 )
 
 // CreateCommand returns create cli.command
-func CreateCommand() cli.Command {
-	return cli.Command{
+func CreateCommand() *cli.Command {
+	return &cli.Command{
 		Name:         "create",
 		Aliases:      []string{"c"},
 		Usage:        "\tCreate a new object",

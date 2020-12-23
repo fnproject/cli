@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 )
 
 func update(c *cli.Context) error {

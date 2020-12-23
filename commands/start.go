@@ -9,38 +9,38 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/fnproject/cli/common"
-	"github.com/fnproject/cli/config"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/fnxproject/cli/config"
+	"github.com/urfave/cli/v2"
 )
 
 // StartCommand returns start server cli.command
-func StartCommand() cli.Command {
-	return cli.Command{
+func StartCommand() *cli.Command {
+	return &cli.Command{
 		Name:        "start",
 		Usage:       "Start a local Fn server",
 		Category:    "SERVER COMMANDS",
 		Description: "This command starts a local Fn server by downloading its docker image.",
 		Action:      start,
 		Flags: []cli.Flag{
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "log-level",
 				Usage: "--log-level debug to enable debugging",
 			},
-			cli.BoolFlag{
+			&cli.BoolFlag{
 				Name:  "detach, d",
 				Usage: "Run container in background.",
 			},
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "env-file",
 				Usage: "Path to Fn server configuration file.",
 			},
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "version",
 				Usage: "Specify a specific fnproject/fnserver version to run, ex: '1.2.3'.",
 				Value: "latest",
 			},
-			cli.IntFlag{
+			&cli.IntFlag{
 				Name:  "port, p",
 				Value: 8080,
 				Usage: "Specify port number to bind to on the host.",

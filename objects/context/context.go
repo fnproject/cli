@@ -12,10 +12,10 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/fnproject/cli/config"
 	"github.com/fnproject/fn_go/provider"
+	"github.com/fnxproject/cli/config"
 	"github.com/spf13/viper"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 var contextsPath = config.GetContextsPath()

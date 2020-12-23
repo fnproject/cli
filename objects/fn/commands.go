@@ -4,18 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 
-	client "github.com/fnproject/cli/client"
-	"github.com/fnproject/cli/objects/app"
-	"github.com/urfave/cli"
+	client "github.com/fnxproject/cli/client"
+	"github.com/fnxproject/cli/objects/app"
+	"github.com/urfave/cli/v2"
 )
 
 // Create function command
-func Create() cli.Command {
+func Create() *cli.Command {
 	f := fnsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "function",
-		ShortName:   "func",
-		Aliases:     []string{"f", "fn"},
+		Aliases:     []string{"f", "fn", "func"},
 		Category:    "MANAGEMENT COMMAND",
 		Usage:       "Create a function within an application",
 		Description: "This command creates a new function within an application.",
@@ -32,7 +31,7 @@ func Create() cli.Command {
 		Action:    f.create,
 		Flags:     FnFlags,
 		BashComplete: func(c *cli.Context) {
-			if len(c.Args()) == 0 {
+			if c.NArg() == 0 {
 				app.BashCompleteApps(c)
 			}
 		},
@@ -40,12 +39,11 @@ func Create() cli.Command {
 }
 
 // List functions command
-func List() cli.Command {
+func List() *cli.Command {
 	f := fnsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "functions",
-		ShortName:   "funcs",
-		Aliases:     []string{"f", "fn"},
+		Aliases:     []string{"f", "fn", "funcs"},
 		Usage:       "List functions for an application",
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This command returns a list of functions for a created application.",
@@ -61,23 +59,23 @@ func List() cli.Command {
 		ArgsUsage: "<app-name>",
 		Action:    f.list,
 		Flags: []cli.Flag{
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "cursor",
 				Usage: "pagination cursor",
 			},
-			cli.Int64Flag{
+			&cli.Int64Flag{
 				Name:  "n",
 				Usage: "number of functions to return",
 				Value: int64(100),
 			},
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "output",
 				Usage: "Output format (json)",
 				Value: "",
 			},
 		},
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				app.BashCompleteApps(c)
 			}
@@ -86,12 +84,11 @@ func List() cli.Command {
 }
 
 // Delete function command
-func Delete() cli.Command {
+func Delete() *cli.Command {
 	f := fnsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "function",
-		ShortName:   "func",
-		Aliases:     []string{"f", "fn"},
+		Aliases:     []string{"f", "fn", "func"},
 		Category:    "MANAGEMENT COMMAND",
 		Description: "This command deletes an existing function from an application.",
 		Usage:       "Delete a function from an application",
@@ -107,7 +104,7 @@ func Delete() cli.Command {
 		ArgsUsage: "<app-name> <function-name>",
 		Action:    f.delete,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				app.BashCompleteApps(c)
 			case 1:
@@ -115,11 +112,11 @@ func Delete() cli.Command {
 			}
 		},
 		Flags: []cli.Flag{
-			cli.BoolFlag{
+			&cli.BoolFlag{
 				Name:  "force, f",
 				Usage: "Forces this delete (you will not be asked if you wish to continue with the delete)",
 			},
-			cli.BoolFlag{
+			&cli.BoolFlag{
 				Name:  "recursive, r",
 				Usage: "Delete this function and all associated resources (can fail part way through execution after deleting some resources without the ability to undo)",
 			},
@@ -128,12 +125,11 @@ func Delete() cli.Command {
 }
 
 // Inspect function command
-func Inspect() cli.Command {
+func Inspect() *cli.Command {
 	f := fnsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "function",
-		ShortName:   "func",
-		Aliases:     []string{"f", "fn"},
+		Aliases:     []string{"f", "fn", "func"},
 		Category:    "MANAGEMENT COMMAND",
 		Usage:       "Retrieve one or all properties for a function",
 		Description: "This command inspects properties of a function.",
@@ -147,7 +143,7 @@ func Inspect() cli.Command {
 			return nil
 		},
 		Flags: []cli.Flag{
-			cli.BoolFlag{
+			&cli.BoolFlag{
 				Name:  "endpoint",
 				Usage: "Output the function invoke endpoint if set",
 			},
@@ -155,13 +151,13 @@ func Inspect() cli.Command {
 		ArgsUsage: "<app-name> <function-name> [property[.key]]",
 		Action:    f.inspect,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				app.BashCompleteApps(c)
 			case 1:
 				BashCompleteFns(c)
 			case 2:
-				fn, err := getFnByAppAndFnName(c.Args()[0], c.Args()[1])
+				fn, err := getFnByAppAndFnName(c.Args().Get(0), c.Args().Get(1))
 				if err != nil {
 					return
 				}
@@ -183,12 +179,11 @@ func Inspect() cli.Command {
 }
 
 // Update function command
-func Update() cli.Command {
+func Update() *cli.Command {
 	f := fnsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "function",
-		ShortName:   "func",
-		Aliases:     []string{"f", "fn"},
+		Aliases:     []string{"f", "fn", "func"},
 		Category:    "MANAGEMENT COMMAND",
 		Usage:       "Update a function in application",
 		Description: "This command updates a function in an application.",
@@ -205,7 +200,7 @@ func Update() cli.Command {
 		Action:    f.update,
 		Flags:     updateFnFlags,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				app.BashCompleteApps(c)
 			case 1:
@@ -216,12 +211,11 @@ func Update() cli.Command {
 }
 
 // GetConfig for function command
-func GetConfig() cli.Command {
+func GetConfig() *cli.Command {
 	f := fnsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "function",
-		ShortName:   "func",
-		Aliases:     []string{"f", "fn"},
+		Aliases:     []string{"f", "fn", "func"},
 		Category:    "MANAGEMENT COMMAND",
 		Usage:       "Inspect configuration key for this function",
 		Description: "This command gets the configuration of a specific function for an application.",
@@ -237,13 +231,13 @@ func GetConfig() cli.Command {
 		ArgsUsage: "<app-name> <function-name> <key>",
 		Action:    f.getConfig,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				app.BashCompleteApps(c)
 			case 1:
 				BashCompleteFns(c)
 			case 2:
-				fn, err := getFnByAppAndFnName(c.Args()[0], c.Args()[1])
+				fn, err := getFnByAppAndFnName(c.Args().Get(0), c.Args().Get(1))
 				if err != nil {
 					return
 				}
@@ -256,12 +250,11 @@ func GetConfig() cli.Command {
 }
 
 // SetConfig for function command
-func SetConfig() cli.Command {
+func SetConfig() *cli.Command {
 	f := fnsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "function",
-		ShortName:   "func",
-		Aliases:     []string{"f", "fn"},
+		Aliases:     []string{"f", "fn", "func"},
 		Category:    "MANAGEMENT COMMAND",
 		Usage:       "Store a configuration key for this function",
 		Description: "This command sets the configuration of a specific function for an application.",
@@ -277,7 +270,7 @@ func SetConfig() cli.Command {
 		ArgsUsage: "<app-name> <function-name> <key> <value>",
 		Action:    f.setConfig,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				app.BashCompleteApps(c)
 			case 1:
@@ -288,12 +281,11 @@ func SetConfig() cli.Command {
 }
 
 // ListConfig for function command
-func ListConfig() cli.Command {
+func ListConfig() *cli.Command {
 	f := fnsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "function",
-		ShortName:   "func",
-		Aliases:     []string{"f", "fn"},
+		Aliases:     []string{"f", "fn", "func"},
 		Category:    "MANAGEMENT COMMAND",
 		Usage:       "List configuration key/value pairs for this function",
 		Description: "This command returns a list of configurations for a specific function.",
@@ -309,7 +301,7 @@ func ListConfig() cli.Command {
 		ArgsUsage: "<app-name> <function-name>",
 		Action:    f.listConfig,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				app.BashCompleteApps(c)
 			case 1:
@@ -320,12 +312,11 @@ func ListConfig() cli.Command {
 }
 
 // UnsetConfig for function command
-func UnsetConfig() cli.Command {
+func UnsetConfig() *cli.Command {
 	f := fnsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "function",
-		ShortName:   "func",
-		Aliases:     []string{"f", "fn"},
+		Aliases:     []string{"f", "fn", "func"},
 		Category:    "MANAGEMENT COMMAND",
 		Usage:       "Remove a configuration key for this function",
 		Description: "This command removes a configuration of a specific function.",
@@ -341,13 +332,13 @@ func UnsetConfig() cli.Command {
 		ArgsUsage: "<app-name> <function-name> <key>",
 		Action:    f.unsetConfig,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				app.BashCompleteApps(c)
 			case 1:
 				BashCompleteFns(c)
 			case 2:
-				fn, err := getFnByAppAndFnName(c.Args()[0], c.Args()[1])
+				fn, err := getFnByAppAndFnName(c.Args().Get(0), c.Args().Get(1))
 				if err != nil {
 					return
 				}

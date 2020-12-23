@@ -7,7 +7,7 @@ import (
 	"github.com/coreos/go-semver/semver"
 	bumper "github.com/giantswarm/semver-bump/bump"
 	"github.com/giantswarm/semver-bump/storage"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 // VType represents the version type
@@ -21,15 +21,15 @@ const (
 )
 
 var (
-	// InitialVersion - inital fn version.
+	// InitialVersion - inital fnx image version.
 	InitialVersion = "0.0.1"
 )
 
 // BumpCommand command to build function version.
-func BumpCommand() cli.Command {
+func BumpCommand() *cli.Command {
 	cmd := bumpcmd{}
 	flags := append([]cli.Flag{}, cmd.flags()...)
-	return cli.Command{
+	return &cli.Command{
 		Name:        "bump",
 		Usage:       "\tBump function version",
 		Aliases:     []string{"bm"},
@@ -47,22 +47,22 @@ type bumpcmd struct {
 
 func (b *bumpcmd) flags() []cli.Flag {
 	return []cli.Flag{
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "major",
 			Usage:       "bumps major version",
 			Destination: &b.major,
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "minor",
 			Usage:       "bumps minor version",
 			Destination: &b.minor,
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "verbose, v",
 			Usage:       "verbose mode",
 			Destination: &CommandVerbose,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "working-dir,w",
 			Usage: "Specify the working directory to bump a function, must be the full path.",
 		},

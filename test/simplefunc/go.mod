@@ -1,4 +1,4 @@
-module github.com/fnproject/cli/test/simplefunc
+module github.com/fnxproject/cli/test/simplefunc
 
 go 1.12
 

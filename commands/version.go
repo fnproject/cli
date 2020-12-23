@@ -3,14 +3,14 @@ package commands
 import (
 	"fmt"
 
-	"github.com/fnproject/cli/client"
-	"github.com/fnproject/cli/config"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/client"
+	"github.com/fnxproject/cli/config"
+	"github.com/urfave/cli/v2"
 )
 
 // VersionCommand
-func VersionCommand() cli.Command {
-	return cli.Command{
+func VersionCommand() *cli.Command {
+	return &cli.Command{
 		Name:        "version",
 		Usage:       "Display Fn CLI and Fn Server versions",
 		Description: "This command shows the version of the Fn CLI being used and the version of the Fn Server referenced by the current context, if available.",

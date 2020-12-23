@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/fnproject/cli/testharness"
+	"github.com/fnxproject/cli/testharness"
 )
 
 var Runtimes = []struct {

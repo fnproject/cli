@@ -1,4 +1,4 @@
-module github.com/fnproject/cli
+module github.com/fnxproject/cli
 
 require (
 	github.com/coreos/go-semver v0.3.0
@@ -14,7 +14,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.2
 	github.com/spf13/viper v1.6.2
-	github.com/urfave/cli v1.20.0
+	github.com/urfave/cli/v2 v2.3.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v0.0.0-20180618132009-1d523034197f

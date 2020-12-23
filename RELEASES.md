@@ -1,5 +1,9 @@
-
 # Releases
+
+## v 0.7.0
+
+* Migrate fnproject/cli to fnxproject/cli.
+* Refactor CLI using urfave/cli:v2.
 
 ## v 0.4.156
 
@@ -7,4 +11,4 @@
 * The migrate command will upgrade your func.yaml to include a trigger section in place of `path` field.
 * `fn call` has been replaced with `fn invoke`.
 
-Please see [Setting Functions Free Blog Post](https://medium.com/fnproject/setting-functions-free-15d063be72bf) and [Fn Project Tutorials](http://fnproject.io/tutorials/) for more information.
+Please see [FnX Project Tutorials](http://fnxproject.io/tutorials/) for more information.

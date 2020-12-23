@@ -35,7 +35,7 @@ git push
 git push origin $tag
 
 # For GitHub
-url='https://api.github.com/repos/fnproject/cli/releases'
+url='https://api.github.com/repos/fnxproject/cli/releases'
 output=$(curl -s -u $GH_DEPLOY_USER:$GH_DEPLOY_KEY -d "{\"tag_name\": \"$version\", \"name\": \"$version\"}" $url)
 upload_url=$(echo "$output" | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["upload_url"]' | sed -E "s/\{.*//")
 html_url=$(echo "$output" | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["html_url"]')
@@ -50,7 +50,7 @@ curl --data-binary "@fn_alpine" -H "Content-Type: application/octet-stream" -u $
 # mv install.sh.tmp install.sh
 # TODO: then git commit and push?  Would be nice to do that along with the vrsion git push above
 
-docker build -t fnproject/fn:latest .
-docker tag fnproject/fn:latest fnproject/fn:$version
-docker push fnproject/fn:$version
-docker push fnproject/fn:latest
+docker build -t fnxproject/fn:latest .
+docker tag fnxproject/fn:latest fnxproject/fn:$version
+docker push fnxproject/fn:$version
+docker push fnxproject/fn:latest

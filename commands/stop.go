@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 // StopCommand returns stop server cli.command
-func StopCommand() cli.Command {
-	return cli.Command{
+func StopCommand() *cli.Command {
+	return &cli.Command{
 		Name:        "stop",
 		Usage:       "Stop a function server",
 		Category:    "SERVER COMMANDS",

@@ -10,15 +10,15 @@ import (
 	"context"
 	"strings"
 
-	"github.com/fnproject/cli/client"
-	"github.com/fnproject/cli/common"
+	"github.com/fnxproject/cli/client"
+	"github.com/fnxproject/cli/common"
 
 	fnclient "github.com/fnproject/fn_go/clientv2"
 	apiapps "github.com/fnproject/fn_go/clientv2/apps"
 	"github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/jmoiron/jsonq"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 type appsCmd struct {
@@ -100,11 +100,11 @@ func getApps(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.App, error) {
 // current context already contains an app name as an argument.
 // This should be checked before calling this)
 func BashCompleteApps(c *cli.Context) {
-	provider, err := client.CurrentProvider()
+	clientProvider, err := client.CurrentProvider()
 	if err != nil {
 		return
 	}
-	resp, err := getApps(c, provider.APIClientv2())
+	resp, err := getApps(c, clientProvider.APIClientv2())
 	if err != nil {
 		return
 	}

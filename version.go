@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fnproject/cli/client"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/client"
+	"github.com/urfave/cli/v2"
 )
 
-// Version of Fn CLI
+// Version of FnX Command-Line Interface.
 var Version = "0.4.143"
 
 // VersionCommand
@@ -56,7 +56,7 @@ func PrintLatestVersion() {
 }
 
 func getLatestVersion() string {
-	base := "https://github.com/fnproject/cli/releases"
+	base := "https://github.com/fnxproject/cli/releases"
 	url := ""
 	c := http.Client{}
 	c.Timeout = time.Second * 3

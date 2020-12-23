@@ -4,16 +4,16 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 )
 
 // PushCommand returns push cli.command
-func PushCommand() cli.Command {
+func PushCommand() *cli.Command {
 	cmd := pushcmd{}
 	var flags []cli.Flag
 	flags = append(flags, cmd.flags()...)
-	return cli.Command{
+	return &cli.Command{
 		Name:        "push",
 		Usage:       "\tPush function to docker registry",
 		Aliases:     []string{"p"},
@@ -30,12 +30,12 @@ type pushcmd struct {
 
 func (p *pushcmd) flags() []cli.Flag {
 	return []cli.Flag{
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "verbose, v",
 			Usage:       "Verbose mode",
 			Destination: &common.CommandVerbose,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "registry",
 			Usage:       "Set the Docker owner for images and optionally the registry. This will be prefixed to your function name for pushing to Docker registries.\n eg: `--registry username` will set your Docker Hub owner. `--registry registry.hub.docker.com/username` will set the registry and owner.",
 			Destination: &p.registry,

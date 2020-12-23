@@ -6,16 +6,15 @@ import (
 	"os"
 	"testing"
 
-	"github.com/fnproject/cli/commands"
-	"github.com/fnproject/cli/common"
-	"github.com/fnproject/cli/langs"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/commands"
+	"github.com/fnxproject/cli/common"
+	"github.com/fnxproject/cli/langs"
+	"github.com/urfave/cli/v2"
 	yaml "gopkg.in/yaml.v2"
 )
 
 func TestInit(t *testing.T) {
-
-	testname := "test-init"
+	testname := "test-init-"
 	testdir, err := ioutil.TempDir("", testname)
 	if err != nil {
 		t.Fatalf("ERROR: Failed to make tmp test directory: err: %v", err)

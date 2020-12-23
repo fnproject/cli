@@ -9,10 +9,10 @@ import (
 )
 
 // Version of Fn CLI
-var Version = "0.6.1"
+var Version = "0.7.0"
 
 func GetVersion(versionType string) string {
-	base := "https://github.com/fnproject/cli/releases"
+	base := "https://github.com/fnxproject/cli/releases"
 	url := ""
 	c := http.Client{}
 	c.Timeout = time.Second * 3

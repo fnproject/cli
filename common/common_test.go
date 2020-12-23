@@ -13,7 +13,7 @@ func TestValidateImageName(t *testing.T) {
 	}{
 		{name: "docker.io/sally/img:0.0.1", expectedErr: ""},
 		{name: "sally/img:0.0.1", expectedErr: ""},
-		{name: "img:0.0.1", expectedErr: "image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var, pass in --registry or configure your context file"},
+		{name: "img:0.0.1", expectedErr: "image name must have a dockerhub owner or private registry. Be sure to set FNX_REGISTRY env var, pass in --registry or configure your context file"},
 		{name: "owner/img", expectedErr: "image name must have a tag"},
 	}
 	for _, c := range testCases {

@@ -107,7 +107,7 @@ import (
 	"io"
 	"log"
 
-	fdk "github.com/fnproject/fdk-go"
+	fdk "github.com/fnxproject/fdk-go"
 )
 
 func main() {

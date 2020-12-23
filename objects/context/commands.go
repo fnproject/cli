@@ -3,12 +3,12 @@ package context
 import (
 	"fmt"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 // Create context command
-func Create() cli.Command {
-	return cli.Command{
+func Create() *cli.Command {
+	return &cli.Command{
 		Name:        "context",
 		Usage:       "Create a new context",
 		Aliases:     []string{"ctx"},
@@ -17,15 +17,15 @@ func Create() cli.Command {
 		Description: "This command creates a new context for a created application.",
 		Action:      createCtx,
 		Flags: []cli.Flag{
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "provider",
 				Usage: "Context provider",
 			},
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "api-url",
 				Usage: "Context api url",
 			},
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "registry",
 				Usage: "Context registry",
 			},
@@ -34,8 +34,8 @@ func Create() cli.Command {
 }
 
 // List contexts command
-func List() cli.Command {
-	return cli.Command{
+func List() *cli.Command {
+	return &cli.Command{
 		Name:        "contexts",
 		Usage:       "List contexts",
 		Aliases:     []string{"context", "ctx"},
@@ -43,7 +43,7 @@ func List() cli.Command {
 		Description: "This command returns a list of contexts.",
 		Action:      listCtx,
 		Flags: []cli.Flag{
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "output",
 				Usage: "Output format (json)",
 				Value: "",
@@ -53,8 +53,8 @@ func List() cli.Command {
 }
 
 // Delete context command
-func Delete() cli.Command {
-	return cli.Command{
+func Delete() *cli.Command {
+	return &cli.Command{
 		Name:        "context",
 		Usage:       "Delete a context",
 		Aliases:     []string{"ctx"},
@@ -63,7 +63,7 @@ func Delete() cli.Command {
 		Category:    "MANAGEMENT COMMAND",
 		Action:      deleteCtx,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				contexts, err := getAvailableContexts()
 				if err != nil {
@@ -80,15 +80,15 @@ func Delete() cli.Command {
 }
 
 // Inspect context command
-func Inspect() cli.Command {
-	return cli.Command{
+func Inspect() *cli.Command {
+	return &cli.Command{
 		Name:     "context",
 		Usage:    "Inspect the contents of a context, if no context is specified the current-context will be used.",
 		Aliases:  []string{"ctx"},
 		Category: "MANAGEMENT COMMAND",
 		Action:   inspectCtx,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				contexts, err := getAvailableContexts()
 				if err != nil {
@@ -103,9 +103,9 @@ func Inspect() cli.Command {
 }
 
 // Update context command
-func Update() cli.Command {
+func Update() *cli.Command {
 	ctxMap := ContextMap{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "context",
 		Usage:       "Update context files",
 		Aliases:     []string{"ctx"},
@@ -114,7 +114,7 @@ func Update() cli.Command {
 		Description: "This command updates the current context file.",
 		Action:      ctxMap.updateCtx,
 		Flags: []cli.Flag{
-			cli.BoolFlag{
+			&cli.BoolFlag{
 				Name:  "delete",
 				Usage: "Delete key=value pair from context file.",
 			},
@@ -123,8 +123,8 @@ func Update() cli.Command {
 }
 
 // Use context command
-func Use() cli.Command {
-	return cli.Command{
+func Use() *cli.Command {
+	return &cli.Command{
 		Name:        "context",
 		Usage:       "Use context for future invocations",
 		Aliases:     []string{"ctx"},
@@ -133,7 +133,7 @@ func Use() cli.Command {
 		Description: "This command uses context for future invocations.",
 		Action:      useCtx,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				contexts, err := getAvailableContexts()
 				if err != nil {
@@ -148,8 +148,8 @@ func Use() cli.Command {
 }
 
 // Unset context command
-func Unset() cli.Command {
-	return cli.Command{
+func Unset() *cli.Command {
+	return &cli.Command{
 		Name:        "context",
 		Usage:       "Unset current-context",
 		Aliases:     []string{"ctx"},

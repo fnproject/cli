@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/fnproject/cli/client"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/client"
+	"github.com/urfave/cli/v2"
 )
 
 // Create app command
-func Create() cli.Command {
+func Create() *cli.Command {
 	a := appsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:     "app",
 		Usage:    "Create a new application",
 		Category: "MANAGEMENT COMMAND",
@@ -28,15 +28,15 @@ func Create() cli.Command {
 		ArgsUsage: "<app-name>",
 		Action:    a.create,
 		Flags: []cli.Flag{
-			cli.StringSliceFlag{
+			&cli.StringSliceFlag{
 				Name:  "config",
 				Usage: "Application configuration",
 			},
-			cli.StringSliceFlag{
+			&cli.StringSliceFlag{
 				Name:  "annotation",
 				Usage: "Application annotations",
 			},
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "syslog-url",
 				Usage: "Syslog URL to send application logs to",
 			},
@@ -45,9 +45,9 @@ func Create() cli.Command {
 }
 
 // List apps command
-func List() cli.Command {
+func List() *cli.Command {
 	a := appsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "apps",
 		Usage:       "List all created applications",
 		Category:    "MANAGEMENT COMMAND",
@@ -63,16 +63,16 @@ func List() cli.Command {
 		},
 		Action: a.list,
 		Flags: []cli.Flag{
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "cursor",
 				Usage: "Pagination cursor",
 			},
-			cli.Int64Flag{
+			&cli.Int64Flag{
 				Name:  "n",
 				Usage: "Number of apps to return",
 				Value: int64(100),
 			},
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "output",
 				Usage: "Output format (json)",
 			},
@@ -81,9 +81,9 @@ func List() cli.Command {
 }
 
 // Delete app command
-func Delete() cli.Command {
+func Delete() *cli.Command {
 	a := appsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "app",
 		Usage:       "Delete an application",
 		Category:    "MANAGEMENT COMMAND",
@@ -100,17 +100,16 @@ func Delete() cli.Command {
 		},
 		Action: a.delete,
 		BashComplete: func(c *cli.Context) {
-			args := c.Args()
-			if len(args) == 0 {
+			if c.NArg() == 0 {
 				BashCompleteApps(c)
 			}
 		},
 		Flags: []cli.Flag{
-			cli.BoolFlag{
+			&cli.BoolFlag{
 				Name:  "force, f",
 				Usage: "Forces this delete (you will not be asked if you wish to continue with the delete)",
 			},
-			cli.BoolFlag{
+			&cli.BoolFlag{
 				Name:  "recursive, r",
 				Usage: "Delete this app and all associated resources (can fail part way through execution after deleting some resources without the ability to undo)",
 			},
@@ -119,9 +118,9 @@ func Delete() cli.Command {
 }
 
 // Inspect app command
-func Inspect() cli.Command {
+func Inspect() *cli.Command {
 	a := appsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "app",
 		Usage:       "Retrieve one or all apps properties",
 		Description: "This command inspects properties of an application.",
@@ -138,7 +137,7 @@ func Inspect() cli.Command {
 		ArgsUsage: "<app-name> [property.[key]]",
 		Action:    a.inspect,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				BashCompleteApps(c)
 			case 1:
@@ -146,7 +145,7 @@ func Inspect() cli.Command {
 				if err != nil {
 					return
 				}
-				app, err := GetAppByName(provider.APIClientv2(), c.Args()[0])
+				app, err := GetAppByName(provider.APIClientv2(), c.Args().Get(0))
 				if err != nil {
 					return
 				}
@@ -168,9 +167,9 @@ func Inspect() cli.Command {
 }
 
 // Update app command
-func Update() cli.Command {
+func Update() *cli.Command {
 	a := appsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "app",
 		Usage:       "Update an application",
 		Category:    "MANAGEMENT COMMAND",
@@ -187,22 +186,21 @@ func Update() cli.Command {
 		ArgsUsage: "<app-name>",
 		Action:    a.update,
 		Flags: []cli.Flag{
-			cli.StringSliceFlag{
+			&cli.StringSliceFlag{
 				Name:  "config,c",
 				Usage: "Application configuration",
 			},
-			cli.StringSliceFlag{
+			&cli.StringSliceFlag{
 				Name:  "annotation",
 				Usage: "Application annotations",
 			},
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "syslog-url",
 				Usage: "Syslog URL to send application logs to",
 			},
 		},
 		BashComplete: func(c *cli.Context) {
-			args := c.Args()
-			if len(args) == 0 {
+			if c.NArg() == 0 {
 				BashCompleteApps(c)
 			}
 		},
@@ -210,9 +208,9 @@ func Update() cli.Command {
 }
 
 // SetConfig for function command
-func SetConfig() cli.Command {
+func SetConfig() *cli.Command {
 	a := appsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "app",
 		Usage:       "Store a configuration key for this application",
 		Description: "This command sets configurations for an application.",
@@ -229,8 +227,7 @@ func SetConfig() cli.Command {
 		ArgsUsage: "<app-name> <key> <value>",
 		Action:    a.setConfig,
 		BashComplete: func(c *cli.Context) {
-			args := c.Args()
-			if len(args) == 0 {
+			if c.NArg() == 0 {
 				BashCompleteApps(c)
 			}
 		},
@@ -238,9 +235,9 @@ func SetConfig() cli.Command {
 }
 
 // ListConfig for app command
-func ListConfig() cli.Command {
+func ListConfig() *cli.Command {
 	a := appsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "app",
 		Usage:       "List configuration key/value pairs for this application",
 		Category:    "MANAGEMENT COMMAND",
@@ -257,8 +254,7 @@ func ListConfig() cli.Command {
 		ArgsUsage: "<app-name>",
 		Action:    a.listConfig,
 		BashComplete: func(c *cli.Context) {
-			args := c.Args()
-			if len(args) == 0 {
+			if c.NArg() == 0 {
 				BashCompleteApps(c)
 			}
 		},
@@ -266,9 +262,9 @@ func ListConfig() cli.Command {
 }
 
 // GetConfig for function command
-func GetConfig() cli.Command {
+func GetConfig() *cli.Command {
 	a := appsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "app",
 		Usage:       "Inspect configuration key for this application",
 		Description: "This command gets the configuration of an application.",
@@ -285,7 +281,7 @@ func GetConfig() cli.Command {
 		ArgsUsage: "<app-name> <key>",
 		Action:    a.getConfig,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				BashCompleteApps(c)
 			case 1:
@@ -293,7 +289,7 @@ func GetConfig() cli.Command {
 				if err != nil {
 					return
 				}
-				app, err := GetAppByName(provider.APIClientv2(), c.Args()[0])
+				app, err := GetAppByName(provider.APIClientv2(), c.Args().Get(0))
 				if err != nil {
 					return
 				}
@@ -306,9 +302,9 @@ func GetConfig() cli.Command {
 }
 
 // UnsetConfig for app command
-func UnsetConfig() cli.Command {
+func UnsetConfig() *cli.Command {
 	a := appsCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:        "app",
 		Usage:       "Remove a configuration key for this application.",
 		Description: "This command removes a configuration for an application.",
@@ -325,7 +321,7 @@ func UnsetConfig() cli.Command {
 		ArgsUsage: "<app-name> <key>",
 		Action:    a.unsetConfig,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				BashCompleteApps(c)
 			case 1:
@@ -333,7 +329,7 @@ func UnsetConfig() cli.Command {
 				if err != nil {
 					return
 				}
-				app, err := GetAppByName(provider.APIClientv2(), c.Args()[0])
+				app, err := GetAppByName(provider.APIClientv2(), c.Args().Get(0))
 				if err != nil {
 					return
 				}

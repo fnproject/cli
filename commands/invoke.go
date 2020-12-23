@@ -5,25 +5,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 
 	"errors"
 
-	"github.com/fnproject/cli/client"
-	"github.com/fnproject/cli/common"
-	"github.com/fnproject/cli/objects/app"
-	"github.com/fnproject/cli/objects/fn"
 	"github.com/fnproject/fn_go/clientv2"
 	"github.com/fnproject/fn_go/provider"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/client"
+	"github.com/fnxproject/cli/common"
+	"github.com/fnxproject/cli/objects/app"
+	"github.com/fnxproject/cli/objects/fn"
+	"github.com/urfave/cli/v2"
 )
 
 // FnInvokeEndpointAnnotation is the annotation that exposes the fn invoke endpoint as defined in models/fn.go
 const (
-	FnInvokeEndpointAnnotation = "fnproject.io/fn/invokeEndpoint"
-	CallIDHeader               = "Fn-Call-Id"
+	FnInvokeEndpointAnnotation = "fnxproject.io/fnx/invokeEndpoint"
+	CallIDHeader               = "FnX-Call-Id"
 )
 
 type invokeCmd struct {
@@ -33,28 +34,28 @@ type invokeCmd struct {
 
 // InvokeFnFlags used to invoke and fn
 var InvokeFnFlags = []cli.Flag{
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  "endpoint",
 		Usage: "Specify the function invoke endpoint for this function, the app-name and func-name parameters will be ignored",
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  "content-type",
 		Usage: "The payload Content-Type for the function invocation.",
 	},
-	cli.BoolFlag{
+	&cli.BoolFlag{
 		Name:  "display-call-id",
 		Usage: "whether display call ID or not",
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  "output",
 		Usage: "Output format (json)",
 	},
 }
 
 // InvokeCommand returns call cli.command
-func InvokeCommand() cli.Command {
+func InvokeCommand() *cli.Command {
 	cl := invokeCmd{}
-	return cli.Command{
+	return &cli.Command{
 		Name:    "invoke",
 		Usage:   "\tInvoke a remote function",
 		Aliases: []string{"iv"},
@@ -73,7 +74,7 @@ func InvokeCommand() cli.Command {
 		Description: `This command invokes a function. Users may send input to their function by passing input to this command via STDIN.`,
 		Action:      cl.Invoke,
 		BashComplete: func(c *cli.Context) {
-			switch len(c.Args()) {
+			switch c.NArg() {
 			case 0:
 				app.BashCompleteApps(c)
 			case 1:
@@ -148,16 +149,14 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 }
 
 func outputJSON(output io.Writer, resp *http.Response) {
-	var b bytes.Buffer
-	// TODO this is lame
-	io.Copy(&b, resp.Body)
+	respBytes, _ := ioutil.ReadAll(resp.Body)
 
 	i := struct {
 		Body       string      `json:"body"`
 		Headers    http.Header `json:"headers"`
 		StatusCode int         `json:"status_code"`
 	}{
-		Body:       b.String(),
+		Body:       string(respBytes),
 		Headers:    resp.Header,
 		StatusCode: resp.StatusCode,
 	}

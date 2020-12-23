@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fnproject/cli/common"
+	"github.com/fnxproject/cli/common"
 	"github.com/ghodss/yaml"
 	"github.com/jmoiron/jsonq"
 )
@@ -32,7 +32,7 @@ type triggerRef struct {
 	appName, funcName, triggerName string
 }
 
-//CLIHarness encapsulates a single CLI session
+// CLIHarness encapsulates a single CLI session
 type CLIHarness struct {
 	t            *testing.T
 	cliPath      string
@@ -48,7 +48,7 @@ type CLIHarness struct {
 	history []string
 }
 
-//CmdResult wraps the result of a single command - this includes the diagnostic history of commands that led to this command in a given context for easier test diagnosis
+// CmdResult wraps the result of a single command - this includes the diagnostic history of commands that led to this command in a given context for easier test diagnosis
 type CmdResult struct {
 	t               *testing.T
 	OriginalCommand string
@@ -84,7 +84,7 @@ EXITSTATE: %s
 		cr.ExitState)
 }
 
-//AssertSuccess checks the command was success
+// AssertSuccess checks the command was success
 func (cr *CmdResult) AssertSuccess() *CmdResult {
 	if !cr.Success {
 		cr.t.Fatalf("Command failed but should have succeeded: \n%s", cr.String())
@@ -200,14 +200,14 @@ func (h *CLIHarness) Cleanup() {
 
 }
 
-//NewAppName creates a new, valid app name and registers it for deletion
+// NewAppName creates a new, valid app name and registers it for deletion
 func (h *CLIHarness) NewAppName() string {
 	appName := randString(8)
 	h.appNames = append(h.appNames, appName)
 	return appName
 }
 
-//WithEnv sets additional enironment variables in the test , these overlay the ambient environment
+// WithEnv sets additional enironment variables in the test , these overlay the ambient environment
 func (h *CLIHarness) WithEnv(key string, value string) {
 	h.env[key] = value
 }
@@ -386,28 +386,28 @@ func (h *CLIHarness) Fn(args ...string) *CmdResult {
 	return h.FnWithInput("", args...)
 }
 
-//NewFuncName creates a valid function name and registers it for deletion
+// NewFuncName creates a valid function name and registers it for deletion
 func (h *CLIHarness) NewFuncName(appName string) string {
 	funcName := randString(8)
 	h.funcRefs = append(h.funcRefs, funcRef{appName, funcName})
 	return funcName
 }
 
-//NewTriggerName creates a valid trigger name and registers it for deletion
+// NewTriggerName creates a valid trigger name and registers it for deletion
 func (h *CLIHarness) NewTriggerName(appName, funcName string) string {
 	triggerName := randString(8)
 	h.triggerRefs = append(h.triggerRefs, triggerRef{appName, funcName, triggerName})
 	return triggerName
 }
 
-//NewContextName creates a valid Context name and registers it for deletion
+// NewContextName creates a valid Context name and registers it for deletion
 func (h *CLIHarness) NewContextName() string {
 	name := randString(8)
 	h.contextNames = append(h.contextNames, name)
 	return name
 }
 
-//NewRandString creates a random string of length n that is safe for naming objects
+// NewRandString creates a random string of length n that is safe for naming objects
 func (h *CLIHarness) NewRandString(an int) string {
 	return randString(8)
 }
@@ -469,7 +469,7 @@ func (h *CLIHarness) Exec(name string, args ...string) error {
 	return err
 }
 
-//FileAppend appends val to  an existing file
+// FileAppend appends val to  an existing file
 func (h *CLIHarness) FileAppend(file string, val string) {
 	filePath := h.relativeToCwd(file)
 	fileV, err := ioutil.ReadFile(filePath)

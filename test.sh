@@ -18,7 +18,7 @@ export fn="${CUR_DIR}/fn"
 
 
 #on CI these can take a while
-go test -v $(go list ./... |  grep -v "^github.com/fnproject/cli/test$")
+go test -v $(go list ./... |  grep -v "^github.com/fnxproject/cli/test$")
 
 
 # start fn
@@ -47,4 +47,4 @@ test ${TRIES} -gt 0
 docker inspect -f {{.State.Running}} $CONTAINER_ID | grep '^true$'
 
 # run the CLI ign tests
-go test -timeout 20m  -v  github.com/fnproject/cli/test
+go test -timeout 20m  -v  github.com/fnxproject/cli/test

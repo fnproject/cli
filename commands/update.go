@@ -1,13 +1,13 @@
 package commands
 
 import (
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 )
 
 // UpdateCommand returns update cli.command
-func UpdateCommand() cli.Command {
-	return cli.Command{
+func UpdateCommand() *cli.Command {
+	return &cli.Command{
 		Name:         "update",
 		Aliases:      []string{"up"},
 		Usage:        "\tUpdate a created object",

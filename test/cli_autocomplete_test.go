@@ -6,8 +6,8 @@ import (
 
 	"strings"
 
-	"github.com/fnproject/cli/commands"
-	"github.com/fnproject/cli/testharness"
+	"github.com/fnxproject/cli/commands"
+	"github.com/fnxproject/cli/testharness"
 )
 
 func TestTopLevelAutoComplete(t *testing.T) {

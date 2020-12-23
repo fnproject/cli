@@ -1,11 +1,11 @@
 package server
 
 import (
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
-func Update() cli.Command {
-	return cli.Command{
+func Update() *cli.Command {
+	return &cli.Command{
 		Name:        "server",
 		Usage:       "Pulls latest functions server",
 		Category:    "MANAGEMENT COMMAND",

@@ -1,13 +1,13 @@
 package commands
 
 import (
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 )
 
 // GetCommand returns get cli.command
-func GetCommand() cli.Command {
-	return cli.Command{
+func GetCommand() *cli.Command {
+	return &cli.Command{
 		Name:         "get",
 		Aliases:      []string{"g"},
 		Usage:        "\tGet an object to retrieve its information",

@@ -8,22 +8,22 @@ import (
 	"strings"
 	"time"
 
-	client "github.com/fnproject/cli/client"
-	common "github.com/fnproject/cli/common"
-	apps "github.com/fnproject/cli/objects/app"
-	function "github.com/fnproject/cli/objects/fn"
-	trigger "github.com/fnproject/cli/objects/trigger"
 	v2Client "github.com/fnproject/fn_go/clientv2"
 	models "github.com/fnproject/fn_go/modelsv2"
-	"github.com/urfave/cli"
+	client "github.com/fnxproject/cli/client"
+	common "github.com/fnxproject/cli/common"
+	apps "github.com/fnxproject/cli/objects/app"
+	function "github.com/fnxproject/cli/objects/fn"
+	trigger "github.com/fnxproject/cli/objects/trigger"
+	"github.com/urfave/cli/v2"
 )
 
 // DeployCommand returns deploy cli.command
-func DeployCommand() cli.Command {
+func DeployCommand() *cli.Command {
 	cmd := deploycmd{}
 	var flags []cli.Flag
 	flags = append(flags, cmd.flags()...)
-	return cli.Command{
+	return &cli.Command{
 		Name:    "deploy",
 		Usage:   "\tDeploys a function to the functions server (bumps, build, pushes and updates functions and/or triggers).",
 		Aliases: []string{"dp"},
@@ -58,51 +58,51 @@ type deploycmd struct {
 
 func (p *deploycmd) flags() []cli.Flag {
 	return []cli.Flag{
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "app",
 			Usage:       "App name to deploy to",
 			Destination: &p.appName,
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "create-app",
 			Usage:       "Enable automatic creation of app if it doesn't exist during deploy",
 			Destination: &p.createApp,
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "verbose, v",
 			Usage:       "Verbose mode",
 			Destination: &common.CommandVerbose,
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "no-cache",
 			Usage:       "Don't use Docker cache for the build",
 			Destination: &p.noCache,
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "local, skip-push", // todo: deprecate skip-push
 			Usage:       "Do not push Docker built images onto Docker Hub - useful for local development.",
 			Destination: &p.local,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "registry",
 			Usage:       "Set the Docker owner for images and optionally the registry. This will be prefixed to your function name for pushing to Docker registries.\r  eg: `--registry username` will set your Docker Hub owner. `--registry registry.hub.docker.com/username` will set the registry and owner. ",
 			Destination: &p.registry,
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "all",
 			Usage:       "If in root directory containing `app.yaml`, this will deploy all functions",
 			Destination: &p.all,
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "no-bump",
 			Usage:       "Do not bump the version, assuming external version management",
 			Destination: &p.noBump,
 		},
-		cli.StringSliceFlag{
+		&cli.StringSliceFlag{
 			Name:  "build-arg",
 			Usage: "Set build time variables",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "working-dir,w",
 			Usage: "Specify the working directory to deploy a function, must be the full path.",
 		},

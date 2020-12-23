@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fnproject/cli/testharness"
+	"github.com/fnxproject/cli/testharness"
 )
 
 func TestFnVersion(t *testing.T) {
@@ -30,10 +30,10 @@ func withMinimalFunction(h *testharness.CLIHarness) {
 	})
 }
 
-// this is messy and nasty  as we generate different potential values for FN_API_URL based on its type
+// this is messy and nasty  as we generate different potential values for FNX_API_URL based on its type
 func fnApiUrlVariations(t *testing.T) []string {
 
-	srcUrl := os.Getenv("FN_API_URL")
+	srcUrl := os.Getenv("FNX_API_URL")
 
 	if srcUrl == "" {
 		srcUrl = "http://localhost:8080/"
@@ -71,7 +71,7 @@ func TestFnApiUrlSupportsDifferentFormats(t *testing.T) {
 	defer h.Cleanup()
 
 	for _, candidateUrl := range fnApiUrlVariations(t) {
-		h.WithEnv("FN_API_URL", candidateUrl)
+		h.WithEnv("FNX_API_URL", candidateUrl)
 		h.Fn("list", "apps").AssertSuccess()
 	}
 }
@@ -82,7 +82,7 @@ func TestSettingTimeoutWorks(t *testing.T) {
 
 	h := testharness.Create(t)
 	defer h.Cleanup()
-	h.WithEnv("FN_REGISTRY", "some_random_registry")
+	h.WithEnv("FNX_REGISTRY", "some_random_registry")
 
 	appName := h.NewAppName()
 	h.Fn("create", "app", appName).AssertSuccess()
@@ -112,13 +112,13 @@ func TestSettingTimeoutWorks(t *testing.T) {
 	h.Fn("invoke", appName, "another").AssertSuccess()
 }
 
-//Memory doesn't seem to get persisted/returned
+// Memory doesn't seem to get persisted/returned
 func TestSettingMemoryWorks(t *testing.T) {
 	t.Parallel()
 
 	h := testharness.Create(t)
 	defer h.Cleanup()
-	h.WithEnv("FN_REGISTRY", "some_random_registry")
+	h.WithEnv("FNX_REGISTRY", "some_random_registry")
 
 	appName := h.NewAppName()
 	h.Fn("create", "app", appName).AssertSuccess()

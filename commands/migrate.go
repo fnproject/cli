@@ -7,11 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/fnproject/cli/common"
-	"github.com/fnproject/cli/config"
+	"github.com/fnxproject/cli/common"
+	"github.com/fnxproject/cli/config"
 	yamltojson "github.com/ghodss/yaml"
 	"github.com/mitchellh/mapstructure"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -24,10 +24,10 @@ type migrateFnCmd struct {
 	newFF *common.FuncFileV20180708
 }
 
-func MigrateCommand() cli.Command {
+func MigrateCommand() *cli.Command {
 	m := &migrateFnCmd{newFF: &common.FuncFileV20180708{}}
 
-	return cli.Command{
+	return &cli.Command{
 		Name:        "migrate",
 		Usage:       "\tMigrate a local func.yaml file to the latest version",
 		Category:    "DEVELOPMENT COMMANDS",

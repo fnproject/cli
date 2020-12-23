@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/fnproject/cli/config"
+	"github.com/fnxproject/cli/config"
 	"github.com/spf13/viper"
 
 	"gopkg.in/yaml.v2"

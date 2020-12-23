@@ -27,11 +27,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/fnproject/cli/common"
-	"github.com/fnproject/cli/langs"
-	function "github.com/fnproject/cli/objects/fn"
 	modelsV2 "github.com/fnproject/fn_go/modelsv2"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/fnxproject/cli/langs"
+	function "github.com/fnxproject/cli/objects/fn"
+	"github.com/urfave/cli/v2"
 )
 
 type initFnCmd struct {
@@ -43,63 +43,63 @@ type initFnCmd struct {
 
 func initFlags(a *initFnCmd) []cli.Flag {
 	fgs := []cli.Flag{
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "name",
 			Usage: "Name of the function. Defaults to directory name in lowercase.",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "force",
 			Usage:       "Overwrite existing func.yaml",
 			Destination: &a.force,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "runtime",
 			Usage: "Choose an existing runtime - " + langsList(),
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "init-image",
 			Usage: "A Docker image which will create a function template",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "entrypoint",
 			Usage: "Entrypoint is the command to run to start this function - equivalent to Dockerfile ENTRYPOINT.",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "cmd",
 			Usage: "Command to run to start this function - equivalent to Dockerfile CMD.",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "version",
 			Usage: "Set initial function version",
 			Value: common.InitialVersion,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "working-dir,w",
 			Usage:       "Specify the working directory to initialise a function, must be the full path.",
 			Destination: &a.wd,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "trigger",
 			Usage:       "Specify the trigger type - permitted values are 'http'.",
 			Destination: &a.triggerType,
 		},
-		cli.Uint64Flag{
+		&cli.Uint64Flag{
 			Name:  "memory,m",
 			Usage: "Memory in MiB",
 		},
-		cli.StringSliceFlag{
+		&cli.StringSliceFlag{
 			Name:  "config,c",
 			Usage: "Function configuration",
 		},
-		cli.IntFlag{
+		&cli.IntFlag{
 			Name:  "timeout",
 			Usage: "Function timeout (eg. 30)",
 		},
-		cli.IntFlag{
+		&cli.IntFlag{
 			Name:  "idle-timeout",
 			Usage: "Function idle timeout (eg. 30)",
 		},
-		cli.StringSliceFlag{
+		&cli.StringSliceFlag{
 			Name:  "annotation",
 			Usage: "Function annotation (can be specified multiple times)",
 		},
@@ -126,10 +126,10 @@ func langsList() string {
 }
 
 // InitCommand returns init cli.command
-func InitCommand() cli.Command {
+func InitCommand() *cli.Command {
 	a := &initFnCmd{ff: &common.FuncFileV20180708{}}
 
-	return cli.Command{
+	return &cli.Command{
 		Name:        "init",
 		Usage:       "\tCreate a local func.yaml file",
 		Category:    "DEVELOPMENT COMMANDS",
@@ -225,7 +225,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		return err
 	}
 
-	defer os.Chdir(dir) // todo: wrap this so we can log the error if changing back fails
+	defer os.Chdir(dir) // TODO: wrap this so we can log the error if changing back fails
 
 	if !a.force {
 		_, ff, err := common.LoadFuncfile(dir)
@@ -334,7 +334,7 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 		return err
 	}
 
-	//if Dockerfile present, use 'docker' as 'runtime'
+	// if Dockerfile present, use 'docker' as 'runtime'
 	if common.Exists("Dockerfile") {
 		fmt.Println("Dockerfile found. Using runtime 'docker'.")
 		a.ff.Runtime = common.FuncfileDockerRuntime

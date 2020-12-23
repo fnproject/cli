@@ -13,15 +13,15 @@ import (
 
 	"github.com/jmoiron/jsonq"
 
-	"github.com/fnproject/cli/client"
-	"github.com/fnproject/cli/common"
-	"github.com/fnproject/cli/objects/app"
-	"github.com/fnproject/cli/objects/fn"
 	fnclient "github.com/fnproject/fn_go/clientv2"
 	apiTriggers "github.com/fnproject/fn_go/clientv2/triggers"
 	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/client"
+	"github.com/fnxproject/cli/common"
+	"github.com/fnxproject/cli/objects/app"
+	"github.com/fnxproject/cli/objects/fn"
+	"github.com/urfave/cli/v2"
 )
 
 type triggersCmd struct {
@@ -31,15 +31,15 @@ type triggersCmd struct {
 
 // TriggerFlags used to create/update triggers
 var TriggerFlags = []cli.Flag{
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  "source,s",
 		Usage: "trigger source",
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  "type, t",
 		Usage: "Todo",
 	},
-	cli.StringSliceFlag{
+	&cli.StringSliceFlag{
 		Name:  "annotation",
 		Usage: "fn annotation (can be specified multiple times)",
 	},

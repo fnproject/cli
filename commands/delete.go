@@ -1,13 +1,13 @@
 package commands
 
 import (
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 )
 
 // DeleteCommand returns delete cli.command
-func DeleteCommand() cli.Command {
-	return cli.Command{
+func DeleteCommand() *cli.Command {
+	return &cli.Command{
 		Name:         "delete",
 		Aliases:      []string{"d"},
 		Usage:        "\tDelete an object",

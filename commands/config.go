@@ -3,13 +3,13 @@ package commands
 import (
 	"strings"
 
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 )
 
 // ConfigCommand returns config cli.command dependant on command parameter
-func ConfigCommand(command string) cli.Command {
-	var cmds []cli.Command
+func ConfigCommand(command string) *cli.Command {
+	var cmds []*cli.Command
 	switch command {
 	case "list":
 		cmds = GetCommands(ConfigListCmds)
@@ -23,9 +23,8 @@ func ConfigCommand(command string) cli.Command {
 
 	usage := strings.Title(command) + " configurations for apps and functions"
 
-	return cli.Command{
+	return &cli.Command{
 		Name:         "config",
-		ShortName:    "config",
 		Usage:        usage,
 		Aliases:      []string{"cf"},
 		ArgsUsage:    "<subcommand>",

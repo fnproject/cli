@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/urfave/cli/v2"
 	"io"
 	"io/ioutil"
 	"log"
@@ -21,20 +22,19 @@ import (
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/fatih/color"
-	"github.com/fnproject/cli/config"
-	"github.com/fnproject/cli/langs"
 	fnclient "github.com/fnproject/fn_go/clientv2"
 	apifns "github.com/fnproject/fn_go/clientv2/fns"
 	apitriggers "github.com/fnproject/fn_go/clientv2/triggers"
 	"github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnxproject/cli/config"
+	"github.com/fnxproject/cli/langs"
 	"github.com/spf13/viper"
-	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 )
 
 // Global docker variables.
 const (
-	FunctionsDockerImage     = "fnproject/fnserver"
+	FunctionsDockerImage     = "fnxproject/fnxserver"
 	FuncfileDockerRuntime    = "docker"
 	MinRequiredDockerVersion = "17.5.0"
 )
@@ -139,9 +139,9 @@ func PrintContextualInfo() {
 	var registry, currentContext string
 	registry = viper.GetString(config.EnvFnRegistry)
 	if registry == "" {
-		registry = "FN_REGISTRY is not set."
+		registry = "FNX_REGISTRY is not set."
 	}
-	fmt.Println("FN_REGISTRY: ", registry)
+	fmt.Println("FNX_REGISTRY: ", registry)
 
 	currentContext = viper.GetString(config.CurrentContext)
 	if currentContext == "" {
@@ -532,7 +532,7 @@ func ValidateFullImageName(n string) error {
 	parts := strings.Split(n, "/")
 	fmt.Println("Parts: ", parts)
 	if len(parts) < 2 {
-		return errors.New("image name must have a dockerhub owner or private registry. Be sure to set FN_REGISTRY env var, pass in --registry or configure your context file")
+		return errors.New("image name must have a dockerhub owner or private registry. Be sure to set FNX_REGISTRY env var, pass in --registry or configure your context file")
 
 	}
 	return ValidateTagImageName(n)
@@ -660,7 +660,7 @@ func ListFnsAndTriggersInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.
 	return fns, trs, nil
 }
 
-//DeleteFunctions deletes all the functions provided to it. if provided nil it is a no-op
+// DeleteFunctions deletes all the functions provided to it. if provided nil it is a no-op
 func DeleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) error {
 	if fns == nil {
 		return nil
@@ -677,7 +677,7 @@ func DeleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) er
 	return nil
 }
 
-//DeleteTriggers deletes all the triggers provided to it. if provided nil it is a no-op
+// DeleteTriggers deletes all the triggers provided to it. if provided nil it is a no-op
 func DeleteTriggers(c *cli.Context, client *fnclient.Fn, triggers []*modelsv2.Trigger) error {
 	if triggers == nil {
 		return nil
@@ -694,7 +694,7 @@ func DeleteTriggers(c *cli.Context, client *fnclient.Fn, triggers []*modelsv2.Tr
 	return nil
 }
 
-//ListFnsInApp gets all the functions associated with an app
+// ListFnsInApp gets all the functions associated with an app
 func ListFnsInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*modelsv2.Fn, error) {
 	params := &apifns.ListFnsParams{
 		Context: context.Background(),
@@ -722,7 +722,7 @@ func ListFnsInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*mo
 	return resFns, nil
 }
 
-//ListTriggersInFunc gets all the triggers associated with a function
+// ListTriggersInFunc gets all the triggers associated with a function
 func ListTriggersInFunc(c *cli.Context, client *fnclient.Fn, fn *modelsv2.Fn) ([]*modelsv2.Trigger, error) {
 	params := &apitriggers.ListTriggersParams{
 		Context: context.Background(),

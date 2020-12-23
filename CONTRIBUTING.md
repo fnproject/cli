@@ -8,9 +8,7 @@ We welcome all contributions
 1. Fork the repo
 2. Fix an issue or create an issue and fix it
 3. Create a Pull Request that fixes the issue
-4. Sign the [CLA](http://www.oracle.com/technetwork/community/oca-486395.html)
-5. Once processed, our CLA bot will automatically clear the CLA check on the PR
-6. Good Job! Thanks for being awesome!
+4. Good Job! Thanks for being awesome!
 
 ## Advice for Forkers ##
 
@@ -42,20 +40,19 @@ asking for suggestions on how to address the documentation part.
 
 ### Getting the Repository ###
 
-`$ git clone https://github.com/fnproject/cli.git $GOPATH/src/github.com/fnproject/cli`
+`$ git clone https://github.com/fnxproject/cli.git $GOPATH/src/github.com/fnxproject/cli`
 
-Note that Go will require the exact path given above in order to build (beware
-forkers).
+Note that Go will require the exact path given above in order to build (beware forkers).
 
 ### Building ###
 
-1.  Change to the correct directory (if not already there):
+1. Change to the correct directory (if not already there):
 
-	`$ cd $GOPATH/src/github.com/fnproject/cli`
+   `$ cd $GOPATH/src/github.com/fnxproject/cli`
 
-2.  Download required Go package dependencies:
+2. Download required Go package dependencies:
 
-	`$ make dep`
+   `$ make dep`
 
 3.  Build and install:
 

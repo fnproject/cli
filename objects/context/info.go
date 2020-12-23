@@ -1,7 +1,7 @@
 package context
 
 import (
-	"github.com/fnproject/cli/config"
+	"github.com/fnxproject/cli/config"
 )
 
 // Info holds the information found in the context YAML file

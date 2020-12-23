@@ -47,7 +47,7 @@ else
     exit 1
 fi
 
-url='https://github.com/fnproject/cli/releases/download'
+url='https://github.com/fnxproject/cli/releases/download'
 
 # perform some very rudimentary platform detection
 case "$(uname)" in

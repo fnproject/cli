@@ -10,16 +10,16 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	client "github.com/fnproject/cli/client"
-	"github.com/fnproject/cli/common"
-	"github.com/fnproject/cli/objects/app"
 	fnclient "github.com/fnproject/fn_go/clientv2"
 	apifns "github.com/fnproject/fn_go/clientv2/fns"
 	"github.com/fnproject/fn_go/modelsv2"
 	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider"
+	client "github.com/fnxproject/cli/client"
+	"github.com/fnxproject/cli/common"
+	"github.com/fnxproject/cli/objects/app"
 	"github.com/jmoiron/jsonq"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 type fnsCmd struct {
@@ -29,27 +29,27 @@ type fnsCmd struct {
 
 // FnFlags used to create/update functions
 var FnFlags = []cli.Flag{
-	cli.Uint64Flag{
+	&cli.Uint64Flag{
 		Name:  "memory,m",
 		Usage: "Memory in MiB",
 	},
-	cli.StringSliceFlag{
+	&cli.StringSliceFlag{
 		Name:  "config,c",
 		Usage: "Function configuration",
 	},
-	cli.IntFlag{
+	&cli.IntFlag{
 		Name:  "timeout",
 		Usage: "Function timeout (eg. 30)",
 	},
-	cli.IntFlag{
+	&cli.IntFlag{
 		Name:  "idle-timeout",
 		Usage: "Function idle timeout (eg. 30)",
 	},
-	cli.StringSliceFlag{
+	&cli.StringSliceFlag{
 		Name:  "annotation",
 		Usage: "Function annotation (can be specified multiple times)",
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  "image",
 		Usage: "Function image",
 	},

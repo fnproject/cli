@@ -1,13 +1,13 @@
 package commands
 
 import (
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 )
 
 // ConfigureCommand returns configure cli.command
-func ConfigureCommand() cli.Command {
-	return cli.Command{
+func ConfigureCommand() *cli.Command {
+	return &cli.Command{
 		Name:         "config",
 		Aliases:      []string{"cf"},
 		Usage:        "\tSet configuration for an object",

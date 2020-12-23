@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/urfave/cli/v2"
 	"io"
 	"os"
 	"sort"
@@ -10,20 +11,26 @@ import (
 	"text/tabwriter"
 	"text/template"
 
-	"github.com/fnproject/cli/commands"
-	"github.com/fnproject/cli/common"
-	"github.com/fnproject/cli/common/color"
-	"github.com/fnproject/cli/config"
+	"github.com/fnxproject/cli/commands"
+	"github.com/fnxproject/cli/common"
+	"github.com/fnxproject/cli/common/color"
+	"github.com/fnxproject/cli/config"
 	"github.com/spf13/viper"
-	"github.com/urfave/cli"
 )
 
 func newFn() *cli.App {
 	app := cli.NewApp()
 	app.Name = "fn"
 	app.Version = config.Version
-	app.Authors = []cli.Author{{Name: "Fn Project"}}
-	app.Description = "Fn Command Line Tool"
+	app.Authors = []*cli.Author{
+		{
+			Name: "Fn Project",
+		},
+		{
+			Name: "FnX Project",
+		},
+	}
+	app.Description = "Fn Command-Line Interface"
 	app.EnableBashCompletion = true
 	app.BashComplete = common.DefaultBashComplete
 	app.Before = func(c *cli.Context) error {
@@ -35,29 +42,26 @@ func newFn() *cli.App {
 		return nil
 	}
 	app.Flags = []cli.Flag{
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "verbose,v", // v is taken for version by default with urfave/cli
 			Usage:       "Use --verbose to enable verbose mode for debugging",
 			Destination: &common.GlobalVerbose,
 		},
-		cli.StringFlag{
-			Name:   "context",
-			Usage:  "Use --context to select context configuration file",
-			EnvVar: "FN_CONTEXT",
+		&cli.StringFlag{
+			Name:    "context",
+			Usage:   "Use --context to select context configuration file",
+			EnvVars: []string{"FN_CONTEXT"},
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "registry",
 			Usage: "Use --registry to select registry",
 		},
 	}
-	cli.VersionFlag = cli.BoolFlag{
+	cli.VersionFlag = &cli.BoolFlag{
 		Name:  "version",
 		Usage: "Display version",
 	}
 
-	// Override app template
-	// AppHelpTemplate is the text template for the Default help topic.
-	// cli.go uses text/template to render templates. You can render custom help text by setting this variable.
 	cli.AppHelpTemplate = `
 {{if not .ArgsUsage}}{{boldred .Description}}	{{boldred "-"}}	{{boldred "Version "}}{{boldred .Version}}
 	
@@ -83,11 +87,8 @@ func newFn() *cli.App {
 		
 {{bold "FURTHER HELP:"}}	{{italic "See "}}{{"'"}}{{brightcyan .HelpName}}{{brightcyan " <command> --help"}}{{"'"}}{{italic " for more information about a command."}}{{if not .ArgsUsage}}
 	
-{{bold "LEARN MORE:"}}	{{underlinebrightred "https://github.com/fnproject/fn"}}{{else}}{{end}}
+{{bold "LEARN MORE:"}}	{{underlinebrightred "https://github.com/fnxproject/fn"}}{{else}}{{end}}
 	`
-	// Override subcommand template
-	// SubcommandHelpTemplate is the text template for the subcommand help topic.
-	// cli.go uses text/template to render templates. You can render custom help text by setting this variable.
 	cli.SubcommandHelpTemplate = `
 {{range .VisibleCategories}}{{if .Name}}{{bold .Name}}{{end}}{{end}}
 	{{boldcyan .Name}}{{if .Usage}}{{" - "}}{{italic .Usage}}
@@ -106,9 +107,6 @@ func newFn() *cli.App {
 
 {{bold "FURTHER HELP:"}}	{{italic "See "}}{{"'"}}{{brightcyan .HelpName}}{{brightcyan " <subcommand> --help"}}{{"'"}}{{italic " for more information about a command."}}{{end}}
 `
-	//Override command template
-	// CommandHelpTemplate is the text template for the command help topic.
-	// cli.go uses text/template to render templates. You can render custom help text by setting this variable.
 	cli.CommandHelpTemplate = `
 {{if .Category}}{{bold .Category}}{{end}}
 	{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}
@@ -130,7 +128,7 @@ func newFn() *cli.App {
 `
 	app.CommandNotFound = func(c *cli.Context, cmd string) {
 		fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+"'"+color.Red("%v")+"' is not a Fn Command ", cmd)
-		//fmt.Fprintf(os.Stderr, "\n\nNote the fn CLI command structure has changed, please change your command to use the new structure.\n")
+		// fmt.Fprintf(os.Stderr, "\n\nNote the fn CLI command structure has changed, please change your command to use the new structure.\n")
 		fmt.Fprintf(os.Stderr, color.Italic("\n\nSee ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information."))
 		fmt.Fprintf(os.Stderr, color.BrightCyan(" Note ")+"the fn CLI command structure has changed, please change your command to use the new structure.\n")
 		os.Exit(1)
@@ -151,7 +149,7 @@ func newFn() *cli.App {
 	return app
 }
 
-//Trim HelpName, removing 'fn' from the HelpName string
+// Trim HelpName, removing 'fn' from the HelpName string
 func TrimLeftChars(s string, n int) string {
 	m := 0
 	for i := range s {
@@ -163,7 +161,7 @@ func TrimLeftChars(s string, n int) string {
 	return s[:0]
 }
 
-//Override function for customised app template
+// Override function for customised app template
 func printHelpCustom(out io.Writer, templ string, data interface{}, customFunc map[string]interface{}) {
 	funcMap := color.Colors
 	for key, value := range customFunc {
@@ -194,32 +192,33 @@ func parseArgs(c *cli.Context) ([]string, []string) {
 	return reqArgs, optArgs
 }
 
-func prepareCmdArgsValidation(cmds []cli.Command) {
-	// TODO: refactor fn to use urfave/cli.v2
-	// v1 doesn't let us validate args before the cmd.Action
-
-	for i, cmd := range cmds {
+func prepareCmdArgsValidation(cmds []*cli.Command) {
+	for _, cmd := range cmds {
 		prepareCmdArgsValidation(cmd.Subcommands)
 		if cmd.Action == nil {
 			continue
 		}
-		action := cmd.Action
-		cmd.Action = func(c *cli.Context) error {
-			reqArgs, _ := parseArgs(c)
-			if c.NArg() < len(reqArgs) {
-				var help bytes.Buffer
-				cli.HelpPrinter(&help, cli.CommandHelpTemplate, c.Command)
-				if len(reqArgs)-c.NArg() == 1 {
-					fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+c.Command.Usage+" using "+color.Cyan(c.Command.HelpName)+" requires the missing argument '"+color.Red("%v")+"'\n", strings.Join(reqArgs[c.NArg():], " "))
-				} else {
-					fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+c.Command.Usage+" using "+color.Cyan(c.Command.HelpName)+" requires the missing arguments '"+color.Red("%v")+"'\n", strings.Join(reqArgs[c.NArg():], " "))
-				}
-				fmt.Fprintf(os.Stderr, color.Italic("\nSee ")+"'"+color.BrightCyan(c.Command.HelpName+" --help")+"'"+color.Italic(" for more information.\n"))
-				os.Exit(1)
+		cmd.Before = cmdArgsValidation()
+		// in urfave/cli:v2, cli.Command must be pointer, so no need to reinsertion the cli.Command into original array.
+		// cmds[i] = cmd
+	}
+}
+
+func cmdArgsValidation() cli.BeforeFunc {
+	return func(c *cli.Context) error {
+		reqArgs, _ := parseArgs(c)
+		if c.NArg() < len(reqArgs) {
+			var help bytes.Buffer
+			cli.HelpPrinter(&help, cli.CommandHelpTemplate, c.Command)
+			if len(reqArgs)-c.NArg() == 1 {
+				fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+c.Command.Usage+" using "+color.Cyan(c.Command.HelpName)+" requires the missing argument '"+color.Red("%v")+"'\n", strings.Join(reqArgs[c.NArg():], " "))
+			} else {
+				fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+c.Command.Usage+" using "+color.Cyan(c.Command.HelpName)+" requires the missing arguments '"+color.Red("%v")+"'\n", strings.Join(reqArgs[c.NArg():], " "))
 			}
-			return cli.HandleAction(action, c)
+			fmt.Fprintf(os.Stderr, color.Italic("\nSee ")+"'"+color.BrightCyan(c.Command.HelpName+" --help")+"'"+color.Italic(" for more information.\n"))
+			os.Exit(1)
 		}
-		cmds[i] = cmd
+		return nil
 	}
 }
 
@@ -238,12 +237,11 @@ func commandArgOverrides(c *cli.Context) {
 }
 
 func main() {
-
 	app := newFn()
 	err := app.Run(os.Args)
 
 	if err != nil {
-		// TODO: this doesn't seem to get called even when an error returns from a command, but maybe urfave is doing a non zero exit anyways? nope: https://github.com/urfave/cli/issues/610
+		// TODO: this doesn't seem to get called even when an error returns from a command, but maybe urfave is doing a non zero exit anyways? nope: https://github.com/urfave/cli/v2/issues/610
 		fmt.Fprintf(os.Stderr, color.Bold("\nFn:")+" %v", err)
 		fmt.Fprintf(os.Stderr, color.Italic("\n\nSee ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information."))
 		fmt.Fprintf(os.Stderr, " Client version: %s\n", config.Version)

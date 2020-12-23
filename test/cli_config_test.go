@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"github.com/fnproject/cli/testharness"
+	"github.com/fnxproject/cli/testharness"
 )
 
 func TestContextCrud(t *testing.T) {

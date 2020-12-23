@@ -1,13 +1,13 @@
 package commands
 
 import (
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 )
 
 // ListCommand returns list cli.command
-func ListCommand() cli.Command {
-	return cli.Command{
+func ListCommand() *cli.Command {
+	return &cli.Command{
 		Name:         "list",
 		Aliases:      []string{"ls"},
 		Usage:        "\tReturn a list of created objects",

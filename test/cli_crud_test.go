@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/fnproject/cli/testharness"
+	"github.com/fnxproject/cli/testharness"
 )
 
 // TODO: These are both  Super minimal

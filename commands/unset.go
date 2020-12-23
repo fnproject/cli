@@ -1,13 +1,13 @@
 package commands
 
 import (
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 )
 
 // UnsetCommand returns unset cli.command
-func UnsetCommand() cli.Command {
-	return cli.Command{
+func UnsetCommand() *cli.Command {
+	return &cli.Command{
 		Name:         "unset",
 		Aliases:      []string{"un"},
 		Usage:        "\tUnset elements of a created object",

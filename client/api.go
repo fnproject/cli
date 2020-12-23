@@ -1,9 +1,9 @@
 package client
 
 import (
-	"github.com/fnproject/cli/config"
 	"github.com/fnproject/fn_go"
 	"github.com/fnproject/fn_go/provider"
+	"github.com/fnxproject/cli/config"
 	"github.com/spf13/viper"
 )
 

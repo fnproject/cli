@@ -1,13 +1,13 @@
 package commands
 
 import (
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 )
 
 // UseCommand returns use cli.command
-func UseCommand() cli.Command {
-	return cli.Command{
+func UseCommand() *cli.Command {
+	return &cli.Command{
 		Name:         "use",
 		Aliases:      []string{"u"},
 		Usage:        "\tSelect context for further commands",

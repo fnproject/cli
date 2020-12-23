@@ -1,7 +1,7 @@
 package test
 
 import (
-	"github.com/fnproject/cli/testharness"
+	"github.com/fnxproject/cli/testharness"
 	"strings"
 	"testing"
 )

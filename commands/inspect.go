@@ -1,13 +1,13 @@
 package commands
 
 import (
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 )
 
 // InspectCommand returns inspect cli.command
-func InspectCommand() cli.Command {
-	return cli.Command{
+func InspectCommand() *cli.Command {
+	return &cli.Command{
 		Name:         "inspect",
 		UsageText:    "inspect",
 		Aliases:      []string{"i"},

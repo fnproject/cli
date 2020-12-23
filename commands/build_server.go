@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/fnproject/cli/common"
-	"github.com/urfave/cli"
+	"github.com/fnxproject/cli/common"
+	"github.com/urfave/cli/v2"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -17,10 +17,10 @@ type BuildServerCmd struct {
 }
 
 // BuildServerCommand returns build server cli.command
-func BuildServerCommand() cli.Command {
+func BuildServerCommand() *cli.Command {
 	cmd := BuildServerCmd{}
 	flags := append([]cli.Flag{}, cmd.flags()...)
-	return cli.Command{
+	return &cli.Command{
 		Name:        "build-server",
 		Usage:       "Build custom Fn server",
 		Category:    "SERVER COMMANDS",
@@ -32,17 +32,17 @@ func BuildServerCommand() cli.Command {
 
 func (b *BuildServerCmd) flags() []cli.Flag {
 	return []cli.Flag{
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "verbose, v",
 			Usage:       "verbose mode",
 			Destination: &common.CommandVerbose,
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:        "no-cache",
 			Usage:       "Don't use docker cache",
 			Destination: &b.noCache,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "tag,t",
 			Usage: "Image name and optional tag",
 		},
