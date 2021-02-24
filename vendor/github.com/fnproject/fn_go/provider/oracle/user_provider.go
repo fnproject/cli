@@ -151,7 +151,26 @@ func loadOracleConfig(config provider.ConfigSource, passphraseSource provider.Pa
 		}
 	}
 
-	overrideConfigProvider := oci.NewRawConfigurationProvider(tenancyID, userID, "", fingerprint, keyFile, passphrase)
+	// We need to ensure that, either api-url has been set in the context, or region is set in the OCI config file (from which endpoint will be constructed)
+	// 'region' here is what gets passed to the override config provider. The cases are:
+	//      - api-url is not set, region is not set -> return error
+	//      - api-url is set, region is not set -> pass a string other than a blank string in the overrideConfigProvider - this is necessary as OCI client construction
+	//          enforces a region value being present despite the fact we then override endpoint
+	//      - api-url is not set, region is set -> we pass a blank string to the overrideConfigProvider such that it is considered unset, and the region from the main cf takes precedence
+	region := "."
+	if !config.IsSet(provider.CfgFnAPIURL) {
+		msg := "unable to find api-url in context, or region in OCI config"
+		if cf == nil {
+			return nil, errors.New(msg)
+		}
+		_, err = cf.Region()
+		if err != nil {
+			return nil, errors.New(msg)
+		}
+		region = ""
+	}
+
+	overrideConfigProvider := oci.NewRawConfigurationProvider(tenancyID, userID, region, fingerprint, keyFile, passphrase)
 
 	// We use a composing configuration provider, so that values set by env vars or Fn context take precedence over OCI config file
 	return oci.ComposingConfigurationProvider([]oci.ConfigurationProvider{
