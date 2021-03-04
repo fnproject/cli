@@ -143,16 +143,20 @@ func (t ociSigningRoundTripper) intercept(request *http.Request) (err error) {
 
 // Skip verification of insecure certs
 func InsecureRoundTripper(roundTripper http.RoundTripper) http.RoundTripper {
-	transport := roundTripper.(*http.Transport)
-	if transport != nil {
+	if roundTripper == nil {
+		roundTripper = http.DefaultTransport
+	}
+
+	if transport, ok := roundTripper.(*http.Transport); ok {
 		if transport.TLSClientConfig != nil {
 			transport.TLSClientConfig.InsecureSkipVerify = true
 		} else {
 			transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 		}
+		return transport
 	}
 
-	return transport
+	return nil
 }
 
 //-- Provider interface impl ----------------------------------------------------------------------------------
