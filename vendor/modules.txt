@@ -10,7 +10,7 @@ github.com/coreos/go-semver/semver
 # github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
 ## explicit
 github.com/fatih/color
-# github.com/fnproject/fn_go v0.8.2
+# github.com/fnproject/fn_go v0.8.3
 ## explicit
 github.com/fnproject/fn_go
 github.com/fnproject/fn_go/client/version
