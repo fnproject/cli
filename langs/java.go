@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -19,6 +20,8 @@ type JavaLangHelper struct {
 	BaseHelper
 	version          string
 	latestFdkVersion string
+	groupId 		 string
+	pomType			 string
 }
 
 func (h *JavaLangHelper) Handles(lang string) bool {
@@ -87,7 +90,7 @@ func (h *JavaLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, h.version)), os.FileMode(0644)); err != nil {
+	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, h.version, h.groupId, h.pomType)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -174,8 +177,15 @@ func mavenOpts() string {
 /*    TODO temporarily generate maven project boilerplate from hardcoded values.
 Will eventually move to using a maven archetype.
 */
-func pomFileContent(APIversion, javaVersion string) string {
-	return fmt.Sprintf(pomFile, APIversion, javaVersion, javaVersion)
+func pomFileContent(APIversion, javaVersion, groupId, pomType string) string {
+	if  groupId== "io.fnproject.com"  {
+		return fmt.Sprintf(mavenPomFile, APIversion, groupId, groupId, groupId, javaVersion, javaVersion)
+	} else {
+		if pomType == "maven" {
+			return fmt.Sprintf(mavenPomFile, APIversion, groupId, groupId, groupId, javaVersion, javaVersion)
+		}
+		return fmt.Sprintf(bintrayPomFile, APIversion, groupId, groupId, groupId, javaVersion, javaVersion)
+	}
 }
 
 func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
@@ -184,20 +194,71 @@ func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
 		return h.latestFdkVersion, nil
 	}
 
-	const versionURL = "https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
-	const versionEnv = "FN_JAVA_FDK_VERSION"
-	fetchError := fmt.Errorf("Failed to fetch latest Java FDK javaVersion from %v. Check your network settings or manually override the javaVersion by setting %s", versionURL, versionEnv)
+	const bintrayVersionURL = "https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
+	const mavenComVersionUrl = "https://repo1.maven.org/maven2/com/fnproject/fn/fdk/maven-metadata.xml"
+	const mavenIOVersionUrl = "https://repo1.maven.org/maven2/io/fnproject/fn/fdk/maven-metadata.xml"
 
-	type parsedResponse struct {
-		Version string `json:"latest_version"`
-	}
+	const versionEnv = "FN_JAVA_FDK_VERSION"
+	fetchError := fmt.Errorf("Failed to fetch latest Java FDK javaVersion. Check your network settings or manually override the javaVersion by setting %s", versionEnv)
 	version := os.Getenv(versionEnv)
+	fmt.Println("version from local %s", version)
 	if version != "" {
 		return version, nil
 	}
+	version, err:=h.getFDKLastestFromURL(mavenComVersionUrl, mavenIOVersionUrl, bintrayVersionURL)
+	if err != nil {
+		return "", fetchError
+	}
 
-	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
+	h.latestFdkVersion = version
+	return version, nil
+}
+
+func (h *JavaLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bintrayURL string) (string, error) {
+	var buf *bytes.Buffer
+	var err error
+	err=fmt.Errorf("All urls failed to respond ")
+
+	//First search for com.fnproject.fn from Maven Central to get the latest version
+	buf, err = h.getURLResponse(comURL)
+	if err == nil {
+		version, e1:=h.parseMavenResponse(*buf)
+		if e1 == nil {
+			h.groupId = "com.fnproject.fn"
+			h.pomType = "maven"
+			return version, e1
+		}
+	}
+
+	//Second time search for io.fnproject.fn from Maven Central to get the latest version, if com.fnproject.fn fails
+	buf, err = h.getURLResponse(ioURL)
+	if err == nil {
+		version, e1:=h.parseMavenResponse(*buf)
+		if e1 == nil {
+			h.groupId = "io.fnproject.fn"
+			h.pomType = "maven"
+			return version, e1
+		}
+	}
+
+	//Third time search for com.fnproject.fn from Bintray to get the latest version, if both com.fnproject.fn and io.fnproject.fn fails
+	buf, err = h.getURLResponse(bintrayURL)
+	if err == nil {
+		version, e1:=h.parseBintrayResponse(*buf)
+		if e1 == nil {
+			h.groupId = "com.fnproject.fn"
+			h.pomType = "bintray"
+			return version, e1
+		}
+	}
+
+	//In all other case return error as latest FDK version is not identified
+	return "", err
+}
+
+func (h *JavaLangHelper) getURLResponse(url string)  (*bytes.Buffer, error){
 	defaultTransport := http.DefaultTransport.(*http.Transport)
+	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
 	noVerifyTransport := &http.Transport{
 		Proxy:                 defaultTransport.Proxy,
 		DialContext:           defaultTransport.DialContext,
@@ -208,27 +269,65 @@ func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
 		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: noVerifyTransport}
-
-	resp, err := client.Get(versionURL)
+	resp, err := client.Get(url)
 	if err != nil || resp.StatusCode != 200 {
-		return "", fetchError
+		return nil, fmt.Errorf("Failed to fetch response from URL %s Error: %v Status: %d", url, err, resp.StatusCode)
 	}
-
-	buf := bytes.Buffer{}
+	buf := &bytes.Buffer{}
 	_, err = buf.ReadFrom(resp.Body)
 	if err != nil {
-		return "", fetchError
+		return nil, err
 	}
 
-	parsedResp := make([]parsedResponse, 1)
-	err = json.Unmarshal(buf.Bytes(), &parsedResp)
+
+	return buf, nil
+}
+
+func (h *JavaLangHelper) parseMavenResponse(buf bytes.Buffer) (string, error) {
+	type ParsedResponse struct {
+    	XMLName    xml.Name `xml:"metadata"`
+    	Text       string   `xml:",chardata"`
+    	GroupId    string   `xml:"groupId"`
+    	ArtifactId string   `xml:"artifactId"`
+    	Versioning struct {
+    		Text     string `xml:",chardata"`
+    		Latest   string `xml:"latest"`
+    		Release  string `xml:"release"`
+    		Versions struct {
+    			Text    string   `xml:",chardata"`
+    			Version []string `xml:"version"`
+    		} `xml:"versions"`
+    		LastUpdated string `xml:"lastUpdated"`
+    	} `xml:"versioning"`
+    }
+	var response ParsedResponse
+	err := xml.Unmarshal(buf.Bytes(), &response)
 	if err != nil {
-		return "", fetchError
+		return "", err
 	}
 
-	version = parsedResp[0].Version
-	h.latestFdkVersion = version
-	return version, nil
+	if len(response.Versioning.Versions.Version) == 0 {
+		return "", fmt.Errorf("Maven response is not valid")
+	}
+	version := response.Versioning.Latest
+	return version,nil
+}
+
+func (h *JavaLangHelper) parseBintrayResponse(buf bytes.Buffer) (string, error) {
+
+	fmt.Println("bintray response")
+	fmt.Println(string(buf.Bytes()))
+	type parsedResponse struct {
+		Version string `json:"latest_version"`
+	}
+	parsedResp := make([]parsedResponse, 1)
+	err := json.Unmarshal(buf.Bytes(), &parsedResp)
+	if err != nil {
+		return "", err
+	}
+	version := parsedResp[0].Version
+
+	return version,nil
 }
 
 func (h *JavaLangHelper) FixImagesOnInit() bool {
@@ -236,7 +335,8 @@ func (h *JavaLangHelper) FixImagesOnInit() bool {
 }
 
 const (
-	pomFile = `<?xml version="1.0" encoding="UTF-8"?>
+
+	mavenPomFile = `<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -249,7 +349,70 @@ const (
     <artifactId>hello</artifactId>
     <version>1.0.0</version>
 
-    <repositories>
+    <dependencies>
+        <dependency>
+            <groupId>%s</groupId>
+            <artifactId>api</artifactId>
+            <version>${fdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>%s</groupId>
+            <artifactId>testing-core</artifactId>
+            <version>${fdk.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>%s</groupId>
+            <artifactId>testing-junit4</artifactId>
+            <version>${fdk.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
+                <configuration>
+                    <source>%s</source>
+                    <target>%s</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-surefire-plugin</artifactId>
+                 <version>2.22.1</version>
+                 <configuration>
+                     <useSystemClassLoader>false</useSystemClassLoader>
+                 </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+`
+
+	bintrayPomFile = `<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <fdk.version>%s</fdk.version>
+    </properties>
+    <groupId>com.example.fn</groupId>
+    <artifactId>hello</artifactId>
+    <version>1.0.0</version>
+
+	<repositories>
         <repository>
             <id>fn-release-repo</id>
             <url>https://dl.bintray.com/fnproject/fnproject</url>
@@ -264,18 +427,18 @@ const (
 
     <dependencies>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>%s</groupId>
             <artifactId>api</artifactId>
             <version>${fdk.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>%s</groupId>
             <artifactId>testing-core</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>%s</groupId>
             <artifactId>testing-junit4</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>
