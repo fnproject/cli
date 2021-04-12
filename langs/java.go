@@ -201,7 +201,7 @@ func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
 	const versionEnv = "FN_JAVA_FDK_VERSION"
 	fetchError := fmt.Errorf("Failed to fetch latest Java FDK javaVersion. Check your network settings or manually override the javaVersion by setting %s", versionEnv)
 	version := os.Getenv(versionEnv)
-	fmt.Println("version from local %s", version)
+
 	if version != "" {
 		return version, nil
 	}
@@ -314,9 +314,6 @@ func (h *JavaLangHelper) parseMavenResponse(buf bytes.Buffer) (string, error) {
 }
 
 func (h *JavaLangHelper) parseBintrayResponse(buf bytes.Buffer) (string, error) {
-
-	fmt.Println("bintray response")
-	fmt.Println(string(buf.Bytes()))
 	type parsedResponse struct {
 		Version string `json:"latest_version"`
 	}

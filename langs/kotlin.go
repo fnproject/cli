@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -18,6 +19,8 @@ import (
 type KotlinLangHelper struct {
 	BaseHelper
 	latestFdkVersion string
+	groupId 		 string
+	pomType			 string
 }
 
 func (h *KotlinLangHelper) Handles(lang string) bool {
@@ -77,7 +80,7 @@ func (h *KotlinLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(pathToPomFile, []byte(kotlinPomFileContent(apiVersion)), os.FileMode(0644)); err != nil {
+	if err := ioutil.WriteFile(pathToPomFile, []byte(kotlinPomFileContent(apiVersion,h.groupId, h.pomType)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -163,8 +166,15 @@ func kotlinMavenOpts() string {
 
 /*    TODO temporarily generate maven project boilerplate from hardcoded values.
       Will eventually move to using a maven archetype.*/
-func kotlinPomFileContent(APIversion string) string {
-	return fmt.Sprintf(kotlinPomFile, APIversion)
+func kotlinPomFileContent(APIversion, groupId, pomType string) string {
+	if  groupId== "io.fnproject.com" {
+		return fmt.Sprintf(mavenKotlinPomFile, APIversion, groupId, groupId, groupId)
+	} else {
+		if pomType == "maven" {
+			return fmt.Sprintf(mavenKotlinPomFile, APIversion, groupId, groupId, groupId)
+		}
+		return fmt.Sprintf(bintrayKotlinPomFile, APIversion, groupId, groupId, groupId)
+	}
 }
 
 func (lh *KotlinLangHelper) getFDKAPIVersion() (string, error) {
@@ -173,20 +183,71 @@ func (lh *KotlinLangHelper) getFDKAPIVersion() (string, error) {
 		return lh.latestFdkVersion, nil
 	}
 
-	const versionURL = "https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
-	const versionEnv = "FN_JAVA_FDK_VERSION"
-	fetchError := fmt.Errorf("Failed to fetch latest Java FDK javaVersion from %v. Check your network settings or manually override the javaVersion by setting %s", versionURL, versionEnv)
+	const bintrayVersionURL = "https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
+	const mavenComVersionUrl = "https://repo1.maven.org/maven2/com/fnproject/fn/fdk/maven-metadata.xml"
+	const mavenIOVersionUrl = "https://repo1.maven.org/maven2/io/fnproject/fn/fdk/maven-metadata.xml"
 
-	type parsedResponse struct {
-		Version string `json:"latest_version"`
-	}
+	const versionEnv = "FN_JAVA_FDK_VERSION"
+	fetchError := fmt.Errorf("Failed to fetch latest Java FDK javaVersion. Check your network settings or manually override the javaVersion by setting %s", versionEnv)
 	version := os.Getenv(versionEnv)
+
 	if version != "" {
 		return version, nil
 	}
+	version, err:=lh.getFDKLastestFromURL(mavenComVersionUrl, mavenIOVersionUrl, bintrayVersionURL)
+	if err != nil {
+		return "", fetchError
+	}
 
-	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
+	lh.latestFdkVersion = version
+	return version, nil
+}
+
+func (lh *KotlinLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bintrayURL string) (string, error) {
+	var buf *bytes.Buffer
+	var err error
+	err=fmt.Errorf("All urls failed to respond ")
+
+	//First search for com.fnproject.fn from Maven Central to get the latest version
+	buf, err = lh.getURLResponse(comURL)
+	if err == nil {
+		version, e1:=lh.parseMavenResponse(*buf)
+		if e1 == nil {
+			lh.groupId = "com.fnproject.fn"
+			lh.pomType = "maven"
+			return version, e1
+		}
+	}
+
+	//Second time search for io.fnproject.fn from Maven Central to get the latest version, if com.fnproject.fn fails
+	buf, err = lh.getURLResponse(ioURL)
+	if err == nil {
+		version, e1:=lh.parseMavenResponse(*buf)
+		if e1 == nil {
+			lh.groupId = "io.fnproject.fn"
+			lh.pomType = "maven"
+			return version, e1
+		}
+	}
+
+	//Third time search for com.fnproject.fn from Bintray to get the latest version, if both com.fnproject.fn and io.fnproject.fn fails
+	buf, err = lh.getURLResponse(bintrayURL)
+	if err == nil {
+		version, e1:=lh.parseBintrayResponse(*buf)
+		if e1 == nil {
+			lh.groupId = "com.fnproject.fn"
+			lh.pomType = "bintray"
+			return version, e1
+		}
+	}
+
+	//In all other case return error as latest FDK version is not identified
+	return "", err
+}
+
+func (lh *KotlinLangHelper) getURLResponse(url string)  (*bytes.Buffer, error){
 	defaultTransport := http.DefaultTransport.(*http.Transport)
+	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
 	noVerifyTransport := &http.Transport{
 		Proxy:                 defaultTransport.Proxy,
 		DialContext:           defaultTransport.DialContext,
@@ -197,35 +258,144 @@ func (lh *KotlinLangHelper) getFDKAPIVersion() (string, error) {
 		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: noVerifyTransport}
-
-	resp, err := client.Get(versionURL)
+	resp, err := client.Get(url)
 	if err != nil || resp.StatusCode != 200 {
-		return "", fetchError
+		return nil, fmt.Errorf("Failed to fetch response from URL %s Error: %v Status: %d", url, err, resp.StatusCode)
 	}
-
-	buf := bytes.Buffer{}
+	buf := &bytes.Buffer{}
 	_, err = buf.ReadFrom(resp.Body)
 	if err != nil {
-		return "", fetchError
+		return nil, err
 	}
-
-	parsedResp := make([]parsedResponse, 1)
-	err = json.Unmarshal(buf.Bytes(), &parsedResp)
-	if err != nil {
-		return "", fetchError
-	}
-
-	version = parsedResp[0].Version
-	lh.latestFdkVersion = version
-	return version, nil
+	return buf, nil
 }
+
+func (lh *KotlinLangHelper) parseMavenResponse(buf bytes.Buffer) (string, error) {
+	type ParsedResponse struct {
+		XMLName    xml.Name `xml:"metadata"`
+		Text       string   `xml:",chardata"`
+		GroupId    string   `xml:"groupId"`
+		ArtifactId string   `xml:"artifactId"`
+		Versioning struct {
+			Text     string `xml:",chardata"`
+			Latest   string `xml:"latest"`
+			Release  string `xml:"release"`
+			Versions struct {
+				Text    string   `xml:",chardata"`
+				Version []string `xml:"version"`
+			} `xml:"versions"`
+			LastUpdated string `xml:"lastUpdated"`
+		} `xml:"versioning"`
+	}
+	var response ParsedResponse
+	err := xml.Unmarshal(buf.Bytes(), &response)
+	if err != nil {
+		return "", err
+	}
+
+	if len(response.Versioning.Versions.Version) == 0 {
+		return "", fmt.Errorf("Maven response is not valid")
+	}
+	version := response.Versioning.Latest
+	return version,nil
+}
+
+func (lh *KotlinLangHelper) parseBintrayResponse(buf bytes.Buffer) (string, error) {
+	type parsedResponse struct {
+		Version string `json:"latest_version"`
+	}
+	parsedResp := make([]parsedResponse, 1)
+	err := json.Unmarshal(buf.Bytes(), &parsedResp)
+	if err != nil {
+		return "", err
+	}
+	version := parsedResp[0].Version
+
+	return version,nil
+}
+
 
 func (lh *KotlinLangHelper) FixImagesOnInit() bool {
 	return true
 }
 
 const (
-	kotlinPomFile = `<?xml version="1.0" encoding="UTF-8"?>
+
+	mavenKotlinPomFile = `<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.example.fn</groupId>
+	<artifactId>hello</artifactId>
+	<version>1.0.0</version>
+	
+	<properties>
+		<kotlin.version>1.2.51</kotlin.version>
+		<fdk.version>%s</fdk.version>
+		<junit.version>4.12</junit.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>%s</groupId>
+			<artifactId>api</artifactId>
+			<version>${fdk.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-stdlib</artifactId>
+			<version>${kotlin.version}</version>
+		</dependency>
+
+        <dependency>
+            <groupId>%s</groupId>
+            <artifactId>testing-core</artifactId>
+            <version>${fdk.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>%s</groupId>
+            <artifactId>testing-junit4</artifactId>
+            <version>${fdk.version}</version>
+            <scope>test</scope>
+        </dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-test-junit</artifactId>
+			<version>${kotlin.version}</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	
+	<build>
+		<sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
+		<testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>
+		<plugins>
+			<plugin>
+				<artifactId>kotlin-maven-plugin</artifactId>
+				<groupId>org.jetbrains.kotlin</groupId>
+				<version>${kotlin.version}</version>
+				<executions>
+					<execution>
+						<id>compile</id>
+						<goals> <goal>compile</goal> </goals>
+					</execution>
+					<execution>
+						<id>test-compile</id>
+						<phase>compile</phase>
+						<goals> <goal>test-compile</goal> </goals>
+					</execution>
+				</executions>
+			</plugin>				
+		</plugins>
+	</build>
+</project>
+			
+`
+
+	bintrayKotlinPomFile = `<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
