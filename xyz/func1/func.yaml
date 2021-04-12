@@ -1,0 +1,7 @@
+schema_version: 20180708
+name: func1
+version: 0.0.1
+runtime: kotlin
+build_image: fnproject/fn-java-fdk-build:jdk11-99.99.999
+run_image: fnproject/fn-java-fdk:jre11-99.99.999
+cmd: com.fn.example.HelloFunctionKt::hello
