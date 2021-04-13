@@ -19,8 +19,8 @@ import (
 type KotlinLangHelper struct {
 	BaseHelper
 	latestFdkVersion string
-	groupId 		 string
-	pomType			 string
+	groupId          string
+	pomType          string
 }
 
 func (h *KotlinLangHelper) Handles(lang string) bool {
@@ -80,7 +80,7 @@ func (h *KotlinLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(pathToPomFile, []byte(kotlinPomFileContent(apiVersion,h.groupId, h.pomType)), os.FileMode(0644)); err != nil {
+	if err := ioutil.WriteFile(pathToPomFile, []byte(kotlinPomFileContent(apiVersion, h.groupId, h.pomType)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -167,7 +167,7 @@ func kotlinMavenOpts() string {
 /*    TODO temporarily generate maven project boilerplate from hardcoded values.
       Will eventually move to using a maven archetype.*/
 func kotlinPomFileContent(APIversion, groupId, pomType string) string {
-	if  groupId== "io.fnproject.com" {
+	if groupId == "io.fnproject.com" {
 		return fmt.Sprintf(mavenKotlinPomFile, APIversion, groupId, groupId, groupId)
 	} else {
 		if pomType == "maven" {
@@ -194,7 +194,7 @@ func (lh *KotlinLangHelper) getFDKAPIVersion() (string, error) {
 	if version != "" {
 		return version, nil
 	}
-	version, err:=lh.getFDKLastestFromURL(mavenComVersionUrl, mavenIOVersionUrl, bintrayVersionURL)
+	version, err := lh.getFDKLastestFromURL(mavenComVersionUrl, mavenIOVersionUrl, bintrayVersionURL)
 	if err != nil {
 		return "", fetchError
 	}
@@ -206,12 +206,12 @@ func (lh *KotlinLangHelper) getFDKAPIVersion() (string, error) {
 func (lh *KotlinLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bintrayURL string) (string, error) {
 	var buf *bytes.Buffer
 	var err error
-	err=fmt.Errorf("All urls failed to respond ")
+	err = fmt.Errorf("All urls failed to respond ")
 
 	//First search for com.fnproject.fn from Maven Central to get the latest version
 	buf, err = lh.getURLResponse(comURL)
 	if err == nil {
-		version, e1:=lh.parseMavenResponse(*buf)
+		version, e1 := lh.parseMavenResponse(*buf)
 		if e1 == nil {
 			lh.groupId = "com.fnproject.fn"
 			lh.pomType = "maven"
@@ -222,7 +222,7 @@ func (lh *KotlinLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bi
 	//Second time search for io.fnproject.fn from Maven Central to get the latest version, if com.fnproject.fn fails
 	buf, err = lh.getURLResponse(ioURL)
 	if err == nil {
-		version, e1:=lh.parseMavenResponse(*buf)
+		version, e1 := lh.parseMavenResponse(*buf)
 		if e1 == nil {
 			lh.groupId = "io.fnproject.fn"
 			lh.pomType = "maven"
@@ -233,7 +233,7 @@ func (lh *KotlinLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bi
 	//Third time search for com.fnproject.fn from Bintray to get the latest version, if both com.fnproject.fn and io.fnproject.fn fails
 	buf, err = lh.getURLResponse(bintrayURL)
 	if err == nil {
-		version, e1:=lh.parseBintrayResponse(*buf)
+		version, e1 := lh.parseBintrayResponse(*buf)
 		if e1 == nil {
 			lh.groupId = "com.fnproject.fn"
 			lh.pomType = "bintray"
@@ -245,7 +245,7 @@ func (lh *KotlinLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bi
 	return "", err
 }
 
-func (lh *KotlinLangHelper) getURLResponse(url string)  (*bytes.Buffer, error){
+func (lh *KotlinLangHelper) getURLResponse(url string) (*bytes.Buffer, error) {
 	defaultTransport := http.DefaultTransport.(*http.Transport)
 	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
 	noVerifyTransport := &http.Transport{
@@ -297,7 +297,7 @@ func (lh *KotlinLangHelper) parseMavenResponse(buf bytes.Buffer) (string, error)
 		return "", fmt.Errorf("Maven response is not valid")
 	}
 	version := response.Versioning.Latest
-	return version,nil
+	return version, nil
 }
 
 func (lh *KotlinLangHelper) parseBintrayResponse(buf bytes.Buffer) (string, error) {
@@ -311,16 +311,14 @@ func (lh *KotlinLangHelper) parseBintrayResponse(buf bytes.Buffer) (string, erro
 	}
 	version := parsedResp[0].Version
 
-	return version,nil
+	return version, nil
 }
-
 
 func (lh *KotlinLangHelper) FixImagesOnInit() bool {
 	return true
 }
 
 const (
-
 	mavenKotlinPomFile = `<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

@@ -20,8 +20,8 @@ type JavaLangHelper struct {
 	BaseHelper
 	version          string
 	latestFdkVersion string
-	groupId 		 string
-	pomType			 string
+	groupId          string
+	pomType          string
 }
 
 func (h *JavaLangHelper) Handles(lang string) bool {
@@ -178,7 +178,7 @@ func mavenOpts() string {
 Will eventually move to using a maven archetype.
 */
 func pomFileContent(APIversion, javaVersion, groupId, pomType string) string {
-	if  groupId== "io.fnproject.com"  {
+	if groupId == "io.fnproject.com" {
 		return fmt.Sprintf(mavenPomFile, APIversion, groupId, groupId, groupId, javaVersion, javaVersion)
 	} else {
 		if pomType == "maven" {
@@ -205,7 +205,7 @@ func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
 	if version != "" {
 		return version, nil
 	}
-	version, err:=h.getFDKLastestFromURL(mavenComVersionUrl, mavenIOVersionUrl, bintrayVersionURL)
+	version, err := h.getFDKLastestFromURL(mavenComVersionUrl, mavenIOVersionUrl, bintrayVersionURL)
 	if err != nil {
 		return "", fetchError
 	}
@@ -217,12 +217,12 @@ func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
 func (h *JavaLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bintrayURL string) (string, error) {
 	var buf *bytes.Buffer
 	var err error
-	err=fmt.Errorf("All urls failed to respond ")
+	err = fmt.Errorf("All urls failed to respond ")
 
 	//First search for com.fnproject.fn from Maven Central to get the latest version
 	buf, err = h.getURLResponse(comURL)
 	if err == nil {
-		version, e1:=h.parseMavenResponse(*buf)
+		version, e1 := h.parseMavenResponse(*buf)
 		if e1 == nil {
 			h.groupId = "com.fnproject.fn"
 			h.pomType = "maven"
@@ -233,7 +233,7 @@ func (h *JavaLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bintr
 	//Second time search for io.fnproject.fn from Maven Central to get the latest version, if com.fnproject.fn fails
 	buf, err = h.getURLResponse(ioURL)
 	if err == nil {
-		version, e1:=h.parseMavenResponse(*buf)
+		version, e1 := h.parseMavenResponse(*buf)
 		if e1 == nil {
 			h.groupId = "io.fnproject.fn"
 			h.pomType = "maven"
@@ -244,7 +244,7 @@ func (h *JavaLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bintr
 	//Third time search for com.fnproject.fn from Bintray to get the latest version, if both com.fnproject.fn and io.fnproject.fn fails
 	buf, err = h.getURLResponse(bintrayURL)
 	if err == nil {
-		version, e1:=h.parseBintrayResponse(*buf)
+		version, e1 := h.parseBintrayResponse(*buf)
 		if e1 == nil {
 			h.groupId = "com.fnproject.fn"
 			h.pomType = "bintray"
@@ -256,7 +256,7 @@ func (h *JavaLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bintr
 	return "", err
 }
 
-func (h *JavaLangHelper) getURLResponse(url string)  (*bytes.Buffer, error){
+func (h *JavaLangHelper) getURLResponse(url string) (*bytes.Buffer, error) {
 	defaultTransport := http.DefaultTransport.(*http.Transport)
 	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
 	noVerifyTransport := &http.Transport{
@@ -279,27 +279,26 @@ func (h *JavaLangHelper) getURLResponse(url string)  (*bytes.Buffer, error){
 		return nil, err
 	}
 
-
 	return buf, nil
 }
 
 func (h *JavaLangHelper) parseMavenResponse(buf bytes.Buffer) (string, error) {
 	type ParsedResponse struct {
-    	XMLName    xml.Name `xml:"metadata"`
-    	Text       string   `xml:",chardata"`
-    	GroupId    string   `xml:"groupId"`
-    	ArtifactId string   `xml:"artifactId"`
-    	Versioning struct {
-    		Text     string `xml:",chardata"`
-    		Latest   string `xml:"latest"`
-    		Release  string `xml:"release"`
-    		Versions struct {
-    			Text    string   `xml:",chardata"`
-    			Version []string `xml:"version"`
-    		} `xml:"versions"`
-    		LastUpdated string `xml:"lastUpdated"`
-    	} `xml:"versioning"`
-    }
+		XMLName    xml.Name `xml:"metadata"`
+		Text       string   `xml:",chardata"`
+		GroupId    string   `xml:"groupId"`
+		ArtifactId string   `xml:"artifactId"`
+		Versioning struct {
+			Text     string `xml:",chardata"`
+			Latest   string `xml:"latest"`
+			Release  string `xml:"release"`
+			Versions struct {
+				Text    string   `xml:",chardata"`
+				Version []string `xml:"version"`
+			} `xml:"versions"`
+			LastUpdated string `xml:"lastUpdated"`
+		} `xml:"versioning"`
+	}
 	var response ParsedResponse
 	err := xml.Unmarshal(buf.Bytes(), &response)
 	if err != nil {
@@ -310,7 +309,7 @@ func (h *JavaLangHelper) parseMavenResponse(buf bytes.Buffer) (string, error) {
 		return "", fmt.Errorf("Maven response is not valid")
 	}
 	version := response.Versioning.Latest
-	return version,nil
+	return version, nil
 }
 
 func (h *JavaLangHelper) parseBintrayResponse(buf bytes.Buffer) (string, error) {
@@ -324,7 +323,7 @@ func (h *JavaLangHelper) parseBintrayResponse(buf bytes.Buffer) (string, error) 
 	}
 	version := parsedResp[0].Version
 
-	return version,nil
+	return version, nil
 }
 
 func (h *JavaLangHelper) FixImagesOnInit() bool {
@@ -332,7 +331,6 @@ func (h *JavaLangHelper) FixImagesOnInit() bool {
 }
 
 const (
-
 	mavenPomFile = `<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
