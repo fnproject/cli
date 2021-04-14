@@ -167,12 +167,9 @@ func kotlinMavenOpts() string {
 /*    TODO temporarily generate maven project boilerplate from hardcoded values.
       Will eventually move to using a maven archetype.*/
 func kotlinPomFileContent(APIversion, groupId, pomType string) string {
-	if groupId == "io.fnproject.com" {
+	if groupId == "io.fnproject.com" || pomType == "maven" {
 		return fmt.Sprintf(mavenKotlinPomFile, APIversion, groupId, groupId, groupId)
 	} else {
-		if pomType == "maven" {
-			return fmt.Sprintf(mavenKotlinPomFile, APIversion, groupId, groupId, groupId)
-		}
 		return fmt.Sprintf(bintrayKotlinPomFile, APIversion, groupId, groupId, groupId)
 	}
 }
@@ -209,7 +206,7 @@ func (lh *KotlinLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bi
 	err = fmt.Errorf("All urls failed to respond ")
 
 	//First search for com.fnproject.fn from Maven Central to get the latest version
-	buf, err = lh.getURLResponse(comURL)
+	buf, err = lh.getURLResponse(comURL, false)
 	if err == nil {
 		version, e1 := lh.parseMavenResponse(*buf)
 		if e1 == nil {
@@ -220,7 +217,7 @@ func (lh *KotlinLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bi
 	}
 
 	//Second time search for io.fnproject.fn from Maven Central to get the latest version, if com.fnproject.fn fails
-	buf, err = lh.getURLResponse(ioURL)
+	buf, err = lh.getURLResponse(ioURL, false)
 	if err == nil {
 		version, e1 := lh.parseMavenResponse(*buf)
 		if e1 == nil {
@@ -231,7 +228,7 @@ func (lh *KotlinLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bi
 	}
 
 	//Third time search for com.fnproject.fn from Bintray to get the latest version, if both com.fnproject.fn and io.fnproject.fn fails
-	buf, err = lh.getURLResponse(bintrayURL)
+	buf, err = lh.getURLResponse(bintrayURL, true)
 	if err == nil {
 		version, e1 := lh.parseBintrayResponse(*buf)
 		if e1 == nil {
@@ -245,7 +242,7 @@ func (lh *KotlinLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bi
 	return "", err
 }
 
-func (lh *KotlinLangHelper) getURLResponse(url string) (*bytes.Buffer, error) {
+func (lh *KotlinLangHelper) getURLResponse(url string, inSecureSkipVerify bool) (*bytes.Buffer, error) {
 	defaultTransport := http.DefaultTransport.(*http.Transport)
 	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
 	noVerifyTransport := &http.Transport{
@@ -255,7 +252,7 @@ func (lh *KotlinLangHelper) getURLResponse(url string) (*bytes.Buffer, error) {
 		IdleConnTimeout:       defaultTransport.IdleConnTimeout,
 		ExpectContinueTimeout: defaultTransport.ExpectContinueTimeout,
 		TLSHandshakeTimeout:   defaultTransport.TLSHandshakeTimeout,
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: inSecureSkipVerify},
 	}
 	client := &http.Client{Transport: noVerifyTransport}
 	resp, err := client.Get(url)

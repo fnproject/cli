@@ -178,12 +178,9 @@ func mavenOpts() string {
 Will eventually move to using a maven archetype.
 */
 func pomFileContent(APIversion, javaVersion, groupId, pomType string) string {
-	if groupId == "io.fnproject.com" {
+	if groupId == "io.fnproject.com" || pomType == "maven"{
 		return fmt.Sprintf(mavenPomFile, APIversion, groupId, groupId, groupId, javaVersion, javaVersion)
 	} else {
-		if pomType == "maven" {
-			return fmt.Sprintf(mavenPomFile, APIversion, groupId, groupId, groupId, javaVersion, javaVersion)
-		}
 		return fmt.Sprintf(bintrayPomFile, APIversion, groupId, groupId, groupId, javaVersion, javaVersion)
 	}
 }
@@ -220,7 +217,7 @@ func (h *JavaLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bintr
 	err = fmt.Errorf("All urls failed to respond ")
 
 	//First search for com.fnproject.fn from Maven Central to get the latest version
-	buf, err = h.getURLResponse(comURL)
+	buf, err = h.getURLResponse(comURL, false)
 	if err == nil {
 		version, e1 := h.parseMavenResponse(*buf)
 		if e1 == nil {
@@ -231,7 +228,7 @@ func (h *JavaLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bintr
 	}
 
 	//Second time search for io.fnproject.fn from Maven Central to get the latest version, if com.fnproject.fn fails
-	buf, err = h.getURLResponse(ioURL)
+	buf, err = h.getURLResponse(ioURL, false)
 	if err == nil {
 		version, e1 := h.parseMavenResponse(*buf)
 		if e1 == nil {
@@ -242,7 +239,7 @@ func (h *JavaLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bintr
 	}
 
 	//Third time search for com.fnproject.fn from Bintray to get the latest version, if both com.fnproject.fn and io.fnproject.fn fails
-	buf, err = h.getURLResponse(bintrayURL)
+	buf, err = h.getURLResponse(bintrayURL, true)
 	if err == nil {
 		version, e1 := h.parseBintrayResponse(*buf)
 		if e1 == nil {
@@ -256,7 +253,7 @@ func (h *JavaLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bintr
 	return "", err
 }
 
-func (h *JavaLangHelper) getURLResponse(url string) (*bytes.Buffer, error) {
+func (h *JavaLangHelper) getURLResponse(url string, inSecureSkipVerify bool) (*bytes.Buffer, error) {
 	defaultTransport := http.DefaultTransport.(*http.Transport)
 	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
 	noVerifyTransport := &http.Transport{
@@ -266,7 +263,7 @@ func (h *JavaLangHelper) getURLResponse(url string) (*bytes.Buffer, error) {
 		IdleConnTimeout:       defaultTransport.IdleConnTimeout,
 		ExpectContinueTimeout: defaultTransport.ExpectContinueTimeout,
 		TLSHandshakeTimeout:   defaultTransport.TLSHandshakeTimeout,
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: inSecureSkipVerify},
 	}
 	client := &http.Client{Transport: noVerifyTransport}
 	resp, err := client.Get(url)
