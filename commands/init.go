@@ -120,9 +120,16 @@ func langsList() string {
 		if i > 0 && s == allLangs[i-1] {
 			continue
 		}
+		if deprecatedPythonRuntime(s) {
+			continue
+		}
 		allUnique = append(allUnique, s)
 	}
 	return strings.Join(allUnique, ", ")
+}
+
+func deprecatedPythonRuntime(runtime string) bool {
+	return runtime == "python3.8.5" || runtime == "python3.7.1"
 }
 
 // InitCommand returns init cli.command
@@ -168,6 +175,9 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		// go no further if the specified runtime is not supported
 		if runtime != common.FuncfileDockerRuntime && langs.GetLangHelper(runtime) == nil {
 			return fmt.Errorf("Init does not support the '%s' runtime", runtime)
+		}
+		if deprecatedPythonRuntime(runtime) {
+			return fmt.Errorf("Runtime %s is no more supported for new apps. Please use python or %s runtime for new apps.", runtime, runtime[:strings.LastIndex(runtime, ".")])
 		}
 	}
 
