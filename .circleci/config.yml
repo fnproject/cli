@@ -1,13 +1,14 @@
 version: 2
 jobs:
   build:
-    machine: true
+    machine:
+      image: ubuntu-2004:202101-01
     working_directory: ~/go/src/github.com/fnproject/cli
     environment: # apparently expansion doesn't work here yet: https://discuss.circleci.com/t/environment-variable-expansion-in-working-directory/11322
       - GO111MODULE=on
       - GOFLAGS=-mod=vendor
       - GOPATH=/home/circleci/go
-      - GOVERSION=1.14.13
+      - GOVERSION=1.16.3
       - OS=linux
       - ARCH=amd64
     steps:
