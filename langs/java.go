@@ -20,7 +20,6 @@ type JavaLangHelper struct {
 	BaseHelper
 	version          string
 	latestFdkVersion string
-	groupId          string
 	pomType          string
 }
 
@@ -90,7 +89,7 @@ func (h *JavaLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, h.version, h.groupId, h.pomType)), os.FileMode(0644)); err != nil {
+	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, h.version, h.pomType)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -177,11 +176,11 @@ func mavenOpts() string {
 /*    TODO temporarily generate maven project boilerplate from hardcoded values.
 Will eventually move to using a maven archetype.
 */
-func pomFileContent(APIversion, javaVersion, groupId, pomType string) string {
-	if groupId == "io.fnproject.com" || pomType == "maven"{
-		return fmt.Sprintf(mavenPomFile, APIversion, groupId, groupId, groupId, javaVersion, javaVersion)
+func pomFileContent(APIversion, javaVersion, pomType string) string {
+	if pomType == "maven" {
+		return fmt.Sprintf(mavenPomFile, APIversion, javaVersion, javaVersion)
 	} else {
-		return fmt.Sprintf(bintrayPomFile, APIversion, groupId, groupId, groupId, javaVersion, javaVersion)
+		return fmt.Sprintf(bintrayPomFile, APIversion, javaVersion, javaVersion)
 	}
 }
 
@@ -192,8 +191,7 @@ func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
 	}
 
 	const bintrayVersionURL = "https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
-	const mavenComVersionUrl = "https://repo1.maven.org/maven2/com/fnproject/fn/fdk/maven-metadata.xml"
-	const mavenIOVersionUrl = "https://repo1.maven.org/maven2/io/fnproject/fn/fdk/maven-metadata.xml"
+	const mavenVersionUrl = "https://repo1.maven.org/maven2/com/fnproject/fn/fdk/maven-metadata.xml"
 
 	const versionEnv = "FN_JAVA_FDK_VERSION"
 	fetchError := fmt.Errorf("Failed to fetch latest Java FDK javaVersion. Check your network settings or manually override the javaVersion by setting %s", versionEnv)
@@ -202,7 +200,7 @@ func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
 	if version != "" {
 		return version, nil
 	}
-	version, err := h.getFDKLastestFromURL(mavenComVersionUrl, mavenIOVersionUrl, bintrayVersionURL)
+	version, err := h.getFDKLastestFromURL(mavenVersionUrl, bintrayVersionURL)
 	if err != nil {
 		return "", fetchError
 	}
@@ -211,39 +209,26 @@ func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
 	return version, nil
 }
 
-func (h *JavaLangHelper) getFDKLastestFromURL(comURL string, ioURL string, bintrayURL string) (string, error) {
+func (h *JavaLangHelper) getFDKLastestFromURL(comURL string, bintrayURL string) (string, error) {
 	var buf *bytes.Buffer
 	var err error
-	err = fmt.Errorf("All urls failed to respond ")
+	err = fmt.Errorf("All URL failed to respond ")
 
 	//First search for com.fnproject.fn from Maven Central to get the latest version
 	buf, err = h.getURLResponse(comURL, false)
 	if err == nil {
 		version, e1 := h.parseMavenResponse(*buf)
 		if e1 == nil {
-			h.groupId = "com.fnproject.fn"
 			h.pomType = "maven"
 			return version, e1
 		}
 	}
 
-	//Second time search for io.fnproject.fn from Maven Central to get the latest version, if com.fnproject.fn fails
-	buf, err = h.getURLResponse(ioURL, false)
-	if err == nil {
-		version, e1 := h.parseMavenResponse(*buf)
-		if e1 == nil {
-			h.groupId = "io.fnproject.fn"
-			h.pomType = "maven"
-			return version, e1
-		}
-	}
-
-	//Third time search for com.fnproject.fn from Bintray to get the latest version, if both com.fnproject.fn and io.fnproject.fn fails
+	//Second time search for com.fnproject.fn from Bintray to get the latest version, if both com.fnproject.fn and io.fnproject.fn fails
 	buf, err = h.getURLResponse(bintrayURL, true)
 	if err == nil {
 		version, e1 := h.parseBintrayResponse(*buf)
 		if e1 == nil {
-			h.groupId = "com.fnproject.fn"
 			h.pomType = "bintray"
 			return version, e1
 		}
@@ -343,18 +328,18 @@ const (
 
     <dependencies>
         <dependency>
-            <groupId>%s</groupId>
+            <groupId>com.fnproject.fn</groupId>
             <artifactId>api</artifactId>
             <version>${fdk.version}</version>
         </dependency>
         <dependency>
-            <groupId>%s</groupId>
+            <groupId>com.fnproject.fn</groupId>
             <artifactId>testing-core</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>%s</groupId>
+            <groupId>com.fnproject.fn</groupId>
             <artifactId>testing-junit4</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>
@@ -419,18 +404,18 @@ const (
 
     <dependencies>
         <dependency>
-            <groupId>%s</groupId>
+            <groupId>com.fnproject.fn</groupId>
             <artifactId>api</artifactId>
             <version>${fdk.version}</version>
         </dependency>
         <dependency>
-            <groupId>%s</groupId>
+            <groupId>com.fnproject.fn</groupId>
             <artifactId>testing-core</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>%s</groupId>
+            <groupId>com.fnproject.fn</groupId>
             <artifactId>testing-junit4</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>
