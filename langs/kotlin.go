@@ -213,7 +213,7 @@ func (lh *KotlinLangHelper) getFDKLastestFromURL(comURL string, bintrayURL strin
 		}
 	}
 
-	//Second time search for com.fnproject.fn from Bintray to get the latest version, if both com.fnproject.fn and io.fnproject.fn fails
+	//Second time search for com.fnproject.fn from Bintray to get the latest version, if fetch from Maven fails
 	buf, err = lh.getURLResponse(bintrayURL, true)
 	if err == nil {
 		version, e1 := lh.parseBintrayResponse(*buf)

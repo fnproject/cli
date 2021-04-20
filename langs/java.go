@@ -224,7 +224,7 @@ func (h *JavaLangHelper) getFDKLastestFromURL(comURL string, bintrayURL string) 
 		}
 	}
 
-	//Second time search for com.fnproject.fn from Bintray to get the latest version, if both com.fnproject.fn and io.fnproject.fn fails
+	//Second time search for com.fnproject.fn from Bintray to get the latest version, if fetch from Maven fails
 	buf, err = h.getURLResponse(bintrayURL, true)
 	if err == nil {
 		version, e1 := h.parseBintrayResponse(*buf)
