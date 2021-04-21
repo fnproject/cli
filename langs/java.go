@@ -200,45 +200,44 @@ func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
 	if version != "" {
 		return version, nil
 	}
-	version, err := h.getFDKLastestFromURL(mavenVersionUrl, bintrayVersionURL)
+	version,pType, err := getFDKLatestFromURL(mavenVersionUrl, bintrayVersionURL)
 	if err != nil {
 		return "", fetchError
 	}
 
 	h.latestFdkVersion = version
+	h.pomType = pType
 	return version, nil
 }
 
-func (h *JavaLangHelper) getFDKLastestFromURL(comURL string, bintrayURL string) (string, error) {
-	var buf *bytes.Buffer
+func getFDKLatestFromURL(comURL string, bintrayURL string) (string, string, error) {
+	var data []byte
 	var err error
 	err = fmt.Errorf("All URL failed to respond ")
 
 	//First search for com.fnproject.fn from Maven Central to get the latest version
-	buf, err = h.getURLResponse(comURL, false)
+	data, err = getURLResponse(comURL, false)
 	if err == nil {
-		version, e1 := h.parseMavenResponse(*buf)
+		version, e1 := parseMavenResponse(data)
 		if e1 == nil {
-			h.pomType = "maven"
-			return version, e1
+			return version,"maven", e1
 		}
 	}
 
 	//Second time search for com.fnproject.fn from Bintray to get the latest version, if fetch from Maven fails
-	buf, err = h.getURLResponse(bintrayURL, true)
+	data, err = getURLResponse(bintrayURL, true)
 	if err == nil {
-		version, e1 := h.parseBintrayResponse(*buf)
+		version, e1 := parseBintrayResponse(data)
 		if e1 == nil {
-			h.pomType = "bintray"
-			return version, e1
+			return version, "bintray", e1
 		}
 	}
 
 	//In all other case return error as latest FDK version is not identified
-	return "", err
+	return "", "",err
 }
 
-func (h *JavaLangHelper) getURLResponse(url string, inSecureSkipVerify bool) (*bytes.Buffer, error) {
+func getURLResponse(url string, inSecureSkipVerify bool) ([]byte, error) {
 	defaultTransport := http.DefaultTransport.(*http.Transport)
 	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
 	noVerifyTransport := &http.Transport{
@@ -252,19 +251,18 @@ func (h *JavaLangHelper) getURLResponse(url string, inSecureSkipVerify bool) (*b
 	}
 	client := &http.Client{Transport: noVerifyTransport}
 	resp, err := client.Get(url)
+	defer resp.Body.Close()
 	if err != nil || resp.StatusCode != 200 {
 		return nil, fmt.Errorf("Failed to fetch response from URL %s Error: %v Status: %d", url, err, resp.StatusCode)
 	}
-	buf := &bytes.Buffer{}
-	_, err = buf.ReadFrom(resp.Body)
+	data, err:=ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-
-	return buf, nil
+	return data, nil
 }
 
-func (h *JavaLangHelper) parseMavenResponse(buf bytes.Buffer) (string, error) {
+func parseMavenResponse(data []byte) (string, error) {
 	type ParsedResponse struct {
 		XMLName    xml.Name `xml:"metadata"`
 		Text       string   `xml:",chardata"`
@@ -282,7 +280,7 @@ func (h *JavaLangHelper) parseMavenResponse(buf bytes.Buffer) (string, error) {
 		} `xml:"versioning"`
 	}
 	var response ParsedResponse
-	err := xml.Unmarshal(buf.Bytes(), &response)
+	err := xml.Unmarshal(data, &response)
 	if err != nil {
 		return "", err
 	}
@@ -294,12 +292,12 @@ func (h *JavaLangHelper) parseMavenResponse(buf bytes.Buffer) (string, error) {
 	return version, nil
 }
 
-func (h *JavaLangHelper) parseBintrayResponse(buf bytes.Buffer) (string, error) {
+func parseBintrayResponse(data []byte) (string, error) {
 	type parsedResponse struct {
 		Version string `json:"latest_version"`
 	}
 	parsedResp := make([]parsedResponse, 1)
-	err := json.Unmarshal(buf.Bytes(), &parsedResp)
+	err := json.Unmarshal(data, &parsedResp)
 	if err != nil {
 		return "", err
 	}

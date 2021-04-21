@@ -2,13 +2,9 @@ package langs
 
 import (
 	"bytes"
-	"crypto/tls"
-	"encoding/json"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -189,110 +185,13 @@ func (lh *KotlinLangHelper) getFDKAPIVersion() (string, error) {
 	if version != "" {
 		return version, nil
 	}
-	version, err := lh.getFDKLastestFromURL(mavenVersionUrl, bintrayVersionURL)
+	version,pType, err := getFDKLatestFromURL(mavenVersionUrl, bintrayVersionURL)
 	if err != nil {
 		return "", fetchError
 	}
 
+	lh.pomType = pType
 	lh.latestFdkVersion = version
-	return version, nil
-}
-
-func (lh *KotlinLangHelper) getFDKLastestFromURL(comURL string, bintrayURL string) (string, error) {
-	var buf *bytes.Buffer
-	var err error
-	err = fmt.Errorf("All URL failed to respond ")
-
-	//First search for com.fnproject.fn from Maven Central to get the latest version
-	buf, err = lh.getURLResponse(comURL, false)
-	if err == nil {
-		version, e1 := lh.parseMavenResponse(*buf)
-		if e1 == nil {
-			lh.pomType = "maven"
-			return version, e1
-		}
-	}
-
-	//Second time search for com.fnproject.fn from Bintray to get the latest version, if fetch from Maven fails
-	buf, err = lh.getURLResponse(bintrayURL, true)
-	if err == nil {
-		version, e1 := lh.parseBintrayResponse(*buf)
-		if e1 == nil {
-			lh.pomType = "bintray"
-			return version, e1
-		}
-	}
-
-	//In all other case return error as latest FDK version is not identified
-	return "", err
-}
-
-func (lh *KotlinLangHelper) getURLResponse(url string, inSecureSkipVerify bool) (*bytes.Buffer, error) {
-	defaultTransport := http.DefaultTransport.(*http.Transport)
-	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
-	noVerifyTransport := &http.Transport{
-		Proxy:                 defaultTransport.Proxy,
-		DialContext:           defaultTransport.DialContext,
-		MaxIdleConns:          defaultTransport.MaxIdleConns,
-		IdleConnTimeout:       defaultTransport.IdleConnTimeout,
-		ExpectContinueTimeout: defaultTransport.ExpectContinueTimeout,
-		TLSHandshakeTimeout:   defaultTransport.TLSHandshakeTimeout,
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: inSecureSkipVerify},
-	}
-	client := &http.Client{Transport: noVerifyTransport}
-	resp, err := client.Get(url)
-	if err != nil || resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Failed to fetch response from URL %s Error: %v Status: %d", url, err, resp.StatusCode)
-	}
-	buf := &bytes.Buffer{}
-	_, err = buf.ReadFrom(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return buf, nil
-}
-
-func (lh *KotlinLangHelper) parseMavenResponse(buf bytes.Buffer) (string, error) {
-	type ParsedResponse struct {
-		XMLName    xml.Name `xml:"metadata"`
-		Text       string   `xml:",chardata"`
-		GroupId    string   `xml:"groupId"`
-		ArtifactId string   `xml:"artifactId"`
-		Versioning struct {
-			Text     string `xml:",chardata"`
-			Latest   string `xml:"latest"`
-			Release  string `xml:"release"`
-			Versions struct {
-				Text    string   `xml:",chardata"`
-				Version []string `xml:"version"`
-			} `xml:"versions"`
-			LastUpdated string `xml:"lastUpdated"`
-		} `xml:"versioning"`
-	}
-	var response ParsedResponse
-	err := xml.Unmarshal(buf.Bytes(), &response)
-	if err != nil {
-		return "", err
-	}
-
-	if len(response.Versioning.Versions.Version) == 0 {
-		return "", fmt.Errorf("Maven response is not valid")
-	}
-	version := response.Versioning.Latest
-	return version, nil
-}
-
-func (lh *KotlinLangHelper) parseBintrayResponse(buf bytes.Buffer) (string, error) {
-	type parsedResponse struct {
-		Version string `json:"latest_version"`
-	}
-	parsedResp := make([]parsedResponse, 1)
-	err := json.Unmarshal(buf.Bytes(), &parsedResp)
-	if err != nil {
-		return "", err
-	}
-	version := parsedResp[0].Version
-
 	return version, nil
 }
 
