@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -19,6 +20,7 @@ type JavaLangHelper struct {
 	BaseHelper
 	version          string
 	latestFdkVersion string
+	pomType          string
 }
 
 func (h *JavaLangHelper) Handles(lang string) bool {
@@ -87,7 +89,7 @@ func (h *JavaLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, h.version)), os.FileMode(0644)); err != nil {
+	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, h.version, h.pomType)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -174,8 +176,12 @@ func mavenOpts() string {
 /*    TODO temporarily generate maven project boilerplate from hardcoded values.
 Will eventually move to using a maven archetype.
 */
-func pomFileContent(APIversion, javaVersion string) string {
-	return fmt.Sprintf(pomFile, APIversion, javaVersion, javaVersion)
+func pomFileContent(APIversion, javaVersion, pomType string) string {
+	if pomType == "maven" {
+		return fmt.Sprintf(mavenPomFile, APIversion, javaVersion, javaVersion)
+	} else {
+		return fmt.Sprintf(bintrayPomFile, APIversion, javaVersion, javaVersion)
+	}
 }
 
 func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
@@ -184,20 +190,56 @@ func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
 		return h.latestFdkVersion, nil
 	}
 
-	const versionURL = "https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
-	const versionEnv = "FN_JAVA_FDK_VERSION"
-	fetchError := fmt.Errorf("Failed to fetch latest Java FDK javaVersion from %v. Check your network settings or manually override the javaVersion by setting %s", versionURL, versionEnv)
+	const bintrayVersionURL = "https://api.bintray.com/search/packages/maven?repo=fnproject&g=com.fnproject.fn&a=fdk"
+	const mavenVersionUrl = "https://repo1.maven.org/maven2/com/fnproject/fn/fdk/maven-metadata.xml"
 
-	type parsedResponse struct {
-		Version string `json:"latest_version"`
-	}
+	const versionEnv = "FN_JAVA_FDK_VERSION"
+	fetchError := fmt.Errorf("Failed to fetch latest Java FDK javaVersion. Check your network settings or manually override the javaVersion by setting %s", versionEnv)
 	version := os.Getenv(versionEnv)
+
 	if version != "" {
 		return version, nil
 	}
+	version,pType, err := getFDKLatestFromURL(mavenVersionUrl, bintrayVersionURL)
+	if err != nil {
+		return "", fetchError
+	}
 
-	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
+	h.latestFdkVersion = version
+	h.pomType = pType
+	return version, nil
+}
+
+func getFDKLatestFromURL(comURL string, bintrayURL string) (string, string, error) {
+	var data []byte
+	var err error
+	err = fmt.Errorf("All URL failed to respond ")
+
+	//First search for com.fnproject.fn from Maven Central to get the latest version
+	data, err = getURLResponse(comURL, false)
+	if err == nil {
+		version, e1 := parseMavenResponse(data)
+		if e1 == nil {
+			return version,"maven", e1
+		}
+	}
+
+	//Second time search for com.fnproject.fn from Bintray to get the latest version, if fetch from Maven fails
+	data, err = getURLResponse(bintrayURL, true)
+	if err == nil {
+		version, e1 := parseBintrayResponse(data)
+		if e1 == nil {
+			return version, "bintray", e1
+		}
+	}
+
+	//In all other case return error as latest FDK version is not identified
+	return "", "",err
+}
+
+func getURLResponse(url string, inSecureSkipVerify bool) ([]byte, error) {
 	defaultTransport := http.DefaultTransport.(*http.Transport)
+	// nishalad95: bin tray TLS certs cause verification issues on OSX, skip TLS verification
 	noVerifyTransport := &http.Transport{
 		Proxy:                 defaultTransport.Proxy,
 		DialContext:           defaultTransport.DialContext,
@@ -205,29 +247,62 @@ func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
 		IdleConnTimeout:       defaultTransport.IdleConnTimeout,
 		ExpectContinueTimeout: defaultTransport.ExpectContinueTimeout,
 		TLSHandshakeTimeout:   defaultTransport.TLSHandshakeTimeout,
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: inSecureSkipVerify},
 	}
 	client := &http.Client{Transport: noVerifyTransport}
-
-	resp, err := client.Get(versionURL)
+	resp, err := client.Get(url)
+	defer resp.Body.Close()
 	if err != nil || resp.StatusCode != 200 {
-		return "", fetchError
+		return nil, fmt.Errorf("Failed to fetch response from URL %s Error: %v Status: %d", url, err, resp.StatusCode)
 	}
-
-	buf := bytes.Buffer{}
-	_, err = buf.ReadFrom(resp.Body)
+	data, err:=ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", fetchError
+		return nil, err
+	}
+	return data, nil
+}
+
+func parseMavenResponse(data []byte) (string, error) {
+	type ParsedResponse struct {
+		XMLName    xml.Name `xml:"metadata"`
+		Text       string   `xml:",chardata"`
+		GroupId    string   `xml:"groupId"`
+		ArtifactId string   `xml:"artifactId"`
+		Versioning struct {
+			Text     string `xml:",chardata"`
+			Latest   string `xml:"latest"`
+			Release  string `xml:"release"`
+			Versions struct {
+				Text    string   `xml:",chardata"`
+				Version []string `xml:"version"`
+			} `xml:"versions"`
+			LastUpdated string `xml:"lastUpdated"`
+		} `xml:"versioning"`
+	}
+	var response ParsedResponse
+	err := xml.Unmarshal(data, &response)
+	if err != nil {
+		return "", err
 	}
 
+	if len(response.Versioning.Versions.Version) == 0 {
+		return "", fmt.Errorf("Maven response is not valid")
+	}
+	version := response.Versioning.Latest
+	return version, nil
+}
+
+func parseBintrayResponse(data []byte) (string, error) {
+	type parsedResponse struct {
+		Version string `json:"latest_version"`
+	}
 	parsedResp := make([]parsedResponse, 1)
-	err = json.Unmarshal(buf.Bytes(), &parsedResp)
+	err := json.Unmarshal(data, &parsedResp)
 	if err != nil {
-		return "", fetchError
+		return "", err
 	}
+	version := parsedResp[0].Version
 
-	version = parsedResp[0].Version
-	h.latestFdkVersion = version
 	return version, nil
 }
 
@@ -236,7 +311,7 @@ func (h *JavaLangHelper) FixImagesOnInit() bool {
 }
 
 const (
-	pomFile = `<?xml version="1.0" encoding="UTF-8"?>
+	mavenPomFile = `<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -249,7 +324,70 @@ const (
     <artifactId>hello</artifactId>
     <version>1.0.0</version>
 
-    <repositories>
+    <dependencies>
+        <dependency>
+            <groupId>com.fnproject.fn</groupId>
+            <artifactId>api</artifactId>
+            <version>${fdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fnproject.fn</groupId>
+            <artifactId>testing-core</artifactId>
+            <version>${fdk.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fnproject.fn</groupId>
+            <artifactId>testing-junit4</artifactId>
+            <version>${fdk.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
+                <configuration>
+                    <source>%s</source>
+                    <target>%s</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-surefire-plugin</artifactId>
+                 <version>2.22.1</version>
+                 <configuration>
+                     <useSystemClassLoader>false</useSystemClassLoader>
+                 </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+`
+
+	bintrayPomFile = `<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <fdk.version>%s</fdk.version>
+    </properties>
+    <groupId>com.example.fn</groupId>
+    <artifactId>hello</artifactId>
+    <version>1.0.0</version>
+
+	<repositories>
         <repository>
             <id>fn-release-repo</id>
             <url>https://dl.bintray.com/fnproject/fnproject</url>
