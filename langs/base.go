@@ -2,6 +2,7 @@ package langs
 
 import (
 	"errors"
+	"fmt"
 	"os"
 )
 
@@ -20,7 +21,11 @@ func init() {
 	registerHelper(&PythonLangHelper{Version: "3.7"})
 	registerHelper(&PythonLangHelper{Version: "3.7.1"})
 	registerHelper(&PythonLangHelper{Version: "3.6"})
-	registerHelper(&RubyLangHelper{})
+
+	//New runtime support for Ruby 2.7
+	// order matter, 'ruby' will pick up the first RubyLangHelper
+	registerHelper(&RubyLangHelper{Version: "2.7"})
+
 	registerHelper(&KotlinLangHelper{})
 }
 
@@ -86,6 +91,8 @@ type LangHelper interface {
 
 func defaultHandles(h LangHelper, lang string) bool {
 	for _, s := range h.LangStrings() {
+		fmt.Println("Lang : %s", s);
+
 		if lang == s {
 			return true
 		}

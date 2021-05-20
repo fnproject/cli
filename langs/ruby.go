@@ -11,6 +11,7 @@ import (
 
 type RubyLangHelper struct {
 	BaseHelper
+	Version string
 }
 
 func (h *RubyLangHelper) Handles(lang string) bool {
@@ -21,7 +22,7 @@ func (h *RubyLangHelper) Runtime() string {
 }
 
 func (h *RubyLangHelper) LangStrings() []string {
-	return []string{"ruby"}
+	return []string{"ruby", fmt.Sprintf("ruby%s", h.Version)}
 }
 func (h *RubyLangHelper) Extensions() []string {
 	return []string{".rb"}
@@ -32,11 +33,31 @@ func (h *RubyLangHelper) CustomMemory() uint64 {
 	return 0
 }
 func (h *RubyLangHelper) BuildFromImage() (string, error) {
-	return "fnproject/ruby:dev", nil
+
+	/*
+		fdkVersion, err := h.getFDKAPIVersion()
+		if err != nil {
+			return "", err
+		}
+
+		if h.version == "8" {
+			return fmt.Sprintf("fnproject/fn-java-fdk-build:%s", fdkVersion), nil
+	*/
+
+	// return fmt.Sprintf("fnproject/ruby:dev-%s", h.Version), nil
+	//fdkVersion, err := h.getFDKAPIVersion()
+	fdkVersion, err := "0.21.0", nil
+
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("fnproject/ruby:%s-dev", h.Version), nil
 }
 
 func (h *RubyLangHelper) RunFromImage() (string, error) {
-	return "fnproject/ruby", nil
+	// return fmt.Sprintf("fnproject/ruby:%s", h.Version), nil
+	return fmt.Sprintf("fnproject/ruby:%s", h.Version), nil
 }
 
 func (h *RubyLangHelper) DockerfileBuildCmds() []string {
@@ -124,6 +145,10 @@ func (h *RubyLangHelper) getFDKAPIVersion() (string, error) {
 	}
 
 	return parsedResp.Version, nil
+}
+
+func (h *RubyLangHelper) FixImagesOnInit() bool {
+	return true
 }
 
 const (
