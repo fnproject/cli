@@ -7,7 +7,7 @@ import (
 
 // not a map because some helpers can handle multiple keys
 var helpers = []LangHelper{}
-var oldVersions = map[string] LangHelper{}
+var fallBackOlderVersions = map[string] LangHelper{}
 
 func init() {
 
@@ -30,7 +30,7 @@ func init() {
 	registerHelper(&KotlinLangHelper{})
 
 	// for older versions support backwards compatibility
-	oldVersions["ruby"] = &RubyLangHelper{Version: "2.5"}
+	fallBackOlderVersions["ruby"] = &RubyLangHelper{Version: "2.5"}
 
 	// add for other languages here..
 }
@@ -57,8 +57,8 @@ func GetLangHelper(lang string) LangHelper {
 	return nil
 }
 
-func GetOlderLangHelper(lang string) LangHelper {
-	return oldVersions[lang]
+func GetFallbackLangHelper(lang string) LangHelper {
+	return fallBackOlderVersions[lang]
 }
 
 // LangHelper is the interface that language helpers must implement.

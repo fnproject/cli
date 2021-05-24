@@ -217,8 +217,13 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 
 		helper = langs.GetLangHelper(ff.Runtime)
 
+		/*
+			To allow support of deprecated runtimes from older Fn CLI clients.
+			If in yaml file runtime and build image properties are not there then select
+			appropriate older runtime version.
+		*/
 		if ff.Build_image == "" && ff.Run_image == "" && helper.Runtime() == ff.Runtime {
-			helper = langs.GetOlderLangHelper(ff.Runtime)
+			helper = langs.GetFallbackLangHelper(ff.Runtime)
 		}
 
 		if helper == nil {
