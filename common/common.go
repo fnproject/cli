@@ -124,6 +124,7 @@ func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708,
 }
 
 func localBuild(path string, steps []string) error {
+	fmt.Println("cmd is %s", steps)
 	for _, cmd := range steps {
 		exe := exec.Command("/bin/sh", "-c", cmd)
 		exe.Dir = filepath.Dir(path)
@@ -213,10 +214,17 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 		if ff.Runtime == FuncfileDockerRuntime {
 			return fmt.Errorf("Dockerfile does not exist for 'docker' runtime")
 		}
+
 		helper = langs.GetLangHelper(ff.Runtime)
+
+		if ff.Build_image == "" && ff.Run_image == "" && helper.Runtime() == ff.Runtime {
+			helper = langs.GetOlderLangHelper(ff.Runtime)
+		}
+
 		if helper == nil {
 			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
 		}
+
 		dockerfile, err = writeTmpDockerfileV20180708(helper, dir, ff)
 		if err != nil {
 			return err
@@ -429,6 +437,13 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 	// multi-stage build: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
 	dfLines := []string{}
 	bi := ff.Build_image
+
+	// check if older version yaml file without build and runtime image
+	if bi == ""  && ff.Run_image == ""{
+		// get recent deprecated language helper..
+
+	}
+
 	if bi == "" {
 		bi, err = helper.BuildFromImage()
 		if err != nil {

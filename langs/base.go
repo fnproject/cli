@@ -2,14 +2,15 @@ package langs
 
 import (
 	"errors"
-	"fmt"
 	"os"
 )
 
 // not a map because some helpers can handle multiple keys
 var helpers = []LangHelper{}
+var oldVersions = map[string] LangHelper{}
 
 func init() {
+
 	registerHelper(&GoLangHelper{})
 	// order matter, 'java' will pick up the first JavaLangHelper
 	registerHelper(&JavaLangHelper{version: "11"})
@@ -27,6 +28,11 @@ func init() {
 	registerHelper(&RubyLangHelper{Version: "2.7"})
 
 	registerHelper(&KotlinLangHelper{})
+
+	// for older versions support backwards compatibility
+	oldVersions["ruby"] = &RubyLangHelper{Version: "2.5"}
+
+	// add for other languages here..
 }
 
 func registerHelper(h LangHelper) {
@@ -49,6 +55,10 @@ func GetLangHelper(lang string) LangHelper {
 		}
 	}
 	return nil
+}
+
+func GetOlderLangHelper(lang string) LangHelper {
+	return oldVersions[lang]
 }
 
 // LangHelper is the interface that language helpers must implement.
@@ -91,8 +101,6 @@ type LangHelper interface {
 
 func defaultHandles(h LangHelper, lang string) bool {
 	for _, s := range h.LangStrings() {
-		fmt.Println("Lang : %s", s);
-
 		if lang == s {
 			return true
 		}

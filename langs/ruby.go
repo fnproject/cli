@@ -17,6 +17,7 @@ type RubyLangHelper struct {
 func (h *RubyLangHelper) Handles(lang string) bool {
 	return defaultHandles(h, lang)
 }
+
 func (h *RubyLangHelper) Runtime() string {
 	return h.LangStrings()[0]
 }
@@ -33,25 +34,6 @@ func (h *RubyLangHelper) CustomMemory() uint64 {
 	return 0
 }
 func (h *RubyLangHelper) BuildFromImage() (string, error) {
-
-	/*
-		fdkVersion, err := h.getFDKAPIVersion()
-		if err != nil {
-			return "", err
-		}
-
-		if h.version == "8" {
-			return fmt.Sprintf("fnproject/fn-java-fdk-build:%s", fdkVersion), nil
-	*/
-
-	// return fmt.Sprintf("fnproject/ruby:dev-%s", h.Version), nil
-	//fdkVersion, err := h.getFDKAPIVersion()
-	fdkVersion, err := "0.21.0", nil
-
-	if err != nil {
-		return "", err
-	}
-
 	return fmt.Sprintf("fnproject/ruby:%s-dev", h.Version), nil
 }
 
@@ -149,6 +131,13 @@ func (h *RubyLangHelper) getFDKAPIVersion() (string, error) {
 
 func (h *RubyLangHelper) FixImagesOnInit() bool {
 	return true
+}
+
+func (h *RubyLangHelper) GetOlderVersion() *RubyLangHelper {
+	if h.Version == "" {
+		return &RubyLangHelper{Version: "2.5.3"}
+	}
+	return h
 }
 
 const (
