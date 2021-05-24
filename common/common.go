@@ -161,6 +161,15 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 
 	var helper langs.LangHelper
 	dockerfile := filepath.Join(dir, "Dockerfile")
+	/*
+		To allow support of deprecated runtimes from older Fn CLI clients.
+		Older yaml schema don't have build_image and run_image properties,
+		so no need to check for them.
+	*/
+	if helper.Runtime() == ff.Runtime {
+		helper = langs.GetFallbackLangHelper(ff.Runtime)
+	}
+
 	if !Exists(dockerfile) {
 		if ff.Runtime == FuncfileDockerRuntime {
 			return fmt.Errorf("Dockerfile does not exist for 'docker' runtime")
@@ -173,7 +182,9 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 		if err != nil {
 			return err
 		}
+
 		defer os.Remove(dockerfile)
+
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
 			if err != nil {
@@ -181,6 +192,7 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 			}
 		}
 	}
+
 	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
@@ -210,16 +222,30 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 		if ff.Runtime == FuncfileDockerRuntime {
 			return fmt.Errorf("Dockerfile does not exist for 'docker' runtime")
 		}
+
 		helper = langs.GetLangHelper(ff.Runtime)
+
+		/*
+			To allow support of deprecated runtimes from older Fn CLI clients.
+			If in yaml/json file runtime and build image properties are not there then select
+			appropriate older runtime version.
+		*/
+		if ff.Build_image == "" && ff.Run_image == "" && helper.Runtime() == ff.Runtime {
+			helper = langs.GetFallbackLangHelper(ff.Runtime)
+		}
+
 		if helper == nil {
 
 			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
 		}
+
 		dockerfile, err = writeTmpDockerfileV20180708(helper, dir, ff)
 		if err != nil {
 			return err
 		}
+
 		defer os.Remove(dockerfile)
+
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
 			if err != nil {
@@ -227,6 +253,7 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 			}
 		}
 	}
+
 	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
@@ -352,6 +379,9 @@ func Exists(name string) bool {
 }
 
 func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (string, error) {
+
+	fmt.Println("~~in writeTmpDockerfile dockerfile")
+
 	if ff.Entrypoint == "" && ff.Cmd == "" {
 		return "", errors.New("entrypoint and cmd are missing, you must provide one or the other")
 	}
@@ -419,6 +449,7 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 	// multi-stage build: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
 	dfLines := []string{}
 	bi := ff.Build_image
+
 	if bi == "" {
 		bi, err = helper.BuildFromImage()
 		if err != nil {

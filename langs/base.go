@@ -7,8 +7,10 @@ import (
 
 // not a map because some helpers can handle multiple keys
 var helpers = []LangHelper{}
+var fallBackOlderVersions = map[string] LangHelper{}
 
 func init() {
+
 	registerHelper(&GoLangHelper{})
 	// order matter, 'java' will pick up the first JavaLangHelper
 	registerHelper(&JavaLangHelper{version: "11"})
@@ -21,8 +23,17 @@ func init() {
 	registerHelper(&PythonLangHelper{Version: "3.7"})
 	registerHelper(&PythonLangHelper{Version: "3.7.1"})
 	registerHelper(&PythonLangHelper{Version: "3.6"})
-	registerHelper(&RubyLangHelper{})
+
+	//New runtime support for Ruby 2.7
+	// order matter, 'ruby' will pick up the first RubyLangHelper
+	registerHelper(&RubyLangHelper{Version: "2.7"})
+
 	registerHelper(&KotlinLangHelper{})
+
+	// for older versions support backwards compatibility
+	fallBackOlderVersions["ruby"] = &RubyLangHelper{Version: "2.5"}
+
+	// add for other languages here..
 }
 
 func registerHelper(h LangHelper) {
@@ -45,6 +56,10 @@ func GetLangHelper(lang string) LangHelper {
 		}
 	}
 	return nil
+}
+
+func GetFallbackLangHelper(lang string) LangHelper {
+	return fallBackOlderVersions[lang]
 }
 
 // LangHelper is the interface that language helpers must implement.
