@@ -81,7 +81,7 @@ func GetDir(c *cli.Context) string {
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string, noCache bool, retainDockerfile bool) (*FuncFile, error) {
+func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string, noCache bool) (*FuncFile, error) {
 	var err error
 	if funcfile.Version == "" {
 		funcfile, err = BumpIt(fpath, Patch)
@@ -94,7 +94,7 @@ func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string
 		return nil, err
 	}
 
-	if err := dockerBuild(verbose, fpath, funcfile, buildArg, noCache, retainDockerfile); err != nil {
+	if err := dockerBuild(verbose, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
 	}
 
@@ -102,7 +102,7 @@ func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool, retainDockerfile bool) (*FuncFileV20180708, error) {
+func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool) (*FuncFileV20180708, error) {
 	var err error
 
 	if funcfile.Version == "" {
@@ -116,7 +116,7 @@ func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708,
 		return nil, err
 	}
 
-	if err := dockerBuildV20180708(verbose, fpath, funcfile, buildArg, noCache, retainDockerfile); err != nil {
+	if err := dockerBuildV20180708(verbose, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
 	}
 
@@ -124,7 +124,6 @@ func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708,
 }
 
 func localBuild(path string, steps []string) error {
-	fmt.Println("cmd is %s", steps)
 	for _, cmd := range steps {
 		exe := exec.Command("/bin/sh", "-c", cmd)
 		exe.Dir = filepath.Dir(path)
@@ -151,7 +150,7 @@ func PrintContextualInfo() {
 	fmt.Println("Current Context: ", currentContext)
 }
 
-func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, noCache bool, retainDockerfile bool) error {
+func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
@@ -174,9 +173,7 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 			return err
 		}
 
-		if !retainDockerfile {
-			defer os.Remove(dockerfile)
-		}
+		defer os.Remove(dockerfile)
 
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
@@ -200,7 +197,7 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 	return nil
 }
 
-func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool, retainDockerfile bool) error {
+func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool) error {
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
@@ -235,9 +232,7 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 			return err
 		}
 
-		if retainDockerfile {
-			defer os.Remove(dockerfile)
-		}
+		defer os.Remove(dockerfile)
 
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
@@ -534,14 +529,12 @@ func DockerPush(ff *FuncFile) error {
 		return err
 	}
 	fmt.Printf("Pushing %v to docker registry...", ff.ImageName())
-	/*
 	cmd := exec.Command("docker", "push", ff.ImageName())
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("error running docker push, are you logged into docker?: %v", err)
 	}
-	 */
 	return nil
 }
 
@@ -551,7 +544,6 @@ func DockerPushV20180708(ff *FuncFileV20180708) error {
 	if err != nil {
 		return err
 	}
-	/*
 	fmt.Printf("Pushing %v to docker registry...", ff.ImageNameV20180708())
 	cmd := exec.Command("docker", "push", ff.ImageNameV20180708())
 	cmd.Stderr = os.Stderr
@@ -559,7 +551,6 @@ func DockerPushV20180708(ff *FuncFileV20180708) error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("error running docker push, are you logged into docker?: %v", err)
 	}
-	 */
 	fmt.Printf("Pushing %v to docker registry...", ff.ImageNameV20180708())
 	return nil
 }

@@ -54,7 +54,6 @@ type deploycmd struct {
 	registry         string
 	all              bool
 	noBump           bool
-	retainDockerfile bool
 }
 
 func (p *deploycmd) flags() []cli.Flag {
@@ -98,11 +97,6 @@ func (p *deploycmd) flags() []cli.Flag {
 			Name:        "no-bump",
 			Usage:       "Do not bump the version, assuming external version management",
 			Destination: &p.noBump,
-		},
-		cli.BoolFlag{
-			Name:        "retain-dockerfile",
-			Usage:       "Do not delete the temp dockerfile which is the default behavior",
-			Destination: &p.retainDockerfile,
 		},
 		cli.StringSliceFlag{
 			Name:  "build-arg",
@@ -298,7 +292,7 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 
 	buildArgs := c.StringSlice("build-arg")
 
-	_, err = common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, p.retainDockerfile)
+	_, err = common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache)
 	if err != nil {
 		return err
 	}

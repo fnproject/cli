@@ -27,7 +27,6 @@ func BuildCommand() cli.Command {
 
 type buildcmd struct {
 	noCache          bool
-	retainDockerfile bool
 }
 
 func (b *buildcmd) flags() []cli.Flag {
@@ -41,11 +40,6 @@ func (b *buildcmd) flags() []cli.Flag {
 			Name:        "no-cache",
 			Usage:       "Don't use docker cache",
 			Destination: &b.noCache,
-		},
-		cli.BoolFlag{
-			Name:        "retain-dockerfile",
-			Usage:       "Do not delete the temp dockerfile which is the default behavior",
-			Destination: &b.retainDockerfile,
 		},
 		cli.StringSliceFlag{
 			Name:  "build-arg",
@@ -87,7 +81,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 		}
 
 		buildArgs := c.StringSlice("build-arg")
-		ff, err = common.BuildFuncV20180708(common.IsVerbose(), fpath, ff, buildArgs, b.noCache, b.retainDockerfile)
+		ff, err = common.BuildFuncV20180708(common.IsVerbose(), fpath, ff, buildArgs, b.noCache)
 		if err != nil {
 			return err
 		}
@@ -102,7 +96,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 		}
 
 		buildArgs := c.StringSlice("build-arg")
-		ff, err = common.BuildFunc(common.IsVerbose(), fpath, ff, buildArgs, b.noCache, b.retainDockerfile)
+		ff, err = common.BuildFunc(common.IsVerbose(), fpath, ff, buildArgs, b.noCache)
 		if err != nil {
 			return err
 		}
