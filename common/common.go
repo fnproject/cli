@@ -160,14 +160,6 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 
 	var helper langs.LangHelper
 	dockerfile := filepath.Join(dir, "Dockerfile")
-	/*
-		To allow support of deprecated runtimes from older Fn CLI clients.
-		Older yaml schema don't have build_image and run_image properties,
-		so no need to check for them.
-	*/
-	if helper.Runtime() == ff.Runtime {
-		helper = langs.GetFallbackLangHelper(ff.Runtime)
-	}
 
 	if !Exists(dockerfile) {
 		if ff.Runtime == FuncfileDockerRuntime {
@@ -177,6 +169,16 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 		if helper == nil {
 			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
 		}
+
+		/*
+			To allow support of deprecated runtimes from older Fn CLI clients.
+			Older yaml schema don't have build_image and run_image properties,
+			so no need to check for them.
+		*/
+		if helper.Runtime() == ff.Runtime {
+			helper = langs.GetFallbackLangHelper(ff.Runtime)
+		}
+
 		dockerfile, err = writeTmpDockerfile(helper, dir, ff)
 		if err != nil {
 			return err
@@ -222,6 +224,9 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 		}
 
 		helper = langs.GetLangHelper(ff.Runtime)
+		if helper == nil {
+			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
+		}
 
 		/*
 			To allow support of deprecated runtimes from older Fn CLI clients.
@@ -230,10 +235,6 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 		*/
 		if ff.Build_image == "" && ff.Run_image == "" && helper.Runtime() == ff.Runtime {
 			helper = langs.GetFallbackLangHelper(ff.Runtime)
-		}
-
-		if helper == nil {
-			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
 		}
 
 		dockerfile, err = writeTmpDockerfileV20180708(helper, dir, ff)
