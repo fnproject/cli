@@ -127,3 +127,7 @@ func (h *PythonLangHelper) DockerfileCopyCmds() []string {
 		"ENV PYTHONPATH=/function:/python",
 	}
 }
+
+func (h *PythonLangHelper) FixImagesOnInit() bool {
+	return true
+}

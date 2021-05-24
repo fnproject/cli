@@ -234,6 +234,7 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 			appropriate older runtime version.
 		*/
 		if ff.Build_image == "" && ff.Run_image == "" && helper.Runtime() == ff.Runtime {
+			fmt.Println("~~Changing helper for language : " + helper.Runtime())
 			helper = langs.GetFallbackLangHelper(ff.Runtime)
 		}
 
@@ -377,8 +378,6 @@ func Exists(name string) bool {
 }
 
 func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (string, error) {
-
-	fmt.Println("~~in writeTmpDockerfile dockerfile")
 
 	if ff.Entrypoint == "" && ff.Cmd == "" {
 		return "", errors.New("entrypoint and cmd are missing, you must provide one or the other")

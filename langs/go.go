@@ -9,6 +9,7 @@ import (
 
 type GoLangHelper struct {
 	BaseHelper
+	Version string
 }
 
 func (h *GoLangHelper) Handles(lang string) bool {
@@ -135,3 +136,7 @@ func myHandler(ctx context.Context, in io.Reader, out io.Writer) {
 module func
 `
 )
+
+func (h *GoLangHelper) FixImagesOnInit() bool {
+	return true
+}
