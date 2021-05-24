@@ -133,13 +133,6 @@ func (h *RubyLangHelper) FixImagesOnInit() bool {
 	return true
 }
 
-func (h *RubyLangHelper) GetOlderVersion() *RubyLangHelper {
-	if h.Version == "" {
-		return &RubyLangHelper{Version: "2.5.3"}
-	}
-	return h
-}
-
 const (
 	rubySrcBoilerplate = `require 'fdk'
 

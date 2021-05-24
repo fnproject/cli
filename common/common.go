@@ -160,6 +160,15 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 
 	var helper langs.LangHelper
 	dockerfile := filepath.Join(dir, "Dockerfile")
+	/*
+		To allow support of deprecated runtimes from older Fn CLI clients.
+		Older yaml schema don't have build_image and run_image properties,
+		so no need to check for them.
+	*/
+	if helper.Runtime() == ff.Runtime {
+		helper = langs.GetFallbackLangHelper(ff.Runtime)
+	}
+
 	if !Exists(dockerfile) {
 		if ff.Runtime == FuncfileDockerRuntime {
 			return fmt.Errorf("Dockerfile does not exist for 'docker' runtime")
@@ -216,7 +225,7 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 
 		/*
 			To allow support of deprecated runtimes from older Fn CLI clients.
-			If in yaml file runtime and build image properties are not there then select
+			If in yaml/json file runtime and build image properties are not there then select
 			appropriate older runtime version.
 		*/
 		if ff.Build_image == "" && ff.Run_image == "" && helper.Runtime() == ff.Runtime {
@@ -438,12 +447,6 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 	dfLines := []string{}
 	bi := ff.Build_image
 
-	// check if older version yaml file without build and runtime image
-	if bi == ""  && ff.Run_image == ""{
-		// get recent deprecated language helper..
-
-	}
-
 	if bi == "" {
 		bi, err = helper.BuildFromImage()
 		if err != nil {
@@ -551,7 +554,6 @@ func DockerPushV20180708(ff *FuncFileV20180708) error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("error running docker push, are you logged into docker?: %v", err)
 	}
-	fmt.Printf("Pushing %v to docker registry...", ff.ImageNameV20180708())
 	return nil
 }
 
