@@ -151,7 +151,6 @@ func PrintContextualInfo() {
 }
 
 func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, noCache bool) error {
-	fmt.Println("New")
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
@@ -210,7 +209,6 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 }
 
 func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool) error {
-	fmt.Println("old")
 	err := dockerVersionCheck()
 	if err != nil {
 		return err
