@@ -184,7 +184,7 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 			return err
 		}
 
-		defer os.Remove(dockerfile)
+		//defer os.Remove(dockerfile)
 
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
@@ -234,7 +234,6 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 			appropriate older runtime version.
 		*/
 		if ff.Build_image == "" && ff.Run_image == "" && helper.Runtime() == ff.Runtime {
-			fmt.Println("~~Changing helper for language : " + helper.Runtime())
 			helper = langs.GetFallbackLangHelper(ff.Runtime)
 		}
 
@@ -243,7 +242,7 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 			return err
 		}
 
-		defer os.Remove(dockerfile)
+		//defer os.Remove(dockerfile)
 
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
