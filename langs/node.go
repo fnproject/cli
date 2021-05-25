@@ -28,7 +28,6 @@ func (lh *NodeLangHelper) Extensions() []string {
 	// this won't be chosen by default
 	return []string{".js"}
 }
-
 func (lh *NodeLangHelper) BuildFromImage() (string, error) {
 	return fmt.Sprintf("roneet101/nodey:%s-dev", lh.Version), nil
 }
@@ -158,6 +157,9 @@ func (h *NodeLangHelper) getFDKAPIVersion() (string, error) {
 
 	return parsedResp.DistTags.Latest, nil
 }
+
 func (h *NodeLangHelper) FixImagesOnInit() bool {
 	return true
 }
+
+

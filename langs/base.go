@@ -26,15 +26,17 @@ func init() {
 
 	//New runtime support for Ruby 2.7
 	// order matter, 'ruby' will pick up the first RubyLangHelper
-	registerHelper(&RubyLangHelper{Version: "2.7"})
+	//registerHelper(&RubyLangHelper{Version: "2.7"})
+	registerHelper(&RubyLangHelper{Version: "2.5"})
 
 	registerHelper(&KotlinLangHelper{})
 
 	// for older versions support backwards compatibility
 	fallBackOlderVersions["ruby"] = &RubyLangHelper{Version: "2.5"}
 	fallBackOlderVersions["node"] = &NodeLangHelper{Version: "11"}
+	fallBackOlderVersions["go"] = &GoLangHelper{Version: "1.11"}
+	fallBackOlderVersions["python"] = &PythonLangHelper{Version: "3.7"}
 
-	// add for other languages here..
 }
 
 func registerHelper(h LangHelper) {
