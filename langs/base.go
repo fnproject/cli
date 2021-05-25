@@ -32,6 +32,7 @@ func init() {
 
 	// for older versions support backwards compatibility
 	fallBackOlderVersions["ruby"] = &RubyLangHelper{Version: "2.5"}
+	fallBackOlderVersions["node"] = &NodeLangHelper{Version: "11"}
 
 	// add for other languages here..
 }
