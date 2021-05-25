@@ -61,7 +61,7 @@ const packageJsonContent = `{
 `
 
 func (h *NodeLangHelper) GenerateBoilerplate(path string) error {
-	fdkVersion, err := h.getFDKAPIVersion()
+	fdkVersion, err := h.GetLatestFDKVersion()
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (h *NodeLangHelper) DockerfileCopyCmds() []string {
 	return r
 }
 
-func (h *NodeLangHelper) getFDKAPIVersion() (string, error) {
+func (h *NodeLangHelper) GetLatestFDKVersion() (string, error) {
 
 	const versionURL = "https://registry.npmjs.org/@fnproject/fdk"
 	const versionEnv = "FN_NODE_FDK_VERSION"
@@ -161,5 +161,3 @@ func (h *NodeLangHelper) getFDKAPIVersion() (string, error) {
 func (h *NodeLangHelper) FixImagesOnInit() bool {
 	return true
 }
-
-

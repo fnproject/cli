@@ -26,7 +26,7 @@ func BuildCommand() cli.Command {
 }
 
 type buildcmd struct {
-	noCache          bool
+	noCache bool
 }
 
 func (b *buildcmd) flags() []cli.Flag {

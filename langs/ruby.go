@@ -68,7 +68,7 @@ func (h *RubyLangHelper) Entrypoint() (string, error) {
 func (h *RubyLangHelper) HasBoilerplate() bool { return true }
 
 func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
-	fdkVersion, err := h.getFDKAPIVersion()
+	fdkVersion, err := h.GetLatestFDKVersion()
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
 	return nil
 }
 
-func (h *RubyLangHelper) getFDKAPIVersion() (string, error) {
+func (h *RubyLangHelper) GetLatestFDKVersion() (string, error) {
 
 	const versionURL = "https://rubygems.org/api/v1/versions/fdk/latest.json"
 	const versionEnv = "FN_RUBY_FDK_VERSION"

@@ -38,7 +38,7 @@ func (h *KotlinLangHelper) Extensions() []string {
 // BuildFromImage returns the Docker image used to compile the Maven function project
 func (h *KotlinLangHelper) BuildFromImage() (string, error) {
 
-	fdkVersion, err := h.getFDKAPIVersion()
+	fdkVersion, err := h.GetLatestFDKVersion()
 	if err != nil {
 		return "", err
 	}
@@ -48,7 +48,7 @@ func (h *KotlinLangHelper) BuildFromImage() (string, error) {
 
 // RunFromImage returns the Docker image used to run the Kotlin function.
 func (h *KotlinLangHelper) RunFromImage() (string, error) {
-	fdkVersion, err := h.getFDKAPIVersion()
+	fdkVersion, err := h.GetLatestFDKVersion()
 	if err != nil {
 		return "", err
 	}
@@ -70,7 +70,7 @@ func (h *KotlinLangHelper) GenerateBoilerplate(path string) error {
 		return ErrBoilerplateExists
 	}
 
-	apiVersion, err := h.getFDKAPIVersion()
+	apiVersion, err := h.GetLatestFDKVersion()
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func kotlinPomFileContent(APIversion, pomType string) string {
 	}
 }
 
-func (lh *KotlinLangHelper) getFDKAPIVersion() (string, error) {
+func (lh *KotlinLangHelper) GetLatestFDKVersion() (string, error) {
 
 	if lh.latestFdkVersion != "" {
 		return lh.latestFdkVersion, nil
@@ -185,7 +185,7 @@ func (lh *KotlinLangHelper) getFDKAPIVersion() (string, error) {
 	if version != "" {
 		return version, nil
 	}
-	version,pType, err := getFDKLatestFromURL(mavenVersionUrl, bintrayVersionURL)
+	version, pType, err := getFDKLatestFromURL(mavenVersionUrl, bintrayVersionURL)
 	if err != nil {
 		return "", fetchError
 	}
