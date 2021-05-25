@@ -29,10 +29,10 @@ func (lh *NodeLangHelper) Extensions() []string {
 	return []string{".js"}
 }
 func (lh *NodeLangHelper) BuildFromImage() (string, error) {
-	return fmt.Sprintf("fnproject/node:%s-dev", lh.Version), nil
+	return fmt.Sprintf("roneet101/nodey:%s-dev", lh.Version), nil
 }
 func (lh *NodeLangHelper) RunFromImage() (string, error) {
-	return fmt.Sprintf("fnproject/node:%s", lh.Version), nil
+	return fmt.Sprintf("roneet101/nodey:%s", lh.Version), nil
 }
 
 const funcJsContent = `const fdk=require('@fnproject/fdk');
