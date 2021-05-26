@@ -1,9 +1,11 @@
 package langs
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 )
@@ -32,7 +34,14 @@ func (h *PythonLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 	depFile := "requirements.txt"
-	if err := ioutil.WriteFile(depFile, []byte(reqsPythonSrcBoilerplate), os.FileMode(0644)); err != nil {
+	fdkVersionInfo, err := h.GetLatestFDKVersion()
+	if err != nil {
+		fmt.Println("Unable to get latest FDK version, using default")
+	}
+	if len(fdkVersionInfo) != 0 {
+		fdkVersionInfo = fmt.Sprintf(">=%s", fdkVersionInfo)
+	}
+	if err := ioutil.WriteFile(depFile, []byte(fmt.Sprintf(reqsPythonSrcBoilerplate, fdkVersionInfo)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -116,7 +125,7 @@ def handler(ctx, data: io.BytesIO = None):
         headers={"Content-Type": "application/json"}
     )
 `
-	reqsPythonSrcBoilerplate = `fdk`
+	reqsPythonSrcBoilerplate = `fdk%s`
 )
 
 func (h *PythonLangHelper) DockerfileCopyCmds() []string {
@@ -130,4 +139,21 @@ func (h *PythonLangHelper) DockerfileCopyCmds() []string {
 
 func (h *PythonLangHelper) FixImagesOnInit() bool {
 	return true
+}
+
+type pypiResponseStruct struct {
+	Info struct {
+		Version string `json:"version"`
+	} `json:"info"`
+}
+
+func (h *PythonLangHelper) GetLatestFDKVersion() (string, error) {
+	resp, err := http.Get("https://pypi.org/pypi/fdk/json")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	responseBody := &pypiResponseStruct{}
+	err = json.NewDecoder(resp.Body).Decode(responseBody)
+	return responseBody.Info.Version, err
 }

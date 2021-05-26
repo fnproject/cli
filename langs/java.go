@@ -41,7 +41,7 @@ func (h *JavaLangHelper) Extensions() []string {
 // BuildFromImage returns the Docker image used to compile the Maven function project
 func (h *JavaLangHelper) BuildFromImage() (string, error) {
 
-	fdkVersion, err := h.getFDKAPIVersion()
+	fdkVersion, err := h.GetLatestFDKVersion()
 	if err != nil {
 		return "", err
 	}
@@ -57,7 +57,7 @@ func (h *JavaLangHelper) BuildFromImage() (string, error) {
 
 // RunFromImage returns the Docker image used to run the Java function.
 func (h *JavaLangHelper) RunFromImage() (string, error) {
-	fdkVersion, err := h.getFDKAPIVersion()
+	fdkVersion, err := h.GetLatestFDKVersion()
 	if err != nil {
 		return "", err
 	}
@@ -84,7 +84,7 @@ func (h *JavaLangHelper) GenerateBoilerplate(path string) error {
 		return ErrBoilerplateExists
 	}
 
-	apiVersion, err := h.getFDKAPIVersion()
+	apiVersion, err := h.GetLatestFDKVersion()
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func pomFileContent(APIversion, javaVersion, pomType string) string {
 	}
 }
 
-func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
+func (h *JavaLangHelper) GetLatestFDKVersion() (string, error) {
 
 	if h.latestFdkVersion != "" {
 		return h.latestFdkVersion, nil
@@ -200,7 +200,7 @@ func (h *JavaLangHelper) getFDKAPIVersion() (string, error) {
 	if version != "" {
 		return version, nil
 	}
-	version,pType, err := getFDKLatestFromURL(mavenVersionUrl, bintrayVersionURL)
+	version, pType, err := getFDKLatestFromURL(mavenVersionUrl, bintrayVersionURL)
 	if err != nil {
 		return "", fetchError
 	}
@@ -220,7 +220,7 @@ func getFDKLatestFromURL(comURL string, bintrayURL string) (string, string, erro
 	if err == nil {
 		version, e1 := parseMavenResponse(data)
 		if e1 == nil {
-			return version,"maven", e1
+			return version, "maven", e1
 		}
 	}
 
@@ -234,7 +234,7 @@ func getFDKLatestFromURL(comURL string, bintrayURL string) (string, string, erro
 	}
 
 	//In all other case return error as latest FDK version is not identified
-	return "", "",err
+	return "", "", err
 }
 
 func getURLResponse(url string, inSecureSkipVerify bool) ([]byte, error) {
@@ -255,7 +255,7 @@ func getURLResponse(url string, inSecureSkipVerify bool) ([]byte, error) {
 	if err != nil || resp.StatusCode != 200 {
 		return nil, fmt.Errorf("Failed to fetch response from URL %s Error: %v Status: %d", url, err, resp.StatusCode)
 	}
-	data, err:=ioutil.ReadAll(resp.Body)
+	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

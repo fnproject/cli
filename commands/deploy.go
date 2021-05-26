@@ -46,14 +46,14 @@ func DeployCommand() cli.Command {
 type deploycmd struct {
 	clientV2 *v2Client.Fn
 
-	appName          string
-	createApp        bool
-	wd               string
-	local            bool
-	noCache          bool
-	registry         string
-	all              bool
-	noBump           bool
+	appName   string
+	createApp bool
+	wd        string
+	local     bool
+	noCache   bool
+	registry  string
+	all       bool
+	noBump    bool
 }
 
 func (p *deploycmd) flags() []cli.Flag {
