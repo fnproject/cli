@@ -34,12 +34,13 @@ func (h *RubyLangHelper) CustomMemory() uint64 {
 	return 0
 }
 func (h *RubyLangHelper) BuildFromImage() (string, error) {
-	return fmt.Sprintf("fnproject/ruby:%s-dev", h.Version), nil
+	//return fmt.Sprintf("fnproject/ruby:%s-dev", h.Version), nil
+	return fmt.Sprintf("greendragons/ruby:%s-dev", h.Version), nil
 }
 
 func (h *RubyLangHelper) RunFromImage() (string, error) {
-	// return fmt.Sprintf("fnproject/ruby:%s", h.Version), nil
-	return fmt.Sprintf("fnproject/ruby:%s", h.Version), nil
+	//return fmt.Sprintf("fnproject/ruby:%s", h.Version), nil
+	return fmt.Sprintf("greendragons/ruby:%s", h.Version), nil
 }
 
 func (h *RubyLangHelper) DockerfileBuildCmds() []string {
