@@ -26,7 +26,6 @@ func init() {
 
 	//New runtime support for Ruby 2.7
 	// order matter, 'ruby' will pick up the first RubyLangHelper
-	//registerHelper(&RubyLangHelper{Version: "2.7"})
 	registerHelper(&RubyLangHelper{Version: "2.7"})
 
 	registerHelper(&KotlinLangHelper{})

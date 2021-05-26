@@ -2,51 +2,40 @@ package test
 
 import (
 	"fmt"
+	"github.com/fnproject/cli/langs"
 	"github.com/fnproject/cli/testharness"
 	"os"
+	"strings"
 	"testing"
 )
 
 const (
-	helloPythonSrcBoilerplate = `import io
-import json
-import logging
-import platform
+	rubySrcBoilerplate = `require 'fdk'
 
-from fdk import response
+def myfunction(context:, input:)
+  # input_value = input.respond_to?(:fetch) ? input.fetch('name') : input
+  # name = input_value.to_s.strip.empty? ? 'World' : input_value
+  # FDK.log(entry: "Inside Ruby Hello World function")
+  "ruby#{RUBY_VERSION}"
+end
 
-
-def handler(ctx, data: io.BytesIO = None):
-    logging.getLogger().info("Inside Python Hello World function")
-	version = platform.sys.version
-    return response.Response(
-        ctx, response_data=json.dumps(
-            {"message": "Version {0}".format(version)}),
-        headers={"Content-Type": "application/json"}
-    )
+FDK.handle(target: :myfunction)
 `
-	reqsPythonSrcBoilerplate = `fdk`
+
+	rubyGemfileBoilerplate = `source 'https://rubygems.org' do
+  gem 'fdk', '>= %s'
+end
+`
 	funcYamlContent = `schema_version: 20180708
 name: %s 
 version: 0.0.1
-runtime: python
-entrypoint: /python/bin/fdk /function/func.py handler`
+runtime: ruby 
+entrypoint: ruby func.rb`
 )
 
-/*
-	Build a yaml file for runtimes:
-	Node
-	PYthon
-	Go
-	Ruby
-	Java
-	Kotlin
-	Without any version in runtime, now build should use fallback runtimes
-	To test:
-	Verify dockerfile
-*/
+// Fallback version scenario for older cli clients
 func TestFnBuildWithOlderRuntimeWithoutVersion(t *testing.T) {
-	t.Run("`fn init --name` should set the name in func.yaml", func(t *testing.T) {
+	t.Run("`fn invoke` should return the fallback ruby version", func(t *testing.T) {
 		t.Parallel()
 		h := testharness.Create(t)
 		defer h.Cleanup()
@@ -54,23 +43,32 @@ func TestFnBuildWithOlderRuntimeWithoutVersion(t *testing.T) {
 		appName := h.NewAppName()
 		funcName := h.NewFuncName(appName)
 		dirName := funcName + "_dir"
+		fmt.Println(appName + " " + funcName)
 		h.Fn("create", "app", appName).AssertSuccess()
-		h.Fn("init", "--runtime", "python", "--name", funcName, dirName).AssertSuccess()
+		h.Fn("init", "--runtime", "ruby", "--name", funcName, dirName).AssertSuccess()
 		h.Cd(dirName)
 
 		mod := os.FileMode(int(0777))
-		h.WithFile("func.py", helloPythonSrcBoilerplate, mod)
-		content := h.GetFile("func.py")
+		h.WithFile("func.rb", rubySrcBoilerplate, mod)
 
 		oldClientYamlFile := fmt.Sprintf(funcYamlContent, funcName)
 		h.WithFile("func.yaml", oldClientYamlFile, mod)
-		content = h.GetFile("func.yaml")
-		fmt.Println(content)
 
 		h.Fn("--verbose", "build").AssertSuccess()
 		h.Fn("--registry", "test", "deploy", "--local", "--app", appName).AssertSuccess()
 		result := h.Fn("invoke", appName, funcName).AssertSuccess()
-		out := result.Stdout
-		fmt.Println(out)
+
+		// get the returned version from ruby image
+		imageVersion := result.Stdout
+
+		fallBackHandler := langs.GetFallbackLangHelper("ruby")
+		fallBackVersion := fallBackHandler.LangStrings()[1]
+		fmt.Println("Ruby version returned by image :" + imageVersion)
+		fmt.Println("Fallback ruby version :" + fallBackVersion)
+		match := strings.Contains(imageVersion, fallBackVersion)
+		if !match {
+			err := fmt.Sprint("Versions do not match, `ruby` image version #{imageVersion} does not match with fallback version #{fallbackVersion}")
+			panic(err)
+		}
 	})
 }
