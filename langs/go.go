@@ -34,11 +34,11 @@ func (lh *GoLangHelper) Extensions() []string {
 }
 
 func (lh *GoLangHelper) BuildFromImage() (string, error) {
-	return fmt.Sprintf("fnproject/go:%s-dev", lh.Version), nil
+	return fmt.Sprintf("metamemelord/go:%s-dev", lh.Version), nil
 }
 
 func (lh *GoLangHelper) RunFromImage() (string, error) {
-	return fmt.Sprintf("fnproject/go:%s", lh.Version), nil
+	return fmt.Sprintf("metamemelord/go:%s", lh.Version), nil
 }
 
 func (h *GoLangHelper) DockerfileBuildCmds() []string {

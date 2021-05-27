@@ -64,7 +64,7 @@ func TestSettingRuntimeAndBuildImage(t *testing.T) {
 
 func TestInitImage(t *testing.T) {
 
-	// NB this test creates a function with `rn init --runtime` then creates an init-image from that
+	// NB this test creates a function with `fn init --runtime` then creates an init-image from that
 	// This will not be necessary when there are init-images publicly available to pull during this test
 
 	t.Run("`fn init --init-image=<...>` should produce a working function template", func(t *testing.T) {

@@ -34,8 +34,6 @@ func init() {
 	fallBackOlderVersions["ruby"] = &RubyLangHelper{Version: "2.5"}
 	fallBackOlderVersions["node"] = &NodeLangHelper{Version: "11"}
 	fallBackOlderVersions["go"] = &GoLangHelper{Version: "1.11"}
-	fallBackOlderVersions["python"] = &PythonLangHelper{Version: "3.7"}
-
 }
 
 func registerHelper(h LangHelper) {
@@ -62,6 +60,11 @@ func GetLangHelper(lang string) LangHelper {
 
 func GetFallbackLangHelper(lang string) LangHelper {
 	return fallBackOlderVersions[lang]
+}
+
+func IsFallbackSupported(lang string) bool {
+	_, found := fallBackOlderVersions[lang]
+	return found
 }
 
 // LangHelper is the interface that language helpers must implement.
