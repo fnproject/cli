@@ -251,14 +251,11 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 		if helper == nil {
 			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
 		}
-
 		dockerfile, err = writeTmpDockerfile(helper, dir, ff)
 		if err != nil {
 			return err
 		}
-
 		//defer os.Remove(dockerfile)
-
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
 			if err != nil {
@@ -266,7 +263,6 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 			}
 		}
 	}
-
 	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
@@ -300,14 +296,11 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 		if helper == nil {
 			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
 		}
-
 		dockerfile, err = writeTmpDockerfileV20180708(helper, dir, ff)
 		if err != nil {
 			return err
 		}
-
 		//defer os.Remove(dockerfile)
-
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
 			if err != nil {
@@ -315,7 +308,6 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 			}
 		}
 	}
-
 	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache)
 	if err != nil {
 		return err
@@ -441,7 +433,6 @@ func Exists(name string) bool {
 }
 
 func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (string, error) {
-
 	if ff.Entrypoint == "" && ff.Cmd == "" {
 		return "", errors.New("entrypoint and cmd are missing, you must provide one or the other")
 	}
@@ -456,11 +447,11 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 	dfLines := []string{}
 	bi := ff.BuildImage
 
-	// Now this check will always be false for non docker runtime
-	// as all funcfiles are already image stamped
-	// can we remove it in future.
+	/* This check will always be false for non docker runtime
+	   as all funcfiles are already image stamped
+	   can we remove it in future.
+	*/
 	if bi == "" {
-
 		bi, err = helper.BuildFromImage()
 		if err != nil {
 			return "", err
@@ -478,9 +469,11 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 		// final stage
 		ri := ff.RunImage
 
-		// Now this check will always be false for non docker runtime
-		// as all funcfiles are already image stamped
-		// can we remove it in future.
+		/*
+		  Now this check will always be false for non docker runtime
+		  as all funcfiles are already image stamped
+		  can we remove it in future.
+		*/
 		if ri == "" {
 			ri, err = helper.RunFromImage()
 			if err != nil {

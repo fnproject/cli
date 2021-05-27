@@ -464,9 +464,9 @@ func (h *CLIHarness) Exec(name string, args ...string) error {
 	cmd.Dir = h.cwd
 	err := cmd.Run()
 	//out, _ := cmd.Output()
-	out, err := cmd.CombinedOutput()
-	fmt.Printf("STDOUT: %s", out)
-	fmt.Printf("STDERR: %s", err)
+	// out, err := cmd.CombinedOutput()
+	// fmt.Printf("STDOUT: %s", out)
+	// fmt.Printf("STDERR: %s", err)
 	return err
 }
 
