@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var runtimes = []string {
+var runtimes = []string{
 	"go",
 	"java",
 	"java8",

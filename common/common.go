@@ -133,7 +133,7 @@ func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708,
 }
 
 // Stamping funcfile is only valid for functions with runtime lang not for docker runtime
-func imageStampFuncFileV20180708(fpath string, funcfile *FuncFileV20180708)  (*FuncFileV20180708, error) {
+func imageStampFuncFileV20180708(fpath string, funcfile *FuncFileV20180708) (*FuncFileV20180708, error) {
 
 	dir := filepath.Dir(fpath)
 	dockerfile := filepath.Join(dir, "Dockerfile")
@@ -169,7 +169,7 @@ func imageStampFuncFileV20180708(fpath string, funcfile *FuncFileV20180708)  (*F
 	return funcfile, nil
 }
 
-func imageStampFuncFile(fpath string, funcfile *FuncFile)  (*FuncFile, error) {
+func imageStampFuncFile(fpath string, funcfile *FuncFile) (*FuncFile, error) {
 
 	dir := filepath.Dir(fpath)
 	dockerfile := filepath.Join(dir, "Dockerfile")
