@@ -273,7 +273,7 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 		if err != nil {
 			return err
 		}
-		//defer os.Remove(dockerfile)
+		defer os.Remove(dockerfile)
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
 			if err != nil {
@@ -318,7 +318,7 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 		if err != nil {
 			return err
 		}
-		//defer os.Remove(dockerfile)
+		defer os.Remove(dockerfile)
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
 			if err != nil {
