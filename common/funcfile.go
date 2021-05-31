@@ -234,6 +234,8 @@ func encodeFuncfileJSON(path string, ff *FuncFile) error {
 
 // EncodeFuncfileYAML encodes function file.
 func EncodeFuncfileYAML(path string, ff *FuncFile) error {
+	fmt.Println(ff.BuildImage)
+	fmt.Println(ff.RunImage)
 	b, err := yaml.Marshal(ff)
 	if err != nil {
 		return fmt.Errorf("could not encode function file. Error: %v", err)
