@@ -162,7 +162,7 @@ func imageStampFuncFile(fpath string, funcfile *FuncFile) (*FuncFile, error) {
 		if helper.IsMultiStage() {
 			ri, err := helper.RunFromImage()
 			if err != nil {
-				return funcfile, nil
+				return funcfile, err
 			}
 			funcfile.RunImage = ri
 		}
