@@ -138,8 +138,6 @@ func imageStampFuncFile(fpath string, funcfile *FuncFile) (*FuncFile, error) {
 	dockerfile := filepath.Join(dir, "Dockerfile")
 
 	// detect if build and run image both are absent and runtime is not docker then update them
-	fmt.Println(funcfile.BuildImage)
-	fmt.Println(funcfile.RunImage)
 	if !Exists(dockerfile) && funcfile.Runtime != FuncfileDockerRuntime && funcfile.BuildImage == "" && funcfile.RunImage == "" {
 
 		helper := langs.GetLangHelper(funcfile.Runtime)
