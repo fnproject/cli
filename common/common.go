@@ -142,6 +142,11 @@ func imageStampFuncFile(fpath string, funcfile *FuncFile) (*FuncFile, error) {
 
 		helper := langs.GetLangHelper(funcfile.Runtime)
 
+		// For case when runtime is overriden with unsupported lang runtime in func.yaml manually
+		if helper == nil {
+			return funcfile, fmt.Errorf("runtime [%s] is not supported", funcfile.Runtime)
+		}
+
 		// get the lang without any version
 		langRuntime := helper.Runtime()
 
@@ -187,6 +192,11 @@ func imageStampFuncFileV20180708(fpath string, funcfile *FuncFileV20180708) (*Fu
 	if !Exists(dockerfile) && funcfile.Runtime != FuncfileDockerRuntime && funcfile.Build_image == "" && funcfile.Run_image == "" {
 
 		helper := langs.GetLangHelper(funcfile.Runtime)
+
+		// For case when runtime is overriden with unsupported lang runtime in func.yaml manually
+		if helper == nil {
+			return funcfile, fmt.Errorf("runtime [%s] is not supported", funcfile.Runtime)
+		}
 
 		// get the lang without any version
 		langRuntime := helper.Runtime()
