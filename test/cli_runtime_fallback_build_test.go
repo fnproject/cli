@@ -1,0 +1,109 @@
+package test
+
+import (
+	"fmt"
+	"github.com/fnproject/cli/langs"
+	"github.com/fnproject/cli/testharness"
+	"strings"
+	"testing"
+)
+
+const (
+	rubySrcBoilerplate = `require 'fdk'
+def myfunction(context:, input:)
+  "ruby#{RUBY_VERSION}"
+end
+
+FDK.handle(target: :myfunction)
+`
+
+	rubyGemfileBoilerplate = `source 'https://rubygems.org' do
+  gem 'fdk', '>= %s'
+end
+`
+	funcYamlContent = `schema_version: 20180708
+name: %s 
+version: 0.0.1
+runtime: ruby 
+entrypoint: ruby func.rb`
+)
+
+/*
+	This test case check for backwards compatibility with older cli func.yaml file
+	Cases Tested:
+	1. During `fn build` make sure Build_image and Run_image are stamped in func.yaml file
+	2. Function container is build using proper fallback runtime and dev image, check
+		by invoking container and fetching runtime version, should match with fallback version.
+*/
+func TestFnBuildWithOlderRuntimeWithoutVersion(t *testing.T) {
+	t.Run("`fn invoke` should return the fallback ruby version", func(t *testing.T) {
+		t.Parallel()
+		h := testharness.Create(t)
+		defer h.Cleanup()
+
+		appName := h.NewAppName()
+		funcName := h.NewFuncName(appName)
+		dirName := funcName + "_dir"
+		fmt.Println(appName + " " + funcName)
+		h.Fn("create", "app", appName).AssertSuccess()
+		h.Fn("init", "--runtime", "ruby", "--name", funcName, dirName).AssertSuccess()
+
+		// change dir to newly created function dir
+		h.Cd(dirName)
+
+		// write custom function file which returns runtime version
+		h.WithFile("func.rb", rubySrcBoilerplate, 0644)
+
+		// inject func name in yaml file placeholder
+		oldClientYamlFile := fmt.Sprintf(funcYamlContent, funcName)
+
+		//update back yaml file
+		h.WithFile("func.yaml", oldClientYamlFile, 0644)
+
+		fallBackHandler := langs.GetFallbackLangHelper("ruby")
+		fallBackVersion := fallBackHandler.LangStrings()[1]
+
+		h.Fn("--verbose", "build").AssertSuccess()
+
+		bi, err := fallBackHandler.BuildFromImage()
+		if err != nil {
+			panic(err)
+		}
+		ri, err := fallBackHandler.RunFromImage()
+		if err != nil {
+			panic(err)
+		}
+
+		updatedFuncFile := h.GetYamlFile("func.yaml")
+		if bi == "" || ri == "" {
+			err := "Build_image or Run_image property is not set in func.yaml file"
+			panic(err)
+		}
+
+		//Test whether build_image set in func.yaml is correct or not
+		if bi != updatedFuncFile.Build_image {
+			err := fmt.Sprintf("Expected Build image %s and Build image in func.yaml do not match%s", bi, updatedFuncFile.Build_image)
+			panic(err)
+		}
+
+		//Test whether run_image set in func.yaml is correct or not
+		if ri != updatedFuncFile.Run_image {
+			err := fmt.Sprintf("Expected Run image %s and Run image in func.yaml do not match%s", ri, updatedFuncFile.Run_image)
+			panic(err)
+		}
+
+		h.Fn("--registry", "test", "deploy", "--local", "--app", appName).AssertSuccess()
+		result := h.Fn("invoke", appName, funcName).AssertSuccess()
+
+		// get the returned version from ruby image
+		imageVersion := result.Stdout
+
+		fmt.Println("Ruby version returned by image :" + imageVersion)
+		fmt.Println("Fallback ruby version :" + fallBackVersion)
+		match := strings.Contains(imageVersion, fallBackVersion)
+		if !match {
+			err := fmt.Sprintf("Versions do not match, `ruby` image version %s does not match with fallback version %s", imageVersion, fallBackVersion)
+			panic(err)
+		}
+	})
+}

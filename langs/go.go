@@ -1,14 +1,18 @@
 package langs
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 )
 
 type GoLangHelper struct {
 	BaseHelper
+	Version string
 }
 
 func (h *GoLangHelper) Handles(lang string) bool {
@@ -23,18 +27,18 @@ func (h *GoLangHelper) CustomMemory() uint64 {
 }
 
 func (lh *GoLangHelper) LangStrings() []string {
-	return []string{"go"}
+	return []string{"go", fmt.Sprintf("go%s", lh.Version)}
 }
 func (lh *GoLangHelper) Extensions() []string {
 	return []string{".go"}
 }
 
 func (lh *GoLangHelper) BuildFromImage() (string, error) {
-	return "fnproject/go:dev", nil
+	return fmt.Sprintf("fnproject/go:%s-dev", lh.Version), nil
 }
 
 func (lh *GoLangHelper) RunFromImage() (string, error) {
-	return "fnproject/go", nil
+	return fmt.Sprintf("fnproject/go:%s", lh.Version), nil
 }
 
 func (h *GoLangHelper) DockerfileBuildCmds() []string {
@@ -90,11 +94,33 @@ func (lh *GoLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 	modFile := "go.mod"
-	if err := ioutil.WriteFile(modFile, []byte(modBoilerplate), os.FileMode(0644)); err != nil {
+	fdkVersion, _ := lh.GetLatestFDKVersion()
+	if err := ioutil.WriteFile(modFile, []byte(fmt.Sprintf(modBoilerplate, fdkVersion)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+type githubTagResponse struct {
+	Name string `json:"name"`
+}
+
+func (h *GoLangHelper) GetLatestFDKVersion() (string, error) {
+	// Github API has limit on number of calls
+	resp, err := http.Get("https://api.github.com/repos/fnproject/fdk-go/tags")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	responseBody := []githubTagResponse{}
+	if err = json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
+		return "", err
+	}
+	if len(responseBody) == 0 {
+		return "", errors.New("Could not read latest version of FDK from tags")
+	}
+	return responseBody[0].Name, nil
 }
 
 const (
@@ -133,5 +159,11 @@ func myHandler(ctx context.Context, in io.Reader, out io.Writer) {
 
 	modBoilerplate = `
 module func
+
+require github.com/fnproject/fdk-go %s
 `
 )
+
+func (h *GoLangHelper) FixImagesOnInit() bool {
+	return true
+}

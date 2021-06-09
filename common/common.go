@@ -90,6 +90,10 @@ func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string
 		}
 	}
 
+	funcfile, err = imageStampFuncFile(fpath, funcfile)
+	if err != nil {
+		return nil, err
+	}
 	if err := localBuild(fpath, funcfile.Build); err != nil {
 		return nil, err
 	}
@@ -112,12 +116,116 @@ func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708,
 		}
 	}
 
+	funcfile, err = imageStampFuncFileV20180708(fpath, funcfile)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := localBuild(fpath, funcfile.Build); err != nil {
 		return nil, err
 	}
 
 	if err := dockerBuildV20180708(verbose, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
+	}
+
+	return funcfile, nil
+}
+
+func imageStampFuncFile(fpath string, funcfile *FuncFile) (*FuncFile, error) {
+
+	dir := filepath.Dir(fpath)
+	dockerfile := filepath.Join(dir, "Dockerfile")
+
+	// detect if build and run image both are absent and runtime is not docker then update them
+	if !Exists(dockerfile) && funcfile.Runtime != FuncfileDockerRuntime && funcfile.BuildImage == "" && funcfile.RunImage == "" {
+
+		helper := langs.GetLangHelper(funcfile.Runtime)
+
+		// For case when runtime is overriden with unsupported lang runtime in func.yaml manually
+		if helper == nil {
+			return funcfile, fmt.Errorf("runtime [%s] is not supported", funcfile.Runtime)
+		}
+
+		// get the lang without any version
+		langRuntime := helper.Runtime()
+
+		// if fallback is not supported then continue with same lang helper
+		if langs.IsFallbackSupported(langRuntime) {
+			helper = langs.GetFallbackLangHelper(langRuntime)
+		}
+
+		// update func file accordingly
+		bi, err := helper.BuildFromImage()
+		if err != nil {
+			return funcfile, err
+		}
+		funcfile.BuildImage = bi
+
+
+		// In case of multistage build there will be a runtime image
+		if helper.IsMultiStage() {
+			ri, err := helper.RunFromImage()
+			if err != nil {
+				return funcfile, err
+			}
+			funcfile.RunImage = ri
+		}
+
+		// fill back yaml file
+		err = EncodeFuncfileYAML(fpath, funcfile)
+		if err != nil {
+			return funcfile, err
+		}
+	}
+
+	return funcfile, nil
+}
+
+// Stamping funcfile is only valid for functions with runtime lang not for docker runtime
+func imageStampFuncFileV20180708(fpath string, funcfile *FuncFileV20180708) (*FuncFileV20180708, error) {
+
+	dir := filepath.Dir(fpath)
+	dockerfile := filepath.Join(dir, "Dockerfile")
+
+	// detect if build and run image both are absent and runtime is not docker then update them
+	if !Exists(dockerfile) && funcfile.Runtime != FuncfileDockerRuntime && funcfile.Build_image == "" && funcfile.Run_image == "" {
+
+		helper := langs.GetLangHelper(funcfile.Runtime)
+
+		// For case when runtime is overriden with unsupported lang runtime in func.yaml manually
+		if helper == nil {
+			return funcfile, fmt.Errorf("runtime [%s] is not supported", funcfile.Runtime)
+		}
+
+		// get the lang without any version
+		langRuntime := helper.Runtime()
+
+		// if fallback is not supported then continue with same lang helper
+		if langs.IsFallbackSupported(langRuntime) {
+			helper = langs.GetFallbackLangHelper(langRuntime)
+		}
+
+		bi, err := helper.BuildFromImage()
+		if err != nil {
+			return funcfile, err
+		}
+		funcfile.Build_image = bi
+
+		// In case of multistage build there will be a runtime image
+		if helper.IsMultiStage() {
+			ri, err := helper.RunFromImage()
+			if err != nil {
+				return funcfile, nil
+			}
+			funcfile.Run_image = ri
+		}
+
+		// fill back yaml file
+		err = EncodeFuncFileV20180708YAML(fpath, funcfile)
+		if err != nil {
+			return funcfile, err
+		}
 	}
 
 	return funcfile, nil
@@ -160,6 +268,7 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 
 	var helper langs.LangHelper
 	dockerfile := filepath.Join(dir, "Dockerfile")
+
 	if !Exists(dockerfile) {
 		if ff.Runtime == FuncfileDockerRuntime {
 			return fmt.Errorf("Dockerfile does not exist for 'docker' runtime")
@@ -208,6 +317,7 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 		if ff.Runtime == FuncfileDockerRuntime {
 			return fmt.Errorf("Dockerfile does not exist for 'docker' runtime")
 		}
+
 		helper = langs.GetLangHelper(ff.Runtime)
 		if helper == nil {
 			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
@@ -362,6 +472,11 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 	// multi-stage build: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
 	dfLines := []string{}
 	bi := ff.BuildImage
+
+	/* This check will always be false for non docker runtime
+	   as all funcfiles are already image stamped
+	   can we remove it in future.
+	*/
 	if bi == "" {
 		bi, err = helper.BuildFromImage()
 		if err != nil {
@@ -379,6 +494,12 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 	if helper.IsMultiStage() {
 		// final stage
 		ri := ff.RunImage
+
+		/*
+		  Now this check will always be false for non docker runtime
+		  as all funcfiles are already image stamped
+		  can we remove it in future.
+		*/
 		if ri == "" {
 			ri, err = helper.RunFromImage()
 			if err != nil {
@@ -416,6 +537,7 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 	// multi-stage build: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
 	dfLines := []string{}
 	bi := ff.Build_image
+
 	if bi == "" {
 		bi, err = helper.BuildFromImage()
 		if err != nil {

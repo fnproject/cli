@@ -7,21 +7,33 @@ import (
 
 // not a map because some helpers can handle multiple keys
 var helpers = []LangHelper{}
+var fallBackOlderVersions = map[string]LangHelper{}
 
 func init() {
-	registerHelper(&GoLangHelper{})
+
+	registerHelper(&GoLangHelper{Version: "1.15"})
 	// order matter, 'java' will pick up the first JavaLangHelper
 	registerHelper(&JavaLangHelper{version: "11"})
 	registerHelper(&JavaLangHelper{version: "8"})
-	registerHelper(&NodeLangHelper{})
+	registerHelper(&NodeLangHelper{Version: "14"})
+	registerHelper(&NodeLangHelper{Version: "11"})
 	// order matter, 'python' will pick up the first PythonLangHelper
 	registerHelper(&PythonLangHelper{Version: "3.8"})
 	registerHelper(&PythonLangHelper{Version: "3.8.5"})
 	registerHelper(&PythonLangHelper{Version: "3.7"})
 	registerHelper(&PythonLangHelper{Version: "3.7.1"})
 	registerHelper(&PythonLangHelper{Version: "3.6"})
-	registerHelper(&RubyLangHelper{})
+
+	//New runtime support for Ruby 2.7
+	// order matter, 'ruby' will pick up the first RubyLangHelper
+	registerHelper(&RubyLangHelper{Version: "2.7"})
+
 	registerHelper(&KotlinLangHelper{})
+
+	// for older versions support backwards compatibility
+	fallBackOlderVersions["ruby"] = &RubyLangHelper{Version: "2.5"}
+	fallBackOlderVersions["node"] = &NodeLangHelper{Version: "11"}
+	fallBackOlderVersions["go"] = &GoLangHelper{Version: "1.11"}
 }
 
 func registerHelper(h LangHelper) {
@@ -44,6 +56,15 @@ func GetLangHelper(lang string) LangHelper {
 		}
 	}
 	return nil
+}
+
+func GetFallbackLangHelper(lang string) LangHelper {
+	return fallBackOlderVersions[lang]
+}
+
+func IsFallbackSupported(lang string) bool {
+	_, found := fallBackOlderVersions[lang]
+	return found
 }
 
 // LangHelper is the interface that language helpers must implement.
@@ -82,6 +103,8 @@ type LangHelper interface {
 	GenerateBoilerplate(string) error
 	// FixImagesOnInit determines if images should be fixed on initialization - BuildFromImage and RunFromImage will be written to func.yaml
 	FixImagesOnInit() bool
+	// GetLatestFDKVersion checks the package repository and returns the latest version of FDK version if available.
+	GetLatestFDKVersion() (string, error)
 }
 
 func defaultHandles(h LangHelper, lang string) bool {
@@ -97,18 +120,19 @@ func defaultHandles(h LangHelper, lang string) bool {
 type BaseHelper struct {
 }
 
-func (h *BaseHelper) IsMultiStage() bool               { return true }
-func (h *BaseHelper) DockerfileBuildCmds() []string    { return []string{} }
-func (h *BaseHelper) DockerfileCopyCmds() []string     { return []string{} }
-func (h *BaseHelper) Entrypoint() (string, error)      { return "", nil }
-func (h *BaseHelper) Cmd() (string, error)             { return "", nil }
-func (h *BaseHelper) HasPreBuild() bool                { return false }
-func (h *BaseHelper) PreBuild() error                  { return nil }
-func (h *BaseHelper) AfterBuild() error                { return nil }
-func (h *BaseHelper) HasBoilerplate() bool             { return false }
-func (h *BaseHelper) GenerateBoilerplate(string) error { return nil }
-func (h *BaseHelper) CustomMemory() uint64             { return 0 }
-func (h *BaseHelper) FixImagesOnInit() bool            { return false }
+func (h *BaseHelper) IsMultiStage() bool                   { return true }
+func (h *BaseHelper) DockerfileBuildCmds() []string        { return []string{} }
+func (h *BaseHelper) DockerfileCopyCmds() []string         { return []string{} }
+func (h *BaseHelper) Entrypoint() (string, error)          { return "", nil }
+func (h *BaseHelper) Cmd() (string, error)                 { return "", nil }
+func (h *BaseHelper) HasPreBuild() bool                    { return false }
+func (h *BaseHelper) PreBuild() error                      { return nil }
+func (h *BaseHelper) AfterBuild() error                    { return nil }
+func (h *BaseHelper) HasBoilerplate() bool                 { return false }
+func (h *BaseHelper) GenerateBoilerplate(string) error     { return nil }
+func (h *BaseHelper) CustomMemory() uint64                 { return 0 }
+func (h *BaseHelper) FixImagesOnInit() bool                { return false }
+func (h *BaseHelper) GetLatestFDKVersion() (string, error) { return "", nil }
 
 // exists checks if a file exists
 func exists(name string) bool {
