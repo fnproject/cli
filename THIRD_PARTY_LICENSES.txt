@@ -23,20 +23,22 @@ License: A copy of the Apache License V2 is included at the end of this file.
 Packages imported from the Go Standard Library:
 
 bytes
-context
 fmt
+github.com/fnproject/cli/client
+github.com/fnproject/cli/commands
+github.com/fnproject/cli/common
+github.com/fnproject/cli/common/color
+github.com/fnproject/cli/config
+github.com/spf13/viper
+github.com/urfave/cli
 io
-io/ioutil
-log
-net
 net/http
-net/url
 os
-path/filepath
-runtime
-strconv
+path
+sort
 strings
-sync
+text/tabwriter
+text/template
 time
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
