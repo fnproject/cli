@@ -114,7 +114,9 @@ func (h *NodeLangHelper) Entrypoint() (string, error) {
 func (h *NodeLangHelper) DockerfileBuildCmds() []string {
 	r := []string{}
 	// skip npm -install if node_modules is local - allows local development
-	if exists("package.json") && !exists("node_modules") {
+	if exists("dist") {
+		// Do nothing
+	} else if exists("package.json") && !exists("node_modules") {
 		if exists("package-lock.json") {
 			r = append(r, "ADD package-lock.json /function/")
 		}
@@ -128,7 +130,13 @@ func (h *NodeLangHelper) DockerfileBuildCmds() []string {
 }
 
 func (h *NodeLangHelper) DockerfileCopyCmds() []string {
+	// If they have a dist folder (likely from webpack) let's just include that
+	if exists("dist") {
+		r := []string{"ADD dist/main.js /function/func.js"}
+		return r
+	}
 	// excessive but content could be anything really
+
 	r := []string{"ADD . /function/"}
 	if exists("package.json") && !exists("node_modules") {
 		r = append(r, "COPY --from=build-stage /function/node_modules/ /function/node_modules/")
