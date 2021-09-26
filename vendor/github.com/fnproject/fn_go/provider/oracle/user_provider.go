@@ -5,7 +5,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/oracle/oci-go-sdk/v28/functions"
+	"github.com/oracle/oci-go-sdk/v48/functions"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -14,7 +14,7 @@ import (
 
 	"github.com/fnproject/fn_go/provider"
 	homedir "github.com/mitchellh/go-homedir"
-	oci "github.com/oracle/oci-go-sdk/v28/common"
+	oci "github.com/oracle/oci-go-sdk/v48/common"
 )
 
 const (
@@ -67,12 +67,13 @@ func NewFromConfig(configSource provider.ConfigSource, passphraseSource provider
 	}
 
 	return &OracleProvider{
-		FnApiUrl:      apiUrl,
-		Signer:        oci.DefaultRequestSigner(configProvider),
-		Interceptor:   nil,
-		DisableCerts:  disableCerts,
-		CompartmentID: compartmentID,
-		ociClient:     ociClient,
+		FnApiUrl:              apiUrl,
+		Signer:                oci.DefaultRequestSigner(configProvider),
+		Interceptor:           nil,
+		DisableCerts:          disableCerts,
+		CompartmentID:         compartmentID,
+		ConfigurationProvider: configProvider,
+		ociClient:             ociClient,
 	}, nil
 }
 

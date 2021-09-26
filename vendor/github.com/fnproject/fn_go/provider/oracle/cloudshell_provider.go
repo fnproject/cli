@@ -2,14 +2,14 @@ package oracle
 
 import (
 	"fmt"
-	"github.com/oracle/oci-go-sdk/v28/functions"
+	"github.com/oracle/oci-go-sdk/v48/functions"
 	"io/ioutil"
 	"net/http"
 	"os"
 
 	"github.com/fnproject/fn_go/provider"
-	oci "github.com/oracle/oci-go-sdk/v28/common"
-	"github.com/oracle/oci-go-sdk/v28/common/auth"
+	oci "github.com/oracle/oci-go-sdk/v48/common"
+	"github.com/oracle/oci-go-sdk/v48/common/auth"
 )
 
 const (
@@ -122,12 +122,13 @@ func NewCSProvider(configSource provider.ConfigSource, passphraseSource provider
 	ociClient.Host = apiUrl.String()
 
 	return &OracleProvider{
-		FnApiUrl:      apiUrl,
-		Signer:        signer,
-		Interceptor:   interceptor,
-		DisableCerts:  disableCerts,
-		CompartmentID: compartmentID,
-		ociClient:     ociClient,
+		FnApiUrl:              apiUrl,
+		Signer:                signer,
+		Interceptor:           interceptor,
+		DisableCerts:          disableCerts,
+		CompartmentID:         compartmentID,
+		ConfigurationProvider: configProvider,
+		ociClient:             ociClient,
 	}, nil
 }
 

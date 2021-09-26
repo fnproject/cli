@@ -2,13 +2,13 @@ package oracle
 
 import (
 	"fmt"
-	"github.com/oracle/oci-go-sdk/v28/functions"
+	"github.com/oracle/oci-go-sdk/v48/functions"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 
-	"github.com/oracle/oci-go-sdk/v28/common"
-	"github.com/oracle/oci-go-sdk/v28/common/auth"
+	"github.com/oracle/oci-go-sdk/v48/common"
+	"github.com/oracle/oci-go-sdk/v48/common/auth"
 
 	"github.com/fnproject/fn_go/provider"
 )
@@ -68,11 +68,12 @@ func NewIPProvider(configSource provider.ConfigSource, passphraseSource provider
 	}
 
 	return &OracleProvider{
-		FnApiUrl:      apiUrl,
-		Signer:        common.DefaultRequestSigner(configProvider),
-		Interceptor:   nil,
-		DisableCerts:  disableCerts,
-		CompartmentID: compartmentID,
-		ociClient:     ociClient,
+		FnApiUrl:              apiUrl,
+		Signer:                common.DefaultRequestSigner(configProvider),
+		Interceptor:           nil,
+		DisableCerts:          disableCerts,
+		CompartmentID:         compartmentID,
+		ConfigurationProvider: configProvider,
+		ociClient:             ociClient,
 	}, nil
 }
