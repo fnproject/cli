@@ -8,7 +8,7 @@ require (
 	github.com/go-openapi/validate v0.19.12
 	github.com/golang/mock v1.4.4
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/oracle/oci-go-sdk/v28 v28.0.0
+	github.com/oracle/oci-go-sdk/v48 v48.0.0
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
