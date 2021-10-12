@@ -497,7 +497,7 @@ func isSignatureConfigured(signingDetails common.SigningDetails) (bool, error) {
 		signingDetails.ImageCompartmentId != "" && signingDetails.KmsKeyVersionId != ""
 	if !configured && (signingDetails.SigningAlgorithm != "" || signingDetails.KmsKeyId != "" ||
 		signingDetails.ImageCompartmentId != "" || signingDetails.KmsKeyVersionId != "") {
-		return false, fmt.Errorf("signing_details is missing values for [%s] in funcfile", findMissingValues(signingDetails))
+		return false, fmt.Errorf("signing_details is missing values for [%s] in func.yaml", findMissingValues(signingDetails))
 	}
 	return configured, nil
 }
