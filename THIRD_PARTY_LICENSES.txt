@@ -16,7 +16,7 @@ Third Party Runtime Dependencies
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 fn-cli is licensed under the Apache License, Version 2.0.
-License: A copy of the Apache License V2 is included in this file.
+License: A copy of the Apache License Version 2.0 is included in this file.
 
 --------------------------------------------------------------------------------
 
@@ -538,6 +538,7 @@ The following dependency of fn-cli is licensed under GNU Lesser General Public
 License version 3
 
 github.com/juju/errgo
+Copyright 2014 Canonical Ltd.
 
 GNU Lesser General Public License version 3
 
@@ -1841,4 +1842,229 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/coreos/go-semver/semver
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+CoreOS Project
+Copyright 2018 CoreOS, Inc
+
+This product includes software developed at CoreOS, Inc.
+(http://www.coreos.com/).
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/golang/mock/gomock
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+# This is the official list of GoMock authors for copyright purposes.
+# This file is distinct from the CONTRIBUTORS files.
+# See the latter for an explanation.
+
+# Names should be added to this file as
+#	Name or Organization <email address>
+# The email address is not required for organizations.
+
+# Please keep the list sorted.
+
+Alex Reece <awreece@gmail.com>
+Google Inc.
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/oracle/oci-go-sdk/v48
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright (c) 2016, 2018, 2020, Oracle and/or its affiliates.
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/go-openapi/validate
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2015 go-swagger maintainers
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/xeipuuv/gojsonpointer
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2015 xeipuuv
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/go-openapi/loads
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2015 go-swagger maintainers
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/go-openapi/errors
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2015 go-swagger maintainers
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+gopkg.in/yaml.v2
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2011-2016 Canonical Ltd.
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/go-openapi/jsonpointer
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2015 go-swagger maintainers
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/go-openapi/spec
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2015 go-swagger maintainers
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+gopkg.in/ini.v1
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2017 Unknwon
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/spf13/afero
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright © 2014 Steve Francia <spf@spf13.com>.
+Copyright 2009 The Go Authors. All rights reserved.
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/fnproject/fn_go
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright (c) 2016, 2018, 2020, Oracle and/or its affiliates.
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+go.mongodb.org/mongo-driver
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright (C) MongoDB, Inc. 2017-present.
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/go-openapi/runtime
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2015 go-swagger maintainers
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/xeipuuv/gojsonreference
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2015 xeipuuv
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/xeipuuv/gojsonschema
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2015 xeipuuv
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/go-openapi/strfmt
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2015 go-swagger maintainers
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/go-openapi/swag
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2015 go-swagger maintainers
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/go-openapi/analysis
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2015 go-swagger maintainers
+
+-----------------------------------------------------------------
+The following dependency of fn-cli is licensed under Apache License 2.0
+
+github.com/go-openapi/jsonreference
+
+Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
+
+Copyright Notices
+Copyright 2013 sigu-399 ( https://github.com/sigu-399 )
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
