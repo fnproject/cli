@@ -75,3 +75,25 @@ func TestDefaultContextConfigContents(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateContainerEngineType(t *testing.T) {
+	testCases := []struct {
+		actual      string
+		expectedErr string
+	}{
+		{actual: "docker", expectedErr: ""},
+		{actual: "podman", expectedErr: ""},
+		{actual: "default", expectedErr: "Invalid Container Engine"},
+	}
+	for _, c := range testCases {
+		t.Run(c.actual, func(t *testing.T) {
+			errString := ""
+			if err := ValidateContainerEngineType(c.actual); err != nil {
+				errString = err.Error()
+			}
+			if c.expectedErr != errString {
+				t.Fatalf("expected %s but got %s", c.expectedErr, errString)
+			}
+		})
+	}
+}

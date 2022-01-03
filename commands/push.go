@@ -77,7 +77,7 @@ func (p *pushcmd) push(c *cli.Context) error {
 
 		fmt.Println("pushing", ff.ImageNameV20180708())
 
-		if err := common.DockerPushV20180708(ff); err != nil {
+		if err := common.PushV20180708(ff); err != nil {
 			return err
 		}
 
@@ -96,7 +96,7 @@ func (p *pushcmd) push(c *cli.Context) error {
 
 	fmt.Println("pushing", ff.ImageName())
 
-	if err := common.DockerPush(ff); err != nil {
+	if err := common.Push(ff); err != nil {
 		return err
 	}
 

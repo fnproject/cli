@@ -113,7 +113,11 @@ func (b *BuildServerCmd) buildServer(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	err = common.RunBuild(common.IsVerbose(), dir, c.String("tag"), "Dockerfile", nil, b.noCache)
+	containerEngineType, err := common.GetContainerEngineType()
+	if err != nil {
+		return err
+	}
+	err = common.RunBuild(common.IsVerbose(), dir, c.String("tag"), "Dockerfile", nil, b.noCache, containerEngineType)
 	if err != nil {
 		return err
 	}

@@ -114,7 +114,7 @@ func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string
 		return nil, err
 	}
 
-	if err := dockerBuild(verbose, fpath, funcfile, buildArg, noCache); err != nil {
+	if err := containerEngineBuild(verbose, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
 	}
 
@@ -141,7 +141,7 @@ func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708,
 		return nil, err
 	}
 
-	if err := dockerBuildV20180708(verbose, fpath, funcfile, buildArg, noCache); err != nil {
+	if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
 	}
 
@@ -177,7 +177,6 @@ func imageStampFuncFile(fpath string, funcfile *FuncFile) (*FuncFile, error) {
 			return funcfile, err
 		}
 		funcfile.BuildImage = bi
-
 
 		// In case of multistage build there will be a runtime image
 		if helper.IsMultiStage() {
@@ -274,8 +273,26 @@ func PrintContextualInfo() {
 	fmt.Println("Current Context: ", currentContext)
 }
 
-func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, noCache bool) error {
-	err := dockerVersionCheck()
+func GetContainerEngineType() (string, error) {
+	containerEngineType := viper.GetString(config.ContainerEngineType)
+	err := config.ValidateContainerEngineType(containerEngineType)
+	if err != nil {
+		return "", err
+	}
+	if containerEngineType == "" {
+		return "docker", nil
+	}
+	return containerEngineType, nil
+}
+
+func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, noCache bool) error {
+	containerEngineType, err := GetContainerEngineType()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Using Container engine", containerEngineType)
+	err = containerEngineVersionCheck(containerEngineType)
 	if err != nil {
 		return err
 	}
@@ -305,7 +322,7 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 			}
 		}
 	}
-	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
+	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache, containerEngineType)
 	if err != nil {
 		return err
 	}
@@ -319,8 +336,14 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 	return nil
 }
 
-func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool) error {
-	err := dockerVersionCheck()
+func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool) error {
+	containerEngineType, err := GetContainerEngineType()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Using Container engine", containerEngineType)
+	err = containerEngineVersionCheck(containerEngineType)
 	if err != nil {
 		return err
 	}
@@ -350,7 +373,7 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 			}
 		}
 	}
-	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache)
+	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache, containerEngineType)
 	if err != nil {
 		return err
 	}
@@ -365,7 +388,7 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 }
 
 // RunBuild runs function from func.yaml/json/yml.
-func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
+func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -417,7 +440,9 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 			"--build-arg", "HTTP_PROXY",
 			"--build-arg", "HTTPS_PROXY",
 			".")
-		cmd := exec.Command("docker", args...)
+
+		// Container engine type would be optional here
+		cmd := exec.Command(containerEngineType, args...)
 		cmd.Dir = dir
 		cmd.Stderr = buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
 		cmd.Stdout = buildOut
@@ -442,24 +467,26 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 	return nil
 }
 
-func dockerVersionCheck() error {
-	out, err := exec.Command("docker", "version", "--format", "{{.Server.Version}}").Output()
+func containerEngineVersionCheck(containerEngineType string) error {
+	out, err := exec.Command(containerEngineType, "version", "--format", "{{.Server.Version}}").Output()
 	if err != nil {
-		return fmt.Errorf("Cannot connect to the Docker daemon, make sure you have it installed and running: %v", err)
+		return fmt.Errorf("Cannot connect to the %v, make sure you have it installed and running: %v", containerEngineType, err)
 	}
 	// dev / test builds append '-ce', trim this
 	trimmed := strings.TrimRightFunc(string(out), func(r rune) bool { return r != '.' && !unicode.IsDigit(r) })
 
 	v, err := semver.NewVersion(trimmed)
 	if err != nil {
-		return fmt.Errorf("could not check Docker version: %v", err)
+		return fmt.Errorf("could not check %v version: %v", containerEngineType, err)
 	}
-	vMin, err := semver.NewVersion(MinRequiredDockerVersion)
-	if err != nil {
-		return fmt.Errorf("our bad, sorry... please make an issue, detailed error: %v", err)
-	}
-	if v.LessThan(*vMin) {
-		return fmt.Errorf("please upgrade your version of Docker to %s or greater", MinRequiredDockerVersion)
+	if containerEngineType == "docker" {
+		vMin, err := semver.NewVersion(MinRequiredDockerVersion)
+		if err != nil {
+			return fmt.Errorf("our bad, sorry... please make an issue, detailed error: %v", err)
+		}
+		if v.LessThan(*vMin) {
+			return fmt.Errorf("please upgrade your version of Docker to %s or greater", MinRequiredDockerVersion)
+		}
 	}
 	return nil
 }
@@ -632,34 +659,43 @@ func ExtractConfig(configs []string) map[string]string {
 	return c
 }
 
-// DockerPush pushes to docker registry.
-func DockerPush(ff *FuncFile) error {
-	err := ValidateFullImageName(ff.ImageName())
+// Push pushes to docker registry.
+func Push(ff *FuncFile) error {
+	containerEngineType, err := GetContainerEngineType()
+	if err != nil {
+		return err
+	}
+	err = ValidateFullImageName(ff.ImageName())
 	if err != nil {
 		return err
 	}
 	fmt.Printf("Pushing %v to docker registry...", ff.ImageName())
-	cmd := exec.Command("docker", "push", ff.ImageName())
+	cmd := exec.Command(containerEngineType, "push", ff.ImageName())
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("error running docker push, are you logged into docker?: %v", err)
+		return fmt.Errorf("error running %v push, are you logged?: %v", containerEngineType, err)
 	}
 	return nil
 }
 
-// DockerPush pushes to docker registry.
-func DockerPushV20180708(ff *FuncFileV20180708) error {
-	err := ValidateFullImageName(ff.ImageNameV20180708())
+// Push pushes to docker registry.
+func PushV20180708(ff *FuncFileV20180708) error {
+	containerEngineType, err := GetContainerEngineType()
 	if err != nil {
 		return err
 	}
+	err = ValidateFullImageName(ff.ImageNameV20180708())
+	if err != nil {
+		return err
+	}
+	fmt.Println("Using Container engine", containerEngineType, "to push")
 	fmt.Printf("Pushing %v to docker registry...", ff.ImageNameV20180708())
-	cmd := exec.Command("docker", "push", ff.ImageNameV20180708())
+	cmd := exec.Command(containerEngineType, "push", ff.ImageNameV20180708())
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("error running docker push, are you logged into docker?: %v", err)
+		return fmt.Errorf("error running %v push, are you logged?: %v", containerEngineType, err)
 	}
 	return nil
 }
@@ -886,15 +922,19 @@ func ListTriggersInFunc(c *cli.Context, client *fnclient.Fn, fn *modelsv2.Fn) ([
 	return resTriggers, nil
 }
 
-func DockerRunInitImage(initImage string, fName string) error {
+func RunInitImage(initImage string, fName string) error {
+	containerEngineType, err := GetContainerEngineType()
+	if err != nil {
+		return err
+	}
 	fmt.Println("Running init-image: " + initImage)
 
 	args := []string{"run", "--rm", "-e", "FN_FUNCTION_NAME=" + fName}
 	args = append(args, proxyArgs()...)
 	args = append(args, initImage)
 
-	fmt.Printf("Executing docker command: %s\n", strings.Join(args, " "))
-	cmd := exec.Command("docker", args...)
+	fmt.Printf("Executing %v command: %s\n", containerEngineType, strings.Join(args, " "))
+	cmd := exec.Command(containerEngineType, args...)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	stdout, err := cmd.StdoutPipe()
