@@ -23,13 +23,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/fnproject/fn_go/provider/oracle"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/fnproject/fn_go/provider/oracle"
 
 	client "github.com/fnproject/cli/client"
 	common "github.com/fnproject/cli/common"
@@ -361,7 +362,7 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	}
 
 	if !p.local {
-		if err := common.DockerPushV20180708(funcfile); err != nil {
+		if err := common.PushV20180708(funcfile); err != nil {
 			return err
 		}
 	}
@@ -529,13 +530,17 @@ func getRepositoryName(ff *common.FuncFileV20180708) (string, error) {
 }
 
 func getImageDigest(ff *common.FuncFileV20180708) (string, error) {
+	containerEngineType, err := common.GetContainerEngineType()
+	if err != nil {
+		return "", err
+	}
 	fmt.Printf("Fetching image digest for %s\n", ff.ImageNameV20180708())
 	parts := strings.Split(ff.ImageNameV20180708(), ":")
 	if len(parts) < 2 {
 		return "", fmt.Errorf("failed to parse image %s", ff.ImageNameV20180708())
 	}
 	image, tag := parts[0], parts[1]
-	imageDigests, err := exec.Command("docker", "images", "--digests", image, "--format", "{{.Tag}} {{.Digest}}").Output()
+	imageDigests, err := exec.Command(containerEngineType, "images", "--digests", image, "--format", "{{.Tag}} {{.Digest}}").Output()
 	if err != nil {
 		return "", fmt.Errorf("error while listing image digests for %s, %s", ff.ImageNameV20180708(), err)
 	}

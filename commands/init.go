@@ -294,7 +294,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 }
 
 func (a *initFnCmd) doInitImage(initImage string, c *cli.Context) error {
-	err := common.DockerRunInitImage(initImage, a.ff.Name)
+	err := common.RunInitImage(initImage, a.ff.Name)
 	if err != nil {
 		return err
 	}

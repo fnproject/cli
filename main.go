@@ -79,7 +79,7 @@ func newFn() *cli.App {
 	
 {{bold "ENVIRONMENT VARIABLES"}}
 	FN_API_URL		 {{italic "Fn server address"}}
-	FN_REGISTRY		 {{italic "Docker registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]USERNAME]"}}{{if .VisibleCommands}}
+	FN_REGISTRY		 {{italic "Docker / Podman registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]USERNAME]"}}{{if .VisibleCommands}}
 		
 {{bold "GENERAL COMMANDS"}}{{end}}{{else}}{{range .VisibleCategories}}{{if .Name}}{{bold .Name}}{{end}}{{end}}
 	{{boldcyan .HelpName}}{{if .Usage}}{{" - "}}{{italic .Usage}}
