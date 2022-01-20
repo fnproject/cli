@@ -23,6 +23,7 @@ const (
 	CfgTenancyID                          = "oracle.tenancy-id"
 	CfgProfile                            = "oracle.profile"
 	CfgCompartmentID                      = "oracle.compartment-id"
+	CfgImageCompartmentID                 = "oracle.image-compartment-id"
 	CfgDisableCerts                       = "oracle.disable-certs"
 	CompartmentMetadata                   = "http://169.254.169.254/opc/v1/instance/compartmentId"
 	FunctionsAPIURLTmpl                   = "https://functions.%s.oci.%s"
@@ -71,6 +72,9 @@ type OracleProvider struct {
 
 	// CompartmentID is the ocid of the functions compartment ID for a given function
 	CompartmentID string
+
+	// ImageCompartmentID is the ocid of the functions image compartment ID for a given function
+	ImageCompartmentID string
 
 	// ConfigurationProvider is the OCI configuration provider for signing requests
 	ConfigurationProvider common.ConfigurationProvider
