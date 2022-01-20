@@ -343,9 +343,37 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	if funcfile.Name == "" {
 		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
 	}
-	fmt.Printf("Deploying %s to app: %s\n", funcfile.Name, app.Name)
 
-	var err error
+	oracleProvider, _ := getOracleProvider()
+	if oracleProvider != nil && oracleProvider.ImageCompartmentID != "" {
+		// If the provider is Oracle and ImageCompartmentID is present, we need to deploy image to the ImageCompartmentID.
+		// The repository name should be unique throughout a tenancy. We check if a repository exists in the compartment and create it if it doesn't already exist.
+		// If the creation fails, it could be because the repository name aready exists in a different compartment.
+
+		repositoryName, err := getRepositoryName(funcfile)
+		if err != nil {
+			return err
+		}
+
+		artifactsClient, err := artifacts.NewArtifactsClientWithConfigurationProvider(oracleProvider.ConfigurationProvider)
+		if err != nil {
+			return err
+		}
+		artifactsClient.SetRegion(getRegion(oracleProvider))
+
+		repositoryExists, err := doesRepositoryExistInCompartment(repositoryName, oracleProvider.ImageCompartmentID, artifactsClient)
+		if err != nil {
+			return err
+		}
+		if !repositoryExists {
+			err = createContainerRepositoryInCompartment(repositoryName, oracleProvider.ImageCompartmentID, artifactsClient)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	fmt.Printf("Deploying %s to app: %s\n", funcfile.Name, app.Name)
 	if !p.noBump {
 		funcfile2, err := common.BumpItV20180708(funcfilePath, common.Patch)
 		if err != nil {
@@ -356,7 +384,7 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	_, err = common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache)
+	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache)
 	if err != nil {
 		return err
 	}
@@ -430,7 +458,7 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 	return nil
 }
 
-func (p *deploycmd) getOracleProvider() (*oracle.OracleProvider, error) {
+func getOracleProvider() (*oracle.OracleProvider, error) {
 	currentProvider, err := client.CurrentProvider()
 	if err != nil {
 		return nil, err
@@ -450,7 +478,7 @@ func (p *deploycmd) signImage(funcfile *common.FuncFileV20180708) error {
 	if !signatureConfigured {
 		return nil
 	}
-	oracleProvider, _ := p.getOracleProvider()
+	oracleProvider, _ := getOracleProvider()
 	if oracleProvider == nil {
 		return nil
 	}
@@ -696,4 +724,29 @@ func findMissingValues(signingDetails common.SigningDetails) string {
 		missingValues = append(missingValues, "signing_algorithm")
 	}
 	return strings.Join(missingValues, ",")
+}
+
+// Checks if the repostitory exists in the compartment
+func doesRepositoryExistInCompartment(repositoryName string, compartmentID string, artifactsClient artifacts.ArtifactsClient) (bool, error) {
+	response, err := artifactsClient.ListContainerRepositories(context.Background(), artifacts.ListContainerRepositoriesRequest{
+		CompartmentId: &compartmentID,
+		DisplayName:   &repositoryName})
+	if err != nil {
+		return false, fmt.Errorf("failed to lookup container repository due to %w", err)
+	}
+	if *response.RepositoryCount == 1 {
+		return true, nil
+	}
+	return false, nil
+}
+
+// This function tries to create the repository in compartmentID
+func createContainerRepositoryInCompartment(repositoryName string, compartmentID string, artifactsClient artifacts.ArtifactsClient) error {
+	_, err := artifactsClient.CreateContainerRepository(context.Background(), artifacts.CreateContainerRepositoryRequest{
+		CreateContainerRepositoryDetails: artifacts.CreateContainerRepositoryDetails{
+			CompartmentId: &compartmentID,
+			DisplayName:   &repositoryName,
+		},
+	})
+	return err
 }

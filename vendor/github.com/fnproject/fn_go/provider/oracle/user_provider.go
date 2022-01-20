@@ -72,6 +72,7 @@ func NewFromConfig(configSource provider.ConfigSource, passphraseSource provider
 		Interceptor:           nil,
 		DisableCerts:          disableCerts,
 		CompartmentID:         compartmentID,
+		ImageCompartmentID:    configSource.GetString(CfgImageCompartmentID),
 		ConfigurationProvider: configProvider,
 		ociClient:             ociClient,
 	}, nil
