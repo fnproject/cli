@@ -273,6 +273,19 @@ func PrintContextualInfo() {
 	fmt.Println("Current Context: ", currentContext)
 }
 
+func PrintDockerfileContent(dockerfile string, stdout io.Writer) {
+	file, err := os.Open(dockerfile)
+	if err != nil {
+		fmt.Fprintf(stdout, err.Error())
+		fmt.Fprintf(stdout, "\n")
+		return
+	}
+	defer file.Close()
+	fmt.Fprintf(stdout, "Dockerfile content\n-----------------------------------\n")
+	_, _ = io.Copy(stdout, file)
+	fmt.Fprintf(stdout, "-----------------------------------\n")
+}
+
 func GetContainerEngineType() (string, error) {
 	containerEngineType := viper.GetString(config.ContainerEngineType)
 	err := config.ValidateContainerEngineType(containerEngineType)
@@ -404,6 +417,7 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 		fmt.Println()
 		buildOut = os.Stdout
 		buildErr = os.Stderr
+		PrintDockerfileContent(dockerfile, buildOut)
 		PrintContextualInfo()
 	} else {
 		// print dots. quit channel explanation: https://stackoverflow.com/a/16466581/105562
