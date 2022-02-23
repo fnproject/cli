@@ -34,6 +34,7 @@ func init() {
 	registerHelper(&NodeLangHelper{Version: "14"})
 	registerHelper(&NodeLangHelper{Version: "11"})
 	// order matter, 'python' will pick up the first PythonLangHelper
+	registerHelper(&PythonLangHelper{Version: "3.9"})
 	registerHelper(&PythonLangHelper{Version: "3.8"})
 	registerHelper(&PythonLangHelper{Version: "3.8.5"})
 	registerHelper(&PythonLangHelper{Version: "3.7"})
