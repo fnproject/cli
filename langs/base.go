@@ -29,6 +29,7 @@ func init() {
 
 	registerHelper(&GoLangHelper{Version: "1.15"})
 	// order matter, 'java' will pick up the first JavaLangHelper
+	registerHelper(&JavaLangHelper{version: "17"})
 	registerHelper(&JavaLangHelper{version: "11"})
 	registerHelper(&JavaLangHelper{version: "8"})
 	registerHelper(&NodeLangHelper{Version: "14"})
