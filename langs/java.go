@@ -66,6 +66,8 @@ func (h *JavaLangHelper) BuildFromImage() (string, error) {
 		return fmt.Sprintf("fnproject/fn-java-fdk-build:%s", fdkVersion), nil
 	} else if h.version == "11" {
 		return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk11-%s", fdkVersion), nil
+	} else if h.version == "17" {
+		return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk17-%s", fdkVersion), nil
 	} else {
 		return "", fmt.Errorf("unsupported java version %s", h.version)
 	}
@@ -81,6 +83,8 @@ func (h *JavaLangHelper) RunFromImage() (string, error) {
 		return fmt.Sprintf("fnproject/fn-java-fdk:%s", fdkVersion), nil
 	} else if h.version == "11" {
 		return fmt.Sprintf("fnproject/fn-java-fdk:jre11-%s", fdkVersion), nil
+	} else if h.version == "17" {
+		return fmt.Sprintf("fnproject/fn-java-fdk:jre17-%s", fdkVersion), nil
 	} else {
 		return "", fmt.Errorf("unsupported java version %s", h.version)
 	}
