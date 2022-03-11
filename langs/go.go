@@ -17,11 +17,9 @@
 package langs
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 )
@@ -118,25 +116,8 @@ func (lh *GoLangHelper) GenerateBoilerplate(path string) error {
 	return nil
 }
 
-type githubTagResponse struct {
-	Name string `json:"name"`
-}
-
 func (h *GoLangHelper) GetLatestFDKVersion() (string, error) {
-	// Github API has limit on number of calls
-	resp, err := http.Get("https://api.github.com/repos/fnproject/fdk-go/tags")
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	responseBody := []githubTagResponse{}
-	if err = json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
-		return "", err
-	}
-	if len(responseBody) == 0 {
-		return "", errors.New("Could not read latest version of FDK from tags")
-	}
-	return responseBody[0].Name, nil
+	return getLatestFDKVersionFromGithub("fnproject/fdk-go")
 }
 
 const (
