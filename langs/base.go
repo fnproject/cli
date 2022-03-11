@@ -17,8 +17,13 @@
 package langs
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"path/filepath"
 )
 
 // not a map because some helpers can handle multiple keys
@@ -26,7 +31,7 @@ var helpers = []LangHelper{}
 var fallBackOlderVersions = map[string]LangHelper{}
 
 func init() {
-
+	registerHelper(&DotnetLangHelper{Version: "3.1"})
 	registerHelper(&GoLangHelper{Version: "1.15"})
 	// order matter, 'java' will pick up the first JavaLangHelper
 	registerHelper(&JavaLangHelper{version: "17"})
@@ -160,4 +165,35 @@ func exists(name string) bool {
 		}
 	}
 	return true
+}
+
+func mkdirAndWriteFile(path, dir, filename, content string) error {
+	fullPath := filepath.Join(path, dir)
+	if err := os.MkdirAll(fullPath, os.FileMode(0755)); err != nil {
+		return err
+	}
+
+	fullFilePath := filepath.Join(fullPath, filename)
+	return ioutil.WriteFile(fullFilePath, []byte(content), os.FileMode(0644))
+}
+
+type githubTagResponse struct {
+	Name string `json:"name"`
+}
+
+func getLatestFDKVersionFromGithub(repoKey string) (string, error) {
+	// Github API has limit on number of calls
+	resp, err := http.Get(fmt.Sprintf("https://api.github.com/repos/%s/tags", repoKey))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	responseBody := []githubTagResponse{}
+	if err = json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
+		return "", err
+	}
+	if len(responseBody) == 0 {
+		return "", errors.New("Could not read latest version of FDK from tags")
+	}
+	return responseBody[0].Name, nil
 }

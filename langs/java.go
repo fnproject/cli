@@ -113,22 +113,12 @@ func (h *JavaLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	mkDirAndWriteFile := func(dir, filename, content string) error {
-		fullPath := filepath.Join(path, dir)
-		if err = os.MkdirAll(fullPath, os.FileMode(0755)); err != nil {
-			return err
-		}
-
-		fullFilePath := filepath.Join(fullPath, filename)
-		return ioutil.WriteFile(fullFilePath, []byte(content), os.FileMode(0644))
-	}
-
-	err = mkDirAndWriteFile("src/main/java/com/example/fn", "HelloFunction.java", helloJavaSrcBoilerplate)
+	err = mkdirAndWriteFile(path, "src/main/java/com/example/fn", "HelloFunction.java", helloJavaSrcBoilerplate)
 	if err != nil {
 		return err
 	}
 
-	return mkDirAndWriteFile("src/test/java/com/example/fn", "HelloFunctionTest.java", helloJavaTestBoilerplate)
+	return mkdirAndWriteFile(path, "src/test/java/com/example/fn", "HelloFunctionTest.java", helloJavaTestBoilerplate)
 }
 
 // Cmd returns the Java runtime Docker entrypoint that will be executed when the function is executed.
