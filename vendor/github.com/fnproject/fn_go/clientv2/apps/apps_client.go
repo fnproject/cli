@@ -7,12 +7,11 @@ package apps
 
 import (
 	"github.com/go-openapi/runtime"
-
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new apps API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -24,10 +23,25 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
-/*
-CreateApp creates a new application
+// ClientService is the interface for Client methods
+type ClientService interface {
+	CreateApp(params *CreateAppParams) (*CreateAppOK, error)
 
-Creates a new Application, returning the complete entity.
+	DeleteApp(params *DeleteAppParams) (*DeleteAppNoContent, error)
+
+	GetApp(params *GetAppParams) (*GetAppOK, error)
+
+	ListApps(params *ListAppsParams) (*ListAppsOK, error)
+
+	UpdateApp(params *UpdateAppParams) (*UpdateAppOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
+/*
+  CreateApp creates a new application
+
+  Creates a new Application, returning the complete entity.
 */
 func (a *Client) CreateApp(params *CreateAppParams) (*CreateAppOK, error) {
 	// TODO: Validate the params before sending
@@ -50,14 +64,19 @@ func (a *Client) CreateApp(params *CreateAppParams) (*CreateAppOK, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result.(*CreateAppOK), nil
-
+	success, ok := result.(*CreateAppOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*CreateAppDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
-DeleteApp deletes an application
+  DeleteApp deletes an application
 
-Delete the specified Application.
+  Delete the specified Application.
 */
 func (a *Client) DeleteApp(params *DeleteAppParams) (*DeleteAppNoContent, error) {
 	// TODO: Validate the params before sending
@@ -80,14 +99,19 @@ func (a *Client) DeleteApp(params *DeleteAppParams) (*DeleteAppNoContent, error)
 	if err != nil {
 		return nil, err
 	}
-	return result.(*DeleteAppNoContent), nil
-
+	success, ok := result.(*DeleteAppNoContent)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*DeleteAppDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
-GetApp gets information for an application
+  GetApp gets information for an application
 
-Returns more details about an Application, such as statistics.
+  Returns more details about an Application, such as statistics.
 */
 func (a *Client) GetApp(params *GetAppParams) (*GetAppOK, error) {
 	// TODO: Validate the params before sending
@@ -110,14 +134,19 @@ func (a *Client) GetApp(params *GetAppParams) (*GetAppOK, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result.(*GetAppOK), nil
-
+	success, ok := result.(*GetAppOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*GetAppDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
-ListApps gets a list of applications
+  ListApps gets a list of applications
 
-Get a filtered list of Applications in alphabetical order.
+  Get a filtered list of Applications in alphabetical order.
 */
 func (a *Client) ListApps(params *ListAppsParams) (*ListAppsOK, error) {
 	// TODO: Validate the params before sending
@@ -140,14 +169,19 @@ func (a *Client) ListApps(params *ListAppsParams) (*ListAppsOK, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ListAppsOK), nil
-
+	success, ok := result.(*ListAppsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*ListAppsDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
-UpdateApp updates an application
+  UpdateApp updates an application
 
-Updates an Application via merging the provided values.
+  Updates an Application via merging the provided values.
 */
 func (a *Client) UpdateApp(params *UpdateAppParams) (*UpdateAppOK, error) {
 	// TODO: Validate the params before sending
@@ -170,8 +204,13 @@ func (a *Client) UpdateApp(params *UpdateAppParams) (*UpdateAppOK, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result.(*UpdateAppOK), nil
-
+	success, ok := result.(*UpdateAppOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	unexpectedSuccess := result.(*UpdateAppDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 // SetTransport changes the transport on the client

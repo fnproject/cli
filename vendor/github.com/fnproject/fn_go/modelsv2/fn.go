@@ -6,14 +6,14 @@ package modelsv2
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // Fn fn
+//
 // swagger:model Fn
 type Fn struct {
 
@@ -36,7 +36,7 @@ type Fn struct {
 	ID string `json:"id,omitempty"`
 
 	// Hot functions idle timeout before container termination. Value in Seconds.
-	IDLETimeout *int32 `json:"idle_timeout,omitempty"`
+	IdleTimeout *int32 `json:"idle_timeout,omitempty"`
 
 	// Full container image name, e.g. hub.docker.com/fnproject/yo or fnproject/yo (default registry: hub.docker.com)
 	Image string `json:"image,omitempty"`

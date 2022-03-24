@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package commands
 
 /*
@@ -120,9 +136,16 @@ func langsList() string {
 		if i > 0 && s == allLangs[i-1] {
 			continue
 		}
+		if deprecatedPythonRuntime(s) {
+			continue
+		}
 		allUnique = append(allUnique, s)
 	}
 	return strings.Join(allUnique, ", ")
+}
+
+func deprecatedPythonRuntime(runtime string) bool {
+	return runtime == "python3.8.5" || runtime == "python3.7.1"
 }
 
 // InitCommand returns init cli.command
@@ -168,6 +191,9 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		// go no further if the specified runtime is not supported
 		if runtime != common.FuncfileDockerRuntime && langs.GetLangHelper(runtime) == nil {
 			return fmt.Errorf("Init does not support the '%s' runtime", runtime)
+		}
+		if deprecatedPythonRuntime(runtime) {
+			return fmt.Errorf("Runtime %s is no more supported for new apps. Please use python or %s runtime for new apps.", runtime, runtime[:strings.LastIndex(runtime, ".")])
 		}
 	}
 
@@ -268,7 +294,7 @@ func (a *initFnCmd) init(c *cli.Context) error {
 }
 
 func (a *initFnCmd) doInitImage(initImage string, c *cli.Context) error {
-	err := common.DockerRunInitImage(initImage, a.ff.Name)
+	err := common.RunInitImage(initImage, a.ff.Name)
 	if err != nil {
 		return err
 	}
@@ -309,8 +335,8 @@ func (a *initFnCmd) bindFn(fn *modelsV2.Fn) {
 	if fn.Timeout != nil {
 		ff.Timeout = fn.Timeout
 	}
-	if fn.IDLETimeout != nil {
-		ff.IDLE_timeout = fn.IDLETimeout
+	if fn.IdleTimeout != nil {
+		ff.IDLE_timeout = fn.IdleTimeout
 	}
 }
 

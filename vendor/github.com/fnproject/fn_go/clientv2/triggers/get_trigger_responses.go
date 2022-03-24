@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	modelsv2 "github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnproject/fn_go/modelsv2"
 )
 
 // GetTriggerReader is a Reader for the GetTrigger structure.
@@ -24,21 +23,18 @@ type GetTriggerReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *GetTriggerReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewGetTriggerOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 404:
 		result := NewGetTriggerNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
 		result := NewGetTriggerDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -68,6 +64,10 @@ func (o *GetTriggerOK) Error() string {
 	return fmt.Sprintf("[GET /triggers/{triggerID}][%d] getTriggerOK  %+v", 200, o.Payload)
 }
 
+func (o *GetTriggerOK) GetPayload() *modelsv2.Trigger {
+	return o.Payload
+}
+
 func (o *GetTriggerOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(modelsv2.Trigger)
@@ -95,6 +95,10 @@ type GetTriggerNotFound struct {
 
 func (o *GetTriggerNotFound) Error() string {
 	return fmt.Sprintf("[GET /triggers/{triggerID}][%d] getTriggerNotFound  %+v", 404, o.Payload)
+}
+
+func (o *GetTriggerNotFound) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *GetTriggerNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -133,6 +137,10 @@ func (o *GetTriggerDefault) Code() int {
 
 func (o *GetTriggerDefault) Error() string {
 	return fmt.Sprintf("[GET /triggers/{triggerID}][%d] GetTrigger default  %+v", o._statusCode, o.Payload)
+}
+
+func (o *GetTriggerDefault) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *GetTriggerDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

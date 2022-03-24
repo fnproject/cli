@@ -8,14 +8,14 @@ package modelsv2
 import (
 	"strconv"
 
-	strfmt "github.com/go-openapi/strfmt"
-
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // TriggerList trigger list
+//
 // swagger:model TriggerList
 type TriggerList struct {
 

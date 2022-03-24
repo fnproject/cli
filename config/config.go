@@ -1,6 +1,23 @@
+/*
+ * Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package config
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -27,9 +44,10 @@ const (
 
 	ReadWritePerms = os.FileMode(0755)
 
-	CurrentContext    = "current-context"
-	ContextProvider   = "provider"
-	CurrentCliVersion = "cli-version"
+	CurrentContext      = "current-context"
+	ContextProvider     = "provider"
+	CurrentCliVersion   = "cli-version"
+	ContainerEngineType = "container-enginetype"
 
 	EnvFnRegistry = "registry"
 	EnvFnContext  = "context"
@@ -37,9 +55,10 @@ const (
 	OCI_CLI_AUTH_ENV_VAR            = "OCI_CLI_AUTH"
 	OCI_CLI_AUTH_INSTANCE_PRINCIPAL = "instance_principal"
 	OCI_CLI_AUTH_INSTANCE_OBO_USER  = "instance_obo_user"
+	DefaultContainerEngineType      = "docker"
 )
 
-var defaultRootConfigContents = &ContextMap{CurrentContext: "default", CurrentCliVersion: Version}
+var defaultRootConfigContents = &ContextMap{CurrentContext: "default", CurrentCliVersion: Version, ContainerEngineType: DefaultContainerEngineType}
 
 type ViperConfigSource struct {
 }
@@ -53,26 +72,6 @@ func (*ViperConfigSource) GetBool(key string) bool {
 }
 func (*ViperConfigSource) IsSet(key string) bool {
 	return viper.IsSet(key)
-}
-
-func DefaultOracleCSRegionContextContents() (contextMap *ContextMap, err error) {
-
-	region, tenancy, err := oracle.GetOCIRegionTenancy()
-
-	if err != nil {
-		return nil, err
-	}
-
-	apiUrl := fmt.Sprintf(oracle.FunctionsAPIURLTmpl, region)
-
-	contextMap = &ContextMap{
-		ContextProvider:         fn_go.OracleCSProvider,
-		provider.CfgFnAPIURL:    apiUrl,
-		EnvFnRegistry:           "",
-		oracle.CfgCompartmentID: tenancy,
-	}
-
-	return contextMap, nil
 }
 
 func DefaultContextConfigContents() (contextMap *ContextMap) {
@@ -161,7 +160,8 @@ func ensureConfiguration() error {
 
 		defaultOracleRegionContextFileName := fmt.Sprintf(defaultOracleRegionContextFileNameTmpl, region)
 		defaultOracleRegionContextPath := filepath.Join(contextsPath, defaultOracleRegionContextFileName)
-		rootConfigContents = &ContextMap{CurrentContext: region, CurrentCliVersion: Version}
+		rootConfigContents = &ContextMap{CurrentContext: region, CurrentCliVersion: Version, ContainerEngineType: DefaultContainerEngineType}
+		//check for supported container engine
 
 		if _, err := os.Stat(defaultOracleRegionContextPath); os.IsNotExist(err) {
 			_, err = os.Create(defaultOracleRegionContextPath)
@@ -170,7 +170,12 @@ func ensureConfiguration() error {
 				return fmt.Errorf("error creating %s context file %v", defaultOracleRegionContextFileName, err)
 			}
 
-			apiUrl := fmt.Sprintf(oracle.FunctionsAPIURLTmpl, region)
+			domain, err := oracle.GetRealmDomain()
+			if err != nil {
+				return fmt.Errorf("error creating %s context file %v", defaultOracleRegionContextFileName, err)
+			}
+
+			apiUrl := fmt.Sprintf(oracle.FunctionsAPIURLTmpl, region, domain)
 			contextMap := &ContextMap{
 				ContextProvider:         fn_go.OracleCSProvider,
 				provider.CfgFnAPIURL:    apiUrl,
@@ -227,6 +232,11 @@ func LoadConfiguration(c *cli.Context) error {
 
 	viper.AddConfigPath(filepath.Join(home, rootConfigPathName, contextsPathName))
 	viper.SetConfigName(context)
+	var containerEngineType string
+	if containerEngineType = viper.GetString(ContainerEngineType); containerEngineType == "" {
+		containerEngineType = DefaultContainerEngineType
+	}
+	viper.SetDefault(ContainerEngineType, containerEngineType)
 
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Printf("%v \n", err)
@@ -238,6 +248,10 @@ func LoadConfiguration(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
+		err = WriteConfigValueToConfigFile(ContainerEngineType, DefaultContainerEngineType)
+		if err != nil {
+			return err
+		}
 
 		fmt.Println("current context has been set to default")
 		return nil
@@ -245,6 +259,15 @@ func LoadConfiguration(c *cli.Context) error {
 
 	viper.Set(CurrentContext, context)
 	return nil
+}
+
+func ValidateContainerEngineType(containerEngineType string) error {
+	switch containerEngineType {
+	case "docker", "podman":
+		return nil
+	default:
+		return errors.New("Invalid Container Engine")
+	}
 }
 
 func WriteConfigValueToConfigFile(key, value string) error {

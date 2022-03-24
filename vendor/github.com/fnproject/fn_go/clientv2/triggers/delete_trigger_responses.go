@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	modelsv2 "github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnproject/fn_go/modelsv2"
 )
 
 // DeleteTriggerReader is a Reader for the DeleteTrigger structure.
@@ -24,21 +23,18 @@ type DeleteTriggerReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *DeleteTriggerReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 204:
 		result := NewDeleteTriggerNoContent()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 404:
 		result := NewDeleteTriggerNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
 		result := NewDeleteTriggerDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -89,6 +85,10 @@ func (o *DeleteTriggerNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /triggers/{triggerID}][%d] deleteTriggerNotFound  %+v", 404, o.Payload)
 }
 
+func (o *DeleteTriggerNotFound) GetPayload() *modelsv2.Error {
+	return o.Payload
+}
+
 func (o *DeleteTriggerNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(modelsv2.Error)
@@ -125,6 +125,10 @@ func (o *DeleteTriggerDefault) Code() int {
 
 func (o *DeleteTriggerDefault) Error() string {
 	return fmt.Sprintf("[DELETE /triggers/{triggerID}][%d] DeleteTrigger default  %+v", o._statusCode, o.Payload)
+}
+
+func (o *DeleteTriggerDefault) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *DeleteTriggerDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package langs
 
 import (
@@ -11,6 +27,7 @@ import (
 
 type NodeLangHelper struct {
 	BaseHelper
+	Version string
 }
 
 func (h *NodeLangHelper) Handles(lang string) bool {
@@ -21,18 +38,17 @@ func (h *NodeLangHelper) Runtime() string {
 }
 
 func (lh *NodeLangHelper) LangStrings() []string {
-	return []string{"node"}
+	return []string{"node", fmt.Sprintf("node%s", lh.Version)}
 }
 func (lh *NodeLangHelper) Extensions() []string {
 	// this won't be chosen by default
 	return []string{".js"}
 }
-
 func (lh *NodeLangHelper) BuildFromImage() (string, error) {
-	return "fnproject/node:dev", nil
+	return fmt.Sprintf("fnproject/node:%s-dev", lh.Version), nil
 }
 func (lh *NodeLangHelper) RunFromImage() (string, error) {
-	return "fnproject/node", nil
+	return fmt.Sprintf("fnproject/node:%s", lh.Version), nil
 }
 
 const funcJsContent = `const fdk=require('@fnproject/fdk');
@@ -61,7 +77,7 @@ const packageJsonContent = `{
 `
 
 func (h *NodeLangHelper) GenerateBoilerplate(path string) error {
-	fdkVersion, err := h.getFDKAPIVersion()
+	fdkVersion, err := h.GetLatestFDKVersion()
 	if err != nil {
 		return err
 	}
@@ -122,7 +138,7 @@ func (h *NodeLangHelper) DockerfileCopyCmds() []string {
 	return r
 }
 
-func (h *NodeLangHelper) getFDKAPIVersion() (string, error) {
+func (h *NodeLangHelper) GetLatestFDKVersion() (string, error) {
 
 	const versionURL = "https://registry.npmjs.org/@fnproject/fdk"
 	const versionEnv = "FN_NODE_FDK_VERSION"
@@ -156,4 +172,8 @@ func (h *NodeLangHelper) getFDKAPIVersion() (string, error) {
 	}
 
 	return parsedResp.DistTags.Latest, nil
+}
+
+func (h *NodeLangHelper) FixImagesOnInit() bool {
+	return true
 }

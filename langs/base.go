@@ -1,25 +1,62 @@
+/*
+ * Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package langs
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"path/filepath"
 )
 
 // not a map because some helpers can handle multiple keys
 var helpers = []LangHelper{}
+var fallBackOlderVersions = map[string]LangHelper{}
 
 func init() {
-	registerHelper(&GoLangHelper{})
+	registerHelper(&DotnetLangHelper{Version: "3.1"})
+	registerHelper(&GoLangHelper{Version: "1.15"})
 	// order matter, 'java' will pick up the first JavaLangHelper
+	registerHelper(&JavaLangHelper{version: "17"})
 	registerHelper(&JavaLangHelper{version: "11"})
 	registerHelper(&JavaLangHelper{version: "8"})
-	registerHelper(&NodeLangHelper{})
+	registerHelper(&NodeLangHelper{Version: "14"})
+	registerHelper(&NodeLangHelper{Version: "11"})
 	// order matter, 'python' will pick up the first PythonLangHelper
-	registerHelper(&PythonLangHelper{Version: "3.6"})
+	registerHelper(&PythonLangHelper{Version: "3.9"})
+	registerHelper(&PythonLangHelper{Version: "3.8"})
+	registerHelper(&PythonLangHelper{Version: "3.8.5"})
+	registerHelper(&PythonLangHelper{Version: "3.7"})
 	registerHelper(&PythonLangHelper{Version: "3.7.1"})
-	registerHelper(&RubyLangHelper{})
+	registerHelper(&PythonLangHelper{Version: "3.6"})
+
+	//New runtime support for Ruby 2.7
+	// order matter, 'ruby' will pick up the first RubyLangHelper
+	registerHelper(&RubyLangHelper{Version: "2.7"})
+
 	registerHelper(&KotlinLangHelper{})
+
+	// for older versions support backwards compatibility
+	fallBackOlderVersions["ruby"] = &RubyLangHelper{Version: "2.5"}
+	fallBackOlderVersions["node"] = &NodeLangHelper{Version: "11"}
+	fallBackOlderVersions["go"] = &GoLangHelper{Version: "1.11"}
 }
 
 func registerHelper(h LangHelper) {
@@ -42,6 +79,15 @@ func GetLangHelper(lang string) LangHelper {
 		}
 	}
 	return nil
+}
+
+func GetFallbackLangHelper(lang string) LangHelper {
+	return fallBackOlderVersions[lang]
+}
+
+func IsFallbackSupported(lang string) bool {
+	_, found := fallBackOlderVersions[lang]
+	return found
 }
 
 // LangHelper is the interface that language helpers must implement.
@@ -80,6 +126,8 @@ type LangHelper interface {
 	GenerateBoilerplate(string) error
 	// FixImagesOnInit determines if images should be fixed on initialization - BuildFromImage and RunFromImage will be written to func.yaml
 	FixImagesOnInit() bool
+	// GetLatestFDKVersion checks the package repository and returns the latest version of FDK version if available.
+	GetLatestFDKVersion() (string, error)
 }
 
 func defaultHandles(h LangHelper, lang string) bool {
@@ -95,18 +143,19 @@ func defaultHandles(h LangHelper, lang string) bool {
 type BaseHelper struct {
 }
 
-func (h *BaseHelper) IsMultiStage() bool               { return true }
-func (h *BaseHelper) DockerfileBuildCmds() []string    { return []string{} }
-func (h *BaseHelper) DockerfileCopyCmds() []string     { return []string{} }
-func (h *BaseHelper) Entrypoint() (string, error)      { return "", nil }
-func (h *BaseHelper) Cmd() (string, error)             { return "", nil }
-func (h *BaseHelper) HasPreBuild() bool                { return false }
-func (h *BaseHelper) PreBuild() error                  { return nil }
-func (h *BaseHelper) AfterBuild() error                { return nil }
-func (h *BaseHelper) HasBoilerplate() bool             { return false }
-func (h *BaseHelper) GenerateBoilerplate(string) error { return nil }
-func (h *BaseHelper) CustomMemory() uint64             { return 0 }
-func (h *BaseHelper) FixImagesOnInit() bool            { return false }
+func (h *BaseHelper) IsMultiStage() bool                   { return true }
+func (h *BaseHelper) DockerfileBuildCmds() []string        { return []string{} }
+func (h *BaseHelper) DockerfileCopyCmds() []string         { return []string{} }
+func (h *BaseHelper) Entrypoint() (string, error)          { return "", nil }
+func (h *BaseHelper) Cmd() (string, error)                 { return "", nil }
+func (h *BaseHelper) HasPreBuild() bool                    { return false }
+func (h *BaseHelper) PreBuild() error                      { return nil }
+func (h *BaseHelper) AfterBuild() error                    { return nil }
+func (h *BaseHelper) HasBoilerplate() bool                 { return false }
+func (h *BaseHelper) GenerateBoilerplate(string) error     { return nil }
+func (h *BaseHelper) CustomMemory() uint64                 { return 0 }
+func (h *BaseHelper) FixImagesOnInit() bool                { return false }
+func (h *BaseHelper) GetLatestFDKVersion() (string, error) { return "", nil }
 
 // exists checks if a file exists
 func exists(name string) bool {
@@ -118,6 +167,33 @@ func exists(name string) bool {
 	return true
 }
 
-func dockerBuildError(err error) error {
-	return fmt.Errorf("error running docker build: %v", err)
+func mkdirAndWriteFile(path, dir, filename, content string) error {
+	fullPath := filepath.Join(path, dir)
+	if err := os.MkdirAll(fullPath, os.FileMode(0755)); err != nil {
+		return err
+	}
+
+	fullFilePath := filepath.Join(fullPath, filename)
+	return ioutil.WriteFile(fullFilePath, []byte(content), os.FileMode(0644))
+}
+
+type githubTagResponse struct {
+	Name string `json:"name"`
+}
+
+func getLatestFDKVersionFromGithub(repoKey string) (string, error) {
+	// Github API has limit on number of calls
+	resp, err := http.Get(fmt.Sprintf("https://api.github.com/repos/%s/tags", repoKey))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	responseBody := []githubTagResponse{}
+	if err = json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
+		return "", err
+	}
+	if len(responseBody) == 0 {
+		return "", errors.New("Could not read latest version of FDK from tags")
+	}
+	return responseBody[0].Name, nil
 }

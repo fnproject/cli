@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	modelsv2 "github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnproject/fn_go/modelsv2"
 )
 
 // GetAppReader is a Reader for the GetApp structure.
@@ -24,21 +23,18 @@ type GetAppReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *GetAppReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewGetAppOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 404:
 		result := NewGetAppNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
 		result := NewGetAppDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -68,6 +64,10 @@ func (o *GetAppOK) Error() string {
 	return fmt.Sprintf("[GET /apps/{appID}][%d] getAppOK  %+v", 200, o.Payload)
 }
 
+func (o *GetAppOK) GetPayload() *modelsv2.App {
+	return o.Payload
+}
+
 func (o *GetAppOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(modelsv2.App)
@@ -95,6 +95,10 @@ type GetAppNotFound struct {
 
 func (o *GetAppNotFound) Error() string {
 	return fmt.Sprintf("[GET /apps/{appID}][%d] getAppNotFound  %+v", 404, o.Payload)
+}
+
+func (o *GetAppNotFound) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *GetAppNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -133,6 +137,10 @@ func (o *GetAppDefault) Code() int {
 
 func (o *GetAppDefault) Error() string {
 	return fmt.Sprintf("[GET /apps/{appID}][%d] GetApp default  %+v", o._statusCode, o.Payload)
+}
+
+func (o *GetAppDefault) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *GetAppDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -10,10 +10,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
 
-	strfmt "github.com/go-openapi/strfmt"
-
-	modelsv2 "github.com/fnproject/fn_go/modelsv2"
+	"github.com/fnproject/fn_go/modelsv2"
 )
 
 // UpdateAppReader is a Reader for the UpdateApp structure.
@@ -24,28 +23,24 @@ type UpdateAppReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *UpdateAppReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewUpdateAppOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewUpdateAppBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewUpdateAppNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	default:
 		result := NewUpdateAppDefault(response.Code())
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -73,6 +68,10 @@ type UpdateAppOK struct {
 
 func (o *UpdateAppOK) Error() string {
 	return fmt.Sprintf("[PUT /apps/{appID}][%d] updateAppOK  %+v", 200, o.Payload)
+}
+
+func (o *UpdateAppOK) GetPayload() *modelsv2.App {
+	return o.Payload
 }
 
 func (o *UpdateAppOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -104,6 +103,10 @@ func (o *UpdateAppBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /apps/{appID}][%d] updateAppBadRequest  %+v", 400, o.Payload)
 }
 
+func (o *UpdateAppBadRequest) GetPayload() *modelsv2.Error {
+	return o.Payload
+}
+
 func (o *UpdateAppBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(modelsv2.Error)
@@ -131,6 +134,10 @@ type UpdateAppNotFound struct {
 
 func (o *UpdateAppNotFound) Error() string {
 	return fmt.Sprintf("[PUT /apps/{appID}][%d] updateAppNotFound  %+v", 404, o.Payload)
+}
+
+func (o *UpdateAppNotFound) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *UpdateAppNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -169,6 +176,10 @@ func (o *UpdateAppDefault) Code() int {
 
 func (o *UpdateAppDefault) Error() string {
 	return fmt.Sprintf("[PUT /apps/{appID}][%d] UpdateApp default  %+v", o._statusCode, o.Payload)
+}
+
+func (o *UpdateAppDefault) GetPayload() *modelsv2.Error {
+	return o.Payload
 }
 
 func (o *UpdateAppDefault) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

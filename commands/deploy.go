@@ -1,12 +1,36 @@
+/*
+ * Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package commands
 
 import (
+	"bytes"
+	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
+
+	"github.com/fnproject/fn_go/provider/oracle"
 
 	client "github.com/fnproject/cli/client"
 	common "github.com/fnproject/cli/common"
@@ -15,8 +39,49 @@ import (
 	trigger "github.com/fnproject/cli/objects/trigger"
 	v2Client "github.com/fnproject/fn_go/clientv2"
 	models "github.com/fnproject/fn_go/modelsv2"
+	"github.com/oracle/oci-go-sdk/v48/artifacts"
+	ociCommon "github.com/oracle/oci-go-sdk/v48/common"
+	"github.com/oracle/oci-go-sdk/v48/keymanagement"
 	"github.com/urfave/cli"
 )
+
+// Message defines the struct of container image signature payload
+type Message struct {
+	Description      string `mandatory:"true" json:"description"`
+	ImageDigest      string `mandatory:"true" json:"imageDigest"`
+	KmsKeyId         string `mandatory:"true" json:"kmsKeyId"`
+	KmsKeyVersionId  string `mandatory:"true" json:"kmsKeyVersionId"`
+	Metadata         string `mandatory:"true" json:"metadata"`
+	Region           string `mandatory:"true" json:"region"`
+	RepositoryName   string `mandatory:"true" json:"repositoryName"`
+	SigningAlgorithm string `mandatory:"true" json:"signingAlgorithm"`
+}
+
+var RegionsWithOldKMSEndpoints = map[ociCommon.Region]struct{}{
+	ociCommon.RegionSEA:           {},
+	ociCommon.RegionPHX:           {},
+	ociCommon.RegionIAD:           {},
+	ociCommon.RegionFRA:           {},
+	ociCommon.RegionLHR:           {},
+	ociCommon.RegionCAToronto1:    {},
+	ociCommon.RegionAPSeoul1:      {},
+	ociCommon.RegionAPTokyo1:      {},
+	ociCommon.RegionAPMumbai1:     {},
+	ociCommon.RegionEUZurich1:     {},
+	ociCommon.RegionSASaopaulo1:   {},
+	ociCommon.RegionAPSydney1:     {},
+	ociCommon.RegionMEJeddah1:     {},
+	ociCommon.RegionEUAmsterdam1:  {},
+	ociCommon.RegionAPMelbourne1:  {},
+	ociCommon.RegionAPOsaka1:      {},
+	ociCommon.RegionCAMontreal1:   {},
+	ociCommon.RegionUSLangley1:    {},
+	ociCommon.RegionUSLuke1:       {},
+	ociCommon.RegionUSGovAshburn1: {},
+	ociCommon.RegionUSGovChicago1: {},
+	ociCommon.RegionUSGovPhoenix1: {},
+	ociCommon.RegionUKGovLondon1:  {},
+}
 
 // DeployCommand returns deploy cli.command
 func DeployCommand() cli.Command {
@@ -278,9 +343,37 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	if funcfile.Name == "" {
 		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
 	}
-	fmt.Printf("Deploying %s to app: %s\n", funcfile.Name, app.Name)
 
-	var err error
+	oracleProvider, _ := getOracleProvider()
+	if oracleProvider != nil && oracleProvider.ImageCompartmentID != "" {
+		// If the provider is Oracle and ImageCompartmentID is present, we need to deploy image to the ImageCompartmentID.
+		// The repository name should be unique throughout a tenancy. We check if a repository exists in the compartment and create it if it doesn't already exist.
+		// If the creation fails, it could be because the repository name aready exists in a different compartment.
+
+		repositoryName, err := getRepositoryName(funcfile)
+		if err != nil {
+			return err
+		}
+
+		artifactsClient, err := artifacts.NewArtifactsClientWithConfigurationProvider(oracleProvider.ConfigurationProvider)
+		if err != nil {
+			return err
+		}
+		artifactsClient.SetRegion(getRegion(oracleProvider))
+
+		repositoryExists, err := doesRepositoryExistInCompartment(repositoryName, oracleProvider.ImageCompartmentID, artifactsClient)
+		if err != nil {
+			return err
+		}
+		if !repositoryExists {
+			err = createContainerRepositoryInCompartment(repositoryName, oracleProvider.ImageCompartmentID, artifactsClient)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	fmt.Printf("Deploying %s to app: %s\n", funcfile.Name, app.Name)
 	if !p.noBump {
 		funcfile2, err := common.BumpItV20180708(funcfilePath, common.Patch)
 		if err != nil {
@@ -291,15 +384,19 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	_, err = common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache)
+	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache)
 	if err != nil {
 		return err
 	}
 
 	if !p.local {
-		if err := common.DockerPushV20180708(funcfile); err != nil {
+		if err := common.PushV20180708(funcfile); err != nil {
 			return err
 		}
+	}
+
+	if err := p.signImage(funcfile); err != nil {
+		return err
 	}
 
 	return p.updateFunction(c, app.ID, funcfile)
@@ -358,6 +455,298 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 			}
 		}
 	}
-
 	return nil
+}
+
+func getOracleProvider() (*oracle.OracleProvider, error) {
+	currentProvider, err := client.CurrentProvider()
+	if err != nil {
+		return nil, err
+	}
+	if oracleProvider, ok := currentProvider.(*oracle.OracleProvider); ok {
+		return oracleProvider, nil
+	}
+	return nil, nil
+}
+
+func (p *deploycmd) signImage(funcfile *common.FuncFileV20180708) error {
+	signingDetails := funcfile.SigningDetails
+	signatureConfigured, err := isSignatureConfigured(signingDetails)
+	if err != nil {
+		return err
+	}
+	if !signatureConfigured {
+		return nil
+	}
+	oracleProvider, _ := getOracleProvider()
+	if oracleProvider == nil {
+		return nil
+	}
+	fmt.Printf("Signing image %s using KmsKey %s...\n", funcfile.ImageNameV20180708(), signingDetails.KmsKeyId)
+	imageDigest, err := getImageDigest(funcfile)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Image digest is %s\n", imageDigest)
+	repositoryName, err := getRepositoryName(funcfile)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Image belongs to repository %s\n", repositoryName)
+	artifactsClient, err := artifacts.NewArtifactsClientWithConfigurationProvider(oracleProvider.ConfigurationProvider)
+	if err != nil {
+		return err
+	}
+	region := getRegion(oracleProvider)
+	artifactsClient.SetRegion(region)
+	imageId, compartmentId, err := getImageId(artifactsClient, "", signingDetails.ImageCompartmentId, repositoryName, imageDigest)
+	if err != nil {
+		return err
+	}
+	signatureRequired, err := isSignatureRequired(artifactsClient, imageId, signingDetails)
+	if err != nil {
+		return err
+	}
+	if !signatureRequired {
+		fmt.Printf("Image %s is already signed by %s\n", funcfile.ImageNameV20180708(), signingDetails.KmsKeyId)
+		return nil
+	}
+	message, signature, err := createImageSignature(oracleProvider, region, imageDigest, repositoryName, funcfile.SigningDetails)
+	if err != nil {
+		return err
+	}
+	if err = uploadImageSignature(artifactsClient, compartmentId, imageId, message, signature, funcfile.SigningDetails); err == nil {
+		fmt.Printf("Successfully signed and uploaded image signature for %s\n", funcfile.ImageNameV20180708())
+	}
+	return err
+}
+
+func isSignatureConfigured(signingDetails common.SigningDetails) (bool, error) {
+	configured := signingDetails.SigningAlgorithm != "" && signingDetails.KmsKeyId != "" &&
+		signingDetails.ImageCompartmentId != "" && signingDetails.KmsKeyVersionId != ""
+	if !configured && (signingDetails.SigningAlgorithm != "" || signingDetails.KmsKeyId != "" ||
+		signingDetails.ImageCompartmentId != "" || signingDetails.KmsKeyVersionId != "") {
+		return false, fmt.Errorf("signing_details is missing values for [%s] in func.yaml", findMissingValues(signingDetails))
+	}
+	return configured, nil
+}
+
+func getRegion(oracleProvider *oracle.OracleProvider) string {
+	// try to derive region from FnApiUrl
+	if oracleProvider.FnApiUrl != nil {
+		parts := strings.Split(oracleProvider.FnApiUrl.Host, ".")
+		if len(parts) >= 4 {
+			return parts[1]
+		}
+	}
+	// provider was built after all validations, so it is safe to ignore
+	region, _ := oracleProvider.ConfigurationProvider.Region()
+	return region
+}
+
+func getRepositoryName(ff *common.FuncFileV20180708) (string, error) {
+	parts := strings.Split(ff.ImageNameV20180708(), ":")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("cannot parse image %s", ff.ImageNameV20180708())
+	}
+	pattern := regexp.MustCompile("(.*)\\.ocir\\.io/([^/]*)/(.*)")
+	parts = pattern.FindStringSubmatch(parts[0])
+	if len(parts) != 4 {
+		return "", fmt.Errorf("cannot parse registry for image %s", ff.ImageNameV20180708())
+	}
+	return parts[3], nil
+}
+
+func getImageDigest(ff *common.FuncFileV20180708) (string, error) {
+	containerEngineType, err := common.GetContainerEngineType()
+	if err != nil {
+		return "", err
+	}
+	fmt.Printf("Fetching image digest for %s\n", ff.ImageNameV20180708())
+	parts := strings.Split(ff.ImageNameV20180708(), ":")
+	if len(parts) < 2 {
+		return "", fmt.Errorf("failed to parse image %s", ff.ImageNameV20180708())
+	}
+	image, tag := parts[0], parts[1]
+	imageDigests, err := exec.Command(containerEngineType, "images", "--digests", image, "--format", "{{.Tag}} {{.Digest}}").Output()
+	if err != nil {
+		return "", fmt.Errorf("error while listing image digests for %s, %s", ff.ImageNameV20180708(), err)
+	}
+	cmd := exec.Command("awk", fmt.Sprintf("{if ($1==\"%s\") print $2}", tag))
+	cmd.Stdin = bytes.NewBuffer(imageDigests)
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("error parsing image digest output for %s, %s", ff.ImageNameV20180708(), err)
+	}
+	imageDigest := strings.ReplaceAll(string(output), "\n", "")
+	if imageDigest == "" {
+		return "", fmt.Errorf("failed to fetch image digest for %s", ff.ImageNameV20180708())
+	}
+	return imageDigest, nil
+}
+
+func getImageId(client artifacts.ArtifactsClient, page, imageCompartmentId, repositoryName, imageDigest string) (string, string, error) {
+	request := artifacts.ListContainerImagesRequest{
+		CompartmentId:          ociCommon.String(imageCompartmentId),
+		CompartmentIdInSubtree: ociCommon.Bool(true),
+		RepositoryName:         ociCommon.String(repositoryName),
+	}
+	if page != "" {
+		request.Page = ociCommon.String(page)
+	}
+	images, err := client.ListContainerImages(context.Background(), request)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to lookup image in OCI Registry due to %s", err)
+	}
+	for _, image := range images.Items {
+		if image.Digest != nil && *image.Digest == imageDigest {
+			return *image.Id, *image.CompartmentId, nil
+		}
+	}
+	if images.OpcNextPage != nil {
+		return getImageId(client, *images.OpcNextPage, imageCompartmentId, repositoryName, imageDigest)
+	}
+	return "", "", fmt.Errorf("failed to fetch image details for %s from OCI Container Registry", repositoryName)
+}
+
+func isSignatureRequired(client artifacts.ArtifactsClient, imageId string, signingDetails common.SigningDetails) (bool, error) {
+	algorithmEnum := artifacts.ListContainerImageSignaturesSigningAlgorithmEnum(signingDetails.SigningAlgorithm)
+	signatures, err := client.ListContainerImageSignatures(context.Background(), artifacts.ListContainerImageSignaturesRequest{
+		CompartmentId:          ociCommon.String(signingDetails.ImageCompartmentId),
+		CompartmentIdInSubtree: ociCommon.Bool(true),
+		ImageId:                ociCommon.String(imageId),
+		KmsKeyId:               ociCommon.String(signingDetails.KmsKeyId),
+		KmsKeyVersionId:        ociCommon.String(signingDetails.KmsKeyVersionId),
+		SigningAlgorithm:       algorithmEnum,
+		Limit:                  ociCommon.Int(1),
+	})
+	if err != nil {
+		return true, err
+	}
+	return len(signatures.Items) == 0, nil
+}
+
+func createImageSignature(provider *oracle.OracleProvider, region string, imageDigest string, repositoryName string, signingDetails common.SigningDetails) (string, string, error) {
+	encoded, err := createImageSignatureMessage(region, imageDigest, repositoryName, signingDetails)
+	if err != nil {
+		return "", "", nil
+	}
+	algorithm := keymanagement.SignDataDetailsSigningAlgorithmEnum(signingDetails.SigningAlgorithm)
+	cryptoEndpoint, err := buildCryptoEndpoint(region, signingDetails.KmsKeyId)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to build crypto endpoint due to %s", err)
+	}
+	kmsClient, err := keymanagement.NewKmsCryptoClientWithConfigurationProvider(provider.ConfigurationProvider, cryptoEndpoint)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to create crypto client due to %s", err)
+	}
+	signResponse, err := kmsClient.Sign(context.Background(), keymanagement.SignRequest{
+		SignDataDetails: keymanagement.SignDataDetails{
+			Message:          ociCommon.String(encoded),
+			KeyId:            ociCommon.String(signingDetails.KmsKeyId),
+			KeyVersionId:     ociCommon.String(signingDetails.KmsKeyVersionId),
+			SigningAlgorithm: algorithm,
+			MessageType:      keymanagement.SignDataDetailsMessageTypeRaw,
+		},
+	})
+	if err != nil {
+		return "", "", fmt.Errorf("failed to sign image due to %s", err)
+	}
+	return encoded, *signResponse.Signature, nil
+}
+
+func createImageSignatureMessage(region string, imageDigest string, repositoryName string, signingDetails common.SigningDetails) (string, error) {
+	message := Message{
+		Description:      "image signed by fn CLI",
+		ImageDigest:      imageDigest,
+		KmsKeyId:         signingDetails.KmsKeyId,
+		KmsKeyVersionId:  signingDetails.KmsKeyVersionId,
+		Region:           region,
+		RepositoryName:   repositoryName,
+		SigningAlgorithm: signingDetails.SigningAlgorithm,
+		Metadata:         "{\"signedBy\":\"fn CLI\"}",
+	}
+	messageBytes, err := json.Marshal(&message)
+	encoded := base64.StdEncoding.EncodeToString(messageBytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to serialize image signature message due to %s", err)
+	}
+	return encoded, nil
+}
+
+func buildCryptoEndpoint(region, kmsKeyId string) (string, error) {
+	keyIdRegexp := regexp.MustCompile(`ocid1\.key\.([\w-]+)\.([\w-]+)\.([\w-]+)\.([\w]{60})`)
+	matches := keyIdRegexp.FindStringSubmatch(kmsKeyId)
+	if len(matches) != 5 {
+		return "", fmt.Errorf("keyId %s cannot be parsed", kmsKeyId)
+	}
+	vaultExt := matches[3]
+	cryptoEndpointTemplate := "https://{vaultExt}-crypto.kms.{region}.oci.{secondLevelDomain}"
+	ociRegion := ociCommon.StringToRegion(region)
+	if _, ok := RegionsWithOldKMSEndpoints[ociRegion]; ok {
+		cryptoEndpointTemplate = strings.Replace(cryptoEndpointTemplate, "oci.{secondLevelDomain}", "{secondLevelDomain}", -1)
+	}
+	cryptoEndpoint := ociRegion.EndpointForTemplate("kms", cryptoEndpointTemplate)
+	return strings.Replace(cryptoEndpoint, "{vaultExt}", vaultExt, 1), nil
+}
+
+func uploadImageSignature(artifactsClient artifacts.ArtifactsClient, compartmentId string, imageId string, message string, signature string, signingDetails common.SigningDetails) error {
+	algorithm := artifacts.CreateContainerImageSignatureDetailsSigningAlgorithmEnum(signingDetails.SigningAlgorithm)
+	_, err := artifactsClient.CreateContainerImageSignature(context.Background(), artifacts.CreateContainerImageSignatureRequest{
+		CreateContainerImageSignatureDetails: artifacts.CreateContainerImageSignatureDetails{
+			CompartmentId:    ociCommon.String(compartmentId),
+			ImageId:          ociCommon.String(imageId),
+			KmsKeyId:         ociCommon.String(signingDetails.KmsKeyId),
+			KmsKeyVersionId:  ociCommon.String(signingDetails.KmsKeyVersionId),
+			SigningAlgorithm: algorithm,
+			Message:          ociCommon.String(message),
+			Signature:        ociCommon.String(signature),
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to upload image signature due to %s", err)
+	}
+	return nil
+}
+
+func findMissingValues(signingDetails common.SigningDetails) string {
+	var missingValues []string
+	if signingDetails.ImageCompartmentId == "" {
+		missingValues = append(missingValues, "image_compartment_id")
+	}
+	if signingDetails.KmsKeyId == "" {
+		missingValues = append(missingValues, "kms_key_id")
+	}
+	if signingDetails.KmsKeyVersionId == "" {
+		missingValues = append(missingValues, "kms_key_version_id")
+	}
+	if signingDetails.SigningAlgorithm == "" {
+		missingValues = append(missingValues, "signing_algorithm")
+	}
+	return strings.Join(missingValues, ",")
+}
+
+// Checks if the repostitory exists in the compartment
+func doesRepositoryExistInCompartment(repositoryName string, compartmentID string, artifactsClient artifacts.ArtifactsClient) (bool, error) {
+	response, err := artifactsClient.ListContainerRepositories(context.Background(), artifacts.ListContainerRepositoriesRequest{
+		CompartmentId: &compartmentID,
+		DisplayName:   &repositoryName})
+	if err != nil {
+		return false, fmt.Errorf("failed to lookup container repository due to %w", err)
+	}
+	if *response.RepositoryCount == 1 {
+		return true, nil
+	}
+	return false, nil
+}
+
+// This function tries to create the repository in compartmentID
+func createContainerRepositoryInCompartment(repositoryName string, compartmentID string, artifactsClient artifacts.ArtifactsClient) error {
+	_, err := artifactsClient.CreateContainerRepository(context.Background(), artifacts.CreateContainerRepositoryRequest{
+		CreateContainerRepositoryDetails: artifacts.CreateContainerRepositoryDetails{
+			CompartmentId: &compartmentID,
+			DisplayName:   &repositoryName,
+		},
+	})
+	return err
 }

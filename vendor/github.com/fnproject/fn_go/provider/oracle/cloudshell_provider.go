@@ -2,13 +2,14 @@ package oracle
 
 import (
 	"fmt"
+	"github.com/oracle/oci-go-sdk/v48/functions"
 	"io/ioutil"
 	"net/http"
 	"os"
 
 	"github.com/fnproject/fn_go/provider"
-	oci "github.com/oracle/oci-go-sdk/common"
-	"github.com/oracle/oci-go-sdk/common/auth"
+	oci "github.com/oracle/oci-go-sdk/v48/common"
+	"github.com/oracle/oci-go-sdk/v48/common/auth"
 )
 
 const (
@@ -69,7 +70,11 @@ func NewCSProvider(configSource provider.ConfigSource, passphraseSource provider
 	// production url form and the configured region from environment.
 	cfgApiUrl := configSource.GetString(provider.CfgFnAPIURL)
 	if cfgApiUrl == "" {
-		cfgApiUrl = fmt.Sprintf(FunctionsAPIURLTmpl, csConfig.region)
+		domain, err := GetRealmDomain()
+		if err != nil {
+			return nil, err
+		}
+		cfgApiUrl = fmt.Sprintf(FunctionsAPIURLTmpl, csConfig.region, domain)
 	}
 	apiUrl, err := provider.CanonicalFnAPIUrl(cfgApiUrl)
 	if err != nil {
@@ -83,7 +88,10 @@ func NewCSProvider(configSource provider.ConfigSource, passphraseSource provider
 		compartmentID = csConfig.tenancyID
 	}
 
-	provider, err := auth.InstancePrincipalConfigurationProvider()
+	// Set OCI SDK to use IMDS to fetch region info (second-level domain etc.)
+	oci.EnableInstanceMetadataServiceLookup()
+
+	configProvider, err := auth.InstancePrincipalDelegationTokenConfigurationProvider(&csConfig.delegationToken)
 	if err != nil {
 		return nil, err
 	}
@@ -96,14 +104,31 @@ func NewCSProvider(configSource provider.ConfigSource, passphraseSource provider
 
 	// Obo token will also be signed
 	defaultHeaders := append(oci.DefaultGenericHeaders(), requestHeaderOpcOboToken)
-	signer := oci.RequestSigner(provider, defaultHeaders, oci.DefaultBodyHeaders())
+	signer := oci.RequestSigner(configProvider, defaultHeaders, oci.DefaultBodyHeaders())
+
+	ociClient, err := functions.NewFunctionsManagementClientWithConfigurationProvider(configProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	ociClient.UserAgent = fmt.Sprintf("%s %s", userAgentPrefixCs, ociClient.UserAgent)
+
+	disableCerts := configSource.GetBool(CfgDisableCerts)
+	if disableCerts {
+		c := ociClient.HTTPClient.(*http.Client)
+		c.Transport = InsecureRoundTripper(c.Transport)
+	}
+
+	ociClient.Host = apiUrl.String()
 
 	return &OracleProvider{
-		FnApiUrl:      apiUrl,
-		Signer:        signer,
-		Interceptor:   interceptor,
-		DisableCerts:  configSource.GetBool(CfgDisableCerts),
-		CompartmentID: compartmentID,
+		FnApiUrl:              apiUrl,
+		Signer:                signer,
+		Interceptor:           interceptor,
+		DisableCerts:          disableCerts,
+		CompartmentID:         compartmentID,
+		ConfigurationProvider: configProvider,
+		ociClient:             ociClient,
 	}, nil
 }
 

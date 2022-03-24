@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package langs
 
 import (
@@ -11,17 +27,19 @@ import (
 
 type RubyLangHelper struct {
 	BaseHelper
+	Version string
 }
 
 func (h *RubyLangHelper) Handles(lang string) bool {
 	return defaultHandles(h, lang)
 }
+
 func (h *RubyLangHelper) Runtime() string {
 	return h.LangStrings()[0]
 }
 
 func (h *RubyLangHelper) LangStrings() []string {
-	return []string{"ruby"}
+	return []string{"ruby", fmt.Sprintf("ruby%s", h.Version)}
 }
 func (h *RubyLangHelper) Extensions() []string {
 	return []string{".rb"}
@@ -32,11 +50,10 @@ func (h *RubyLangHelper) CustomMemory() uint64 {
 	return 0
 }
 func (h *RubyLangHelper) BuildFromImage() (string, error) {
-	return "fnproject/ruby:dev", nil
+	return fmt.Sprintf("fnproject/ruby:%s-dev", h.Version), nil
 }
-
 func (h *RubyLangHelper) RunFromImage() (string, error) {
-	return "fnproject/ruby", nil
+	return fmt.Sprintf("fnproject/ruby:%s", h.Version), nil
 }
 
 func (h *RubyLangHelper) DockerfileBuildCmds() []string {
@@ -65,7 +82,7 @@ func (h *RubyLangHelper) Entrypoint() (string, error) {
 func (h *RubyLangHelper) HasBoilerplate() bool { return true }
 
 func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
-	fdkVersion, err := h.getFDKAPIVersion()
+	fdkVersion, err := h.GetLatestFDKVersion()
 	if err != nil {
 		return err
 	}
@@ -92,7 +109,7 @@ func (h *RubyLangHelper) GenerateBoilerplate(path string) error {
 	return nil
 }
 
-func (h *RubyLangHelper) getFDKAPIVersion() (string, error) {
+func (h *RubyLangHelper) GetLatestFDKVersion() (string, error) {
 
 	const versionURL = "https://rubygems.org/api/v1/versions/fdk/latest.json"
 	const versionEnv = "FN_RUBY_FDK_VERSION"
@@ -126,6 +143,10 @@ func (h *RubyLangHelper) getFDKAPIVersion() (string, error) {
 	return parsedResp.Version, nil
 }
 
+func (h *RubyLangHelper) FixImagesOnInit() bool {
+	return true
+}
+
 const (
 	rubySrcBoilerplate = `require 'fdk'
 
@@ -139,7 +160,7 @@ end
 FDK.handle(target: :myfunction)
 `
 
-	rubyGemfileBoilerplate = `source 'https://rubygems.org' do
+	rubyGemfileBoilerplate = `source 'https://www.rubygems.org' do
   gem 'fdk', '>= %s'
 end
 `

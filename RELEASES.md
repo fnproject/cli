@@ -1,6 +1,16 @@
 
 # Releases
 
+## v 0.6.7
+
+* Support for following languages versions:
+    * Node 14
+    * Go 1.15
+    * Ruby 2.7
+  
+    Check out `fn init --help` for available runtime environments.
+* Docker runtime and build image stamping in func.yaml for a language runtime. 
+
 ## v 0.4.156
 
 * Routes have now been removed from fn and replaced with functions and triggers.

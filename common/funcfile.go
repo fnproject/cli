@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package common
 
 import (
@@ -85,6 +101,14 @@ type FuncFile struct {
 	Expects Expects `yaml:"expects,omitempty" json:"expects,omitempty"`
 }
 
+// SigningDetails defines configuration for signing a function image
+type SigningDetails struct {
+	ImageCompartmentId string `yaml:"image_compartment_id,omitempty" json:"image_compartment_id,omitempty"`
+	KmsKeyId           string `yaml:"kms_key_id,omitempty" json:"kms_key_id,omitempty"`
+	KmsKeyVersionId    string `yaml:"kms_key_version_id,omitempty" json:"kms_key_version_id,omitempty"`
+	SigningAlgorithm   string `yaml:"signing_algorithm,omitempty" json:"signing_algorithm,omitempty"`
+}
+
 // FuncFileV20180708 defines the latest internal structure of a func.yaml/json/yml
 type FuncFileV20180708 struct {
 	Schema_version int `yaml:"schema_version,omitempty" json:"schema_version,omitempty"`
@@ -102,8 +126,10 @@ type FuncFileV20180708 struct {
 	Timeout      *int32 `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 	IDLE_timeout *int32 `yaml:"idle_timeout,omitempty" json:"idle_timeout,omitempty"`
 
-	Config      map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
-	Annotations map[string]interface{} `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Config            map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
+	Annotations       map[string]interface{} `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+
+	SigningDetails SigningDetails `yaml:"signing_details,omitempty" json:"signing_details,omitempty""`
 
 	Build []string `yaml:"build,omitempty" json:"build,omitempty"`
 

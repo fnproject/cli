@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package common
 
 import (
@@ -90,11 +106,15 @@ func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string
 		}
 	}
 
+	funcfile, err = imageStampFuncFile(fpath, funcfile)
+	if err != nil {
+		return nil, err
+	}
 	if err := localBuild(fpath, funcfile.Build); err != nil {
 		return nil, err
 	}
 
-	if err := dockerBuild(verbose, fpath, funcfile, buildArg, noCache); err != nil {
+	if err := containerEngineBuild(verbose, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
 	}
 
@@ -112,12 +132,115 @@ func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708,
 		}
 	}
 
+	funcfile, err = imageStampFuncFileV20180708(fpath, funcfile)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := localBuild(fpath, funcfile.Build); err != nil {
 		return nil, err
 	}
 
-	if err := dockerBuildV20180708(verbose, fpath, funcfile, buildArg, noCache); err != nil {
+	if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache); err != nil {
 		return nil, err
+	}
+
+	return funcfile, nil
+}
+
+func imageStampFuncFile(fpath string, funcfile *FuncFile) (*FuncFile, error) {
+
+	dir := filepath.Dir(fpath)
+	dockerfile := filepath.Join(dir, "Dockerfile")
+
+	// detect if build and run image both are absent and runtime is not docker then update them
+	if !Exists(dockerfile) && funcfile.Runtime != FuncfileDockerRuntime && funcfile.BuildImage == "" && funcfile.RunImage == "" {
+
+		helper := langs.GetLangHelper(funcfile.Runtime)
+
+		// For case when runtime is overriden with unsupported lang runtime in func.yaml manually
+		if helper == nil {
+			return funcfile, fmt.Errorf("runtime [%s] is not supported", funcfile.Runtime)
+		}
+
+		// get the lang without any version
+		langRuntime := helper.Runtime()
+
+		// if fallback is not supported then continue with same lang helper
+		if langs.IsFallbackSupported(langRuntime) {
+			helper = langs.GetFallbackLangHelper(langRuntime)
+		}
+
+		// update func file accordingly
+		bi, err := helper.BuildFromImage()
+		if err != nil {
+			return funcfile, err
+		}
+		funcfile.BuildImage = bi
+
+		// In case of multistage build there will be a runtime image
+		if helper.IsMultiStage() {
+			ri, err := helper.RunFromImage()
+			if err != nil {
+				return funcfile, err
+			}
+			funcfile.RunImage = ri
+		}
+
+		// fill back yaml file
+		err = EncodeFuncfileYAML(fpath, funcfile)
+		if err != nil {
+			return funcfile, err
+		}
+	}
+
+	return funcfile, nil
+}
+
+// Stamping funcfile is only valid for functions with runtime lang not for docker runtime
+func imageStampFuncFileV20180708(fpath string, funcfile *FuncFileV20180708) (*FuncFileV20180708, error) {
+
+	dir := filepath.Dir(fpath)
+	dockerfile := filepath.Join(dir, "Dockerfile")
+
+	// detect if build and run image both are absent and runtime is not docker then update them
+	if !Exists(dockerfile) && funcfile.Runtime != FuncfileDockerRuntime && funcfile.Build_image == "" && funcfile.Run_image == "" {
+
+		helper := langs.GetLangHelper(funcfile.Runtime)
+
+		// For case when runtime is overriden with unsupported lang runtime in func.yaml manually
+		if helper == nil {
+			return funcfile, fmt.Errorf("runtime [%s] is not supported", funcfile.Runtime)
+		}
+
+		// get the lang without any version
+		langRuntime := helper.Runtime()
+
+		// if fallback is not supported then continue with same lang helper
+		if langs.IsFallbackSupported(langRuntime) {
+			helper = langs.GetFallbackLangHelper(langRuntime)
+		}
+
+		bi, err := helper.BuildFromImage()
+		if err != nil {
+			return funcfile, err
+		}
+		funcfile.Build_image = bi
+
+		// In case of multistage build there will be a runtime image
+		if helper.IsMultiStage() {
+			ri, err := helper.RunFromImage()
+			if err != nil {
+				return funcfile, nil
+			}
+			funcfile.Run_image = ri
+		}
+
+		// fill back yaml file
+		err = EncodeFuncFileV20180708YAML(fpath, funcfile)
+		if err != nil {
+			return funcfile, err
+		}
 	}
 
 	return funcfile, nil
@@ -150,8 +273,39 @@ func PrintContextualInfo() {
 	fmt.Println("Current Context: ", currentContext)
 }
 
-func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, noCache bool) error {
-	err := dockerVersionCheck()
+func PrintDockerfileContent(dockerfile string, stdout io.Writer) {
+	file, err := os.Open(dockerfile)
+	if err != nil {
+		fmt.Fprintf(stdout, err.Error())
+		fmt.Fprintf(stdout, "\n")
+		return
+	}
+	defer file.Close()
+	fmt.Fprintf(stdout, "Dockerfile content\n-----------------------------------\n")
+	_, _ = io.Copy(stdout, file)
+	fmt.Fprintf(stdout, "-----------------------------------\n")
+}
+
+func GetContainerEngineType() (string, error) {
+	containerEngineType := viper.GetString(config.ContainerEngineType)
+	err := config.ValidateContainerEngineType(containerEngineType)
+	if err != nil {
+		return "", err
+	}
+	if containerEngineType == "" {
+		return "docker", nil
+	}
+	return containerEngineType, nil
+}
+
+func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, noCache bool) error {
+	containerEngineType, err := GetContainerEngineType()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Using Container engine", containerEngineType)
+	err = containerEngineVersionCheck(containerEngineType)
 	if err != nil {
 		return err
 	}
@@ -160,6 +314,7 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 
 	var helper langs.LangHelper
 	dockerfile := filepath.Join(dir, "Dockerfile")
+
 	if !Exists(dockerfile) {
 		if ff.Runtime == FuncfileDockerRuntime {
 			return fmt.Errorf("Dockerfile does not exist for 'docker' runtime")
@@ -180,7 +335,7 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 			}
 		}
 	}
-	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache)
+	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache, containerEngineType)
 	if err != nil {
 		return err
 	}
@@ -194,8 +349,14 @@ func dockerBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []string, n
 	return nil
 }
 
-func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool) error {
-	err := dockerVersionCheck()
+func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool) error {
+	containerEngineType, err := GetContainerEngineType()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Using Container engine", containerEngineType)
+	err = containerEngineVersionCheck(containerEngineType)
 	if err != nil {
 		return err
 	}
@@ -208,6 +369,7 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 		if ff.Runtime == FuncfileDockerRuntime {
 			return fmt.Errorf("Dockerfile does not exist for 'docker' runtime")
 		}
+
 		helper = langs.GetLangHelper(ff.Runtime)
 		if helper == nil {
 			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
@@ -224,7 +386,7 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 			}
 		}
 	}
-	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache)
+	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache, containerEngineType)
 	if err != nil {
 		return err
 	}
@@ -239,7 +401,7 @@ func dockerBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, bui
 }
 
 // RunBuild runs function from func.yaml/json/yml.
-func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool) error {
+func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -255,6 +417,7 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 		fmt.Println()
 		buildOut = os.Stdout
 		buildErr = os.Stderr
+		PrintDockerfileContent(dockerfile, buildOut)
 		PrintContextualInfo()
 	} else {
 		// print dots. quit channel explanation: https://stackoverflow.com/a/16466581/105562
@@ -291,7 +454,9 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 			"--build-arg", "HTTP_PROXY",
 			"--build-arg", "HTTPS_PROXY",
 			".")
-		cmd := exec.Command("docker", args...)
+
+		// Container engine type would be optional here
+		cmd := exec.Command(containerEngineType, args...)
 		cmd.Dir = dir
 		cmd.Stderr = buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
 		cmd.Stdout = buildOut
@@ -316,24 +481,26 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 	return nil
 }
 
-func dockerVersionCheck() error {
-	out, err := exec.Command("docker", "version", "--format", "{{.Server.Version}}").Output()
+func containerEngineVersionCheck(containerEngineType string) error {
+	out, err := exec.Command(containerEngineType, "version", "--format", "{{.Server.Version}}").Output()
 	if err != nil {
-		return fmt.Errorf("Cannot connect to the Docker daemon, make sure you have it installed and running: %v", err)
+		return fmt.Errorf("Cannot connect to the %v, make sure you have it installed and running: %v", containerEngineType, err)
 	}
 	// dev / test builds append '-ce', trim this
 	trimmed := strings.TrimRightFunc(string(out), func(r rune) bool { return r != '.' && !unicode.IsDigit(r) })
 
 	v, err := semver.NewVersion(trimmed)
 	if err != nil {
-		return fmt.Errorf("could not check Docker version: %v", err)
+		return fmt.Errorf("could not check %v version: %v", containerEngineType, err)
 	}
-	vMin, err := semver.NewVersion(MinRequiredDockerVersion)
-	if err != nil {
-		return fmt.Errorf("our bad, sorry... please make an issue, detailed error: %v", err)
-	}
-	if v.LessThan(*vMin) {
-		return fmt.Errorf("please upgrade your version of Docker to %s or greater", MinRequiredDockerVersion)
+	if containerEngineType == "docker" {
+		vMin, err := semver.NewVersion(MinRequiredDockerVersion)
+		if err != nil {
+			return fmt.Errorf("our bad, sorry... please make an issue, detailed error: %v", err)
+		}
+		if v.LessThan(*vMin) {
+			return fmt.Errorf("please upgrade your version of Docker to %s or greater", MinRequiredDockerVersion)
+		}
 	}
 	return nil
 }
@@ -362,6 +529,11 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 	// multi-stage build: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
 	dfLines := []string{}
 	bi := ff.BuildImage
+
+	/* This check will always be false for non docker runtime
+	   as all funcfiles are already image stamped
+	   can we remove it in future.
+	*/
 	if bi == "" {
 		bi, err = helper.BuildFromImage()
 		if err != nil {
@@ -379,6 +551,12 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 	if helper.IsMultiStage() {
 		// final stage
 		ri := ff.RunImage
+
+		/*
+		  Now this check will always be false for non docker runtime
+		  as all funcfiles are already image stamped
+		  can we remove it in future.
+		*/
 		if ri == "" {
 			ri, err = helper.RunFromImage()
 			if err != nil {
@@ -416,6 +594,7 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 	// multi-stage build: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
 	dfLines := []string{}
 	bi := ff.Build_image
+
 	if bi == "" {
 		bi, err = helper.BuildFromImage()
 		if err != nil {
@@ -494,34 +673,43 @@ func ExtractConfig(configs []string) map[string]string {
 	return c
 }
 
-// DockerPush pushes to docker registry.
-func DockerPush(ff *FuncFile) error {
-	err := ValidateFullImageName(ff.ImageName())
+// Push pushes to docker registry.
+func Push(ff *FuncFile) error {
+	containerEngineType, err := GetContainerEngineType()
+	if err != nil {
+		return err
+	}
+	err = ValidateFullImageName(ff.ImageName())
 	if err != nil {
 		return err
 	}
 	fmt.Printf("Pushing %v to docker registry...", ff.ImageName())
-	cmd := exec.Command("docker", "push", ff.ImageName())
+	cmd := exec.Command(containerEngineType, "push", ff.ImageName())
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("error running docker push, are you logged into docker?: %v", err)
+		return fmt.Errorf("error running %v push, are you logged?: %v", containerEngineType, err)
 	}
 	return nil
 }
 
-// DockerPush pushes to docker registry.
-func DockerPushV20180708(ff *FuncFileV20180708) error {
-	err := ValidateFullImageName(ff.ImageNameV20180708())
+// Push pushes to docker registry.
+func PushV20180708(ff *FuncFileV20180708) error {
+	containerEngineType, err := GetContainerEngineType()
 	if err != nil {
 		return err
 	}
+	err = ValidateFullImageName(ff.ImageNameV20180708())
+	if err != nil {
+		return err
+	}
+	fmt.Println("Using Container engine", containerEngineType, "to push")
 	fmt.Printf("Pushing %v to docker registry...", ff.ImageNameV20180708())
-	cmd := exec.Command("docker", "push", ff.ImageNameV20180708())
+	cmd := exec.Command(containerEngineType, "push", ff.ImageNameV20180708())
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("error running docker push, are you logged into docker?: %v", err)
+		return fmt.Errorf("error running %v push, are you logged?: %v", containerEngineType, err)
 	}
 	return nil
 }
@@ -748,15 +936,19 @@ func ListTriggersInFunc(c *cli.Context, client *fnclient.Fn, fn *modelsv2.Fn) ([
 	return resTriggers, nil
 }
 
-func DockerRunInitImage(initImage string, fName string) error {
+func RunInitImage(initImage string, fName string) error {
+	containerEngineType, err := GetContainerEngineType()
+	if err != nil {
+		return err
+	}
 	fmt.Println("Running init-image: " + initImage)
 
 	args := []string{"run", "--rm", "-e", "FN_FUNCTION_NAME=" + fName}
 	args = append(args, proxyArgs()...)
 	args = append(args, initImage)
 
-	fmt.Printf("Executing docker command: %s\n", strings.Join(args, " "))
-	cmd := exec.Command("docker", args...)
+	fmt.Printf("Executing %v command: %s\n", containerEngineType, strings.Join(args, " "))
+	cmd := exec.Command(containerEngineType, args...)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	stdout, err := cmd.StdoutPipe()

@@ -1,11 +1,40 @@
+/*
+ * Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package test
 
 import (
 	"fmt"
-	"testing"
-
 	"github.com/fnproject/cli/testharness"
+	"testing"
 )
+
+var runtimes = []string{
+	"go",
+	"java",
+	"java8",
+	"java11",
+	"kotlin",
+	"ruby",
+	"node",
+	"python",
+	"python3.6",
+	"python3.7",
+	"python3.8",
+}
 
 func TestSettingFuncName(t *testing.T) {
 	t.Run("`fn init --name` should set the name in func.yaml", func(t *testing.T) {
@@ -27,9 +56,31 @@ func TestSettingFuncName(t *testing.T) {
 	})
 }
 
+func TestSettingRuntimeAndBuildImage(t *testing.T) {
+	for _, runtime := range runtimes {
+		t.Run("Build_image and Runtime_image should set the name in func.yaml", func(t *testing.T) {
+			t.Parallel()
+			h := testharness.Create(t)
+			defer h.Cleanup()
+
+			appName := h.NewAppName()
+			funcName := h.NewFuncName(appName)
+			dirName := funcName + "_dir"
+			h.Fn("init", "--runtime", runtime, "--name", funcName, dirName).AssertSuccess()
+
+			h.Cd(dirName)
+
+			yamlFile := h.GetYamlFile("func.yaml")
+			if yamlFile.Build_image == "" || yamlFile.Run_image == "" {
+				t.Fatalf("Run_image or Build_image was not set in func.yaml")
+			}
+		})
+	}
+}
+
 func TestInitImage(t *testing.T) {
 
-	// NB this test creates a function with `rn init --runtime` then creates an init-image from that
+	// NB this test creates a function with `fn init --runtime` then creates an init-image from that
 	// This will not be necessary when there are init-images publicly available to pull during this test
 
 	t.Run("`fn init --init-image=<...>` should produce a working function template", func(t *testing.T) {

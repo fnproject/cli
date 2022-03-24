@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package config
 
 import (
@@ -55,6 +71,28 @@ func TestDefaultContextConfigContents(t *testing.T) {
 			os.Setenv(OCI_CLI_AUTH_ENV_VAR, tt.OciCliAuth)
 			if gotContextMap := DefaultContextConfigContents(); !reflect.DeepEqual(gotContextMap, tt.wantContextMap) {
 				t.Errorf("DefaultContextConfigContents() = %v, want %v", gotContextMap, tt.wantContextMap)
+			}
+		})
+	}
+}
+
+func TestValidateContainerEngineType(t *testing.T) {
+	testCases := []struct {
+		actual      string
+		expectedErr string
+	}{
+		{actual: "docker", expectedErr: ""},
+		{actual: "podman", expectedErr: ""},
+		{actual: "default", expectedErr: "Invalid Container Engine"},
+	}
+	for _, c := range testCases {
+		t.Run(c.actual, func(t *testing.T) {
+			errString := ""
+			if err := ValidateContainerEngineType(c.actual); err != nil {
+				errString = err.Error()
+			}
+			if c.expectedErr != errString {
+				t.Fatalf("expected %s but got %s", c.expectedErr, errString)
 			}
 		})
 	}
