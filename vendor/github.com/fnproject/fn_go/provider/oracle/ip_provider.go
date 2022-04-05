@@ -2,10 +2,11 @@ package oracle
 
 import (
 	"fmt"
-	"github.com/oracle/oci-go-sdk/v48/functions"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"github.com/oracle/oci-go-sdk/v48/functions"
 
 	"github.com/oracle/oci-go-sdk/v48/common"
 	"github.com/oracle/oci-go-sdk/v48/common/auth"
@@ -73,6 +74,7 @@ func NewIPProvider(configSource provider.ConfigSource, passphraseSource provider
 		Interceptor:           nil,
 		DisableCerts:          disableCerts,
 		CompartmentID:         compartmentID,
+		ImageCompartmentID:    configSource.GetString(CfgImageCompartmentID),
 		ConfigurationProvider: configProvider,
 		ociClient:             ociClient,
 	}, nil
