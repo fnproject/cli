@@ -3,13 +3,14 @@ package oracle
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/fnproject/fn_go/provider/oracle/shim"
-	"github.com/oracle/oci-go-sdk/v48/functions"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/fnproject/fn_go/provider/oracle/shim"
+	"github.com/oracle/oci-go-sdk/v48/functions"
 
 	"github.com/fnproject/fn_go/client/version"
 	"github.com/fnproject/fn_go/clientv2"
