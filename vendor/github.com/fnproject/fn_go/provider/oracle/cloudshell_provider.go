@@ -2,10 +2,11 @@ package oracle
 
 import (
 	"fmt"
-	"github.com/oracle/oci-go-sdk/v48/functions"
 	"io/ioutil"
 	"net/http"
 	"os"
+
+	"github.com/oracle/oci-go-sdk/v48/functions"
 
 	"github.com/fnproject/fn_go/provider"
 	oci "github.com/oracle/oci-go-sdk/v48/common"
@@ -127,6 +128,7 @@ func NewCSProvider(configSource provider.ConfigSource, passphraseSource provider
 		Interceptor:           interceptor,
 		DisableCerts:          disableCerts,
 		CompartmentID:         compartmentID,
+		ImageCompartmentID:    configSource.GetString(CfgImageCompartmentID),
 		ConfigurationProvider: configProvider,
 		ociClient:             ociClient,
 	}, nil
