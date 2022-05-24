@@ -130,7 +130,7 @@ namespace Function {
 	class Greeter {
 		public string greet(string input) {
 			return string.Format("Hello {0}!",
-				input.Length == 0 ? "World" : input.Trim());
+				string.IsNullOrEmpty(input) ? "World" : input.Trim());
 		}
 
 		static void Main(string[] args) { Fdk.Handle(args[0]); }
