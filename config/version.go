@@ -25,7 +25,7 @@ import (
 )
 
 // Version of Fn CLI
-var Version = "0.6.20"
+var Version = "0.6.21"
 
 func GetVersion(versionType string) string {
 	base := "https://github.com/fnproject/cli/releases"
