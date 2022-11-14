@@ -151,7 +151,7 @@ golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
 golang.org/x/net/context
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
+# golang.org/x/sys v0.0.0-20220804214406-8e32c043e418
 ## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
