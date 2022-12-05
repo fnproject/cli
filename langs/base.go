@@ -31,6 +31,7 @@ var helpers = []LangHelper{}
 var fallBackOlderVersions = map[string]LangHelper{}
 
 func init() {
+	registerHelper(&DotnetLangHelper{Version: "6.0"})
 	registerHelper(&DotnetLangHelper{Version: "3.1"})
 	registerHelper(&GoLangHelper{Version: "1.15"})
 	// order matter, 'java' will pick up the first JavaLangHelper

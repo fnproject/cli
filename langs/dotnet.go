@@ -24,6 +24,11 @@ import (
 	"path/filepath"
 )
 
+var dotnetToFrameworkVersionMap = map[string]string{
+	"3.1": "netcoreapp3.1",
+	"6.0": "net6.0",
+}
+
 type DotnetLangHelper struct {
 	BaseHelper
 	Version string
@@ -92,7 +97,7 @@ func (lh *DotnetLangHelper) GenerateBoilerplate(path string) error {
 	csprojFile := "Function.csproj"
 	fdkVersion, _ := lh.GetLatestFDKVersion()
 
-	if err := mkdirAndWriteFile(path, "src/Function", csprojFile, fmt.Sprintf(srcCsprojBoilerplate, fdkVersion)); err != nil {
+	if err := mkdirAndWriteFile(path, "src/Function", csprojFile, fmt.Sprintf(srcCsprojBoilerplate, dotnetToFrameworkVersionMap[lh.Version], fdkVersion)); err != nil {
 		return err
 	}
 
@@ -102,7 +107,7 @@ func (lh *DotnetLangHelper) GenerateBoilerplate(path string) error {
 	}
 
 	testCsprojFile := "Function.Tests.csproj"
-	if err := mkdirAndWriteFile(path, "tests/Function.Tests", testCsprojFile, testsCsprojBoilerplate); err != nil {
+	if err := mkdirAndWriteFile(path, "tests/Function.Tests", testCsprojFile, fmt.Sprintf(testsCsprojBoilerplate, dotnetToFrameworkVersionMap[lh.Version])); err != nil {
 		return err
 	}
 
@@ -130,7 +135,7 @@ namespace Function {
 	class Greeter {
 		public string greet(string input) {
 			return string.Format("Hello {0}!",
-				input.Length == 0 ? "World" : input.Trim());
+				string.IsNullOrEmpty(input) ? "World" : input.Trim());
 		}
 
 		static void Main(string[] args) { Fdk.Handle(args[0]); }
@@ -183,7 +188,7 @@ EndGlobal
 
   <PropertyGroup>
   <OutputType>Exe</OutputType>
-  <TargetFramework>netcoreapp3.1</TargetFramework>
+  <TargetFramework>%s</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -195,7 +200,7 @@ EndGlobal
 	testsCsprojBoilerplate = `<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-  <TargetFramework>netcoreapp3.1</TargetFramework>
+  <TargetFramework>%s</TargetFramework>
 
   <IsPackable>false</IsPackable>
   </PropertyGroup>

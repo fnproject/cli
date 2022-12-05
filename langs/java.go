@@ -261,13 +261,16 @@ func getURLResponse(url string, inSecureSkipVerify bool) ([]byte, error) {
 	}
 	client := &http.Client{Transport: noVerifyTransport}
 	resp, err := client.Get(url)
-	defer resp.Body.Close()
-	if err != nil || resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Failed to fetch response from URL %s Error: %v Status: %d", url, err, resp.StatusCode)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to fetch response from URL %s Error: %v", url, err)
 	}
+	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("Failed to fetch response from URL %s Status: %d Body: %s", url, resp.StatusCode, data)
 	}
 	return data, nil
 }

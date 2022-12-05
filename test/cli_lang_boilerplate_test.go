@@ -29,6 +29,8 @@ var Runtimes = []struct {
 }{
 	{"go", ""},
 	{"dotnet", ""},
+	{"dotnet3.1", ""},
+	{"dotnet6.0", ""},
 	{"java", ""},
 	{"java8", ""},
 	{"java11", ""},

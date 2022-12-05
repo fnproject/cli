@@ -53,7 +53,7 @@ func (p *pushcmd) flags() []cli.Flag {
 		},
 		cli.StringFlag{
 			Name:        "registry",
-			Usage:       "Set the Docker owner for images and optionally the registry. This will be prefixed to your function name for pushing to Docker registries.\n eg: `--registry username` will set your Docker Hub owner. `--registry registry.hub.docker.com/username` will set the registry and owner.",
+			Usage:       "Set the Docker owner for images and optionally the registry. This will be prefixed to your function name for pushing to Docker registries.\n eg: `--registry username` will set only the owner prefix. `--registry registry.hub.docker.com/username` will set the registry and owner.",
 			Destination: &p.registry,
 		},
 	}
@@ -81,7 +81,7 @@ func (p *pushcmd) push(c *cli.Context) error {
 			return err
 		}
 
-		fmt.Printf("Function %v pushed successfully to Docker Hub.\n", ff.ImageNameV20180708())
+		fmt.Printf("Function %v pushed successfully to the registry.\n", ff.ImageNameV20180708())
 		return nil
 	}
 
@@ -100,6 +100,6 @@ func (p *pushcmd) push(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Printf("Function %v pushed successfully to Docker Hub.\n", ff.ImageName())
+	fmt.Printf("Function %v pushed successfully to the registry.\n", ff.ImageName())
 	return nil
 }
