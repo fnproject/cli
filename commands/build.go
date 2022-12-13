@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/fnproject/cli/common"
 	"github.com/urfave/cli"
@@ -65,6 +66,10 @@ func (b *buildcmd) flags() []cli.Flag {
 			Name:  "working-dir, w",
 			Usage: "Specify the working directory to build a function, must be the full path.",
 		},
+		cli.StringFlag{
+			Name:  "archs",
+			Usage: "To build images of multiple architectures together and generate a multi-arch image.",
+		},
 	}
 }
 
@@ -97,7 +102,8 @@ func (b *buildcmd) build(c *cli.Context) error {
 		}
 
 		buildArgs := c.StringSlice("build-arg")
-		ff, err = common.BuildFuncV20180708(common.IsVerbose(), fpath, ff, buildArgs, b.noCache)
+		platforms := strings.Split(c.String("archs"), ",")
+		ff, err = common.BuildFuncV20180708(common.IsVerbose(), fpath, ff, buildArgs, b.noCache, platforms)
 		if err != nil {
 			return err
 		}

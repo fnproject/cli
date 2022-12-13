@@ -171,6 +171,10 @@ func (p *deploycmd) flags() []cli.Flag {
 			Name:  "working-dir,w",
 			Usage: "Specify the working directory to deploy a function, must be the full path.",
 		},
+		cli.StringFlag{
+			Name:  "arch",
+			Usage: "To build images of multiple architectures together and generate a multi-arch image.",
+		},
 	}
 }
 
