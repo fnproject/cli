@@ -122,7 +122,7 @@ func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool) (*FuncFileV20180708, error) {
+func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool, platforms []string) (*FuncFileV20180708, error) {
 	var err error
 
 	if funcfile.Version == "" {
@@ -140,9 +140,16 @@ func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708,
 	if err := localBuild(fpath, funcfile.Build); err != nil {
 		return nil, err
 	}
-
-	if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache); err != nil {
-		return nil, err
+	if len(platforms) > 0 {
+		for _, platform := range platforms {
+			if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache, platform); err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache, ""); err != nil {
+			return nil, err
+		}
 	}
 
 	return funcfile, nil
@@ -335,7 +342,7 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 			}
 		}
 	}
-	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache, containerEngineType)
+	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache, containerEngineType, "")
 	if err != nil {
 		return err
 	}
@@ -349,7 +356,7 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 	return nil
 }
 
-func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool) error {
+func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool, platform string) error {
 	containerEngineType, err := GetContainerEngineType()
 	if err != nil {
 		return err
@@ -386,7 +393,7 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 			}
 		}
 	}
-	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache, containerEngineType)
+	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache, containerEngineType, platform)
 	if err != nil {
 		return err
 	}
@@ -401,7 +408,7 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 }
 
 // RunBuild runs function from func.yaml/json/yml.
-func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string) error {
+func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string, platform string) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -436,11 +443,18 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 	}
 
 	go func(done chan<- error) {
+		var buildCommand = "build"
+		var name = imageName
+		if len(platform) > 0 {
+			buildCommand = "buildx build"
+			name = name + "-" + platform
+		}
 		args := []string{
-			"build",
-			"-t", imageName,
+			buildCommand,
+			"-t", name,
 			"-f", dockerfile,
 		}
+
 		if noCache {
 			args = append(args, "--no-cache")
 		}
@@ -449,6 +463,14 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 			for _, buildArg := range buildArgs {
 				args = append(args, "--build-arg", buildArg)
 			}
+		}
+
+		if len(platform) > 0 {
+			var arg = "ARCH=" + platform
+			var label = "imageName=" + imageName
+			args = append(args, "--build-arg", arg)
+			args = append(args, "--load")
+			args = append(args, "--label", label)
 		}
 		args = append(args,
 			"--build-arg", "HTTP_PROXY",
