@@ -23,6 +23,9 @@ type Fn struct {
 	// App ID.
 	AppID string `json:"app_id,omitempty"`
 
+	// Architecture type for the application
+	Architecture []string `json:"architecture"`
+
 	// Function configuration key values.
 	Config map[string]string `json:"config,omitempty"`
 

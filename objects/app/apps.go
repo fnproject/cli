@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"text/tabwriter"
 
 	"context"
@@ -149,7 +150,22 @@ func (a *appsCmd) create(c *cli.Context) error {
 
 	appWithFlags(c, app)
 
-	_, err := CreateApp(a.client, app)
+	architecturesString := c.String("architectures")
+
+	// Check for architectures parameter passed or set to default
+	if len(architecturesString) == 0 {
+		return errors.New("no architectures specified for the application")
+	}
+	fmt.Println("arch string : "+architecturesString)
+
+	architectures, err := common.ExtractArchitecturesType(architecturesString)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Architectures : %v %d", architectures, len(architectures))
+
+	app.Architecture = architectures
+	_, err = CreateApp(a.client, app)
 	return err
 }
 
@@ -169,6 +185,9 @@ func CreateApp(a *fnclient.Fn, app *modelsv2.App) (*modelsv2.App, error) {
 		}
 		return nil, err
 	}
+	//~~to remove
+	fmt.Println("response arch : ")
+	fmt.Println(resp.Payload.Architecture)
 
 	fmt.Println("Successfully created app: ", resp.Payload.Name)
 	return resp.Payload, nil
@@ -183,6 +202,52 @@ func (a *appsCmd) update(c *cli.Context) error {
 	}
 
 	appWithFlags(c, app)
+
+	//~~~~To remove, injected value
+	app.Architecture = []string{"x86"}
+
+	var updateArchitecture = c.IsSet("architectures")
+
+	if updateArchitecture {
+		architecturesString := c.String("architectures")
+		architectures, err := common.ExtractArchitecturesType(architecturesString)
+		if err != nil {
+			return err
+		}
+
+		// Allow architecture type update only from single arch to single arch or single arch to multiarch.
+		// Multiarch to single arch is not allowed in update.
+		currArchitectures := make([]string, len(app.Architecture))
+		copy(currArchitectures, app.Architecture)
+		sort.Strings(currArchitectures)
+
+		if len(app.Architecture) > 1 && len(architectures) == 1 {
+			return errors.New("cannot update application architectures type from multiarch to single arch")
+		}
+
+		misMatch := true
+		for _, arch := range architectures {
+			for _, currArch := range app.Architecture {
+				if currArch == arch {
+					misMatch = false
+					break
+				}
+			}
+			if misMatch {
+				break
+			}
+		}
+
+		if misMatch {
+			app.Architecture = architectures
+			fmt.Print("Update arch : ")
+			fmt.Println(architectures)
+		} else {
+			fmt.Print("~~Don't update archs, no new arch found")
+		}
+	} else {
+		fmt.Print("~~Don't update archs, update not requried")
+	}
 
 	if _, err = PutApp(a.client, app.ID, app); err != nil {
 		return err
@@ -306,6 +371,7 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("Could not marshal app: %v", err)
 	}
+
 	var inspect map[string]interface{}
 	err = json.Unmarshal(data, &inspect)
 	if err != nil {
@@ -416,6 +482,8 @@ func GetAppByName(client *fnclient.Fn, appName string) (*modelsv2.App, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println(appsResp.Payload.Items[0].Architecture)
 
 	var app *modelsv2.App
 	if len(appsResp.Payload.Items) > 0 {

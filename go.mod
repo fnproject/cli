@@ -23,4 +23,8 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 )
 
+replace (
+	github.com/fnproject/fn_go v0.8.6 => /Users/sunny/Functions/fn_go
+)
+
 go 1.14

@@ -85,6 +85,7 @@ type FuncFile struct {
 	BuildImage  string   `yaml:"build_image,omitempty" json:"build_image,omitempty"` // Image to use as base for building
 	RunImage    string   `yaml:"run_image,omitempty" json:"run_image,omitempty"`     // Image to use for running
 	ContentType string   `yaml:"content_type,omitempty" json:"content_type,omitempty"`
+	Platforms   []string   `yaml:"platforms,omitempty" json:"platforms,omitempty"`     // What platform/architecture to use
 
 	// Route params
 	// TODO embed models.Route

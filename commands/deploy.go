@@ -344,9 +344,6 @@ func (p *deploycmd) deployAll(c *cli.Context, app *models.App) error {
 }
 
 func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfilePath string, funcfile *common.FuncFileV20180708) error {
-	if funcfile.Name == "" {
-		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
-	}
 
 	oracleProvider, _ := getOracleProvider()
 	if oracleProvider != nil && oracleProvider.ImageCompartmentID != "" {
@@ -388,21 +385,25 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache)
-	if err != nil {
-		return err
+	var architectures []string
+
+	// ~~~~to remove
+	app.Architecture = append(app.Architecture, "linux/amd64")
+	app.Architecture = append(app.Architecture, "linux/arm64")
+
+	// Convert ArchitectureType to string
+	for _, arch := range app.Architecture {
+		architectures = append(architectures, fmt.Sprintf("%s", arch))
 	}
 
-	if !p.local {
-		if err := common.PushV20180708(funcfile); err != nil {
-			return err
-		}
+	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, architectures)
+	if err != nil {
+		return err
 	}
 
 	if err := p.signImage(funcfile); err != nil {
 		return err
 	}
-
 	return p.updateFunction(c, app.ID, funcfile)
 }
 

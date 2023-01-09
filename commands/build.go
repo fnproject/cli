@@ -18,12 +18,10 @@ package commands
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-
 	"github.com/fnproject/cli/common"
 	"github.com/urfave/cli"
+	"os"
+	"path/filepath"
 )
 
 // BuildCommand returns build cli.command
@@ -66,10 +64,6 @@ func (b *buildcmd) flags() []cli.Flag {
 			Name:  "working-dir, w",
 			Usage: "Specify the working directory to build a function, must be the full path.",
 		},
-		cli.StringFlag{
-			Name:  "archs",
-			Usage: "To build images of multiple architectures together and generate a multi-arch image.",
-		},
 	}
 }
 
@@ -102,8 +96,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 		}
 
 		buildArgs := c.StringSlice("build-arg")
-		platforms := strings.Split(c.String("archs"), ",")
-		ff, err = common.BuildFuncV20180708(common.IsVerbose(), fpath, ff, buildArgs, b.noCache, platforms)
+		ff, err = common.BuildFuncV20180708(common.IsVerbose(), fpath, ff, buildArgs, b.noCache, nil)
 		if err != nil {
 			return err
 		}
@@ -115,6 +108,13 @@ func (b *buildcmd) build(c *cli.Context) error {
 		fpath, ff, err := common.FindAndParseFuncfile(dir)
 		if err != nil {
 			return err
+		}
+
+		//to remove
+		fmt.Println(ff.Platforms)
+		if len(ff.Platforms) > 1 {
+			fmt.Printf("fn build is not supported for multi-arch images")
+			return nil
 		}
 
 		buildArgs := c.StringSlice("build-arg")

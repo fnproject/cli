@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ghodss/yaml"
 	"io"
 	"io/ioutil"
 	"log"
@@ -45,7 +46,6 @@ import (
 	"github.com/fnproject/fn_go/modelsv2"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
-	"gopkg.in/yaml.v2"
 )
 
 // Global docker variables.
@@ -53,6 +53,7 @@ const (
 	FunctionsDockerImage     = "fnproject/fnserver"
 	FuncfileDockerRuntime    = "docker"
 	MinRequiredDockerVersion = "17.5.0"
+	BuildxBuilderInstance    = "oci_fn_builder"
 )
 
 var GlobalVerbose bool
@@ -122,7 +123,7 @@ func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool, platforms []string) (*FuncFileV20180708, error) {
+func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool, architectures []string) (*FuncFileV20180708, error) {
 	var err error
 
 	if funcfile.Version == "" {
@@ -140,16 +141,8 @@ func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708,
 	if err := localBuild(fpath, funcfile.Build); err != nil {
 		return nil, err
 	}
-	if len(platforms) > 0 {
-		for _, platform := range platforms {
-			if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache, platform); err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache, ""); err != nil {
-			return nil, err
-		}
+	if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache, architectures); err != nil {
+		return nil, err
 	}
 
 	return funcfile, nil
@@ -334,7 +327,8 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 		if err != nil {
 			return err
 		}
-		defer os.Remove(dockerfile)
+		//~~~~ to remove
+		//defer os.Remove(dockerfile)
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
 			if err != nil {
@@ -342,7 +336,7 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 			}
 		}
 	}
-	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache, containerEngineType, "")
+	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache, containerEngineType, make([]string, 0))
 	if err != nil {
 		return err
 	}
@@ -356,7 +350,7 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 	return nil
 }
 
-func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool, platform string) error {
+func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool, architectures []string) error {
 	containerEngineType, err := GetContainerEngineType()
 	if err != nil {
 		return err
@@ -385,7 +379,8 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 		if err != nil {
 			return err
 		}
-		defer os.Remove(dockerfile)
+		//~~~~ to remove
+		//defer os.Remove(dockerfile)
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
 			if err != nil {
@@ -393,7 +388,8 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 			}
 		}
 	}
-	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache, containerEngineType, platform)
+
+	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache, containerEngineType, architectures)
 	if err != nil {
 		return err
 	}
@@ -407,8 +403,81 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 	return nil
 }
 
+func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCache bool, architectures []string) []string {
+	var buildCommand = "buildx"
+	var name = imageName
+	args := []string{
+		buildCommand,
+		"build",
+		"-t", name,
+		"-f", dockerfile,
+		"--platform", strings.Join(architectures, ","),
+	}
+
+	if noCache {
+		args = append(args, "--no-cache")
+	}
+
+	if len(buildArgs) > 0 {
+		for _, buildArg := range buildArgs {
+			args = append(args, "--build-arg", buildArg)
+		}
+	}
+
+	if len(architectures) > 0 {
+		var arg = "ARCH=" + strings.Join(architectures, ",")
+		var label = "imageName=" + imageName
+		args = append(args, "--build-arg", arg)
+		args = append(args, "--label", label)
+		args = append(args, "--push")
+	}
+
+	args = append(args,
+		"--build-arg", "HTTP_PROXY",
+		"--build-arg", "HTTPS_PROXY",
+		".")
+
+	//~~~~ to remove
+	fmt.Printf("~~~~~~build command: %v\n", args)
+	fmt.Println(args)
+
+	// Container engine type would be optional here
+	return args
+}
+
+func buildDockerCommand(imageName, dockerfile string, buildArgs []string, noCache bool) []string {
+	var name = imageName
+	args := []string{
+		"build",
+		"-t", name,
+		"-f", dockerfile,
+	}
+
+	if noCache {
+		args = append(args, "--no-cache")
+	}
+
+	if len(buildArgs) > 0 {
+		for _, buildArg := range buildArgs {
+			args = append(args, "--build-arg", buildArg)
+		}
+	}
+
+	args = append(args,
+		"--build-arg", "HTTP_PROXY",
+		"--build-arg", "HTTPS_PROXY",
+		".")
+
+	//~~~~ to remove
+	fmt.Printf("~~~~~~build command: %v\n", args)
+	fmt.Println(args)
+
+	// Container engine type would be optional here
+	return args
+}
+
 // RunBuild runs function from func.yaml/json/yml.
-func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string, platform string) error {
+func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string, architectures []string) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -443,47 +512,31 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 	}
 
 	go func(done chan<- error) {
-		var buildCommand = "build"
-		var name = imageName
-		if len(platform) > 0 {
-			buildCommand = "buildx build"
-			name = name + "-" + platform
-		}
-		args := []string{
-			buildCommand,
-			"-t", name,
-			"-f", dockerfile,
-		}
-
-		if noCache {
-			args = append(args, "--no-cache")
-		}
-
-		if len(buildArgs) > 0 {
-			for _, buildArg := range buildArgs {
-				args = append(args, "--build-arg", buildArg)
-			}
-		}
-
-		if len(platform) > 0 {
-			var arg = "ARCH=" + platform
-			var label = "imageName=" + imageName
-			args = append(args, "--build-arg", arg)
-			args = append(args, "--load")
-			args = append(args, "--label", label)
-		}
-		args = append(args,
-			"--build-arg", "HTTP_PROXY",
-			"--build-arg", "HTTPS_PROXY",
-			".")
-
 		// Container engine type would be optional here
-		cmd := exec.Command(containerEngineType, args...)
+		//cmd := exec.Command(containerEngineType, args...)
+		fmt.Printf("containerEngine: %s\n", containerEngineType)
+
+		var dockerBuildCommand []string
+		// Depending whether architecture list is passed or not trigger docker buildx or docker build accordingly
+		if architectures != nil && len(architectures) != 0 {
+			err := initializeContainerBuilder(containerEngineType)
+			if err != nil {
+				done <- err
+				return
+			}
+			dockerBuildCommand = buildXDockerCommand(imageName, dockerfile,  buildArgs, noCache, architectures)
+			// perform cleanup
+			defer cleanupContainerBuilder(containerEngineType)
+		} else {
+			dockerBuildCommand = buildDockerCommand(imageName, dockerfile,  buildArgs, noCache)
+		}
+
+		cmd := exec.Command("docker", dockerBuildCommand...)
 		cmd.Dir = dir
 		cmd.Stderr = buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
 		cmd.Stdout = buildOut
 		done <- cmd.Run()
-	}(result)
+		}(result)
 
 	select {
 	case err := <-result:
@@ -525,6 +578,40 @@ func containerEngineVersionCheck(containerEngineType string) error {
 		}
 	}
 	return nil
+}
+
+func initializeContainerBuilder(containerEngineType string) error {
+	// ignoring the error as there could be no such existing builder
+	// valid error would be caught later while creating a builder
+	_ = cleanupContainerBuilder(containerEngineType)
+
+	var args []string
+	args = append(args, "buildx")
+	args = append(args, "create")
+	args = append(args, "--name", BuildxBuilderInstance)
+	args = append(args, "--use")
+
+	//params := fmt.Sprintf("buildx create --name %s --use", builderName)
+	out, err := exec.Command(containerEngineType, args...).Output()
+	fmt.Println("output of builder create " + string(out))
+	fmt.Println(err)
+	if err != nil {
+		return fmt.Errorf("Cannot create/use builder instance %v for %v : %v", containerEngineType,
+			BuildxBuilderInstance, err)
+	}
+
+	return nil
+}
+
+func cleanupContainerBuilder(containerEngineType string) error {
+	var args []string
+	args = append(args, "buildx")
+	args = append(args, "rm")
+	args = append(args, BuildxBuilderInstance)
+
+	//remove existing builder instance
+	_, err := exec.Command(containerEngineType, args...).Output()
+	return err
 }
 
 // Exists check file exists.
@@ -788,6 +875,29 @@ func ExtractAnnotations(c *cli.Context) map[string]interface{} {
 		}
 	}
 	return annotations
+}
+
+func ExtractArchitecturesType(architectureString string) ([]string, error) {
+	var architectures []string
+	err := json.Unmarshal([]byte(architectureString), &architectures)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Unable to parse architectures value '%v'. Architectures values must be a valid JSON string.\n", architectureString))
+	}
+
+	architectureMap := make(map[string]bool, 0)
+	for _, arch := range architectures {
+		//verify the string value for architecture type is a valid value
+		archType := modelsv2.ArchitectureType(arch)
+		if err := archType.Validate(nil); err != nil {
+			return nil, errors.New(fmt.Sprintf("invalid architecture type : %s", arch))
+		}
+
+		if _, ok := architectureMap[arch]; ok {
+			return nil, errors.New(fmt.Sprintf("duplicate architecture type found : %s", arch))
+		}
+		architectureMap[arch] = true
+	}
+	return  architectures, nil
 }
 
 func ReadInFuncFile() (map[string]interface{}, error) {
