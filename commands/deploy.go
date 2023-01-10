@@ -171,10 +171,6 @@ func (p *deploycmd) flags() []cli.Flag {
 			Name:  "working-dir,w",
 			Usage: "Specify the working directory to deploy a function, must be the full path.",
 		},
-		cli.StringFlag{
-			Name:  "arch",
-			Usage: "To build images of multiple architectures together and generate a multi-arch image.",
-		},
 	}
 }
 
@@ -344,6 +340,9 @@ func (p *deploycmd) deployAll(c *cli.Context, app *models.App) error {
 }
 
 func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfilePath string, funcfile *common.FuncFileV20180708) error {
+	if funcfile.Name == "" {
+		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
+	}
 
 	oracleProvider, _ := getOracleProvider()
 	if oracleProvider != nil && oracleProvider.ImageCompartmentID != "" {

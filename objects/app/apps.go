@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"sort"
 	"text/tabwriter"
 
 	"context"
@@ -149,20 +148,17 @@ func (a *appsCmd) create(c *cli.Context) error {
 	}
 
 	appWithFlags(c, app)
-
 	architecturesString := c.String("architectures")
 
 	// Check for architectures parameter passed or set to default
 	if len(architecturesString) == 0 {
 		return errors.New("no architectures specified for the application")
 	}
-	fmt.Println("arch string : "+architecturesString)
 
 	architectures, err := common.ExtractArchitecturesType(architecturesString)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Architectures : %v %d", architectures, len(architectures))
 
 	app.Architecture = architectures
 	_, err = CreateApp(a.client, app)
@@ -210,10 +206,6 @@ func (a *appsCmd) update(c *cli.Context) error {
 
 		// Allow architecture type update only from single arch to single arch or single arch to multiarch.
 		// multiarch to single arch is not allowed in update.
-		currArchitectures := make([]string, len(app.Architecture))
-		copy(currArchitectures, app.Architecture)
-		sort.Strings(currArchitectures)
-
 		if len(app.Architecture) > 1 && len(architectures) == 1 {
 			return errors.New("cannot update application architectures type from multi-arch to single arch")
 		}
@@ -454,8 +446,6 @@ func GetAppByName(client *fnclient.Fn, appName string) (*modelsv2.App, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(appsResp.Payload.Items[0].Architecture)
 
 	var app *modelsv2.App
 	if len(appsResp.Payload.Items) > 0 {

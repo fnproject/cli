@@ -76,6 +76,7 @@ func (p *pushcmd) push(c *cli.Context) error {
 		}
 
 		fmt.Println("pushing", ff.ImageNameV20180708())
+
 		if err := common.PushV20180708(ff); err != nil {
 			return err
 		}

@@ -502,11 +502,7 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 	}
 
 	go func(done chan<- error) {
-		// Container engine type would be optional here
-		//cmd := exec.Command(containerEngineType, args...)
-		fmt.Printf("containerEngine: %s\n", containerEngineType)
-
-		var dockerBuildCommand []string
+		var dockerBuildCmdArgs []string
 		// Depending whether architecture list is passed or not trigger docker buildx or docker build accordingly
 		if architectures != nil && len(architectures) != 0 {
 			err := initializeContainerBuilder(containerEngineType)
@@ -514,19 +510,19 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 				done <- err
 				return
 			}
-			dockerBuildCommand = buildXDockerCommand(imageName, dockerfile,  buildArgs, noCache, architectures)
+			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile,  buildArgs, noCache, architectures)
 			// perform cleanup
 			defer cleanupContainerBuilder(containerEngineType)
 		} else {
-			dockerBuildCommand = buildDockerCommand(imageName, dockerfile,  buildArgs, noCache)
+			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile,  buildArgs, noCache)
 		}
 
-		cmd := exec.Command("docker", dockerBuildCommand...)
+		cmd := exec.Command("docker", dockerBuildCmdArgs...)
 		cmd.Dir = dir
 		cmd.Stderr = buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
 		cmd.Stdout = buildOut
 		done <- cmd.Run()
-		}(result)
+	}(result)
 
 	select {
 	case err := <-result:
@@ -581,10 +577,7 @@ func initializeContainerBuilder(containerEngineType string) error {
 	args = append(args, "--name", BuildxBuilderInstance)
 	args = append(args, "--use")
 
-	//params := fmt.Sprintf("buildx create --name %s --use", builderName)
-	out, err := exec.Command(containerEngineType, args...).Output()
-	fmt.Println("output of builder create " + string(out))
-	fmt.Println(err)
+	_, err := exec.Command(containerEngineType, args...).Output()
 	if err != nil {
 		return fmt.Errorf("Cannot create/use builder instance %v for %v : %v", containerEngineType,
 			BuildxBuilderInstance, err)
