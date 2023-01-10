@@ -385,18 +385,8 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	var architectures []string
 
-	// ~~~~to remove
-	app.Architecture = append(app.Architecture, "linux/amd64")
-	app.Architecture = append(app.Architecture, "linux/arm64")
-
-	// Convert ArchitectureType to string
-	for _, arch := range app.Architecture {
-		architectures = append(architectures, fmt.Sprintf("%s", arch))
-	}
-
-	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, architectures)
+	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, app.Architecture)
 	if err != nil {
 		return err
 	}

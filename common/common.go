@@ -327,8 +327,7 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 		if err != nil {
 			return err
 		}
-		//~~~~ to remove
-		//defer os.Remove(dockerfile)
+		defer os.Remove(dockerfile)
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
 			if err != nil {
@@ -379,8 +378,7 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 		if err != nil {
 			return err
 		}
-		//~~~~ to remove
-		//defer os.Remove(dockerfile)
+		defer os.Remove(dockerfile)
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
 			if err != nil {
@@ -437,10 +435,6 @@ func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCac
 		"--build-arg", "HTTPS_PROXY",
 		".")
 
-	//~~~~ to remove
-	fmt.Printf("~~~~~~build command: %v\n", args)
-	fmt.Println(args)
-
 	// Container engine type would be optional here
 	return args
 }
@@ -467,10 +461,6 @@ func buildDockerCommand(imageName, dockerfile string, buildArgs []string, noCach
 		"--build-arg", "HTTP_PROXY",
 		"--build-arg", "HTTPS_PROXY",
 		".")
-
-	//~~~~ to remove
-	fmt.Printf("~~~~~~build command: %v\n", args)
-	fmt.Println(args)
 
 	// Container engine type would be optional here
 	return args

@@ -85,12 +85,6 @@ func (p *pushcmd) push(c *cli.Context) error {
 	}
 
 	_, ff, err := common.LoadFuncfile(".")
-	//to remove
-	fmt.Println(ff.Platforms)
-	if len(ff.Platforms) > 1 {
-		fmt.Printf("fn build is not supported for multi-arch images")
-		return nil
-	}
 
 	if err != nil {
 		if _, ok := err.(*common.NotFoundError); ok {

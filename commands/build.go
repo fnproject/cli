@@ -110,13 +110,6 @@ func (b *buildcmd) build(c *cli.Context) error {
 			return err
 		}
 
-		//to remove
-		fmt.Println(ff.Platforms)
-		if len(ff.Platforms) > 1 {
-			fmt.Printf("fn build is not supported for multi-arch images")
-			return nil
-		}
-
 		buildArgs := c.StringSlice("build-arg")
 		ff, err = common.BuildFunc(common.IsVerbose(), fpath, ff, buildArgs, b.noCache)
 		if err != nil {
