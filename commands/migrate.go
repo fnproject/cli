@@ -59,6 +59,7 @@ func (m *migrateFnCmd) migrate(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println(oldFF)
 
 	version := common.GetFuncYamlVersion(oldFF)
 	if version == common.LatestYamlVersion {

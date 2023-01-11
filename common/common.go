@@ -24,7 +24,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ghodss/yaml"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"log"
@@ -913,6 +913,7 @@ func ReadInFuncFile() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", fpath, err)
 	}
+
 	var ff map[string]interface{}
 	err = yaml.Unmarshal(b, &ff)
 	if err != nil {
