@@ -100,6 +100,10 @@ EXITSTATE: %s
 		cr.ExitState)
 }
 
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+}
+
 //AssertSuccess checks the command was success
 func (cr *CmdResult) AssertSuccess() *CmdResult {
 	if !cr.Success {

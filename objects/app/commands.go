@@ -59,7 +59,6 @@ func Create() cli.Command {
 			cli.StringFlag{
 				Name:  "architectures",
 				Usage: "The hardware architecture on which the application runs (default: x86)",
-				Value: "[\"x86\"]",
 			},
 		},
 	}

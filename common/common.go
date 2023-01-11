@@ -59,6 +59,11 @@ const (
 var GlobalVerbose bool
 var CommandVerbose bool
 
+var architectureMap = map[string]string{
+	"x86": "linux/amd64",
+	"arm": "linux/arm64",
+}
+
 func IsVerbose() bool {
 	return GlobalVerbose || CommandVerbose
 }
@@ -404,6 +409,7 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCache bool, architectures []string) []string {
 	var buildCommand = "buildx"
 	var name = imageName
+
 	args := []string{
 		buildCommand,
 		"build",
@@ -510,7 +516,19 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 				done <- err
 				return
 			}
-			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile,  buildArgs, noCache, architectures)
+
+			var mappedArchitectures []string
+			for _, arch := range architectures {
+				mappedArch, ok := architectureMap[arch]
+				if !ok {
+					err = errors.New(fmt.Sprintf("invalid architecture type : %v", arch))
+					done <- err
+					return
+				}
+				mappedArchitectures = append(mappedArchitectures, mappedArch)
+			}
+
+			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile,  buildArgs, noCache, mappedArchitectures)
 			// perform cleanup
 			defer cleanupContainerBuilder(containerEngineType)
 		} else {

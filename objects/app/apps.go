@@ -148,20 +148,23 @@ func (a *appsCmd) create(c *cli.Context) error {
 	}
 
 	appWithFlags(c, app)
-	architecturesString := c.String("architectures")
+	// If architectures flag is not set then default it to nil
+	if c.IsSet("architectures") {
+		architecturesString := c.String("architectures")
 
-	// Check for architectures parameter passed or set to default
-	if len(architecturesString) == 0 {
-		return errors.New("no architectures specified for the application")
+		// Check for architectures parameter passed or set to default
+		if len(architecturesString) == 0 {
+			return errors.New("no architectures specified for the application")
+		}
+
+		architectures, err := common.ExtractArchitecturesType(architecturesString)
+		if err != nil {
+			return err
+		}
+		app.Architecture = architectures
 	}
 
-	architectures, err := common.ExtractArchitecturesType(architecturesString)
-	if err != nil {
-		return err
-	}
-
-	app.Architecture = architectures
-	_, err = CreateApp(a.client, app)
+	_, err := CreateApp(a.client, app)
 	return err
 }
 
