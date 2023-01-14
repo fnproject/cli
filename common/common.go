@@ -50,7 +50,8 @@ import (
 
 // Global docker variables.
 const (
-	FunctionsDockerImage     = "fnproject/fnserver"
+	//FunctionsDockerImage     = "fnproject/fnserver"
+	FunctionsDockerImage     = "greendragons/testfnproject"
 	FuncfileDockerRuntime    = "docker"
 	MinRequiredDockerVersion = "17.5.0"
 	BuildxBuilderInstance    = "oci_fn_builder"

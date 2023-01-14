@@ -97,8 +97,8 @@ func start(c *cli.Context) error {
 	}
 
 	image := fmt.Sprintf("%s:%s", common.FunctionsDockerImage, c.String("version"))
-
 	args = append(args, image)
+	fmt.Printf("docker: %v\n", args)
 	cmd := exec.Command("docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

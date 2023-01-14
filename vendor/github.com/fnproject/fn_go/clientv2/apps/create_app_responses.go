@@ -8,6 +8,7 @@ package apps
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
@@ -77,6 +78,8 @@ func (o *CreateAppOK) GetPayload() *modelsv2.App {
 func (o *CreateAppOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(modelsv2.App)
+	body, _ := ioutil.ReadAll(response.Body())
+	println("body -> " + string(body))
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
