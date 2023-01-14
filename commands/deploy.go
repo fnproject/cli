@@ -184,6 +184,7 @@ func (p *deploycmd) flags() []cli.Flag {
 // on the file system (can be overridden using the `path` arg in each `func.yaml`. The index/root function
 // is the one that lives in the same directory as the app.yaml.
 func (p *deploycmd) deploy(c *cli.Context) error {
+
 	appName := ""
 	dir := common.GetDir(c)
 
