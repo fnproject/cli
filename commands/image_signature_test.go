@@ -7,7 +7,7 @@ import (
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/config"
 	"github.com/fnproject/fn_go/provider/oracle"
-	ociCommon "github.com/oracle/oci-go-sdk/v48/common"
+	ociCommon "github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/spf13/viper"
 	"net/url"
 	"testing"

@@ -37,6 +37,9 @@ import (
 	"github.com/urfave/cli"
 )
 
+const (
+	ARCHITECTURES_PARAMETER = "architectures"
+)
 type appsCmd struct {
 	provider provider.Provider
 	client   *fnclient.Fn
@@ -149,21 +152,24 @@ func (a *appsCmd) create(c *cli.Context) error {
 
 	appWithFlags(c, app)
 	// If architectures flag is not set then default it to nil
-	if c.IsSet("architectures") {
-		architecturesString := c.String("architectures")
+	if c.IsSet(ARCHITECTURES_PARAMETER) {
+		architecturesString := c.String(ARCHITECTURES_PARAMETER)
 
 		// Check for architectures parameter passed or set to default
 		if len(architecturesString) == 0 {
 			return errors.New("no architectures specified for the application")
 		}
 
+		//Validate and extract architectures list
+		//architectures, err := common.ExtractArchitecturesType(architecturesString)
 		architectures, err := common.ExtractArchitecturesType(architecturesString)
 		if err != nil {
 			return err
 		}
-		app.Architecture = architectures
+		app.Architectures = architectures
 	}
 
+	fmt.Printf("~arch : %v\n", app.Architectures)
 	_, err := CreateApp(a.client, app)
 	return err
 }
@@ -198,10 +204,10 @@ func (a *appsCmd) update(c *cli.Context) error {
 
 	appWithFlags(c, app)
 
-	var updateArchitecture = c.IsSet("architectures")
+	var updateArchitecture = c.IsSet(ARCHITECTURES_PARAMETER)
 
 	if updateArchitecture {
-		architecturesString := c.String("architectures")
+		architecturesString := c.String(ARCHITECTURES_PARAMETER)
 		architectures, err := common.ExtractArchitecturesType(architecturesString)
 		if err != nil {
 			return err
@@ -209,11 +215,16 @@ func (a *appsCmd) update(c *cli.Context) error {
 
 		// Allow architecture type update only from single arch to single arch or single arch to multiarch.
 		// multiarch to single arch is not allowed in update.
-		if len(app.Architecture) > 1 && len(architectures) == 1 {
+		if len(app.Architectures) > 1 && len(architectures) == 1 {
 			return errors.New("cannot update application architectures type from multi-arch to single arch")
 		}
 
-		app.Architecture = architectures
+		// don't allow update from one single arch type to another
+		if len(app.Architectures) == 1 && len(architectures) == 1 && app.Architectures[0] != architectures[0] {
+			return errors.New(fmt.Sprintf("cannot update application architectures type from %s to %s",app.Architectures[0], architectures[0]))
+		}
+
+		app.Architectures = architectures
 	}
 
 	if _, err = PutApp(a.client, app.ID, app); err != nil {

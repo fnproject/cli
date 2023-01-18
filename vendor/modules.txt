@@ -66,6 +66,8 @@ github.com/go-openapi/swag
 github.com/go-openapi/validate
 # github.com/go-stack/stack v1.8.0
 github.com/go-stack/stack
+# github.com/gofrs/flock v0.8.1
+github.com/gofrs/flock
 # github.com/golang/mock v1.4.4
 github.com/golang/mock/gomock
 # github.com/hashicorp/hcl v1.0.0
@@ -103,15 +105,17 @@ github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.3.2
 ## explicit
 github.com/mitchellh/mapstructure
-# github.com/oracle/oci-go-sdk/v48 v48.0.0
+# github.com/oracle/oci-go-sdk/v65 v65.28.1 => /Users/sunny/Functions/oci-go-sdk
 ## explicit
-github.com/oracle/oci-go-sdk/v48/artifacts
-github.com/oracle/oci-go-sdk/v48/common
-github.com/oracle/oci-go-sdk/v48/common/auth
-github.com/oracle/oci-go-sdk/v48/functions
-github.com/oracle/oci-go-sdk/v48/keymanagement
+github.com/oracle/oci-go-sdk/v65/artifacts
+github.com/oracle/oci-go-sdk/v65/common
+github.com/oracle/oci-go-sdk/v65/common/auth
+github.com/oracle/oci-go-sdk/v65/functions
+github.com/oracle/oci-go-sdk/v65/keymanagement
 # github.com/pelletier/go-toml v1.7.0
 github.com/pelletier/go-toml
+# github.com/sony/gobreaker v0.5.0
+github.com/sony/gobreaker
 # github.com/spf13/afero v1.1.2
 github.com/spf13/afero
 github.com/spf13/afero/mem

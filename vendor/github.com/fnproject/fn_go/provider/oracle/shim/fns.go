@@ -7,7 +7,7 @@ import (
 	"github.com/fnproject/fn_go/provider/oracle/shim/client"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
-	"github.com/oracle/oci-go-sdk/v48/functions"
+	"github.com/oracle/oci-go-sdk/v65/functions"
 )
 
 const (

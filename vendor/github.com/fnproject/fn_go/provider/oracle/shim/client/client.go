@@ -2,7 +2,7 @@ package client
 
 import (
 	"context"
-	"github.com/oracle/oci-go-sdk/v48/functions"
+	"github.com/oracle/oci-go-sdk/v65/functions"
 )
 
 // Interface extracted from Go SDK FunctionsManagementClient for mockability

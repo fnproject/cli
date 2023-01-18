@@ -536,7 +536,7 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile,  buildArgs, noCache)
 		}
 
-		cmd := exec.Command("docker", dockerBuildCmdArgs...)
+		cmd := exec.Command(containerEngineType, dockerBuildCmdArgs...)
 		cmd.Dir = dir
 		cmd.Stderr = buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
 		cmd.Stdout = buildOut
@@ -877,6 +877,29 @@ func ExtractAnnotations(c *cli.Context) map[string]interface{} {
 		}
 	}
 	return annotations
+}
+
+func ExtractArchitecturesTypeEnum(architectureString string) ([]modelsv2.ArchitectureType, error) {
+	var architectures []modelsv2.ArchitectureType
+	err := json.Unmarshal([]byte(architectureString), &architectures)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Unable to parse architectures value '%v'. Architectures values must be a valid JSON string.\n", architectureString))
+	}
+
+	architectureMap := make(map[modelsv2.ArchitectureType]bool, 0)
+	for _, arch := range architectures {
+		//verify the string value for architecture type is a valid value
+		archType := modelsv2.ArchitectureType(arch)
+		if err := archType.Validate(nil); err != nil {
+			return nil, errors.New(fmt.Sprintf("invalid architecture type : %s", arch))
+		}
+
+		if _, ok := architectureMap[archType]; ok {
+			return nil, errors.New(fmt.Sprintf("duplicate architecture type found : %s", arch))
+		}
+		architectureMap[archType] = true
+	}
+	return  architectures, nil
 }
 
 func ExtractArchitecturesType(architectureString string) ([]string, error) {

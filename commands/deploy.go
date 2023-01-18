@@ -39,9 +39,9 @@ import (
 	trigger "github.com/fnproject/cli/objects/trigger"
 	v2Client "github.com/fnproject/fn_go/clientv2"
 	models "github.com/fnproject/fn_go/modelsv2"
-	"github.com/oracle/oci-go-sdk/v48/artifacts"
-	ociCommon "github.com/oracle/oci-go-sdk/v48/common"
-	"github.com/oracle/oci-go-sdk/v48/keymanagement"
+	"github.com/oracle/oci-go-sdk/v65/artifacts"
+	ociCommon "github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/oracle/oci-go-sdk/v65/keymanagement"
 	"github.com/urfave/cli"
 )
 
@@ -58,7 +58,6 @@ type Message struct {
 }
 
 var RegionsWithOldKMSEndpoints = map[ociCommon.Region]struct{}{
-	ociCommon.RegionSEA:           {},
 	ociCommon.RegionPHX:           {},
 	ociCommon.RegionIAD:           {},
 	ociCommon.RegionFRA:           {},
@@ -356,6 +355,7 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 			return err
 		}
 
+		//artifactsClient, err := artifacts.NewArtifactsClientWithConfigurationProvider(oracleProvider.ConfigurationProvider)
 		artifactsClient, err := artifacts.NewArtifactsClientWithConfigurationProvider(oracleProvider.ConfigurationProvider)
 		if err != nil {
 			return err
@@ -386,11 +386,11 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 
 	buildArgs := c.StringSlice("build-arg")
 
-	// ~~~~to remove
 	architectures := make([]string, 0)
+	// In case of local ignore the architectures parameter
 	if !p.local {
-		copy(architectures, app.Architecture)
-		architectures = []string{"x86", "arm"}
+		//Validate architectures
+		copy(architectures, app.Architectures)
 	}
 
 	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, architectures)

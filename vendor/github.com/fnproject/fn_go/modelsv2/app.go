@@ -21,7 +21,7 @@ type App struct {
 	Annotations map[string]interface{} `json:"annotations,omitempty"`
 
 	// Architecture type for the application
-	Architecture []string `json:"architecture"`
+	Architectures []string `json:"architectures"`
 
 	// Application function configuration, applied to all Functions.
 	Config map[string]string `json:"config,omitempty"`

@@ -7,7 +7,7 @@ import (
 	"github.com/fnproject/fn_go/provider/oracle/shim/client"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
-	"github.com/oracle/oci-go-sdk/v48/functions"
+	"github.com/oracle/oci-go-sdk/v65/functions"
 )
 
 const (
@@ -37,6 +37,7 @@ func (s *appsShim) CreateApp(params *apps.CreateAppParams) (*apps.CreateAppOK, e
 		SubnetIds:     subnetIds,
 		Config:        params.Body.Config,
 		SyslogUrl:     params.Body.SyslogURL,
+		Architectures: params.Body.Architectures,
 	}
 
 	req := functions.CreateApplicationRequest{CreateApplicationDetails: details}
@@ -153,8 +154,9 @@ func (s *appsShim) UpdateApp(params *apps.UpdateAppParams) (*apps.UpdateAppOK, e
 	}
 
 	details := functions.UpdateApplicationDetails{
-		Config:    params.Body.Config,
-		SyslogUrl: params.Body.SyslogURL,
+		Config:        params.Body.Config,
+		SyslogUrl:     params.Body.SyslogURL,
+		Architectures: params.Body.Architectures,
 	}
 
 	req := functions.UpdateApplicationRequest{
@@ -212,6 +214,7 @@ func ociAppToV2(ociApp functions.Application) *modelsv2.App {
 
 	return &modelsv2.App{
 		Annotations: annotations,
+		Architectures: ociApp.Architectures,
 		Config:      ociApp.Config,
 		CreatedAt:   strfmt.DateTime(ociApp.TimeCreated.Time),
 		ID:          *ociApp.Id,
@@ -228,6 +231,7 @@ func ociAppSummaryToV2(ociAppSummary functions.ApplicationSummary) *modelsv2.App
 
 	return &modelsv2.App{
 		Annotations: annotations,
+		Architectures: ociAppSummary.Architectures,
 		CreatedAt:   strfmt.DateTime(ociAppSummary.TimeCreated.Time),
 		ID:          *ociAppSummary.Id,
 		Name:        *ociAppSummary.DisplayName,

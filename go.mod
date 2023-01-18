@@ -13,7 +13,7 @@ require (
 	github.com/mattn/go-isatty v0.0.3
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.2
-	github.com/oracle/oci-go-sdk/v48 v48.0.0
+	github.com/oracle/oci-go-sdk/v65 v65.28.1
 	github.com/spf13/viper v1.6.2
 	github.com/urfave/cli v1.20.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
@@ -24,5 +24,7 @@ require (
 )
 
 replace github.com/fnproject/fn_go v0.8.6 => /Users/sunny/Functions/fn_go
+
+replace github.com/oracle/oci-go-sdk/v65 v65.28.1 => /Users/sunny/Functions/oci-go-sdk
 
 go 1.14
