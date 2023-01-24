@@ -168,8 +168,6 @@ func (a *appsCmd) create(c *cli.Context) error {
 		}
 		app.Architectures = architectures
 	}
-
-	fmt.Printf("~arch : %v\n", app.Architectures)
 	_, err := CreateApp(a.client, app)
 	return err
 }
