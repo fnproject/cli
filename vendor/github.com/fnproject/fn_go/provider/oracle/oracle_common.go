@@ -47,12 +47,11 @@ const (
 )
 
 type Response struct {
-	Annotations Annotations `json:"annotations"`
-	CreatedAt   string      `json:"created_at"`
-	UpdatedAt   string      `json:"updated_at"`
-	Name        string      `json:"name"`
-	//~~~~to remove
-	Architectures string    `json:architectures`
+	Annotations   Annotations `json:"annotations"`
+	CreatedAt     string      `json:"created_at"`
+	UpdatedAt     string      `json:"updated_at"`
+	Name          string      `json:"name"`
+	Architectures string      `json:architectures`
 }
 
 type Annotations struct {

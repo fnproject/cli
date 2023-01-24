@@ -389,8 +389,7 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	architectures := make([]string, 0)
 	// In case of local ignore the architectures parameter
 	if !p.local {
-		//Validate architectures
-		copy(architectures, app.Architectures)
+		architectures = append(architectures, app.Architectures...)
 	}
 
 	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, architectures)

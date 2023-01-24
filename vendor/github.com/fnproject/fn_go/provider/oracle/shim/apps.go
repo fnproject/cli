@@ -213,14 +213,14 @@ func ociAppToV2(ociApp functions.Application) *modelsv2.App {
 	annotations[annotationSubnet] = ociSubnetsToAnnotationValue(ociApp.SubnetIds)
 
 	return &modelsv2.App{
-		Annotations: annotations,
+		Annotations:   annotations,
 		Architectures: ociApp.Architectures,
-		Config:      ociApp.Config,
-		CreatedAt:   strfmt.DateTime(ociApp.TimeCreated.Time),
-		ID:          *ociApp.Id,
-		Name:        *ociApp.DisplayName,
-		SyslogURL:   ociApp.SyslogUrl,
-		UpdatedAt:   strfmt.DateTime(ociApp.TimeUpdated.Time),
+		Config:        ociApp.Config,
+		CreatedAt:     strfmt.DateTime(ociApp.TimeCreated.Time),
+		ID:            *ociApp.Id,
+		Name:          *ociApp.DisplayName,
+		SyslogURL:     ociApp.SyslogUrl,
+		UpdatedAt:     strfmt.DateTime(ociApp.TimeUpdated.Time),
 	}
 }
 
@@ -230,12 +230,12 @@ func ociAppSummaryToV2(ociAppSummary functions.ApplicationSummary) *modelsv2.App
 	annotations[annotationSubnet] = ociSubnetsToAnnotationValue(ociAppSummary.SubnetIds)
 
 	return &modelsv2.App{
-		Annotations: annotations,
+		Annotations:   annotations,
 		Architectures: ociAppSummary.Architectures,
-		CreatedAt:   strfmt.DateTime(ociAppSummary.TimeCreated.Time),
-		ID:          *ociAppSummary.Id,
-		Name:        *ociAppSummary.DisplayName,
-		UpdatedAt:   strfmt.DateTime(ociAppSummary.TimeUpdated.Time),
+		CreatedAt:     strfmt.DateTime(ociAppSummary.TimeCreated.Time),
+		ID:            *ociAppSummary.Id,
+		Name:          *ociAppSummary.DisplayName,
+		UpdatedAt:     strfmt.DateTime(ociAppSummary.TimeUpdated.Time),
 	}
 }
 

@@ -596,17 +596,9 @@ type ClientCallDetails struct {
 // Call executes the http request with the given context
 func (client BaseClient) Call(ctx context.Context, request *http.Request) (response *http.Response, err error) {
 	if client.IsRefreshableAuthType() {
-		resp, err := client.RefreshableTokenWrappedCallWithDetails(ctx, request, ClientCallDetails{Signer: client.Signer})
-		b,e := ioutil.ReadAll(resp.Body)
-		fmt.Printf("~~~~b : %v\n", b)
-		fmt.Printf("~~~~err : %v\n", e)
-		return resp, err
+		return client.RefreshableTokenWrappedCallWithDetails(ctx, request, ClientCallDetails{Signer: client.Signer})
 	}
-	resp, err := client.CallWithDetails(ctx, request, ClientCallDetails{Signer: client.Signer})
-	b,e := ioutil.ReadAll(resp.Body)
-	fmt.Printf("~~~~call with details b : %v\n", string(b))
-	fmt.Printf("~~~~err : %v\n", e)
-	return resp, err
+	return client.CallWithDetails(ctx, request, ClientCallDetails{Signer: client.Signer})
 }
 
 // RefreshableTokenWrappedCallWithDetails wraps the CallWithDetails with retry on 401 for Refreshable Toekn (Instance Principal, Resource Principal etc.)

@@ -220,8 +220,8 @@ func Update() cli.Command {
 				Usage: "Syslog URL to send application logs to",
 			},
 			cli.StringFlag{
-				Name:  "architectures",
-				Usage: "The hardware architecture on which the application runs (default: x86)",
+				Name:        "architectures",
+				Usage:       "The hardware architecture on which the application runs (default: x86)",
 			},
 		},
 		BashComplete: func(c *cli.Context) {

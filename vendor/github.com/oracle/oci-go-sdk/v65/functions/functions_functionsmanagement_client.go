@@ -15,7 +15,6 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/common/auth"
 	"net/http"
-	"io/ioutil"
 )
 
 //FunctionsManagementClient a client for FunctionsManagement
@@ -376,9 +375,6 @@ func (client FunctionsManagementClient) GetApplication(ctx context.Context, requ
 			if httpResponse := ociResponse.HTTPResponse(); httpResponse != nil {
 				opcRequestId := httpResponse.Header.Get("opc-request-id")
 				response = GetApplicationResponse{RawResponse: httpResponse, OpcRequestId: &opcRequestId}
-				b,e := ioutil.ReadAll(httpResponse.Body)
-				fmt.Printf("~~~~body : %v\n", string(b))
-				fmt.Printf("~~~~err : %v\n", e)
 			} else {
 				response = GetApplicationResponse{}
 			}
@@ -387,7 +383,6 @@ func (client FunctionsManagementClient) GetApplication(ctx context.Context, requ
 	}
 	if convertedResponse, ok := ociResponse.(GetApplicationResponse); ok {
 		response = convertedResponse
-		fmt.Printf("~~~~oci sdk: arch: %v\n",convertedResponse.Architectures)
 	} else {
 		err = fmt.Errorf("failed to convert OCIResponse into GetApplicationResponse")
 	}
@@ -407,9 +402,6 @@ func (client FunctionsManagementClient) getApplication(ctx context.Context, requ
 	httpResponse, err = client.Call(ctx, &httpRequest)
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
-	b, e := ioutil.ReadAll(httpResponse.Body)
-	fmt.Printf("~~~~body : %v\n", string(b))
-	fmt.Printf("~~~~err : %v\n", e)
 	if err != nil {
 		apiReferenceLink := "https://docs.oracle.com/iaas/api/#/en/functions/20181201/Application/GetApplication"
 		err = common.PostProcessServiceError(err, "FunctionsManagement", "GetApplication", apiReferenceLink)
@@ -417,7 +409,6 @@ func (client FunctionsManagementClient) getApplication(ctx context.Context, requ
 	}
 
 	err = common.UnmarshalResponse(httpResponse, &response)
-	fmt.Printf("~~~~oci sdk: arch: %v\n", response.Architectures)
 	return response, err
 }
 
