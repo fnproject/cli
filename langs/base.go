@@ -48,8 +48,9 @@ func init() {
 	registerHelper(&PythonLangHelper{Version: "3.7.1"})
 	registerHelper(&PythonLangHelper{Version: "3.6"})
 
-	//New runtime support for Ruby 2.7
+	//New runtime support for Ruby 3.1
 	// order matter, 'ruby' will pick up the first RubyLangHelper
+	registerHelper(&RubyLangHelper{Version: "3.1"})
 	registerHelper(&RubyLangHelper{Version: "2.7"})
 
 	registerHelper(&KotlinLangHelper{})
