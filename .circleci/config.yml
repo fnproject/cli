@@ -31,6 +31,12 @@ jobs:
           curl -fsSL https://get.docker.com/ | sudo sh
       - run: docker version
       - run:
+          name: test build linux arm64
+          command: go build -o fn_linux_arm64
+          environment:
+            GOOS: linux
+            GOARCH: arm64
+      - run:
           name: build and test
           command: make test
           no_output_timeout: 20m
