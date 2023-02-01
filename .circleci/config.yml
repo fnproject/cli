@@ -36,6 +36,9 @@ jobs:
           environment:
             GOOS: linux
             GOARCH: arm64
+      - store_artifacts:
+          path: fn_linux_arm64
+          destination: fn_linux_arm64
       - run:
           name: build and test
           command: make test
