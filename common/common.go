@@ -333,7 +333,7 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 		if err != nil {
 			return err
 		}
-		defer os.Remove(dockerfile)
+		//defer os.Remove(dockerfile)
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
 			if err != nil {
@@ -384,7 +384,7 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 		if err != nil {
 			return err
 		}
-		defer os.Remove(dockerfile)
+		//defer os.Remove(dockerfile)
 		if helper.HasPreBuild() {
 			err := helper.PreBuild()
 			if err != nil {
@@ -443,6 +443,9 @@ func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCac
 		".")
 
 	// Container engine type would be optional here
+	cmd := strings.Join(args, " ")
+	fmt.Println(cmd)
+
 	return args
 }
 
@@ -512,21 +515,22 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 		var dockerBuildCmdArgs []string
 		// Depending whether architecture list is passed or not trigger docker buildx or docker build accordingly
 		if architectures != nil && len(architectures) != 0 {
-			err := initializeContainerBuilder(containerEngineType)
-			if err != nil {
-				done <- err
-				return
-			}
 
 			var mappedArchitectures []string
 			for _, arch := range architectures {
 				mappedArch, ok := architectureMap[arch]
 				if !ok {
-					err = errors.New(fmt.Sprintf("invalid architecture type : %v", arch))
+					err := errors.New(fmt.Sprintf("invalid architecture type : %v", arch))
 					done <- err
 					return
 				}
 				mappedArchitectures = append(mappedArchitectures, mappedArch)
+			}
+
+			err := initializeContainerBuilder(containerEngineType, mappedArchitectures)
+			if err != nil {
+				done <- err
+				return
 			}
 
 			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile,  buildArgs, noCache, mappedArchitectures)
@@ -585,7 +589,7 @@ func containerEngineVersionCheck(containerEngineType string) error {
 	return nil
 }
 
-func initializeContainerBuilder(containerEngineType string) error {
+func initializeContainerBuilder(containerEngineType string, platforms []string) error {
 	// ignoring the error as there could be no such existing builder
 	// valid error would be caught later while creating a builder
 	_ = cleanupContainerBuilder(containerEngineType)
@@ -595,6 +599,12 @@ func initializeContainerBuilder(containerEngineType string) error {
 	args = append(args, "create")
 	args = append(args, "--name", BuildxBuilderInstance)
 	args = append(args, "--use")
+	args = append(args, "--platform", strings.Join(platforms, ","))
+
+	buildKitVersion := os.Getenv("BUILDKIT_VERSION")
+	if len(buildKitVersion) != 0 {
+		args = append(args, "--driver-opt image=moby/buildkit:" + buildKitVersion)
+	}
 
 	_, err := exec.Command(containerEngineType, args...).Output()
 	if err != nil {
