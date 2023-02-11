@@ -269,22 +269,12 @@ func TestFnAppUpdateCycleWithArch(t *testing.T) {
 	h.Fn("create", "app", appName).AssertSuccess()
 	h.Fn("inspect", "app", appName).AssertSuccess().AssertStdoutContains("x86")
 
-	//Test update to multiarch
+	//Test update to multiarch, should fail as we don't allow any update operation
 	arch := `["x86", "arm"]`
-	h.Fn("update", "app", appName, "--architectures", arch).AssertSuccess()
-	h.Fn("inspect", "app", appName).AssertSuccess().AssertStdoutContains("x86").AssertStdoutContains("arm")
-
-	//Test update back to arm, should fail
-	h.Fn("update", "app", appName, "--architectures", "[\"arm\"]").AssertFailed()
+	h.Fn("update", "app", appName, "--architectures", arch).AssertFailed()
 
 	//duplicate arch, should fail
 	appName = h.NewAppName()
 	arch = `["x86", "arm", "x86"]`
 	h.Fn("create", "app", appName, "--architectures", arch).AssertFailed().AssertStderrContains("duplicate architecture type found")
-
-	// Validate update from single arch to different single arch
-	appName = h.NewAppName()
-	arch = `["x86"]`
-	h.Fn("create", "app", appName, "--architectures", arch).AssertSuccess()
-	h.Fn("update", "app", appName, "--architectures", "[\"arm\"]").AssertFailed()
 }

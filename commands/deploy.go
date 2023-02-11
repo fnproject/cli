@@ -390,6 +390,15 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	// In case of local ignore the architectures parameter
 	if !p.local {
 		architectures = append(architectures, app.Architectures...)
+
+		// ~~to remove
+		if app.Architectures == nil {
+			archs := strings.TrimSpace(os.Getenv("FN_APP_ARCH"))
+			if archs != "" && len(archs) != 0 {
+				architectures = strings.Split(archs, ",")
+				app.Architectures = architectures
+			}
+		}
 	}
 
 	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, architectures)

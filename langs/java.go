@@ -141,8 +141,9 @@ func (h *JavaLangHelper) DockerfileBuildCmds() []string {
 		"RUN [\"mvn\", \"package\", \"dependency:copy-dependencies\", \"-DincludeScope=runtime\", " +
 			"\"-DskipTests=true\", \"-Dmdep.prependGroupId=true\", \"-DoutputDirectory=target\", \"--fail-never\"]",
 		"ADD src /function/src",
-		"RUN [\"mvn\", \"package\"]",
+		"RUN [\"mvn\", \"package\", \"-v\"]",
 	}
+	//"RUN [\"mvn\", \"package\", \"-v\"]",
 }
 
 // HasPreBuild returns whether the Java Maven runtime has a pre-build step.
@@ -179,6 +180,7 @@ func mavenOpts() string {
 	opts.WriteString(fmt.Sprintf("-Dhttp.nonProxyHosts=%s ", strings.Replace(nonProxyHost, ",", "|", -1)))
 
 	opts.WriteString("-Dmaven.repo.local=/usr/share/maven/ref/repository")
+	//opts.WriteString("-Djdk.lang.Process.launchMechanism=vfork")
 
 	return opts.String()
 }

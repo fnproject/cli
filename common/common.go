@@ -287,7 +287,7 @@ func PrintDockerfileContent(dockerfile string, stdout io.Writer) {
 		return
 	}
 	defer file.Close()
-	fmt.Fprintf(stdout, "Dockerfile content\n-----------------------------------\n")
+	fmt.Fprintf(stdout, "Dockerfile content\n-----------------------------------$$\n")
 	_, _ = io.Copy(stdout, file)
 	fmt.Fprintf(stdout, "-----------------------------------\n")
 }
@@ -535,7 +535,7 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 
 			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile,  buildArgs, noCache, mappedArchitectures)
 			// perform cleanup
-			defer cleanupContainerBuilder(containerEngineType)
+			//defer cleanupContainerBuilder(containerEngineType)
 		} else {
 			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile,  buildArgs, noCache)
 		}
@@ -600,17 +600,25 @@ func initializeContainerBuilder(containerEngineType string, platforms []string) 
 	args = append(args, "--name", BuildxBuilderInstance)
 	args = append(args, "--use")
 	args = append(args, "--platform", strings.Join(platforms, ","))
+	args = append(args, "--bootstrap")
 
 	buildKitVersion := os.Getenv("BUILDKIT_VERSION")
 	if len(buildKitVersion) != 0 {
-		args = append(args, "--driver-opt image=moby/buildkit:" + buildKitVersion)
+		args = append(args, "--driver-opt", "image=moby/buildkit:" + buildKitVersion)
 	}
+
+	fmt.Printf("buildx create command: %v\n", args)
 
 	_, err := exec.Command(containerEngineType, args...).Output()
 	if err != nil {
 		return fmt.Errorf("Cannot create/use builder instance %v for %v : %v", containerEngineType,
 			BuildxBuilderInstance, err)
 	}
+
+	p := []string{"buildx", "version"}
+	out, err := exec.Command(containerEngineType, p...).Output()
+	fmt.Printf(">>>>>> Output of buildx version: %s\n", string(out))
+	fmt.Printf(">>>>>> err of buildx version: %v\n", err)
 
 	return nil
 }
