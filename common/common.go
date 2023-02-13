@@ -600,7 +600,7 @@ func initializeContainerBuilder(containerEngineType string, platforms []string) 
 	args = append(args, "--name", BuildxBuilderInstance)
 	args = append(args, "--use")
 	args = append(args, "--platform", strings.Join(platforms, ","))
-	args = append(args, "--bootstrap")
+	//args = append(args, "--bootstrap")
 
 	buildKitVersion := os.Getenv("BUILDKIT_VERSION")
 	if len(buildKitVersion) != 0 {
