@@ -512,21 +512,21 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 		var dockerBuildCmdArgs []string
 		// Depending whether architecture list is passed or not trigger docker buildx or docker build accordingly
 		if architectures != nil && len(architectures) != 0 {
-			err := initializeContainerBuilder(containerEngineType)
-			if err != nil {
-				done <- err
-				return
-			}
-
 			var mappedArchitectures []string
 			for _, arch := range architectures {
 				mappedArch, ok := architectureMap[arch]
 				if !ok {
-					err = errors.New(fmt.Sprintf("invalid architecture type : %v", arch))
+					err := errors.New(fmt.Sprintf("invalid architecture type : %v", arch))
 					done <- err
 					return
 				}
 				mappedArchitectures = append(mappedArchitectures, mappedArch)
+			}
+
+			err := initializeContainerBuilder(containerEngineType, mappedArchitectures)
+			if err != nil {
+				done <- err
+				return
 			}
 
 			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile,  buildArgs, noCache, mappedArchitectures)
@@ -585,7 +585,8 @@ func containerEngineVersionCheck(containerEngineType string) error {
 	return nil
 }
 
-func initializeContainerBuilder(containerEngineType string) error {
+func initializeContainerBuilder(containerEngineType string, platforms []string) error {
+
 	// ignoring the error as there could be no such existing builder
 	// valid error would be caught later while creating a builder
 	_ = cleanupContainerBuilder(containerEngineType)
@@ -595,6 +596,9 @@ func initializeContainerBuilder(containerEngineType string) error {
 	args = append(args, "create")
 	args = append(args, "--name", BuildxBuilderInstance)
 	args = append(args, "--use")
+
+	//Use builders which are sufficient to created the requested platform image
+	args = append(args, "--platform", strings.Join(platforms, ","))
 
 	_, err := exec.Command(containerEngineType, args...).Output()
 	if err != nil {

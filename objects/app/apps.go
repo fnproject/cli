@@ -202,29 +202,6 @@ func (a *appsCmd) update(c *cli.Context) error {
 
 	appWithFlags(c, app)
 
-	var updateArchitecture = c.IsSet(ARCHITECTURES_PARAMETER)
-
-	if updateArchitecture {
-		architecturesString := c.String(ARCHITECTURES_PARAMETER)
-		architectures, err := common.ExtractArchitecturesType(architecturesString)
-		if err != nil {
-			return err
-		}
-
-		// Allow architecture type update only from single arch to single arch or single arch to multiarch.
-		// multiarch to single arch is not allowed in update.
-		if len(app.Architectures) > 1 && len(architectures) == 1 {
-			return errors.New("cannot update application architectures type from multi-arch to single arch")
-		}
-
-		// don't allow update from one single arch type to another
-		if len(app.Architectures) == 1 && len(architectures) == 1 && app.Architectures[0] != architectures[0] {
-			return errors.New(fmt.Sprintf("cannot update application architectures type from %s to %s",app.Architectures[0], architectures[0]))
-		}
-
-		app.Architectures = architectures
-	}
-
 	if _, err = PutApp(a.client, app.ID, app); err != nil {
 		return err
 	}
