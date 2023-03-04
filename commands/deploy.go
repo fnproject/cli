@@ -389,7 +389,13 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	architectures := make([]string, 0)
 	// In case of local ignore the architectures parameter
 	if !p.local {
-		architectures = append(architectures, app.Architectures...)
+		// fetch the architectures
+		shape := app.Shape
+		if arch, ok := common.ShapeMap[shape]; !ok {
+			architectures = append(architectures, arch...)
+		} else {
+			return errors.New(fmt.Sprintf("Invalid application : %s shape: %s", app.Name, shape))
+		}
 	}
 
 	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, architectures)

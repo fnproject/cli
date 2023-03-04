@@ -6,6 +6,8 @@ package modelsv2
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
+
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
@@ -22,9 +24,6 @@ type Fn struct {
 
 	// App ID.
 	AppID string `json:"app_id,omitempty"`
-
-	// Architecture type for the application
-	Architecture []string `json:"architecture"`
 
 	// Function configuration key values.
 	Config map[string]string `json:"config,omitempty"`
@@ -50,6 +49,15 @@ type Fn struct {
 	// Unique name for this function.
 	Name string `json:"name,omitempty"`
 
+	// Valid values are GENERIC_X86, GENERIC_ARM and GENERIC_X86_ARM. Default is GENERIC_X86. Setting this to GENERIC_X86, will run the functions in the application on X86 processor architecture.
+	// Setting this to GENERIC_ARM, will run the functions in the application on ARM processor architecture.
+	// When set to 'GENERIC_X86_ARM', functions in the application are run on either X86 or ARM processor architecture.
+	// Accepted values are:
+	// GENERIC_X86, GENERIC_ARM, GENERIC_X86_ARM
+	//
+	// Enum: [GENERIC_X86 GENERIC_ARM GENERIC_X86_ARM]
+	Shape string `json:"shape,omitempty"`
+
 	// Timeout for executions of a function. Value in Seconds.
 	Timeout *int32 `json:"timeout,omitempty"`
 
@@ -64,6 +72,10 @@ func (m *Fn) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateCreatedAt(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateShape(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -84,6 +96,52 @@ func (m *Fn) validateCreatedAt(formats strfmt.Registry) error {
 	}
 
 	if err := validate.FormatOf("created_at", "body", "date-time", m.CreatedAt.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var fnTypeShapePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["GENERIC_X86","GENERIC_ARM","GENERIC_X86_ARM"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		fnTypeShapePropEnum = append(fnTypeShapePropEnum, v)
+	}
+}
+
+const (
+
+	// FnShapeGENERICX86 captures enum value "GENERIC_X86"
+	FnShapeGENERICX86 string = "GENERIC_X86"
+
+	// FnShapeGENERICARM captures enum value "GENERIC_ARM"
+	FnShapeGENERICARM string = "GENERIC_ARM"
+
+	// FnShapeGENERICX86ARM captures enum value "GENERIC_X86_ARM"
+	FnShapeGENERICX86ARM string = "GENERIC_X86_ARM"
+)
+
+// prop value enum
+func (m *Fn) validateShapeEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, fnTypeShapePropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Fn) validateShape(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Shape) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateShapeEnum("shape", "body", m.Shape); err != nil {
 		return err
 	}
 

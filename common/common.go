@@ -65,6 +65,12 @@ var architectureMap = map[string]string{
 	"arm": "linux/arm64",
 }
 
+var ShapeMap = map[string][]string{
+	"GENERIC_X86":     []string{"linux/amd64"},
+	"GENERIC_ARM":     []string{"linux/arm64"},
+	"GENERIC_X86_ARM": []string{"linux/amd64", "linux/arm64"},
+}
+
 func IsVerbose() bool {
 	return GlobalVerbose || CommandVerbose
 }
@@ -531,7 +537,7 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 
 			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile,  buildArgs, noCache, mappedArchitectures)
 			// perform cleanup
-			defer cleanupContainerBuilder(containerEngineType)
+			//defer cleanupContainerBuilder(containerEngineType)
 		} else {
 			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile,  buildArgs, noCache)
 		}

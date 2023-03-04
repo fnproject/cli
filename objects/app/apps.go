@@ -38,7 +38,7 @@ import (
 )
 
 const (
-	ARCHITECTURES_PARAMETER = "architectures"
+	SHAPE_PARAMETER = "shape"
 )
 type appsCmd struct {
 	provider provider.Provider
@@ -152,21 +152,27 @@ func (a *appsCmd) create(c *cli.Context) error {
 
 	appWithFlags(c, app)
 	// If architectures flag is not set then default it to nil
-	if c.IsSet(ARCHITECTURES_PARAMETER) {
-		architecturesString := c.String(ARCHITECTURES_PARAMETER)
+	if c.IsSet(SHAPE_PARAMETER) {
+		shapeParam := c.String(SHAPE_PARAMETER)
 
 		// Check for architectures parameter passed or set to default
-		if len(architecturesString) == 0 {
-			return errors.New("no architectures specified for the application")
+		if len(shapeParam) == 0 {
+			return errors.New("no shape specified for the application")
+		}
+
+		if _, ok := common.ShapeMap[shapeParam]; !ok {
+			return errors.New("invalid shape specified for the application")
 		}
 
 		//Validate and extract architectures list
 		//architectures, err := common.ExtractArchitecturesType(architecturesString)
-		architectures, err := common.ExtractArchitecturesType(architecturesString)
+		//architectures, err := common.ExtractArchitecturesType(architecturesString)
+		/*
 		if err != nil {
 			return err
 		}
-		app.Architectures = architectures
+		 */
+		app.Shape = shapeParam
 	}
 	_, err := CreateApp(a.client, app)
 	return err
