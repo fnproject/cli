@@ -3,7 +3,7 @@ module github.com/fnproject/cli
 require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
-	github.com/fnproject/fn_go v0.8.6
+	github.com/fnproject/fn_go v0.8.7
 	github.com/ghodss/yaml v1.0.0
 	github.com/giantswarm/semver-bump v0.0.0-20140912095342-88e6c9f2fe39
 	github.com/go-openapi/runtime v0.19.23
@@ -22,7 +22,5 @@ require (
 	golang.org/x/sys v0.0.0-20220804214406-8e32c043e418
 	gopkg.in/yaml.v2 v2.3.0
 )
-
-replace github.com/fnproject/fn_go v0.8.6 => /Users/sunny/Functions/pbf/fn_go
 
 go 1.14

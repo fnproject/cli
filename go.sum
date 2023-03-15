@@ -41,6 +41,8 @@ github.com/fatih/color v0.0.0-20170926111411-5df930a27be2 h1:40J76vs1Y7oiHFqTrQH
 github.com/fatih/color v0.0.0-20170926111411-5df930a27be2/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fnproject/fn_go v0.8.6 h1:CO2ouYc9ZytENgeHe36gGRFKwCb7nM7wf7Y+VGkI7eA=
 github.com/fnproject/fn_go v0.8.6/go.mod h1:qQhi3sVpjmPVnxVwnWySZDjG0tackIT6IQjJ6BjiQpc=
+github.com/fnproject/fn_go v0.8.7 h1:XtRc5EWfRmTmlfkR5rfRFB9BejnEpYukmXHRS0ME0Q4=
+github.com/fnproject/fn_go v0.8.7/go.mod h1:qQhi3sVpjmPVnxVwnWySZDjG0tackIT6IQjJ6BjiQpc=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
