@@ -241,7 +241,19 @@ func ociFnToV2(ociFn functions.Function) *modelsv2.Fn {
 	annotations := make(map[string]interface{})
 	invokeEndpoint := fmt.Sprintf(invokeEndpointFmtString, *ociFn.InvokeEndpoint, *ociFn.Id)
 	annotations[annotationCompartmentId] = *ociFn.CompartmentId
-	annotations[annotationImageDigest] = *ociFn.ImageDigest
+
+	// For pbf functions image and its digest will be always empty
+	imageDigest := ""
+	if ociFn.ImageDigest != nil {
+		imageDigest = *ociFn.ImageDigest
+	}
+
+	image := ""
+	if ociFn.Image != nil {
+		image = *ociFn.Image
+	}
+
+	annotations[annotationImageDigest] = imageDigest
 	annotations[annotationInvokeEndpoint] = invokeEndpoint
 
 	var timeoutPtr *int32
@@ -256,7 +268,7 @@ func ociFnToV2(ociFn functions.Function) *modelsv2.Fn {
 		Config:      ociFn.Config,
 		CreatedAt:   strfmt.DateTime(ociFn.TimeCreated.Time),
 		ID:          *ociFn.Id,
-		Image:       *ociFn.Image,
+		Image:       image,
 		Memory:      uint64(*ociFn.MemoryInMBs),
 		Name:        *ociFn.DisplayName,
 		Timeout:     timeoutPtr,
@@ -268,7 +280,19 @@ func ociFnSummaryToV2(ociFnSummary functions.FunctionSummary) *modelsv2.Fn {
 	annotations := make(map[string]interface{})
 	invokeEndpoint := fmt.Sprintf(invokeEndpointFmtString, *ociFnSummary.InvokeEndpoint, *ociFnSummary.Id)
 	annotations[annotationCompartmentId] = *ociFnSummary.CompartmentId
-	annotations[annotationImageDigest] = *ociFnSummary.ImageDigest
+
+	// For pbf functions image and its digest will be always empty
+	imageDigest := ""
+	if ociFnSummary.ImageDigest != nil {
+		imageDigest = *ociFnSummary.ImageDigest
+	}
+
+	image := ""
+	if ociFnSummary.Image != nil {
+		image = *ociFnSummary.Image
+	}
+
+	annotations[annotationImageDigest] = imageDigest
 	annotations[annotationInvokeEndpoint] = invokeEndpoint
 
 	var timeoutPtr *int32
@@ -282,7 +306,7 @@ func ociFnSummaryToV2(ociFnSummary functions.FunctionSummary) *modelsv2.Fn {
 		AppID:       *ociFnSummary.ApplicationId,
 		CreatedAt:   strfmt.DateTime(ociFnSummary.TimeCreated.Time),
 		ID:          *ociFnSummary.Id,
-		Image:       *ociFnSummary.Image,
+		Image:       image,
 		Memory:      uint64(*ociFnSummary.MemoryInMBs),
 		Name:        *ociFnSummary.DisplayName,
 		Timeout:     timeoutPtr,
