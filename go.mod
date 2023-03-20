@@ -15,7 +15,7 @@ require (
 	github.com/spf13/viper v1.6.2
 	github.com/urfave/cli v1.20.0
 	github.com/xeipuuv/gojsonschema v0.0.0-20180618132009-1d523034197f
-	golang.org/x/sys v0.4.0
+	golang.org/x/sys v0.6.0
 	gopkg.in/yaml.v2 v2.3.0
 )
 
@@ -60,6 +60,6 @@ require (
 
 replace github.com/fnproject/fn_go v0.8.6 => /Users/sunny/Functions/fn_go
 
-replace github.com/oracle/oci-go-sdk/v65 v65.28.1 => /Users/sunny/Functions/oci-go-sdk-preview/oci-go-sdk
+replace github.com/oracle/oci-go-sdk/v65 v65.28.1 => /Users/sunny/Functions/oci-go-sdk-preview/oci-go-sdk-preview/oci-go-sdk
 
 go 1.14
