@@ -62,4 +62,4 @@ replace github.com/fnproject/fn_go v0.8.6 => /Users/sunny/Functions/fn_go
 
 replace github.com/oracle/oci-go-sdk/v65 v65.28.1 => /Users/sunny/Functions/oci-go-sdk-preview/oci-go-sdk-preview/oci-go-sdk
 
-go 1.14
+go 1.17

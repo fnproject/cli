@@ -278,9 +278,6 @@ func ociFnSummaryToV2(ociFnSummary functions.FunctionSummary) *modelsv2.Fn {
 		timeoutPtr = &timeout
 	}
 
-	fmt.Printf("~~~> ociFnSummary : %v", ociFnSummary)
-	fmt.Printf("~~~> ociFnSummary image : %v", ociFnSummary.Image)
-
 	return &modelsv2.Fn{
 		Annotations: annotations,
 		AppID:       *ociFnSummary.ApplicationId,
