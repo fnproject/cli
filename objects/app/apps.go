@@ -164,7 +164,6 @@ func (a *appsCmd) create(c *cli.Context) error {
 			return errors.New("invalid shape specified for the application")
 		}
 		app.Shape = shapeParam
-		fmt.Printf("shape param %s\n", shapeParam)
 	}
 	_, err := CreateApp(a.client, app)
 	return err
