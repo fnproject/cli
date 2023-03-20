@@ -1,6 +1,13 @@
 
 # Releases
 
+## v 0.6.24
+
+* Allowing `fn inspect functions` and `fn list functions` for PBF(Pre-Built Functions) function with empty image and digest field. By default, it was not supported. 
+  
+  Note: If you have functions created using Pre-Built Functions, then please upgrade to this version to have fn list and fn inspect  work properly
+
+
 ## v 0.6.7
 
 * Support for following languages versions:
