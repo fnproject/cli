@@ -51,7 +51,7 @@ type Response struct {
 	CreatedAt     string      `json:"created_at"`
 	UpdatedAt     string      `json:"updated_at"`
 	Name          string      `json:"name"`
-	Architectures string      `json:architectures`
+	Shape         string      `json:shape`
 }
 
 type Annotations struct {

@@ -12,10 +12,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/oracle/oci-go-sdk/v65/common/utils"
 	"io"
 	"net/http"
 	"sync"
 	"time"
+)
+
+const (
+	rpstValidForRatio float64 = 0.5
 )
 
 // Workload RPST Issuance Service (WRIS)
@@ -84,12 +89,15 @@ func (c *x509FederationClientForOkeWorkloadIdentity) getSecurityToken() (securit
 	}
 
 	request, err := http.NewRequest(http.MethodPost, c.proxymuxEndpoint, bytes.NewBuffer(payload))
+
 	if err != nil {
 		common.Logf("error %s", err)
 		return nil, fmt.Errorf("error getting security token %s", err)
 	}
 	request.Header.Add("Authorization", "Bearer "+c.kubernetesServiceAccountToken)
 	request.Header.Set("Content-Type", "application/json")
+	opcRequestID := utils.GenerateOpcRequestID()
+	request.Header.Set("opc-request-id", opcRequestID)
 
 	response, err := client.Do(request)
 	if err != nil {
@@ -165,6 +173,24 @@ func (c *x509FederationClientForOkeWorkloadIdentity) renewSecurityTokenIfNotVali
 		}
 	}
 	return nil
+}
+
+type workloadIdentityPrincipalToken struct {
+	principalToken
+}
+
+func (t *workloadIdentityPrincipalToken) Valid() bool {
+	// TODO: read rpstValidForRatio from rpst token
+	issuedAt := int64(t.jwtToken.payload["iat"].(float64))
+	expiredAt := int64(t.jwtToken.payload["exp"].(float64))
+	softExpiredAt := issuedAt + int64(float64(expiredAt-issuedAt)*rpstValidForRatio)
+	softExpiredAtTime := time.Unix(softExpiredAt, 0)
+	now := time.Now().Unix() + int64(bufferTimeBeforeTokenExpiration.Seconds())
+	expired := softExpiredAt <= now
+	if expired {
+		common.Debugf("Token expired at: %v", softExpiredAtTime.Format("15:04:05.000"))
+	}
+	return !expired
 }
 
 func (c *x509FederationClientForOkeWorkloadIdentity) GetClaim(key string) (interface{}, error) {

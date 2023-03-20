@@ -93,7 +93,7 @@ func ResourcePrincipalConfigurationProvider() (ConfigurationProviderWithClaimAcc
 	}
 }
 
-// OkeWorkloadIdentityConfigurationProvider returns a resource principal configuration provider by OKE Work Identity
+// OkeWorkloadIdentityConfigurationProvider returns a resource principal configuration provider by OKE Workload Identity
 func OkeWorkloadIdentityConfigurationProvider() (ConfigurationProviderWithClaimAccess, error) {
 	var version string
 	var ok bool
@@ -141,6 +141,45 @@ func OkeWorkloadIdentityConfigurationProvider() (ConfigurationProviderWithClaimA
 
 	err := fmt.Errorf("can not create resource principal, environment variable: %s, must be valid", ResourcePrincipalVersionEnvVar)
 	return nil, resourcePrincipalError{err: err}
+}
+
+// ResourcePrincipalConfigurationProviderForRegion returns a resource principal configuration provider using well known
+// environment variables to look up token information, for a given region. The environment variables can either paths or contain the material value
+// of the keys. However, in the case of the keys and tokens paths and values can not be mixed
+func ResourcePrincipalConfigurationProviderForRegion(region common.Region) (ConfigurationProviderWithClaimAccess, error) {
+	var version string
+	var ok bool
+	if version, ok = os.LookupEnv(ResourcePrincipalVersionEnvVar); !ok {
+		err := fmt.Errorf("can not create resource principal, environment variable: %s, not present", ResourcePrincipalVersionEnvVar)
+		return nil, resourcePrincipalError{err: err}
+	}
+
+	switch version {
+	case ResourcePrincipalVersion2_2:
+		rpst := requireEnv(ResourcePrincipalRPSTEnvVar)
+		if rpst == nil {
+			err := fmt.Errorf("can not create resource principal, environment variable: %s, not present", ResourcePrincipalVersionEnvVar)
+			return nil, resourcePrincipalError{err: err}
+		}
+		private := requireEnv(ResourcePrincipalPrivatePEMEnvVar)
+		if private == nil {
+			err := fmt.Errorf("can not create resource principal, environment variable: %s, not present", ResourcePrincipalVersionEnvVar)
+			return nil, resourcePrincipalError{err: err}
+		}
+		passphrase := requireEnv(ResourcePrincipalPrivatePEMPassphraseEnvVar)
+		region := string(region)
+		if region == "" {
+			err := fmt.Errorf("can not create resource principal, region cannot be empty")
+			return nil, resourcePrincipalError{err: err}
+		}
+		return newResourcePrincipalKeyProvider22(
+			*rpst, *private, passphrase, region)
+	case ResourcePrincipalVersion1_1:
+		return newResourcePrincipalKeyProvider11(DefaultRptPathProvider{})
+	default:
+		err := fmt.Errorf("can not create resource principal, environment variable: %s, must be valid", ResourcePrincipalVersionEnvVar)
+		return nil, resourcePrincipalError{err: err}
+	}
 }
 
 // ResourcePrincipalConfigurationProviderWithPathProvider returns a resource principal configuration provider using path provider.
@@ -198,7 +237,7 @@ type resourcePrincipalKeyProvider struct {
 func newResourcePrincipalKeyProvider22(sessionTokenLocation, privatePemLocation string,
 	passphraseLocation *string, region string) (*resourcePrincipalKeyProvider, error) {
 
-	//Check both the the passphrase and the key are paths
+	//Check both the passphrase and the key are paths
 	if passphraseLocation != nil && (!isPath(privatePemLocation) && isPath(*passphraseLocation) ||
 		isPath(privatePemLocation) && !isPath(*passphraseLocation)) {
 		err := fmt.Errorf("cant not create resource principal: both key and passphrase need to be path or none needs to be path")
@@ -247,13 +286,6 @@ func newResourcePrincipalKeyProvider22(sessionTokenLocation, privatePemLocation 
 
 	return &rs, nil
 }
-
-// resourcePrincipalKeyProvider22 is key provider that reads from specified the specified environment variables
-// the environment variables can host the material keys/passphrases or they can be paths to files that need to be read
-//type resourcePrincipalKeyProviderForOkeWorkloadIdentity struct {
-//	FederationClient  federationClient
-//	KeyProviderRegion common.Region
-//}
 
 func newOkeWorkloadIdentityProvider(proxymuxEndpoint string, kubernetesServiceAccountToken string,
 	kubernetesServiceAccountCert *x509.CertPool, region string) (*resourcePrincipalKeyProvider, error) {

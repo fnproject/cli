@@ -163,16 +163,8 @@ func (a *appsCmd) create(c *cli.Context) error {
 		if _, ok := common.ShapeMap[shapeParam]; !ok {
 			return errors.New("invalid shape specified for the application")
 		}
-
-		//Validate and extract architectures list
-		//architectures, err := common.ExtractArchitecturesType(architecturesString)
-		//architectures, err := common.ExtractArchitecturesType(architecturesString)
-		/*
-		if err != nil {
-			return err
-		}
-		 */
 		app.Shape = shapeParam
+		fmt.Printf("shape param %s\n", shapeParam)
 	}
 	_, err := CreateApp(a.client, app)
 	return err

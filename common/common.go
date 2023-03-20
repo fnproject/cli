@@ -55,20 +55,16 @@ const (
 	FuncfileDockerRuntime    = "docker"
 	MinRequiredDockerVersion = "17.5.0"
 	BuildxBuilderInstance    = "oci_fn_builder"
+	DefaultAppShape          = modelsv2.AppShapeGENERICX86
 )
 
 var GlobalVerbose bool
 var CommandVerbose bool
 
-var architectureMap = map[string]string{
-	"x86": "linux/amd64",
-	"arm": "linux/arm64",
-}
-
 var ShapeMap = map[string][]string{
-	"GENERIC_X86":     []string{"linux/amd64"},
-	"GENERIC_ARM":     []string{"linux/arm64"},
-	"GENERIC_X86_ARM": []string{"linux/amd64", "linux/arm64"},
+	modelsv2.AppShapeGENERICX86: []string{"linux/amd64"},
+	modelsv2.AppShapeGENERICARM: []string{"linux/arm64"},
+	modelsv2.AppShapeGENERICX86ARM: []string{"linux/amd64","linux/arm64"},
 }
 
 func IsVerbose() bool {
@@ -135,7 +131,7 @@ func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool, architectures []string) (*FuncFileV20180708, error) {
+func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool, shape string) (*FuncFileV20180708, error) {
 	var err error
 
 	if funcfile.Version == "" {
@@ -153,7 +149,7 @@ func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708,
 	if err := localBuild(fpath, funcfile.Build); err != nil {
 		return nil, err
 	}
-	if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache, architectures); err != nil {
+	if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache, shape); err != nil {
 		return nil, err
 	}
 
@@ -347,7 +343,7 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 			}
 		}
 	}
-	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache, containerEngineType, make([]string, 0))
+	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache, containerEngineType, "")
 	if err != nil {
 		return err
 	}
@@ -361,7 +357,7 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 	return nil
 }
 
-func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool, architectures []string) error {
+func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool, shape string) error {
 	containerEngineType, err := GetContainerEngineType()
 	if err != nil {
 		return err
@@ -399,7 +395,7 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 		}
 	}
 
-	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache, containerEngineType, architectures)
+	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache, containerEngineType, shape)
 	if err != nil {
 		return err
 	}
@@ -480,7 +476,7 @@ func buildDockerCommand(imageName, dockerfile string, buildArgs []string, noCach
 }
 
 // RunBuild runs function from func.yaml/json/yml.
-func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string, architectures []string) error {
+func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string, shape string) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -517,18 +513,9 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 	go func(done chan<- error) {
 		var dockerBuildCmdArgs []string
 		// Depending whether architecture list is passed or not trigger docker buildx or docker build accordingly
-		if architectures != nil && len(architectures) != 0 {
-			var mappedArchitectures []string
-			for _, arch := range architectures {
-				mappedArch, ok := architectureMap[arch]
-				if !ok {
-					err := errors.New(fmt.Sprintf("invalid architecture type : %v", arch))
-					done <- err
-					return
-				}
-				mappedArchitectures = append(mappedArchitectures, mappedArch)
-			}
-
+		var mappedArchitectures []string
+		if arch, ok := ShapeMap[shape]; ok {
+			mappedArchitectures = append(mappedArchitectures, arch...)
 			err := initializeContainerBuilder(containerEngineType, mappedArchitectures)
 			if err != nil {
 				done <- err
@@ -887,52 +874,6 @@ func ExtractAnnotations(c *cli.Context) map[string]interface{} {
 		}
 	}
 	return annotations
-}
-
-func ExtractArchitecturesTypeEnum(architectureString string) ([]modelsv2.ArchitectureType, error) {
-	var architectures []modelsv2.ArchitectureType
-	err := json.Unmarshal([]byte(architectureString), &architectures)
-	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Unable to parse architectures value '%v'. Architectures values must be a valid JSON string.\n", architectureString))
-	}
-
-	architectureMap := make(map[modelsv2.ArchitectureType]bool, 0)
-	for _, arch := range architectures {
-		//verify the string value for architecture type is a valid value
-		archType := modelsv2.ArchitectureType(arch)
-		if err := archType.Validate(nil); err != nil {
-			return nil, errors.New(fmt.Sprintf("invalid architecture type : %s", arch))
-		}
-
-		if _, ok := architectureMap[archType]; ok {
-			return nil, errors.New(fmt.Sprintf("duplicate architecture type found : %s", arch))
-		}
-		architectureMap[archType] = true
-	}
-	return  architectures, nil
-}
-
-func ExtractArchitecturesType(architectureString string) ([]string, error) {
-	var architectures []string
-	err := json.Unmarshal([]byte(architectureString), &architectures)
-	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Unable to parse architectures value '%v'. Architectures values must be a valid JSON string.\n", architectureString))
-	}
-
-	architectureMap := make(map[string]bool, 0)
-	for _, arch := range architectures {
-		//verify the string value for architecture type is a valid value
-		archType := modelsv2.ArchitectureType(arch)
-		if err := archType.Validate(nil); err != nil {
-			return nil, errors.New(fmt.Sprintf("invalid architecture type : %s", arch))
-		}
-
-		if _, ok := architectureMap[arch]; ok {
-			return nil, errors.New(fmt.Sprintf("duplicate architecture type found : %s", arch))
-		}
-		architectureMap[arch] = true
-	}
-	return  architectures, nil
 }
 
 func ReadInFuncFile() (map[string]interface{}, error) {
