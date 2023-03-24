@@ -524,16 +524,20 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 
 			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile,  buildArgs, noCache, mappedArchitectures)
 			// perform cleanup
-			//defer cleanupContainerBuilder(containerEngineType)
+			defer cleanupContainerBuilder(containerEngineType)
 		} else {
 			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile,  buildArgs, noCache)
 		}
 
+		//v := os.Environ()
+		//cmd.Env = os.Environ()
+		//cmd.Env = append(cmd.Env, "TMPDIR=/home/opc/tmp")
 		cmd := exec.Command(containerEngineType, dockerBuildCmdArgs...)
 		cmd.Dir = dir
 		cmd.Stderr = buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
 		cmd.Stdout = buildOut
 		done <- cmd.Run()
+		//cmd.Env = v
 	}(result)
 
 	select {
