@@ -516,7 +516,6 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("fn:\n %v\n", fn)
 
 	if c.Bool("endpoint") {
 		endpoint, ok := fn.Annotations["fnproject.io/fn/invokeEndpoint"].(string)
