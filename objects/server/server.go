@@ -31,7 +31,6 @@ func update(c *cli.Context) error {
 	args := []string{"pull",
 		common.FunctionsDockerImage,
 	}
-	print(args)
 	cmd := exec.Command("docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

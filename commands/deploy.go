@@ -58,6 +58,7 @@ type Message struct {
 }
 
 var RegionsWithOldKMSEndpoints = map[ociCommon.Region]struct{}{
+	ociCommon.RegionSEA:           {},
 	ociCommon.RegionPHX:           {},
 	ociCommon.RegionIAD:           {},
 	ociCommon.RegionFRA:           {},
@@ -355,7 +356,6 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 			return err
 		}
 
-		//artifactsClient, err := artifacts.NewArtifactsClientWithConfigurationProvider(oracleProvider.ConfigurationProvider)
 		artifactsClient, err := artifacts.NewArtifactsClientWithConfigurationProvider(oracleProvider.ConfigurationProvider)
 		if err != nil {
 			return err
