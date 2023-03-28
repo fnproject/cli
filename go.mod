@@ -56,7 +56,7 @@ require (
 	golang.org/x/text v0.3.3 // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
 )
-objects/server/server.go
+
 replace github.com/fnproject/fn_go v0.8.7 => /Users/sunny/Functions/fn_go
 
 replace github.com/oracle/oci-go-sdk/v65 v65.28.1 => /Users/sunny/Functions/oci-go-sdk-preview/oci-go-sdk-preview/oci-go-sdk

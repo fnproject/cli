@@ -58,7 +58,6 @@ type Message struct {
 }
 
 var RegionsWithOldKMSEndpoints = map[ociCommon.Region]struct{}{
-	ociCommon.RegionSEA:           {},
 	ociCommon.RegionPHX:           {},
 	ociCommon.RegionIAD:           {},
 	ociCommon.RegionFRA:           {},
