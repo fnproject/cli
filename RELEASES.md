@@ -1,6 +1,11 @@
 
 # Releases
 
+## v 0.6.26
+
+* Enabling support for node18, node16, go1.19, go1.18, ruby3.1.
+* Removing support for node11, go1.15, python3.6, python3.7
+
 ## v 0.6.25
 
 * Support for multiple shapes(architectures) functions images: 

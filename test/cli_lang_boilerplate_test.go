@@ -28,19 +28,26 @@ var Runtimes = []struct {
 	callInput string
 }{
 	{"go", ""},
+	{"go1.19", ""},
+	{"go1.18", ""},
 	{"dotnet", ""},
 	{"dotnet3.1", ""},
 	{"dotnet6.0", ""},
 	{"java", ""},
 	{"java8", ""},
 	{"java11", ""},
+	{"java17", ""},
 	{"kotlin", ""},
 	{"node", ""},
+	{"node18", ""},
+	{"node16", ""},
+	{"node14", ""},
 	{"ruby", ""},
+	{"ruby3.1", ""},
+	{"ruby2.7", ""},
 	{"python", ""},
-	{"python3.6", ""},
-	{"python3.7", ""},
 	{"python3.8", ""},
+	{"python3.9", ""},
 }
 
 func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {

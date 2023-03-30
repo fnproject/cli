@@ -24,15 +24,22 @@ import (
 
 var runtimes = []string{
 	"go",
+	"go1.19",
+	"go1.18",
 	"java",
 	"java8",
 	"java11",
+	"java17",
 	"kotlin",
 	"ruby",
+	"ruby3.1",
+	"ruby2.7",
 	"node",
+	"node18",
+	"node16",
+	"node14",
 	"python",
-	"python3.6",
-	"python3.7",
+	"python3.9",
 	"python3.8",
 }
 

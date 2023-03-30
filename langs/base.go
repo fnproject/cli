@@ -33,23 +33,23 @@ var fallBackOlderVersions = map[string]LangHelper{}
 func init() {
 	registerHelper(&DotnetLangHelper{Version: "6.0"})
 	registerHelper(&DotnetLangHelper{Version: "3.1"})
-	registerHelper(&GoLangHelper{Version: "1.15"})
+	registerHelper(&GoLangHelper{Version: "1.19"})
+	registerHelper(&GoLangHelper{Version: "1.18"})
 	// order matter, 'java' will pick up the first JavaLangHelper
 	registerHelper(&JavaLangHelper{version: "17"})
 	registerHelper(&JavaLangHelper{version: "11"})
 	registerHelper(&JavaLangHelper{version: "8"})
+	registerHelper(&NodeLangHelper{Version: "18"})
+	registerHelper(&NodeLangHelper{Version: "16"})
 	registerHelper(&NodeLangHelper{Version: "14"})
-	registerHelper(&NodeLangHelper{Version: "11"})
 	// order matter, 'python' will pick up the first PythonLangHelper
 	registerHelper(&PythonLangHelper{Version: "3.9"})
 	registerHelper(&PythonLangHelper{Version: "3.8"})
 	registerHelper(&PythonLangHelper{Version: "3.8.5"})
-	registerHelper(&PythonLangHelper{Version: "3.7"})
-	registerHelper(&PythonLangHelper{Version: "3.7.1"})
-	registerHelper(&PythonLangHelper{Version: "3.6"})
 
-	//New runtime support for Ruby 2.7
+	//New runtime support for Ruby 3.1
 	// order matter, 'ruby' will pick up the first RubyLangHelper
+	registerHelper(&RubyLangHelper{Version: "3.1"})
 	registerHelper(&RubyLangHelper{Version: "2.7"})
 
 	registerHelper(&KotlinLangHelper{})
