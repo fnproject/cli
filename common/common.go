@@ -57,7 +57,7 @@ const (
 	MinRequiredDockerVersion   = "17.5.0"
 	BuildxBuilderInstance      = "oci_fn_builder"
 	DefaultAppShape            = modelsv2.AppShapeGENERICX86
-	ContainerRegistryNamespace = "iad.ocir.io/oraclefunctionsdevelopm/"
+	ContainerRegistryNamespace = "docker.io/" //Keep the current namespace as docker.io as we are still pulling from dockerhub
 	//The value should be ghcr.io/ for github container registry and ocr for oracle container registry and empty or docker.io/ for dockerhub.
 )
 
