@@ -21,6 +21,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/langs"
 	"github.com/fnproject/cli/testharness"
 )
@@ -86,13 +87,13 @@ func TestFnBuildWithOlderRuntimeWithoutVersion(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		// bi = common.AddContainerNamespace(bi)
+		bi = common.AddContainerNamespace(bi)
 
 		ri, err := fallBackHandler.RunFromImage()
 		if err != nil {
 			panic(err)
 		}
-		// ri = common.AddContainerNamespace(ri)
+		ri = common.AddContainerNamespace(ri)
 		fmt.Printf(bi)
 
 		updatedFuncFile := h.GetYamlFile("func.yaml")
