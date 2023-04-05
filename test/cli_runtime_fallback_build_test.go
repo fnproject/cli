@@ -94,9 +94,12 @@ func TestFnBuildWithOlderRuntimeWithoutVersion(t *testing.T) {
 			panic(err)
 		}
 		ri = common.AddContainerNamespace(ri)
-		fmt.Printf(bi)
+		fmt.Println(bi)
+		fmt.Println(ri)
 
 		updatedFuncFile := h.GetYamlFile("func.yaml")
+		fmt.Println(updatedFuncFile.Build_image)
+		fmt.Printf(updatedFuncFile.Run_image)
 		if bi == "" || ri == "" {
 			err := "Build_image or Run_image property is not set in func.yaml file"
 			panic(err)
@@ -117,7 +120,7 @@ func TestFnBuildWithOlderRuntimeWithoutVersion(t *testing.T) {
 		h.Fn("--registry", "test", "deploy", "--local", "--app", appName).AssertSuccess()
 		result := h.Fn("invoke", appName, funcName).AssertSuccess()
 
-		// get the returned version from ruby image
+		// // get the returned version from ruby image
 		imageVersion := result.Stdout
 
 		fmt.Println("Ruby version returned by image :" + imageVersion)
