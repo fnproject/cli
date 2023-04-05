@@ -84,3 +84,23 @@ func Test_proxyArgs(t *testing.T) {
 		}
 	}
 }
+
+func Test_addNamespace(t *testing.T) {
+	testCases := []struct {
+		image         string
+		fullImageName string
+	}{
+		{image: "fnproject/go", fullImageName: ContainerRegistryNamespace + "fnproject/go"},
+		{image: "fnproject/dotnet", fullImageName: ContainerRegistryNamespace + "fnproject/dotnet"},
+	}
+
+	for _, c := range testCases {
+		t.Run(c.image, func(t *testing.T) {
+			imageName := AddContainerNamespace(c.image)
+			if imageName != c.fullImageName {
+				t.Fatalf("expected %s but got %s", c.fullImageName, imageName)
+			}
+			t.Logf("Output %s", imageName)
+		})
+	}
+}

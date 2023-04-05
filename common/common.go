@@ -24,7 +24,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"log"
@@ -35,6 +34,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/fatih/color"
@@ -51,20 +52,22 @@ import (
 // Global docker variables.
 const (
 	//FunctionsDockerImage     = "fnproject/fnserver"
-	FunctionsDockerImage     = "greendragons/testfnproject"
-	FuncfileDockerRuntime    = "docker"
-	MinRequiredDockerVersion = "17.5.0"
-	BuildxBuilderInstance    = "oci_fn_builder"
-	DefaultAppShape          = modelsv2.AppShapeGENERICX86
+	FunctionsDockerImage       = "greendragons/testfnproject"
+	FuncfileDockerRuntime      = "docker"
+	MinRequiredDockerVersion   = "17.5.0"
+	BuildxBuilderInstance      = "oci_fn_builder"
+	DefaultAppShape            = modelsv2.AppShapeGENERICX86
+	ContainerRegistryNamespace = "iad.ocir.io/oraclefunctionsdevelopm/"
+	//The value should be ghcr.io/ for github container registry and ocr for oracle container registry and empty or docker.io/ for dockerhub.
 )
 
 var GlobalVerbose bool
 var CommandVerbose bool
 
 var ShapeMap = map[string][]string{
-	modelsv2.AppShapeGENERICX86: []string{"linux/amd64"},
-	modelsv2.AppShapeGENERICARM: []string{"linux/arm64"},
-	modelsv2.AppShapeGENERICX86ARM: []string{"linux/amd64","linux/arm64"},
+	modelsv2.AppShapeGENERICX86:    []string{"linux/amd64"},
+	modelsv2.AppShapeGENERICARM:    []string{"linux/arm64"},
+	modelsv2.AppShapeGENERICX86ARM: []string{"linux/amd64", "linux/arm64"},
 }
 
 func IsVerbose() bool {
@@ -184,6 +187,9 @@ func imageStampFuncFile(fpath string, funcfile *FuncFile) (*FuncFile, error) {
 		if err != nil {
 			return funcfile, err
 		}
+
+		//Call this function to add namespace to the build image
+		bi = AddContainerNamespace(bi)
 		funcfile.BuildImage = bi
 
 		// In case of multistage build there will be a runtime image
@@ -192,6 +198,7 @@ func imageStampFuncFile(fpath string, funcfile *FuncFile) (*FuncFile, error) {
 			if err != nil {
 				return funcfile, err
 			}
+			ri = AddContainerNamespace(ri)
 			funcfile.RunImage = ri
 		}
 
@@ -233,6 +240,7 @@ func imageStampFuncFileV20180708(fpath string, funcfile *FuncFileV20180708) (*Fu
 		if err != nil {
 			return funcfile, err
 		}
+		bi = AddContainerNamespace(bi)
 		funcfile.Build_image = bi
 
 		// In case of multistage build there will be a runtime image
@@ -241,6 +249,7 @@ func imageStampFuncFileV20180708(fpath string, funcfile *FuncFileV20180708) (*Fu
 			if err != nil {
 				return funcfile, nil
 			}
+			ri = AddContainerNamespace(ri)
 			funcfile.Run_image = ri
 		}
 
@@ -522,11 +531,11 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 				return
 			}
 
-			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile,  buildArgs, noCache, mappedArchitectures)
+			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures)
 			// perform cleanup
 			defer cleanupContainerBuilder(containerEngineType)
 		} else {
-			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile,  buildArgs, noCache)
+			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache)
 		}
 
 		//v := os.Environ()
@@ -651,6 +660,7 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 		if err != nil {
 			return "", err
 		}
+		bi = AddContainerNamespace(bi)
 	}
 	if helper.IsMultiStage() {
 		// build stage
@@ -674,6 +684,7 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 			if err != nil {
 				return "", err
 			}
+			ri = AddContainerNamespace(ri)
 		}
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")
@@ -712,6 +723,7 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 		if err != nil {
 			return "", err
 		}
+		bi = AddContainerNamespace(bi)
 	}
 	if helper.IsMultiStage() {
 		// build stage
@@ -729,6 +741,7 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 			if err != nil {
 				return "", err
 			}
+			ri = AddContainerNamespace(ri)
 		}
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")
@@ -961,7 +974,7 @@ func ListFnsAndTriggersInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.
 	return fns, trs, nil
 }
 
-//DeleteFunctions deletes all the functions provided to it. if provided nil it is a no-op
+// DeleteFunctions deletes all the functions provided to it. if provided nil it is a no-op
 func DeleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) error {
 	if fns == nil {
 		return nil
@@ -978,7 +991,7 @@ func DeleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) er
 	return nil
 }
 
-//DeleteTriggers deletes all the triggers provided to it. if provided nil it is a no-op
+// DeleteTriggers deletes all the triggers provided to it. if provided nil it is a no-op
 func DeleteTriggers(c *cli.Context, client *fnclient.Fn, triggers []*modelsv2.Trigger) error {
 	if triggers == nil {
 		return nil
@@ -995,7 +1008,7 @@ func DeleteTriggers(c *cli.Context, client *fnclient.Fn, triggers []*modelsv2.Tr
 	return nil
 }
 
-//ListFnsInApp gets all the functions associated with an app
+// ListFnsInApp gets all the functions associated with an app
 func ListFnsInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*modelsv2.Fn, error) {
 	params := &apifns.ListFnsParams{
 		Context: context.Background(),
@@ -1023,7 +1036,7 @@ func ListFnsInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*mo
 	return resFns, nil
 }
 
-//ListTriggersInFunc gets all the triggers associated with a function
+// ListTriggersInFunc gets all the triggers associated with a function
 func ListTriggersInFunc(c *cli.Context, client *fnclient.Fn, fn *modelsv2.Fn) ([]*modelsv2.Trigger, error) {
 	params := &apitriggers.ListTriggersParams{
 		Context: context.Background(),
@@ -1137,4 +1150,12 @@ func untarStream(r io.Reader) error {
 			_ = f.Close()
 		}
 	}
+}
+
+// func to add the container registry namespace before the image names
+func AddContainerNamespace(imageName string) string {
+
+	registryNamespace := ContainerRegistryNamespace
+	fullImageName := fmt.Sprintf("%s%s", registryNamespace, imageName)
+	return fullImageName
 }
