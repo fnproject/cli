@@ -46,7 +46,7 @@ func withMinimalFunction(h *testharness.CLIHarness) {
 	})
 }
 
-// this is messy and nasty  as we generate different potential values for FN_API_URL based on its type
+// this is messy and nasty  as we generate different potential values for  based on its type
 func fnApiUrlVariations(t *testing.T) []string {
 
 	srcUrl := os.Getenv("FN_API_URL")
@@ -128,7 +128,7 @@ func TestSettingTimeoutWorks(t *testing.T) {
 	h.Fn("invoke", appName, "another").AssertSuccess()
 }
 
-//Memory doesn't seem to get persisted/returned
+// Memory doesn't seem to get persisted/returned
 func TestSettingMemoryWorks(t *testing.T) {
 	t.Parallel()
 

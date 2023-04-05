@@ -39,9 +39,9 @@ import (
 	trigger "github.com/fnproject/cli/objects/trigger"
 	v2Client "github.com/fnproject/fn_go/clientv2"
 	models "github.com/fnproject/fn_go/modelsv2"
-	"github.com/oracle/oci-go-sdk/v48/artifacts"
-	ociCommon "github.com/oracle/oci-go-sdk/v48/common"
-	"github.com/oracle/oci-go-sdk/v48/keymanagement"
+	"github.com/oracle/oci-go-sdk/v65/artifacts"
+	ociCommon "github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/oracle/oci-go-sdk/v65/keymanagement"
 	"github.com/urfave/cli"
 )
 
@@ -58,7 +58,6 @@ type Message struct {
 }
 
 var RegionsWithOldKMSEndpoints = map[ociCommon.Region]struct{}{
-	ociCommon.RegionSEA:           {},
 	ociCommon.RegionPHX:           {},
 	ociCommon.RegionIAD:           {},
 	ociCommon.RegionFRA:           {},
@@ -184,6 +183,7 @@ func (p *deploycmd) flags() []cli.Flag {
 // on the file system (can be overridden using the `path` arg in each `func.yaml`. The index/root function
 // is the one that lives in the same directory as the app.yaml.
 func (p *deploycmd) deploy(c *cli.Context) error {
+
 	appName := ""
 	dir := common.GetDir(c)
 
@@ -384,21 +384,30 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	}
 
 	buildArgs := c.StringSlice("build-arg")
-	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache)
-	if err != nil {
-		return err
+
+	// In case of local ignore the architectures parameter
+	shape := ""
+	if !p.local {
+		// fetch the architectures
+		shape = app.Shape
+		if shape == "" {
+			shape = common.DefaultAppShape
+			app.Shape = shape
+		}
+
+		if _, ok := common.ShapeMap[shape]; !ok {
+			return errors.New(fmt.Sprintf("Invalid application : %s shape: %s", app.Name, shape))
+		}
 	}
 
-	if !p.local {
-		if err := common.PushV20180708(funcfile); err != nil {
-			return err
-		}
+	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, shape)
+	if err != nil {
+		return err
 	}
 
 	if err := p.signImage(funcfile); err != nil {
 		return err
 	}
-
 	return p.updateFunction(c, app.ID, funcfile)
 }
 

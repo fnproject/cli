@@ -78,6 +78,7 @@ func newFn() *cli.App {
 {{if not .ArgsUsage}}{{boldred .Description}}	{{boldred "-"}}	{{boldred "Version "}}{{boldred .Version}}
 	
 {{bold "ENVIRONMENT VARIABLES"}}
+	TEST_VARIABLE	 {{italic "New CLI"}}
 	FN_API_URL		 {{italic "Fn server address"}}
 	FN_REGISTRY		 {{italic "Docker / Podman registry to push images to, use username only to push to Docker Hub - [[registry.hub.docker.com/]USERNAME]"}}{{if .VisibleCommands}}
 		
@@ -167,7 +168,7 @@ func newFn() *cli.App {
 	return app
 }
 
-//Trim HelpName, removing 'fn' from the HelpName string
+// Trim HelpName, removing 'fn' from the HelpName string
 func TrimLeftChars(s string, n int) string {
 	m := 0
 	for i := range s {
@@ -179,7 +180,7 @@ func TrimLeftChars(s string, n int) string {
 	return s[:0]
 }
 
-//Override function for customised app template
+// Override function for customised app template
 func printHelpCustom(out io.Writer, templ string, data interface{}, customFunc map[string]interface{}) {
 	funcMap := color.Colors
 	for key, value := range customFunc {

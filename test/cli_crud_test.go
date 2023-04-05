@@ -252,3 +252,28 @@ func TestRecursiveDelete(t *testing.T) {
 		AssertStdoutContains(funcName1).
 		AssertStdoutContains(triggerName1)
 }
+
+func TestFnAppUpdateCycleWithArch(t *testing.T) {
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+
+	appName := h.NewAppName()
+
+	// can't create an app twice
+	h.Fn("create", "app", appName, "--shape", "GENERIC_X86").AssertSuccess()
+	h.Fn("inspect", "app", appName).AssertSuccess().AssertStdoutContains("GENERIC_X86")
+
+	appName = h.NewAppName()
+	h.Fn("create", "app", appName).AssertSuccess()
+	h.Fn("inspect", "app", appName).AssertSuccess().AssertStdoutContains("GENERIC_X86")
+
+	//Test update to multiarch, should fail as we don't allow any update operation
+
+	shape := "GENERIC_X86_ARM"
+	h.Fn("update", "app", appName, "--shape", shape).AssertFailed()
+
+	//Test update back to arm, should fail
+	h.Fn("update", "app", appName, "--shape", "GENERIC_ARM").AssertFailed()
+}

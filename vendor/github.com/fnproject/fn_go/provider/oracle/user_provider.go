@@ -11,11 +11,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/oracle/oci-go-sdk/v48/functions"
+	"github.com/oracle/oci-go-sdk/v65/functions"
 
 	"github.com/fnproject/fn_go/provider"
 	homedir "github.com/mitchellh/go-homedir"
-	oci "github.com/oracle/oci-go-sdk/v48/common"
+	oci "github.com/oracle/oci-go-sdk/v65/common"
 )
 
 const (

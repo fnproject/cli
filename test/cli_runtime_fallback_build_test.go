@@ -18,10 +18,12 @@ package test
 
 import (
 	"fmt"
-	"github.com/fnproject/cli/langs"
-	"github.com/fnproject/cli/testharness"
 	"strings"
 	"testing"
+
+	"github.com/fnproject/cli/common"
+	"github.com/fnproject/cli/langs"
+	"github.com/fnproject/cli/testharness"
 )
 
 const (
@@ -45,11 +47,11 @@ entrypoint: ruby func.rb`
 )
 
 /*
-	This test case check for backwards compatibility with older cli func.yaml file
-	Cases Tested:
-	1. During `fn build` make sure Build_image and Run_image are stamped in func.yaml file
-	2. Function container is build using proper fallback runtime and dev image, check
-		by invoking container and fetching runtime version, should match with fallback version.
+This test case check for backwards compatibility with older cli func.yaml file
+Cases Tested:
+ 1. During `fn build` make sure Build_image and Run_image are stamped in func.yaml file
+ 2. Function container is build using proper fallback runtime and dev image, check
+    by invoking container and fetching runtime version, should match with fallback version.
 */
 func TestFnBuildWithOlderRuntimeWithoutVersion(t *testing.T) {
 	t.Run("`fn invoke` should return the fallback ruby version", func(t *testing.T) {
@@ -85,12 +87,19 @@ func TestFnBuildWithOlderRuntimeWithoutVersion(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
+		bi = common.AddContainerNamespace(bi)
+
 		ri, err := fallBackHandler.RunFromImage()
 		if err != nil {
 			panic(err)
 		}
+		ri = common.AddContainerNamespace(ri)
+		fmt.Println(bi)
+		fmt.Println(ri)
 
 		updatedFuncFile := h.GetYamlFile("func.yaml")
+		fmt.Println(updatedFuncFile.Build_image)
+		fmt.Printf(updatedFuncFile.Run_image)
 		if bi == "" || ri == "" {
 			err := "Build_image or Run_image property is not set in func.yaml file"
 			panic(err)
@@ -111,7 +120,7 @@ func TestFnBuildWithOlderRuntimeWithoutVersion(t *testing.T) {
 		h.Fn("--registry", "test", "deploy", "--local", "--app", appName).AssertSuccess()
 		result := h.Fn("invoke", appName, funcName).AssertSuccess()
 
-		// get the returned version from ruby image
+		// // get the returned version from ruby image
 		imageVersion := result.Stdout
 
 		fmt.Println("Ruby version returned by image :" + imageVersion)

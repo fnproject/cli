@@ -1,8 +1,11 @@
 # github.com/PuerkitoBio/purell v1.1.1
+## explicit
 github.com/PuerkitoBio/purell
 # github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
+## explicit
 github.com/PuerkitoBio/urlesc
 # github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
+## explicit; go 1.12
 github.com/asaskevich/govalidator
 # github.com/coreos/go-semver v0.3.0
 ## explicit
@@ -10,8 +13,8 @@ github.com/coreos/go-semver/semver
 # github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
 ## explicit
 github.com/fatih/color
-# github.com/fnproject/fn_go v0.8.7
-## explicit
+# github.com/fnproject/fn_go v0.8.7 => /Users/sunny/Functions/fn_go
+## explicit; go 1.17
 github.com/fnproject/fn_go
 github.com/fnproject/fn_go/client/version
 github.com/fnproject/fn_go/clientv2
@@ -26,6 +29,7 @@ github.com/fnproject/fn_go/provider/oracle
 github.com/fnproject/fn_go/provider/oracle/shim
 github.com/fnproject/fn_go/provider/oracle/shim/client
 # github.com/fsnotify/fsnotify v1.4.7
+## explicit
 github.com/fsnotify/fsnotify
 # github.com/ghodss/yaml v1.0.0
 ## explicit
@@ -35,18 +39,23 @@ github.com/ghodss/yaml
 github.com/giantswarm/semver-bump/bump
 github.com/giantswarm/semver-bump/storage
 # github.com/go-openapi/analysis v0.19.10
+## explicit; go 1.13
 github.com/go-openapi/analysis
 github.com/go-openapi/analysis/internal
 # github.com/go-openapi/errors v0.19.8
+## explicit; go 1.14
 github.com/go-openapi/errors
 # github.com/go-openapi/jsonpointer v0.19.3
+## explicit; go 1.13
 github.com/go-openapi/jsonpointer
 # github.com/go-openapi/jsonreference v0.19.3
+## explicit; go 1.13
 github.com/go-openapi/jsonreference
 # github.com/go-openapi/loads v0.19.5
+## explicit; go 1.13
 github.com/go-openapi/loads
 # github.com/go-openapi/runtime v0.19.23
-## explicit
+## explicit; go 1.13
 github.com/go-openapi/runtime
 github.com/go-openapi/runtime/client
 github.com/go-openapi/runtime/logger
@@ -57,18 +66,28 @@ github.com/go-openapi/runtime/middleware/untyped
 github.com/go-openapi/runtime/security
 github.com/go-openapi/runtime/yamlpc
 # github.com/go-openapi/spec v0.19.8
+## explicit; go 1.13
 github.com/go-openapi/spec
 # github.com/go-openapi/strfmt v0.19.8
+## explicit; go 1.13
 github.com/go-openapi/strfmt
 # github.com/go-openapi/swag v0.19.11
+## explicit; go 1.13
 github.com/go-openapi/swag
 # github.com/go-openapi/validate v0.19.12
+## explicit; go 1.14
 github.com/go-openapi/validate
 # github.com/go-stack/stack v1.8.0
+## explicit
 github.com/go-stack/stack
+# github.com/gofrs/flock v0.8.1
+## explicit
+github.com/gofrs/flock
 # github.com/golang/mock v1.4.4
+## explicit; go 1.11
 github.com/golang/mock/gomock
 # github.com/hashicorp/hcl v1.0.0
+## explicit
 github.com/hashicorp/hcl
 github.com/hashicorp/hcl/hcl/ast
 github.com/hashicorp/hcl/hcl/parser
@@ -86,8 +105,10 @@ github.com/jmoiron/jsonq
 ## explicit
 github.com/juju/errgo/errors
 # github.com/magiconair/properties v1.8.1
+## explicit
 github.com/magiconair/properties
 # github.com/mailru/easyjson v0.7.1
+## explicit; go 1.12
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
@@ -101,30 +122,40 @@ github.com/mattn/go-isatty
 ## explicit
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.3.2
-## explicit
+## explicit; go 1.14
 github.com/mitchellh/mapstructure
-# github.com/oracle/oci-go-sdk/v48 v48.0.0
-## explicit
-github.com/oracle/oci-go-sdk/v48/artifacts
-github.com/oracle/oci-go-sdk/v48/common
-github.com/oracle/oci-go-sdk/v48/common/auth
-github.com/oracle/oci-go-sdk/v48/functions
-github.com/oracle/oci-go-sdk/v48/keymanagement
+# github.com/oracle/oci-go-sdk/v65 v65.28.1 => /Users/sunny/Functions/oci-go-sdk-preview/oci-go-sdk-preview/oci-go-sdk
+## explicit; go 1.13
+github.com/oracle/oci-go-sdk/v65/artifacts
+github.com/oracle/oci-go-sdk/v65/common
+github.com/oracle/oci-go-sdk/v65/common/auth
+github.com/oracle/oci-go-sdk/v65/common/utils
+github.com/oracle/oci-go-sdk/v65/functions
+github.com/oracle/oci-go-sdk/v65/keymanagement
 # github.com/pelletier/go-toml v1.7.0
+## explicit; go 1.12
 github.com/pelletier/go-toml
+# github.com/sony/gobreaker v0.5.0
+## explicit; go 1.12
+github.com/sony/gobreaker
 # github.com/spf13/afero v1.1.2
+## explicit
 github.com/spf13/afero
 github.com/spf13/afero/mem
 # github.com/spf13/cast v1.3.0
+## explicit
 github.com/spf13/cast
 # github.com/spf13/jwalterweatherman v1.0.0
+## explicit
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.3
+## explicit
 github.com/spf13/pflag
 # github.com/spf13/viper v1.6.2
-## explicit
+## explicit; go 1.12
 github.com/spf13/viper
 # github.com/subosito/gotenv v1.2.0
+## explicit
 github.com/subosito/gotenv
 # github.com/urfave/cli v1.20.0
 ## explicit
@@ -139,6 +170,7 @@ github.com/xeipuuv/gojsonreference
 ## explicit
 github.com/xeipuuv/gojsonschema
 # go.mongodb.org/mongo-driver v1.4.2
+## explicit; go 1.10
 go.mongodb.org/mongo-driver/bson
 go.mongodb.org/mongo-driver/bson/bsoncodec
 go.mongodb.org/mongo-driver/bson/bsonoptions
@@ -147,22 +179,26 @@ go.mongodb.org/mongo-driver/bson/bsontype
 go.mongodb.org/mongo-driver/bson/primitive
 go.mongodb.org/mongo-driver/x/bsonx/bsoncore
 # golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
+## explicit; go 1.11
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
+## explicit; go 1.11
 golang.org/x/net/context
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20220804214406-8e32c043e418
-## explicit
+# golang.org/x/sys v0.6.0
+## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.3
+## explicit; go 1.11
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
 # gopkg.in/ini.v1 v1.51.0
+## explicit
 gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.3.0
 ## explicit

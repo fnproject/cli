@@ -1,13 +1,14 @@
 package shim
 
 import (
+	"errors"
 	"fmt"
 	"github.com/fnproject/fn_go/clientv2/apps"
 	"github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider/oracle/shim/client"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
-	"github.com/oracle/oci-go-sdk/v48/functions"
+	"github.com/oracle/oci-go-sdk/v65/functions"
 )
 
 const (
@@ -31,12 +32,18 @@ func (s *appsShim) CreateApp(params *apps.CreateAppParams) (*apps.CreateAppOK, e
 		return nil, err
 	}
 
+	shape, err := v2ToOCICreateApplicationShape(params.Body.Shape)
+	if err != nil {
+		return nil, err
+	}
+
 	details := functions.CreateApplicationDetails{
 		CompartmentId: &s.compartmentId,
 		DisplayName:   &params.Body.Name,
 		SubnetIds:     subnetIds,
 		Config:        params.Body.Config,
 		SyslogUrl:     params.Body.SyslogURL,
+		Shape:         shape,
 	}
 
 	req := functions.CreateApplicationRequest{CreateApplicationDetails: details}
@@ -153,8 +160,8 @@ func (s *appsShim) UpdateApp(params *apps.UpdateAppParams) (*apps.UpdateAppOK, e
 	}
 
 	details := functions.UpdateApplicationDetails{
-		Config:    params.Body.Config,
-		SyslogUrl: params.Body.SyslogURL,
+		Config:        params.Body.Config,
+		SyslogUrl:     params.Body.SyslogURL,
 	}
 
 	req := functions.UpdateApplicationRequest{
@@ -211,13 +218,14 @@ func ociAppToV2(ociApp functions.Application) *modelsv2.App {
 	annotations[annotationSubnet] = ociSubnetsToAnnotationValue(ociApp.SubnetIds)
 
 	return &modelsv2.App{
-		Annotations: annotations,
-		Config:      ociApp.Config,
-		CreatedAt:   strfmt.DateTime(ociApp.TimeCreated.Time),
-		ID:          *ociApp.Id,
-		Name:        *ociApp.DisplayName,
-		SyslogURL:   ociApp.SyslogUrl,
-		UpdatedAt:   strfmt.DateTime(ociApp.TimeUpdated.Time),
+		Annotations:   annotations,
+		Config:        ociApp.Config,
+		CreatedAt:     strfmt.DateTime(ociApp.TimeCreated.Time),
+		ID:            *ociApp.Id,
+		Name:          *ociApp.DisplayName,
+		Shape:         string(ociApp.Shape),
+		SyslogURL:     ociApp.SyslogUrl,
+		UpdatedAt:     strfmt.DateTime(ociApp.TimeUpdated.Time),
 	}
 }
 
@@ -227,11 +235,12 @@ func ociAppSummaryToV2(ociAppSummary functions.ApplicationSummary) *modelsv2.App
 	annotations[annotationSubnet] = ociSubnetsToAnnotationValue(ociAppSummary.SubnetIds)
 
 	return &modelsv2.App{
-		Annotations: annotations,
-		CreatedAt:   strfmt.DateTime(ociAppSummary.TimeCreated.Time),
-		ID:          *ociAppSummary.Id,
-		Name:        *ociAppSummary.DisplayName,
-		UpdatedAt:   strfmt.DateTime(ociAppSummary.TimeUpdated.Time),
+		Annotations:   annotations,
+		Shape: 		   string(ociAppSummary.Shape),
+		CreatedAt:     strfmt.DateTime(ociAppSummary.TimeCreated.Time),
+		ID:            *ociAppSummary.Id,
+		Name:          *ociAppSummary.DisplayName,
+		UpdatedAt:     strfmt.DateTime(ociAppSummary.TimeUpdated.Time),
 	}
 }
 
@@ -242,4 +251,21 @@ func ociSubnetsToAnnotationValue(subnets []string) []interface{} {
 		ifs[i] = s
 	}
 	return ifs
+}
+
+func v2ToOCICreateApplicationShape(shape string) (functions.CreateApplicationDetailsShapeEnum, error) {
+	if shape == "" {
+		return "", nil
+	}
+
+	switch shape {
+	case string(functions.CreateApplicationDetailsShapeX86):
+		return functions.CreateApplicationDetailsShapeX86, nil
+	case string(functions.CreateApplicationDetailsShapeArm):
+		return functions.CreateApplicationDetailsShapeArm, nil
+	case string(functions.CreateApplicationDetailsShapeX86Arm):
+		return functions.CreateApplicationDetailsShapeX86Arm, nil
+	default:
+		return "", errors.New(fmt.Sprintf("invalid shape value %s", shape))
+	}
 }

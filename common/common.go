@@ -35,6 +35,8 @@ import (
 	"time"
 	"unicode"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/coreos/go-semver/semver"
 	"github.com/fatih/color"
 	"github.com/fnproject/cli/config"
@@ -45,18 +47,28 @@ import (
 	"github.com/fnproject/fn_go/modelsv2"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
-	"gopkg.in/yaml.v2"
 )
 
 // Global docker variables.
 const (
-	FunctionsDockerImage     = "fnproject/fnserver"
-	FuncfileDockerRuntime    = "docker"
-	MinRequiredDockerVersion = "17.5.0"
+	//FunctionsDockerImage     = "fnproject/fnserver"
+	FunctionsDockerImage       = "greendragons/testfnproject"
+	FuncfileDockerRuntime      = "docker"
+	MinRequiredDockerVersion   = "17.5.0"
+	BuildxBuilderInstance      = "oci_fn_builder"
+	DefaultAppShape            = modelsv2.AppShapeGENERICX86
+	ContainerRegistryNamespace = "docker.io/" //Keep the current namespace as docker.io as we are still pulling from dockerhub
+	//The value should be ghcr.io/ for github container registry and ocr for oracle container registry and empty or docker.io/ for dockerhub.
 )
 
 var GlobalVerbose bool
 var CommandVerbose bool
+
+var ShapeMap = map[string][]string{
+	modelsv2.AppShapeGENERICX86:    []string{"linux/amd64"},
+	modelsv2.AppShapeGENERICARM:    []string{"linux/arm64"},
+	modelsv2.AppShapeGENERICX86ARM: []string{"linux/amd64", "linux/arm64"},
+}
 
 func IsVerbose() bool {
 	return GlobalVerbose || CommandVerbose
@@ -122,7 +134,7 @@ func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool) (*FuncFileV20180708, error) {
+func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool, shape string) (*FuncFileV20180708, error) {
 	var err error
 
 	if funcfile.Version == "" {
@@ -140,8 +152,7 @@ func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708,
 	if err := localBuild(fpath, funcfile.Build); err != nil {
 		return nil, err
 	}
-
-	if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache); err != nil {
+	if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache, shape); err != nil {
 		return nil, err
 	}
 
@@ -176,6 +187,9 @@ func imageStampFuncFile(fpath string, funcfile *FuncFile) (*FuncFile, error) {
 		if err != nil {
 			return funcfile, err
 		}
+
+		//Call this function to add namespace to the build image
+		bi = AddContainerNamespace(bi)
 		funcfile.BuildImage = bi
 
 		// In case of multistage build there will be a runtime image
@@ -184,6 +198,7 @@ func imageStampFuncFile(fpath string, funcfile *FuncFile) (*FuncFile, error) {
 			if err != nil {
 				return funcfile, err
 			}
+			ri = AddContainerNamespace(ri)
 			funcfile.RunImage = ri
 		}
 
@@ -225,6 +240,7 @@ func imageStampFuncFileV20180708(fpath string, funcfile *FuncFileV20180708) (*Fu
 		if err != nil {
 			return funcfile, err
 		}
+		bi = AddContainerNamespace(bi)
 		funcfile.Build_image = bi
 
 		// In case of multistage build there will be a runtime image
@@ -233,6 +249,7 @@ func imageStampFuncFileV20180708(fpath string, funcfile *FuncFileV20180708) (*Fu
 			if err != nil {
 				return funcfile, nil
 			}
+			ri = AddContainerNamespace(ri)
 			funcfile.Run_image = ri
 		}
 
@@ -335,7 +352,7 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 			}
 		}
 	}
-	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache, containerEngineType)
+	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache, containerEngineType, "")
 	if err != nil {
 		return err
 	}
@@ -349,7 +366,7 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 	return nil
 }
 
-func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool) error {
+func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool, shape string) error {
 	containerEngineType, err := GetContainerEngineType()
 	if err != nil {
 		return err
@@ -386,7 +403,8 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 			}
 		}
 	}
-	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache, containerEngineType)
+
+	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache, containerEngineType, shape)
 	if err != nil {
 		return err
 	}
@@ -400,8 +418,74 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 	return nil
 }
 
+func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCache bool, architectures []string) []string {
+	var buildCommand = "buildx"
+	var name = imageName
+
+	args := []string{
+		buildCommand,
+		"build",
+		"-t", name,
+		"-f", dockerfile,
+		"--platform", strings.Join(architectures, ","),
+	}
+
+	if noCache {
+		args = append(args, "--no-cache")
+	}
+
+	if len(buildArgs) > 0 {
+		for _, buildArg := range buildArgs {
+			args = append(args, "--build-arg", buildArg)
+		}
+	}
+
+	if len(architectures) > 0 {
+		var arg = "ARCH=" + strings.Join(architectures, ",")
+		var label = "imageName=" + imageName
+		args = append(args, "--build-arg", arg)
+		args = append(args, "--label", label)
+		args = append(args, "--push")
+	}
+
+	args = append(args,
+		"--build-arg", "HTTP_PROXY",
+		"--build-arg", "HTTPS_PROXY",
+		".")
+
+	// Container engine type would be optional here
+	return args
+}
+
+func buildDockerCommand(imageName, dockerfile string, buildArgs []string, noCache bool) []string {
+	var name = imageName
+	args := []string{
+		"build",
+		"-t", name,
+		"-f", dockerfile,
+	}
+
+	if noCache {
+		args = append(args, "--no-cache")
+	}
+
+	if len(buildArgs) > 0 {
+		for _, buildArg := range buildArgs {
+			args = append(args, "--build-arg", buildArg)
+		}
+	}
+
+	args = append(args,
+		"--build-arg", "HTTP_PROXY",
+		"--build-arg", "HTTPS_PROXY",
+		".")
+
+	// Container engine type would be optional here
+	return args
+}
+
 // RunBuild runs function from func.yaml/json/yml.
-func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string) error {
+func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string, shape string) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -436,31 +520,33 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 	}
 
 	go func(done chan<- error) {
-		args := []string{
-			"build",
-			"-t", imageName,
-			"-f", dockerfile,
-		}
-		if noCache {
-			args = append(args, "--no-cache")
-		}
-
-		if len(buildArgs) > 0 {
-			for _, buildArg := range buildArgs {
-				args = append(args, "--build-arg", buildArg)
+		var dockerBuildCmdArgs []string
+		// Depending whether architecture list is passed or not trigger docker buildx or docker build accordingly
+		var mappedArchitectures []string
+		if arch, ok := ShapeMap[shape]; ok {
+			mappedArchitectures = append(mappedArchitectures, arch...)
+			err := initializeContainerBuilder(containerEngineType, mappedArchitectures)
+			if err != nil {
+				done <- err
+				return
 			}
-		}
-		args = append(args,
-			"--build-arg", "HTTP_PROXY",
-			"--build-arg", "HTTPS_PROXY",
-			".")
 
-		// Container engine type would be optional here
-		cmd := exec.Command(containerEngineType, args...)
+			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures)
+			// perform cleanup
+			defer cleanupContainerBuilder(containerEngineType)
+		} else {
+			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache)
+		}
+
+		//v := os.Environ()
+		//cmd.Env = os.Environ()
+		//cmd.Env = append(cmd.Env, "TMPDIR=/home/opc/tmp")
+		cmd := exec.Command(containerEngineType, dockerBuildCmdArgs...)
 		cmd.Dir = dir
 		cmd.Stderr = buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
 		cmd.Stdout = buildOut
 		done <- cmd.Run()
+		//cmd.Env = v
 	}(result)
 
 	select {
@@ -505,6 +591,41 @@ func containerEngineVersionCheck(containerEngineType string) error {
 	return nil
 }
 
+func initializeContainerBuilder(containerEngineType string, platforms []string) error {
+
+	// ignoring the error as there could be no such existing builder
+	// valid error would be caught later while creating a builder
+	_ = cleanupContainerBuilder(containerEngineType)
+
+	var args []string
+	args = append(args, "buildx")
+	args = append(args, "create")
+	args = append(args, "--name", BuildxBuilderInstance)
+	args = append(args, "--use")
+
+	//Use builders which are sufficient to created the requested platform image
+	args = append(args, "--platform", strings.Join(platforms, ","))
+
+	_, err := exec.Command(containerEngineType, args...).Output()
+	if err != nil {
+		return fmt.Errorf("Cannot create/use builder instance %v for %v : %v", containerEngineType,
+			BuildxBuilderInstance, err)
+	}
+
+	return nil
+}
+
+func cleanupContainerBuilder(containerEngineType string) error {
+	var args []string
+	args = append(args, "buildx")
+	args = append(args, "rm")
+	args = append(args, BuildxBuilderInstance)
+
+	//remove existing builder instance
+	_, err := exec.Command(containerEngineType, args...).Output()
+	return err
+}
+
 // Exists check file exists.
 func Exists(name string) bool {
 	if _, err := os.Stat(name); err != nil {
@@ -539,6 +660,7 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 		if err != nil {
 			return "", err
 		}
+		bi = AddContainerNamespace(bi)
 	}
 	if helper.IsMultiStage() {
 		// build stage
@@ -562,6 +684,7 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 			if err != nil {
 				return "", err
 			}
+			ri = AddContainerNamespace(ri)
 		}
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")
@@ -600,6 +723,7 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 		if err != nil {
 			return "", err
 		}
+		bi = AddContainerNamespace(bi)
 	}
 	if helper.IsMultiStage() {
 		// build stage
@@ -617,6 +741,7 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 			if err != nil {
 				return "", err
 			}
+			ri = AddContainerNamespace(ri)
 		}
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")
@@ -780,6 +905,7 @@ func ReadInFuncFile() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", fpath, err)
 	}
+
 	var ff map[string]interface{}
 	err = yaml.Unmarshal(b, &ff)
 	if err != nil {
@@ -848,7 +974,7 @@ func ListFnsAndTriggersInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.
 	return fns, trs, nil
 }
 
-//DeleteFunctions deletes all the functions provided to it. if provided nil it is a no-op
+// DeleteFunctions deletes all the functions provided to it. if provided nil it is a no-op
 func DeleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) error {
 	if fns == nil {
 		return nil
@@ -865,7 +991,7 @@ func DeleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) er
 	return nil
 }
 
-//DeleteTriggers deletes all the triggers provided to it. if provided nil it is a no-op
+// DeleteTriggers deletes all the triggers provided to it. if provided nil it is a no-op
 func DeleteTriggers(c *cli.Context, client *fnclient.Fn, triggers []*modelsv2.Trigger) error {
 	if triggers == nil {
 		return nil
@@ -882,7 +1008,7 @@ func DeleteTriggers(c *cli.Context, client *fnclient.Fn, triggers []*modelsv2.Tr
 	return nil
 }
 
-//ListFnsInApp gets all the functions associated with an app
+// ListFnsInApp gets all the functions associated with an app
 func ListFnsInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*modelsv2.Fn, error) {
 	params := &apifns.ListFnsParams{
 		Context: context.Background(),
@@ -910,7 +1036,7 @@ func ListFnsInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*mo
 	return resFns, nil
 }
 
-//ListTriggersInFunc gets all the triggers associated with a function
+// ListTriggersInFunc gets all the triggers associated with a function
 func ListTriggersInFunc(c *cli.Context, client *fnclient.Fn, fn *modelsv2.Fn) ([]*modelsv2.Trigger, error) {
 	params := &apitriggers.ListTriggersParams{
 		Context: context.Background(),
@@ -1024,4 +1150,12 @@ func untarStream(r io.Reader) error {
 			_ = f.Close()
 		}
 	}
+}
+
+// func to add the container registry namespace before the image names
+func AddContainerNamespace(imageName string) string {
+
+	registryNamespace := ContainerRegistryNamespace
+	fullImageName := fmt.Sprintf("%s%s", registryNamespace, imageName)
+	return fullImageName
 }

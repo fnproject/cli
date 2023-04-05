@@ -7,7 +7,7 @@ package client
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	functions "github.com/oracle/oci-go-sdk/v48/functions"
+	functions "github.com/oracle/oci-go-sdk/v65/functions"
 	reflect "reflect"
 )
 
