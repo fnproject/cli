@@ -53,7 +53,10 @@ const (
 	FunctionsDockerImage       = "fnproject/fnserver"
 	FuncfileDockerRuntime      = "docker"
 	MinRequiredDockerVersion   = "17.5.0"
-	ContainerRegistryNamespace = "docker.io/"
+	ContainerRegistryNamespace = ""
+	//Change the containerRegistryNamespace while migrating the images to a different repository.
+	// The values should ghcr.io/ for github container registry, container-registry.oracle.com/ for OCR and docker.io or blank space for dockerhub.
+	//Currently keeping the value as blank due to cli_runtime_fallback_build test failure.
 )
 
 var GlobalVerbose bool
