@@ -18,10 +18,12 @@ package test
 
 import (
 	"fmt"
-	"github.com/fnproject/cli/langs"
-	"github.com/fnproject/cli/testharness"
 	"strings"
 	"testing"
+
+	"github.com/fnproject/cli/common"
+	"github.com/fnproject/cli/langs"
+	"github.com/fnproject/cli/testharness"
 )
 
 const (
@@ -45,11 +47,11 @@ entrypoint: ruby func.rb`
 )
 
 /*
-	This test case check for backwards compatibility with older cli func.yaml file
-	Cases Tested:
-	1. During `fn build` make sure Build_image and Run_image are stamped in func.yaml file
-	2. Function container is build using proper fallback runtime and dev image, check
-		by invoking container and fetching runtime version, should match with fallback version.
+This test case check for backwards compatibility with older cli func.yaml file
+Cases Tested:
+ 1. During `fn build` make sure Build_image and Run_image are stamped in func.yaml file
+ 2. Function container is build using proper fallback runtime and dev image, check
+    by invoking container and fetching runtime version, should match with fallback version.
 */
 func TestFnBuildWithOlderRuntimeWithoutVersion(t *testing.T) {
 	t.Run("`fn invoke` should return the fallback ruby version", func(t *testing.T) {
@@ -85,10 +87,15 @@ func TestFnBuildWithOlderRuntimeWithoutVersion(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
+		bi = common.AddContainerNamespace(bi)
+		fmt.Println(bi)
+
 		ri, err := fallBackHandler.RunFromImage()
 		if err != nil {
 			panic(err)
 		}
+		ri = common.AddContainerNamespace(ri)
+		fmt.Println(ri)
 
 		updatedFuncFile := h.GetYamlFile("func.yaml")
 		if bi == "" || ri == "" {

@@ -423,6 +423,7 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 				if err != nil {
 					return err
 				}
+				buildImage = common.AddContainerNamespace(buildImage)
 				a.ff.Build_image = buildImage
 			}
 			if helper.IsMultiStage() {
@@ -431,6 +432,7 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 					if err != nil {
 						return err
 					}
+					runImage = common.AddContainerNamespace(runImage)
 					a.ff.Run_image = runImage
 				}
 			}
