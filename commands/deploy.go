@@ -394,6 +394,7 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 			shape = common.DefaultAppShape
 			app.Shape = shape
 		}
+		shape = "GENERIC_ARM"
 
 		if _, ok := common.ShapeMap[shape]; !ok {
 			return errors.New(fmt.Sprintf("Invalid application : %s shape: %s", app.Name, shape))

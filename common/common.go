@@ -62,9 +62,9 @@ var GlobalVerbose bool
 var CommandVerbose bool
 
 var ShapeMap = map[string][]string{
-	modelsv2.AppShapeGENERICX86: []string{"linux/amd64"},
-	modelsv2.AppShapeGENERICARM: []string{"linux/arm64"},
-	modelsv2.AppShapeGENERICX86ARM: []string{"linux/amd64","linux/arm64"},
+	modelsv2.AppShapeGENERICX86:    {"linux/amd64"},
+	modelsv2.AppShapeGENERICARM:    {"linux/arm64"},
+	modelsv2.AppShapeGENERICX86ARM: {"linux/amd64", "linux/arm64"},
 }
 
 func IsVerbose() bool {
@@ -582,7 +582,54 @@ func containerEngineVersionCheck(containerEngineType string) error {
 	return nil
 }
 
+func isSupportedByDefaultBuildxPlatforms(containerEngineType string, platforms []string) bool {
+
+	// Only allow single platform for default builder instance
+	// multiarch platform build may fail for default builder instance
+	if len(platforms) > 1 {
+		return false
+	}
+	var args []string
+	args = append(args, "buildx")
+	args = append(args, "inspect")
+
+	out, err := exec.Command(containerEngineType, args...).Output()
+	if err != nil {
+		return false
+	}
+	strOut := string(out)
+	lines := strings.Split(strOut, "\n")
+	var supportedPlatforms []string
+	for _, line := range lines {
+		if strings.Contains(line, "Platforms") {
+			ps := strings.Split(line, ":")[1]
+			for _, p := range strings.Split(ps, ",") {
+				supportedPlatforms = append(supportedPlatforms, strings.TrimSpace(p))
+			}
+		}
+	}
+
+	supportsPlatforms := true
+	for _, platform := range platforms {
+		found := false
+		for _, supportedPlatform := range supportedPlatforms {
+			if supportedPlatform == platform {
+				found = true
+			}
+		}
+		if !found {
+			supportsPlatforms = false
+		}
+	}
+
+	return supportsPlatforms
+}
+
 func initializeContainerBuilder(containerEngineType string, platforms []string) error {
+
+	if isSupportedByDefaultBuildxPlatforms(containerEngineType, platforms) {
+		return nil
+	}
 
 	// ignoring the error as there could be no such existing builder
 	// valid error would be caught later while creating a builder
@@ -593,6 +640,7 @@ func initializeContainerBuilder(containerEngineType string, platforms []string) 
 	args = append(args, "create")
 	args = append(args, "--name", BuildxBuilderInstance)
 	args = append(args, "--use")
+
 
 	//Use builders which are sufficient to created the requested platform image
 	args = append(args, "--platform", strings.Join(platforms, ","))

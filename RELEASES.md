@@ -1,6 +1,16 @@
 
 # Releases
 
+## v 0.6.25
+
+* Support for multiple shapes(architectures) functions images: 
+  * x86 (default)
+  * arm
+  * multiarch (x86, arm)
+  
+* cli now is supported on `Arm Linux` as well.
+
+
 ## v 0.6.24
 
 * Allowing `fn inspect functions` and `fn list functions` for PBF(Pre-Built Functions) function with empty image and digest field. By default, it was not supported. 
