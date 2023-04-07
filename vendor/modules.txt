@@ -124,7 +124,7 @@ github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.3.2
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
-# github.com/oracle/oci-go-sdk/v65 v65.28.1 => /Users/sunny/Functions/oci-go-sdk-preview/oci-go-sdk-preview/oci-go-sdk
+# github.com/oracle/oci-go-sdk/v65 v65.28.1 => /Users/sunny/Functions/oci-go-sdk-preview/oci-go-sdk-with-edit/oci-go-sdk
 ## explicit; go 1.13
 github.com/oracle/oci-go-sdk/v65/artifacts
 github.com/oracle/oci-go-sdk/v65/common
