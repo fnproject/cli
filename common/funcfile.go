@@ -126,8 +126,8 @@ type FuncFileV20180708 struct {
 	Timeout      *int32 `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 	IDLE_timeout *int32 `yaml:"idle_timeout,omitempty" json:"idle_timeout,omitempty"`
 
-	Config            map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
-	Annotations       map[string]interface{} `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Config      map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
+	Annotations map[string]interface{} `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 
 	SigningDetails SigningDetails `yaml:"signing_details,omitempty" json:"signing_details,omitempty""`
 

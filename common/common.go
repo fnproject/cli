@@ -522,11 +522,11 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 				return
 			}
 
-			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile,  buildArgs, noCache, mappedArchitectures)
+			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures)
 			// perform cleanup
 			defer cleanupContainerBuilder(containerEngineType)
 		} else {
-			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile,  buildArgs, noCache)
+			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache)
 		}
 
 		//v := os.Environ()
@@ -640,7 +640,6 @@ func initializeContainerBuilder(containerEngineType string, platforms []string) 
 	args = append(args, "create")
 	args = append(args, "--name", BuildxBuilderInstance)
 	args = append(args, "--use")
-
 
 	//Use builders which are sufficient to created the requested platform image
 	args = append(args, "--platform", strings.Join(platforms, ","))
@@ -1108,7 +1107,6 @@ func RunInitImage(initImage string, fName string) error {
 	args = append(args, proxyArgs()...)
 	args = append(args, initImage)
 
-	fmt.Printf("Executing %v command: %s\n", containerEngineType, strings.Join(args, " "))
 	cmd := exec.Command(containerEngineType, args...)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr

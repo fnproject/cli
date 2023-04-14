@@ -1,3 +1,5 @@
+bitbucket.oci.oraclecorp.com/sdk/oci-go-sdk.git/v65 v65.34.0-p.0.20230405194604-b7769034a313 h1:wZuGNHd/2NUu5A1W0oU60DU36KkLJ14soc4RiCO0O50=
+bitbucket.oci.oraclecorp.com/sdk/oci-go-sdk.git/v65 v65.34.0-p.0.20230405194604-b7769034a313/go.mod h1:MXMLMzHnnd9wlpgadPkdlkZ9YrwQmCOmbX5kjVEJodw=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=

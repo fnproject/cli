@@ -40,6 +40,7 @@ import (
 const (
 	SHAPE_PARAMETER = "shape"
 )
+
 type appsCmd struct {
 	provider provider.Provider
 	client   *fnclient.Fn
