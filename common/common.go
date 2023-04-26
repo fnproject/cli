@@ -529,9 +529,6 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache)
 		}
 
-		//v := os.Environ()
-		//cmd.Env = os.Environ()
-		//cmd.Env = append(cmd.Env, "TMPDIR=/home/opc/tmp")
 		cmd := exec.Command(containerEngineType, dockerBuildCmdArgs...)
 		cmd.Dir = dir
 		cmd.Stderr = buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
@@ -589,11 +586,8 @@ func isSupportedByDefaultBuildxPlatforms(containerEngineType string, platforms [
 	if len(platforms) > 1 {
 		return false
 	}
-	var args []string
-	args = append(args, "buildx")
-	args = append(args, "inspect")
 
-	out, err := exec.Command(containerEngineType, args...).Output()
+	out, err := exec.Command(containerEngineType, "buildx", "inspect").Output()
 	if err != nil {
 		return false
 	}
@@ -654,13 +648,8 @@ func initializeContainerBuilder(containerEngineType string, platforms []string) 
 }
 
 func cleanupContainerBuilder(containerEngineType string) error {
-	var args []string
-	args = append(args, "buildx")
-	args = append(args, "rm")
-	args = append(args, BuildxBuilderInstance)
-
 	//remove existing builder instance
-	_, err := exec.Command(containerEngineType, args...).Output()
+	_, err := exec.Command(containerEngineType, "buildx", "rm", BuildxBuilderInstance).Output()
 	return err
 }
 
