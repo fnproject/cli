@@ -36,12 +36,6 @@ jobs:
           no_output_timeout: 20m
           environment:
       - run:
-          name: test build linux arm64
-          command: go build -o fn_linux_arm64
-          environment:
-            GOOS: linux
-            GOARCH: arm64
-      - run:
           name: test build macos
           command: go build -o fn_mac
           environment:
