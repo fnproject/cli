@@ -10,14 +10,14 @@ import (
 	"time"
 
 	"github.com/fnproject/fn_go/provider/oracle/shim"
-	"github.com/oracle/oci-go-sdk/v48/functions"
+	"github.com/oracle/oci-go-sdk/v65/functions"
 
 	"github.com/fnproject/fn_go/client/version"
 	"github.com/fnproject/fn_go/clientv2"
 	"github.com/fnproject/fn_go/provider"
 	openapi "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	"github.com/oracle/oci-go-sdk/v48/common"
+	"github.com/oracle/oci-go-sdk/v65/common"
 )
 
 const (
@@ -47,10 +47,11 @@ const (
 )
 
 type Response struct {
-	Annotations Annotations `json:"annotations"`
-	CreatedAt   string      `json:"created_at"`
-	UpdatedAt   string      `json:"updated_at"`
-	Name        string      `json:"name"`
+	Annotations   Annotations `json:"annotations"`
+	CreatedAt     string      `json:"created_at"`
+	UpdatedAt     string      `json:"updated_at"`
+	Name          string      `json:"name"`
+	Shape         string      `json:shape`
 }
 
 type Annotations struct {

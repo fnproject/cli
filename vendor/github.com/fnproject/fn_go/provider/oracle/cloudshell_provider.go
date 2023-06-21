@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/oracle/oci-go-sdk/v48/functions"
+	"github.com/oracle/oci-go-sdk/v65/functions"
 
 	"github.com/fnproject/fn_go/provider"
-	oci "github.com/oracle/oci-go-sdk/v48/common"
-	"github.com/oracle/oci-go-sdk/v48/common/auth"
+	oci "github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/oracle/oci-go-sdk/v65/common/auth"
 )
 
 const (

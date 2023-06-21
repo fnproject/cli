@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"log"
@@ -45,7 +46,6 @@ import (
 	"github.com/fnproject/fn_go/modelsv2"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
-	"gopkg.in/yaml.v2"
 )
 
 // Global docker variables.
@@ -53,10 +53,18 @@ const (
 	FunctionsDockerImage     = "fnproject/fnserver"
 	FuncfileDockerRuntime    = "docker"
 	MinRequiredDockerVersion = "17.5.0"
+	BuildxBuilderInstance    = "oci_fn_builder"
+	DefaultAppShape          = modelsv2.AppShapeGENERICX86
 )
 
 var GlobalVerbose bool
 var CommandVerbose bool
+
+var ShapeMap = map[string][]string{
+	modelsv2.AppShapeGENERICX86:    {"linux/amd64"},
+	modelsv2.AppShapeGENERICARM:    {"linux/arm64"},
+	modelsv2.AppShapeGENERICX86ARM: {"linux/amd64", "linux/arm64"},
+}
 
 func IsVerbose() bool {
 	return GlobalVerbose || CommandVerbose
@@ -122,7 +130,7 @@ func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool) (*FuncFileV20180708, error) {
+func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool, shape string) (*FuncFileV20180708, error) {
 	var err error
 
 	if funcfile.Version == "" {
@@ -140,8 +148,7 @@ func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708,
 	if err := localBuild(fpath, funcfile.Build); err != nil {
 		return nil, err
 	}
-
-	if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache); err != nil {
+	if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache, shape); err != nil {
 		return nil, err
 	}
 
@@ -335,7 +342,7 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 			}
 		}
 	}
-	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache, containerEngineType)
+	err = RunBuild(verbose, dir, ff.ImageName(), dockerfile, buildArgs, noCache, containerEngineType, "")
 	if err != nil {
 		return err
 	}
@@ -349,7 +356,7 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 	return nil
 }
 
-func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool) error {
+func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool, shape string) error {
 	containerEngineType, err := GetContainerEngineType()
 	if err != nil {
 		return err
@@ -386,7 +393,8 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 			}
 		}
 	}
-	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache, containerEngineType)
+
+	err = RunBuild(verbose, dir, ff.ImageNameV20180708(), dockerfile, buildArgs, noCache, containerEngineType, shape)
 	if err != nil {
 		return err
 	}
@@ -400,8 +408,74 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 	return nil
 }
 
+func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCache bool, architectures []string) []string {
+	var buildCommand = "buildx"
+	var name = imageName
+
+	args := []string{
+		buildCommand,
+		"build",
+		"-t", name,
+		"-f", dockerfile,
+		"--platform", strings.Join(architectures, ","),
+	}
+
+	if noCache {
+		args = append(args, "--no-cache")
+	}
+
+	if len(buildArgs) > 0 {
+		for _, buildArg := range buildArgs {
+			args = append(args, "--build-arg", buildArg)
+		}
+	}
+
+	if len(architectures) > 0 {
+		var arg = "ARCH=" + strings.Join(architectures, ",")
+		var label = "imageName=" + imageName
+		args = append(args, "--build-arg", arg)
+		args = append(args, "--label", label)
+		args = append(args, "--push")
+	}
+
+	args = append(args,
+		"--build-arg", "HTTP_PROXY",
+		"--build-arg", "HTTPS_PROXY",
+		".")
+
+	// Container engine type would be optional here
+	return args
+}
+
+func buildDockerCommand(imageName, dockerfile string, buildArgs []string, noCache bool) []string {
+	var name = imageName
+	args := []string{
+		"build",
+		"-t", name,
+		"-f", dockerfile,
+	}
+
+	if noCache {
+		args = append(args, "--no-cache")
+	}
+
+	if len(buildArgs) > 0 {
+		for _, buildArg := range buildArgs {
+			args = append(args, "--build-arg", buildArg)
+		}
+	}
+
+	args = append(args,
+		"--build-arg", "HTTP_PROXY",
+		"--build-arg", "HTTPS_PROXY",
+		".")
+
+	// Container engine type would be optional here
+	return args
+}
+
 // RunBuild runs function from func.yaml/json/yml.
-func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string) error {
+func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string, shape string) error {
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -436,31 +510,30 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 	}
 
 	go func(done chan<- error) {
-		args := []string{
-			"build",
-			"-t", imageName,
-			"-f", dockerfile,
-		}
-		if noCache {
-			args = append(args, "--no-cache")
-		}
-
-		if len(buildArgs) > 0 {
-			for _, buildArg := range buildArgs {
-				args = append(args, "--build-arg", buildArg)
+		var dockerBuildCmdArgs []string
+		// Depending whether architecture list is passed or not trigger docker buildx or docker build accordingly
+		var mappedArchitectures []string
+		if arch, ok := ShapeMap[shape]; ok {
+			mappedArchitectures = append(mappedArchitectures, arch...)
+			err := initializeContainerBuilder(containerEngineType, mappedArchitectures)
+			if err != nil {
+				done <- err
+				return
 			}
-		}
-		args = append(args,
-			"--build-arg", "HTTP_PROXY",
-			"--build-arg", "HTTPS_PROXY",
-			".")
 
-		// Container engine type would be optional here
-		cmd := exec.Command(containerEngineType, args...)
+			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures)
+			// perform cleanup
+			defer cleanupContainerBuilder(containerEngineType)
+		} else {
+			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache)
+		}
+
+		cmd := exec.Command(containerEngineType, dockerBuildCmdArgs...)
 		cmd.Dir = dir
 		cmd.Stderr = buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
 		cmd.Stdout = buildOut
 		done <- cmd.Run()
+		//cmd.Env = v
 	}(result)
 
 	select {
@@ -503,6 +576,80 @@ func containerEngineVersionCheck(containerEngineType string) error {
 		}
 	}
 	return nil
+}
+
+func isSupportedByDefaultBuildxPlatforms(containerEngineType string, platforms []string) bool {
+
+	// Only allow single platform for default builder instance
+	// multiarch platform build may fail for default builder instance
+	if len(platforms) > 1 {
+		return false
+	}
+
+	out, err := exec.Command(containerEngineType, "buildx", "inspect").Output()
+	if err != nil {
+		return false
+	}
+	strOut := string(out)
+	lines := strings.Split(strOut, "\n")
+	var supportedPlatforms []string
+	for _, line := range lines {
+		if strings.Contains(line, "Platforms") {
+			ps := strings.Split(line, ":")[1]
+			for _, p := range strings.Split(ps, ",") {
+				supportedPlatforms = append(supportedPlatforms, strings.TrimSpace(p))
+			}
+		}
+	}
+
+	supportsPlatforms := true
+	for _, platform := range platforms {
+		found := false
+		for _, supportedPlatform := range supportedPlatforms {
+			if supportedPlatform == platform {
+				found = true
+			}
+		}
+		if !found {
+			supportsPlatforms = false
+		}
+	}
+
+	return supportsPlatforms
+}
+
+func initializeContainerBuilder(containerEngineType string, platforms []string) error {
+
+	if isSupportedByDefaultBuildxPlatforms(containerEngineType, platforms) {
+		return nil
+	}
+
+	// ignoring the error as there could be no such existing builder
+	// valid error would be caught later while creating a builder
+	_ = cleanupContainerBuilder(containerEngineType)
+
+	var args []string
+	args = append(args, "buildx")
+	args = append(args, "create")
+	args = append(args, "--name", BuildxBuilderInstance)
+	args = append(args, "--use")
+
+	//Use builders which are sufficient to created the requested platform image
+	args = append(args, "--platform", strings.Join(platforms, ","))
+
+	_, err := exec.Command(containerEngineType, args...).Output()
+	if err != nil {
+		return fmt.Errorf("Cannot create/use builder instance %v for %v : %v", containerEngineType,
+			BuildxBuilderInstance, err)
+	}
+
+	return nil
+}
+
+func cleanupContainerBuilder(containerEngineType string) error {
+	//remove existing builder instance
+	_, err := exec.Command(containerEngineType, "buildx", "rm", BuildxBuilderInstance).Output()
+	return err
 }
 
 // Exists check file exists.
@@ -780,6 +927,7 @@ func ReadInFuncFile() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not open %s for parsing. Error: %v", fpath, err)
 	}
+
 	var ff map[string]interface{}
 	err = yaml.Unmarshal(b, &ff)
 	if err != nil {
@@ -947,7 +1095,6 @@ func RunInitImage(initImage string, fName string) error {
 	args = append(args, proxyArgs()...)
 	args = append(args, initImage)
 
-	fmt.Printf("Executing %v command: %s\n", containerEngineType, strings.Join(args, " "))
 	cmd := exec.Command(containerEngineType, args...)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr

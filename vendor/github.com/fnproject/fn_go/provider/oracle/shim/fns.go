@@ -7,7 +7,7 @@ import (
 	"github.com/fnproject/fn_go/provider/oracle/shim/client"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
-	"github.com/oracle/oci-go-sdk/v48/functions"
+	"github.com/oracle/oci-go-sdk/v65/functions"
 )
 
 const (
@@ -272,6 +272,7 @@ func ociFnToV2(ociFn functions.Function) *modelsv2.Fn {
 		Memory:      uint64(*ociFn.MemoryInMBs),
 		Name:        *ociFn.DisplayName,
 		Timeout:     timeoutPtr,
+		Shape: 		 string(ociFn.Shape),
 		UpdatedAt:   strfmt.DateTime(ociFn.TimeUpdated.Time),
 	}
 }
@@ -309,6 +310,7 @@ func ociFnSummaryToV2(ociFnSummary functions.FunctionSummary) *modelsv2.Fn {
 		Image:       image,
 		Memory:      uint64(*ociFnSummary.MemoryInMBs),
 		Name:        *ociFnSummary.DisplayName,
+		Shape:       string(ociFnSummary.Shape),
 		Timeout:     timeoutPtr,
 		UpdatedAt:   strfmt.DateTime(ociFnSummary.TimeUpdated.Time),
 	}

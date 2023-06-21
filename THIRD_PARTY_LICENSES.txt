@@ -105,7 +105,7 @@ The following dependencies of fn-cli are licensed under Apache 2.0 license
 
 github.com/coreos/go-semver/semver
 github.com/golang/mock/gomock
-github.com/oracle/oci-go-sdk/v48
+github.com/oracle/oci-go-sdk/v65
 github.com/go-openapi/validate
 github.com/xeipuuv/gojsonpointer
 github.com/go-openapi/loads
@@ -1880,7 +1880,7 @@ Google Inc.
 -----------------------------------------------------------------
 The following dependency of fn-cli is licensed under Apache License 2.0
 
-github.com/oracle/oci-go-sdk/v48
+github.com/oracle/oci-go-sdk/v65
 
 Apache License 2.0 : A copy of the Apache License V2.0 is included in this file.
 

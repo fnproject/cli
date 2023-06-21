@@ -37,6 +37,10 @@ import (
 	"github.com/urfave/cli"
 )
 
+const (
+	SHAPE_PARAMETER = "shape"
+)
+
 type appsCmd struct {
 	provider provider.Provider
 	client   *fnclient.Fn
@@ -148,7 +152,20 @@ func (a *appsCmd) create(c *cli.Context) error {
 	}
 
 	appWithFlags(c, app)
+	// If architectures flag is not set then default it to nil
+	if c.IsSet(SHAPE_PARAMETER) {
+		shapeParam := c.String(SHAPE_PARAMETER)
 
+		// Check for architectures parameter passed or set to default
+		if len(shapeParam) == 0 {
+			return errors.New("no shape specified for the application")
+		}
+
+		if _, ok := common.ShapeMap[shapeParam]; !ok {
+			return errors.New("invalid shape specified for the application")
+		}
+		app.Shape = shapeParam
+	}
 	_, err := CreateApp(a.client, app)
 	return err
 }
@@ -169,7 +186,6 @@ func CreateApp(a *fnclient.Fn, app *modelsv2.App) (*modelsv2.App, error) {
 		}
 		return nil, err
 	}
-
 	fmt.Println("Successfully created app: ", resp.Payload.Name)
 	return resp.Payload, nil
 }
@@ -306,6 +322,7 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("Could not marshal app: %v", err)
 	}
+
 	var inspect map[string]interface{}
 	err = json.Unmarshal(data, &inspect)
 	if err != nil {

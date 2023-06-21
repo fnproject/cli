@@ -18,12 +18,10 @@ package test
 
 import (
 	"fmt"
-	"testing"
-
+	"github.com/fnproject/cli/testharness"
 	"regexp"
 	"strings"
-
-	"github.com/fnproject/cli/testharness"
+	"testing"
 )
 
 // TODO: These are both  Super minimal
@@ -251,4 +249,26 @@ func TestRecursiveDelete(t *testing.T) {
 		AssertStdoutContains(appName1).
 		AssertStdoutContains(funcName1).
 		AssertStdoutContains(triggerName1)
+}
+
+func TestFnAppCreateAndUpdateCycleWithArch(t *testing.T) {
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+
+	appName := h.NewAppName()
+
+	h.Fn("create", "app", appName, "--shape", "GENERIC_X86")
+	h.Fn("inspect", "app", appName).AssertSuccess().AssertStdoutContains("GENERIC_X86")
+
+	appName = h.NewAppName()
+	h.Fn("create", "app", appName).AssertSuccess()
+
+	//Test multiarch shape
+	shape := "GENERIC_X86_ARM"
+	h.Fn("update", "app", appName, "--shape", shape).AssertFailed()
+
+	//Test update back to arm, should fail
+	h.Fn("update", "app", appName, "--shape", "GENERIC_ARM").AssertFailed()
 }

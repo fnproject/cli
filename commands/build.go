@@ -18,11 +18,10 @@ package commands
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"github.com/fnproject/cli/common"
 	"github.com/urfave/cli"
+	"os"
+	"path/filepath"
 )
 
 // BuildCommand returns build cli.command
@@ -97,7 +96,9 @@ func (b *buildcmd) build(c *cli.Context) error {
 		}
 
 		buildArgs := c.StringSlice("build-arg")
-		ff, err = common.BuildFuncV20180708(common.IsVerbose(), fpath, ff, buildArgs, b.noCache)
+
+		// Passing empty shape for build command
+		ff, err = common.BuildFuncV20180708(common.IsVerbose(), fpath, ff, buildArgs, b.noCache, "")
 		if err != nil {
 			return err
 		}
