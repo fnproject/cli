@@ -47,7 +47,7 @@ type instancePrincipalError struct {
 }
 
 func (ipe instancePrincipalError) Error() string {
-	return fmt.Sprintf("%s\nInstance principals authentication can only be used on OCI compute instances. Please confirm this code is running on an OCI compute instance.\nSee https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm for more info", ipe.err.Error())
+	return fmt.Sprintf("%s\nInstance principals authentication can only be used on OCI compute instances. Please confirm this code is running on an OCI compute instance and you have set up the policy properly.\nSee https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm for more info", ipe.err.Error())
 }
 
 // newInstancePrincipalKeyProvider creates and returns an instancePrincipalKeyProvider instance based on
@@ -58,8 +58,7 @@ func (ipe instancePrincipalError) Error() string {
 // The x509FederationClient caches the security token in memory until it is expired.  Thus, even if a client obtains a
 // KeyID that is not expired at the moment, the PrivateRSAKey that the client acquires at a next moment could be
 // invalid because the KeyID could be already expired.
-func newInstancePrincipalKeyProvider(modifier func(common.HTTPRequestDispatcher) (common.HTTPRequestDispatcher, error),
-	tokenPurpose string) (provider *instancePrincipalKeyProvider, err error) {
+func newInstancePrincipalKeyProvider(modifier func(common.HTTPRequestDispatcher) (common.HTTPRequestDispatcher, error)) (provider *instancePrincipalKeyProvider, err error) {
 	updateX509CertRetrieverURLParas(metadataBaseURL)
 	clientModifier := newDispatcherModifier(modifier)
 
@@ -91,8 +90,7 @@ func newInstancePrincipalKeyProvider(modifier func(common.HTTPRequestDispatcher)
 	}
 	tenancyID := extractTenancyIDFromCertificate(leafCertificateRetriever.Certificate())
 
-	federationClient, err := newX509FederationClientWithPurpose(region, tenancyID, leafCertificateRetriever,
-		intermediateCertificateRetrievers, true, *clientModifier, tokenPurpose)
+	federationClient, err := newX509FederationClient(region, tenancyID, leafCertificateRetriever, intermediateCertificateRetrievers, *clientModifier)
 
 	if err != nil {
 		err = fmt.Errorf("failed to create federation client: %s", err.Error())
@@ -107,7 +105,6 @@ func getRegionForFederationClient(dispatcher common.HTTPRequestDispatcher, url s
 	var body bytes.Buffer
 	var statusCode int
 	MaxRetriesFederationClient := 3
-
 	for currTry := 0; currTry < MaxRetriesFederationClient; currTry++ {
 		body, statusCode, err = httpGet(dispatcher, url)
 		if err == nil && statusCode == 200 {
@@ -115,7 +112,7 @@ func getRegionForFederationClient(dispatcher common.HTTPRequestDispatcher, url s
 		}
 		common.Logf("Error in getting region from url: %s, Status code: %v, Error: %s", url, statusCode, err.Error())
 		if statusCode == 404 && strings.Compare(url, metadataBaseURL+regionPath) == 0 {
-			common.Logf("Falling back to http://169.254.169.254/opc/v1 to try again...\n")
+			common.Logf("Falling back to http://169.254.169.254/opc/v1 to try again...")
 			updateX509CertRetrieverURLParas(metadataFallbackURL)
 			url = regionURL
 		}

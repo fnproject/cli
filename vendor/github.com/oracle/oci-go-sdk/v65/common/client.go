@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
@@ -29,6 +30,9 @@ import (
 )
 
 const (
+	// DefaultHostURLTemplate The default url template for service hosts
+	DefaultHostURLTemplate = "%s.%s.oraclecloud.com"
+
 	// requestHeaderAccept The key for passing a header to indicate Accept
 	requestHeaderAccept = "Accept"
 
@@ -80,8 +84,9 @@ const (
 	defaultConfigFileName    = "config"
 	defaultConfigDirName     = ".oci"
 	configFilePathEnvVarName = "OCI_CONFIG_FILE"
-	secondaryConfigDirName   = ".oraclebmc"
-	maxBodyLenForDebug       = 1024 * 1000
+
+	secondaryConfigDirName = ".oraclebmc"
+	maxBodyLenForDebug     = 1024 * 1000
 
 	// appendUserAgentEnv The key for retrieving append user agent value from env var
 	appendUserAgentEnv = "OCI_SDK_APPEND_USER_AGENT"
@@ -288,7 +293,6 @@ func NewClientWithOboToken(configProvider ConfigurationProvider, oboToken string
 
 // Add obo token header to Interceptor and sign to client
 func signOboToken(client *BaseClient, oboToken string, configProvider ConfigurationProvider) {
-
 	// Interceptor to add obo token header
 	client.Interceptor = func(request *http.Request) error {
 		request.Header.Add(requestHeaderOpcOboToken, oboToken)
@@ -321,7 +325,7 @@ func getHomeFolder() string {
 func DefaultConfigProvider() ConfigurationProvider {
 	defaultConfigFile := getDefaultConfigFilePath()
 	homeFolder := getHomeFolder()
-	secondaryConfigFile := path.Join(homeFolder, secondaryConfigDirName, defaultConfigFileName)
+	secondaryConfigFile := filepath.Join(homeFolder, secondaryConfigDirName, defaultConfigFileName)
 
 	defaultFileProvider, _ := ConfigurationProviderFromFile(defaultConfigFile, "")
 	secondaryFileProvider, _ := ConfigurationProviderFromFile(secondaryConfigFile, "")
@@ -334,7 +338,7 @@ func DefaultConfigProvider() ConfigurationProvider {
 
 func getDefaultConfigFilePath() string {
 	homeFolder := getHomeFolder()
-	defaultConfigFile := path.Join(homeFolder, defaultConfigDirName, defaultConfigFileName)
+	defaultConfigFile := filepath.Join(homeFolder, defaultConfigDirName, defaultConfigFileName)
 	if _, err := os.Stat(defaultConfigFile); err == nil {
 		return defaultConfigFile
 	}
@@ -380,7 +384,7 @@ func setRawPath(u *url.URL) error {
 func CustomProfileConfigProvider(customConfigPath string, profile string) ConfigurationProvider {
 	homeFolder := getHomeFolder()
 	if customConfigPath == "" {
-		customConfigPath = path.Join(homeFolder, defaultConfigDirName, defaultConfigFileName)
+		customConfigPath = filepath.Join(homeFolder, defaultConfigDirName, defaultConfigFileName)
 	}
 	customFileProvider, _ := ConfigurationProviderFromFileWithProfile(customConfigPath, profile, "")
 	defaultFileProvider, _ := ConfigurationProviderFromFileWithProfile(customConfigPath, "DEFAULT", "")
@@ -534,7 +538,7 @@ func (rsc *OCIReadSeekCloser) Seek(offset int64, whence int) (int64, error) {
 		return rsc.rc.(io.Seeker).Seek(offset, whence)
 	}
 	// once the binary request body is wrapped with ioutil.NopCloser:
-	if reflect.TypeOf(rsc.rc) == reflect.TypeOf(ioutil.NopCloser(nil)) {
+	if rsc.isNopCloser() {
 		unwrappedInterface := reflect.ValueOf(rsc.rc).Field(0).Interface()
 		if _, ok := unwrappedInterface.(io.Seeker); ok {
 			return unwrappedInterface.(io.Seeker).Seek(offset, whence)
@@ -572,10 +576,18 @@ func (rsc *OCIReadSeekCloser) Seekable() bool {
 		return true
 	}
 	// once the binary request body is wrapped with ioutil.NopCloser:
-	if reflect.TypeOf(rsc.rc) == reflect.TypeOf(ioutil.NopCloser(nil)) {
+	if rsc.isNopCloser() {
 		if _, ok := reflect.ValueOf(rsc.rc).Field(0).Interface().(io.Seeker); ok {
 			return true
 		}
+	}
+	return false
+}
+
+// Helper function to judge if this struct is a nopCloser or nopCloserWriterTo
+func (rsc *OCIReadSeekCloser) isNopCloser() bool {
+	if reflect.TypeOf(rsc.rc) == reflect.TypeOf(ioutil.NopCloser(nil)) || reflect.TypeOf(rsc.rc) == reflect.TypeOf(ioutil.NopCloser(bytes.NewReader(nil))) {
+		return true
 	}
 	return false
 }
@@ -620,18 +632,15 @@ func (client BaseClient) RefreshableTokenWrappedCallWithDetails(ctx context.Cont
 func (client BaseClient) CallWithDetails(ctx context.Context, request *http.Request, details ClientCallDetails) (response *http.Response, err error) {
 	Debugln("Attempting to call downstream service")
 	request = request.WithContext(ctx)
-
 	err = client.prepareRequest(request)
 	if err != nil {
 		return
 	}
-
 	//Intercept
 	err = client.intercept(request)
 	if err != nil {
 		return
 	}
-
 	//Sign the request
 	err = details.Signer.Sign(request)
 	if err != nil {

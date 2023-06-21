@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -32,7 +32,7 @@ const (
 // AuthConfig is used for getting auth related paras in config file
 type AuthConfig struct {
 	AuthType AuthenticationType
-	// IsFromConfigFile is used to point out the if the AuthConfig is from configuration file
+	// IsFromConfigFile is used to point out if the authConfig is from configuration file
 	IsFromConfigFile bool
 	OboToken         *string
 }
@@ -95,7 +95,7 @@ type rawConfigurationProvider struct {
 	privateKeyPassphrase *string
 }
 
-// NewRawConfigurationProvider will create a rawConfigurationProvider
+// NewRawConfigurationProvider will create a ConfigurationProvider with the arguments of the function
 func NewRawConfigurationProvider(tenancy, user, region, fingerprint, privateKey string, privateKeyPassphrase *string) ConfigurationProvider {
 	return rawConfigurationProvider{tenancy, user, region, fingerprint, privateKey, privateKeyPassphrase}
 }
@@ -149,8 +149,7 @@ func (p rawConfigurationProvider) Region() (string, error) {
 }
 
 func (p rawConfigurationProvider) AuthType() (AuthConfig, error) {
-	return AuthConfig{UnknownAuthenticationType, false, nil},
-		fmt.Errorf("unsupported, keep the interface")
+	return AuthConfig{UnknownAuthenticationType, false, nil}, nil
 }
 
 // environmentConfigurationProvider reads configuration from environment variables
@@ -272,7 +271,7 @@ type fileConfigurationProvider struct {
 	//ConfigFileInfo
 	FileInfo *configFileInfo
 
-	// Mutex
+	//Mutex to protect the config file
 	configMux sync.Mutex
 }
 
@@ -281,7 +280,7 @@ type fileConfigurationProviderError struct {
 }
 
 func (fpe fileConfigurationProviderError) Error() string {
-	return fmt.Sprintf("%s\nFor more info about config file and how to get required information, see https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm for more info on OCI configuration files", fpe.err)
+	return fmt.Sprintf("%s\nFor more info about config file and how to get required information, see https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm", fpe.err)
 }
 
 // ConfigurationProviderFromFile creates a configuration provider from a configuration file
@@ -404,12 +403,12 @@ func parseConfigAtLine(start int, content []string) (info *configFileInfo, err e
 
 // cleans and expands the path if it contains a tilde , returns the expanded path or the input path as is if not expansion
 // was performed
-func expandPath(filepath string) (expandedPath string) {
-	cleanedPath := path.Clean(filepath)
+func expandPath(filename string) (expandedPath string) {
+	cleanedPath := filepath.Clean(filename)
 	expandedPath = cleanedPath
 	if strings.HasPrefix(cleanedPath, "~") {
 		rest := cleanedPath[2:]
-		expandedPath = path.Join(getHomeFolder(), rest)
+		expandedPath = filepath.Join(getHomeFolder(), rest)
 	}
 	return
 }
@@ -420,6 +419,7 @@ func openConfigFile(configFilePath string) (data []byte, err error) {
 	if err != nil {
 		err = fmt.Errorf("can not read config file: %s due to: %s", configFilePath, err.Error())
 	}
+
 	return
 }
 
@@ -437,6 +437,7 @@ func (p fileConfigurationProvider) readAndParseConfigFile() (info *configFileInf
 	if p.ConfigPath == "" {
 		return nil, fileConfigurationProviderError{err: fmt.Errorf("configuration path can not be empty")}
 	}
+
 	data, err := openConfigFile(p.ConfigPath)
 	if err != nil {
 		err = fileConfigurationProviderError{err: fmt.Errorf("error while parsing config file: %s. Due to: %s", p.ConfigPath, err.Error())}
@@ -597,6 +598,7 @@ func (p fileConfigurationProvider) AuthType() (AuthConfig, error) {
 				return AuthConfig{InstancePrincipalDelegationToken, true, &delegationToken}, nil
 			}
 			return AuthConfig{UnknownAuthenticationType, true, nil}, err
+
 		}
 		// normal instance principle
 		return AuthConfig{InstancePrincipal, true, nil}, nil
@@ -654,6 +656,7 @@ func (c composingConfigurationProvider) UserOCID() (string, error) {
 		if err == nil {
 			return val, nil
 		}
+		Debugf("did not find a proper configuration for keyFingerprint, err: %v", err)
 	}
 	return "", fmt.Errorf("did not find a proper configuration for user")
 }
@@ -664,7 +667,6 @@ func (c composingConfigurationProvider) KeyFingerprint() (string, error) {
 		if err == nil {
 			return val, nil
 		}
-		Debugf("did not find a proper configuration for keyFingerprint, err: %v", err)
 	}
 	return "", fmt.Errorf("did not find a proper configuration for keyFingerprint")
 }

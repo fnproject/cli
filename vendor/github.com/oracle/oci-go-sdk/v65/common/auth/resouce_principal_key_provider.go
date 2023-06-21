@@ -8,10 +8,11 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"github.com/oracle/oci-go-sdk/v65/common"
 	"io/ioutil"
 	"os"
 	"path"
+
+	"github.com/oracle/oci-go-sdk/v65/common"
 )
 
 const (
@@ -356,8 +357,7 @@ func (p *resourcePrincipalKeyProvider) UserOCID() (string, error) {
 }
 
 func (p *resourcePrincipalKeyProvider) AuthType() (common.AuthConfig, error) {
-	return common.AuthConfig{common.UnknownAuthenticationType, false, nil},
-		fmt.Errorf("unsupported, keep the interface")
+	return common.AuthConfig{common.UnknownAuthenticationType, false, nil}, fmt.Errorf("unsupported, keep the interface")
 }
 
 func (p *resourcePrincipalKeyProvider) Refreshable() bool {
@@ -375,5 +375,5 @@ type resourcePrincipalError struct {
 }
 
 func (ipe resourcePrincipalError) Error() string {
-	return fmt.Sprintf("%s\nResource principals authentication can only be used in certain OCI services. Please check that the OCI service you're running this code from supports Resource principals.\nSee https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdk_authentication_methods.htm for more info.", ipe.err.Error())
+	return fmt.Sprintf("%s\nResource principals authentication can only be used in certain OCI services. Please check that the OCI service you're running this code from supports Resource principals.\nSee https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdk_authentication_methods.htm#sdk_authentication_methods_resource_principal for more info.", ipe.err.Error())
 }

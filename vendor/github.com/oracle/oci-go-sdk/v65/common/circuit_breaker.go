@@ -133,6 +133,7 @@ func NewOciCircuitBreaker(cbst *CircuitBreakerSetting, gbcb *gobreaker.CircuitBr
 	ocb := new(OciCircuitBreaker)
 	ocb.Cbst = cbst
 	if ocb.Cbst.numberOfRecordedHistoryResponse == 0 {
+		fmt.Println("num hist empty")
 		ocb.Cbst.numberOfRecordedHistoryResponse = getDefaultNumHistoryCount()
 	}
 	ocb.Cb = gbcb
@@ -224,6 +225,7 @@ func NewCircuitBreaker(cbst *CircuitBreakerSetting) *OciCircuitBreaker {
 	if !cbst.isEnabled {
 		return nil
 	}
+
 	st := gobreaker.Settings{}
 	customizeGoBreakerSetting(&st, cbst)
 	gbcb := gobreaker.NewCircuitBreaker(st)
