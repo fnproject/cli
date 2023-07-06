@@ -24,8 +24,10 @@ import (
 const dockerFile = `FROM golang:latest
 FROM fnproject/go:dev as build-stage
 WORKDIR /function
-ADD . /go/src/func/
-RUN cd /go/src/func/ && go build -o func
+WORKDIR /go/src/func/
+ENV GO111MODULE=on
+COPY . .
+RUN go build -o func -v
 FROM fnproject/go
 WORKDIR /function
 COPY --from=build-stage /go/src/func/func /function/

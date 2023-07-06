@@ -1,9 +1,27 @@
+/*
+ * Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package fdk
 
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -36,7 +54,12 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := buildCtx(r.Context(), r)
 	defer cancel()
 
+	logFrameHeader(r)
+
 	h.handler.Serve(ctx, r.Body, &resp)
+
+	io.Copy(ioutil.Discard, r.Body) // Ignoring error since r.Body may already be closed
+	r.Body.Close()
 
 	if _, ok := GetContext(ctx).(HTTPContext); ok {
 		// XXX(reed): could put this in a response writer to clean up? not as easy as it looks (ordering wrt WriteHeader())
@@ -45,6 +68,10 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Fn-Http-Status", strconv.Itoa(resp.status))
 	}
 	// NOTE: FDKs don't set call status directly on the response at the moment...
+
+	// send back our version
+	w.Header().Set("Fn-Fdk-Version", versionHeader)
+	w.Header().Set("Fn-Fdk-Runtime", runtimeHeader)
 
 	// XXX(reed): 504 if ctx is past due / handle errors with 5xx? just 200 for now
 	// copy response from user back up now with headers in place...
@@ -136,11 +163,46 @@ func withHTTPContext(ctx context.Context) context.Context {
 	return WithContext(ctx, hctx)
 }
 
+func setTracingContext(config map[string]string, header http.Header) tracingCtx {
+	if config["OCI_TRACING_ENABLED"] == "0" {
+		// When tracing is not enabled then we
+		// assign empty tracing context to
+		// the context
+		return tracingCtx{}
+	}
+	tctx := tracingCtx{
+		traceCollectorURL: config["OCI_TRACE_COLLECTOR_URL"],
+		traceId:           header.Get("x-b3-traceid"),
+		spanId:            header.Get("x-b3-spanid"),
+		parentSpanId:      header.Get("x-b3-parentspanid"),
+		flags:             header.Get("x-b3-flags"),
+		sampled:           true,
+		serviceName:       strings.ToLower(config["FN_APP_NAME"] + "::" + config["FN_FN_NAME"]),
+	}
+
+	if header.Get("x-b3-sampled") != "" {
+		isSampled, err := strconv.ParseBool(header.Get("x-b3-sampled"))
+		if err == nil {
+			tctx.sampled = isSampled
+		}
+	}
+
+	isEnabled, err := strconv.ParseBool(config["OCI_TRACING_ENABLED"])
+	tctx.tracingEnabled = false
+	if err == nil {
+		tctx.tracingEnabled = isEnabled
+	}
+
+	return tctx
+}
+
 func withBaseContext(ctx context.Context, r *http.Request) (_ context.Context, cancel func()) {
+	configData := buildConfig() // from env vars (stinky, but effective...)
 	rctx := baseCtx{
-		config: buildConfig(), // from env vars (stinky, but effective...)
-		callID: r.Header.Get("Fn-Call-Id"),
-		header: r.Header,
+		config:         configData,
+		callID:         r.Header.Get("Fn-Call-Id"),
+		header:         r.Header,
+		tracingContext: setTracingContext(configData, r.Header),
 	}
 
 	ctx = WithContext(ctx, rctx)
@@ -215,5 +277,22 @@ func sockPerm(phonySock, realSock string) {
 	err = os.Symlink(filepath.Base(phonySock), realSock)
 	if err != nil {
 		log.Fatalln("error linking fake sock to real sock", err)
+	}
+}
+
+// If enabled, print the log framing content.
+func logFrameHeader(r *http.Request) {
+	framer := os.Getenv("FN_LOGFRAME_NAME")
+	if framer == "" {
+		return
+	}
+	valueSrc := os.Getenv("FN_LOGFRAME_HDR")
+	if valueSrc == "" {
+		return
+	}
+	id := r.Header.Get(valueSrc)
+	if id != "" {
+		fmt.Fprintf(os.Stderr, "\n%s=%s\n", framer, id)
+		fmt.Fprintf(os.Stdout, "\n%s=%s\n", framer, id)
 	}
 }

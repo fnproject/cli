@@ -121,7 +121,7 @@ func (h *NodeLangHelper) DockerfileBuildCmds() []string {
 
 		r = append(r,
 			"ADD package.json /function/",
-			"RUN npm install",
+			"RUN npm install  && chown -R $(id -u):$(id -g) node_modules",
 		)
 	}
 	return r

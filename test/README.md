@@ -20,7 +20,7 @@ func TestPythonCall(t *testing.T) {
 
 	h.MkDir(funcName)
 	h.Cd(funcName)
-	h.Fn("init", "--name", funcName, "--runtime", "python3.6").AssertSuccess()
+	h.Fn("init", "--name", funcName, "--runtime", "python3.9").AssertSuccess()
 	appName := h.NewAppName()
 	h.Fn("deploy", "--local", appName).AssertSuccess()
 	h.Fn("invoke", appName, funcName).AssertSuccess()

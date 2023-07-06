@@ -78,11 +78,12 @@ func (h *GoLangHelper) DockerfileBuildCmds() []string {
 			r = append(r, "ENV GOFLAGS=\"-mod=vendor\"")
 		}
 		r = append(r, "COPY . .")
+		r = append(r, "RUN go mod tidy")
 	} else {
 		r = append(r, "ADD . /go/src/func/")
 	}
 
-	r = append(r, "RUN cd /go/src/func/ && go build -o func")
+	r = append(r, "RUN go build -o func -v")
 
 	return r
 }
