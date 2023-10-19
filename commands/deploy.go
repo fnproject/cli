@@ -390,9 +390,12 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	if !p.local {
 		// fetch the architectures
 		shape = app.Shape
+		fmt.Printf("*****shape is %v *******", shape)
 		if shape == "" {
+			fmt.Printf("shape is default")
 			shape = common.DefaultAppShape
 			app.Shape = shape
+			//shape = "GENERIC_ARM"
 		}
 
 		if _, ok := common.ShapeMap[shape]; !ok {

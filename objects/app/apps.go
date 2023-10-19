@@ -152,10 +152,11 @@ func (a *appsCmd) create(c *cli.Context) error {
 	}
 
 	appWithFlags(c, app)
+
 	// If architectures flag is not set then default it to nil
 	if c.IsSet(SHAPE_PARAMETER) {
 		shapeParam := c.String(SHAPE_PARAMETER)
-
+		fmt.Printf("in apps.go shape parameter is set and is %v", shapeParam)
 		// Check for architectures parameter passed or set to default
 		if len(shapeParam) == 0 {
 			return errors.New("no shape specified for the application")
@@ -165,6 +166,8 @@ func (a *appsCmd) create(c *cli.Context) error {
 			return errors.New("invalid shape specified for the application")
 		}
 		app.Shape = shapeParam
+	} else {
+		fmt.Printf("in apps.go shape parameter is not set")
 	}
 	_, err := CreateApp(a.client, app)
 	return err
@@ -178,12 +181,14 @@ func CreateApp(a *fnclient.Fn, app *modelsv2.App) (*modelsv2.App, error) {
 	})
 
 	if err != nil {
+
 		switch e := err.(type) {
 		case *apiapps.CreateAppBadRequest:
 			err = fmt.Errorf("%v", e.Payload.Message)
 		case *apiapps.CreateAppConflict:
 			err = fmt.Errorf("%v", e.Payload.Message)
 		}
+		//fmt.Println("create App error is %v", err)
 		return nil, err
 	}
 	fmt.Println("Successfully created app: ", resp.Payload.Name)
