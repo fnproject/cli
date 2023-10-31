@@ -495,6 +495,7 @@ func buildDockerCommand(imageName, dockerfile string, buildArgs []string, noCach
 
 // RunBuild runs function from func.yaml/json/yml.
 func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string, shape string) error {
+	var issuePush bool
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -530,6 +531,7 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 
 	go func(done chan<- error) {
 		var dockerBuildCmdArgs []string
+
 		// Depending whether architecture list is passed or not trigger docker buildx or docker build accordingly
 
 		if arch, ok := ShapeMap[shape]; ok {
@@ -553,6 +555,7 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 				} else {
 					fmt.Println("TargetedPlatform and hostPlatform are same")
 					dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache)
+					issuePush = true
 				}
 			}
 		}
@@ -580,7 +583,7 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 		fmt.Fprintln(os.Stderr)
 		return fmt.Errorf("build cancelled on signal %v", signal)
 	}
-	if containerEngineType != containerEngineTypeDocker {
+	if containerEngineType != containerEngineTypeDocker || issuePush {
 		fmt.Println("Using Container engine", containerEngineType, "to push as --push id only for docker and --load is for podman")
 		// Push to docker registry
 		fmt.Println("Using Container engine", containerEngineType, "to push")
