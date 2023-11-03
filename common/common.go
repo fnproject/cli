@@ -65,7 +65,7 @@ var CommandVerbose bool
 var ShapeMap = map[string][]string{
 	modelsv2.AppShapeGENERICX86:    {"linux/amd64"},
 	modelsv2.AppShapeGENERICARM:    {"linux/arm64"},
-	modelsv2.AppShapeGENERICX86ARM: {"linux/amd64", "linux/arm64"},
+	modelsv2.AppShapeGENERICX86ARM: {"linux/arm64", "linux/amd64"},
 }
 
 var TargetPlatformMap = map[string][]string{
@@ -425,7 +425,7 @@ func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCac
 	args := []string{
 		buildCommand,
 		"build",
-		"-t", name,
+		//"-t", name,
 		"-f", dockerfile,
 		//"--load",
 		"--platform", strings.Join(architectures, ","),
@@ -450,11 +450,12 @@ func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCac
 
 	if containerEngineType != containerEngineTypeDocker {
 		fmt.Println("*** engine type not docker append load")
+		args = append(args, "--manifest", name)
 		args = append(args, "--load")
 	} else {
-		fmt.Println("*** engine type docker append push")
+		fmt.Println("*** engine type docker append  push")
+		args = append(args, "-t", name)
 		args = append(args, "--push")
-
 	}
 
 	args = append(args,
@@ -466,12 +467,16 @@ func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCac
 	return args
 }
 
-func buildDockerCommand(imageName, dockerfile string, buildArgs []string, noCache bool) []string {
+func buildDockerCommand(imageName, dockerfile string, buildArgs []string, noCache bool, architectures []string) []string {
 	var name = imageName
+	plat:= strings.Join(architectures,"," )
+	fmt.Println("build platform is %v", plat)
+
 	args := []string{
 		"build",
 		"-t", name,
 		"-f", dockerfile,
+		"--platform", strings.Join(architectures, ","),
 	}
 
 	if noCache {
@@ -554,12 +559,15 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 					defer cleanupContainerBuilder(containerEngineType)
 				} else {
 					fmt.Println("TargetedPlatform and hostPlatform are same")
-					dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache)
+					fmt.Println("1. issuePush is ", issuePush)
+					dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures )
 					issuePush = true
+					fmt.Println("2. issuePush is ", issuePush)
 				}
 			}
 		}
-
+        fmt.Println("*****containerEngineType*****",containerEngineType )
+		fmt.Println("*****dockerBuildCmdArgs*******", dockerBuildCmdArgs)
 		cmd := exec.Command(containerEngineType, dockerBuildCmdArgs...)
 		cmd.Dir = dir
 		cmd.Stderr = buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
@@ -588,11 +596,24 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 		// Push to docker registry
 		fmt.Println("Using Container engine", containerEngineType, "to push")
 		fmt.Printf("Pushing %v to docker registry...", imageName)
-		cmd := exec.Command(containerEngineType, "push", imageName)
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("error running %v push, are you logged?: %v", containerEngineType, err)
+		if issuePush == true {
+			// build push
+			fmt.Println("***build push***")
+			cmd := exec.Command(containerEngineType, "push", imageName)
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("error running %v push, are you logged?: %v", containerEngineType, err)
+			}
+		} else {
+			// buildX push for podman
+			fmt.Println("***buildX push for podman***")
+			cmd := exec.Command(containerEngineType, "manifest", "push", imageName)
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("error running %v push, are you logged?: %v", containerEngineType, err)
+			}
 		}
 	}
 	return nil
