@@ -57,6 +57,7 @@ func Create() cli.Command {
 				Usage: "Syslog URL to send application logs to",
 			},
 			cli.StringFlag{
+			//cli.StringSliceFlag{
 				Name:  "shape",
 				Usage: "Valid values are GENERIC_X86, GENERIC_ARM and GENERIC_X86_ARM. Default is GENERIC_X86. Setting this to GENERIC_X86, will run the functions in the application on X86 processor architecture.\n Setting this to GENERIC_ARM, will run the functions in the application on ARM processor architecture.\n When set to 'GENERIC_X86_ARM', functions in the application are run on either X86 or ARM processor architecture.\n Accepted values are:\n GENERIC_X86, GENERIC_ARM, GENERIC_X86_ARM",
 			},

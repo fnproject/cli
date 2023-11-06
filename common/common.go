@@ -32,6 +32,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 	"unicode"
@@ -55,6 +56,7 @@ const (
 	MinRequiredDockerVersion = "17.5.0"
 	BuildxBuilderInstance    = "oci_fn_builder"
 	DefaultAppShape          = modelsv2.AppShapeGENERICX86
+	containerEngineTypeDocker      = "docker"
 )
 
 var GlobalVerbose bool
@@ -63,7 +65,13 @@ var CommandVerbose bool
 var ShapeMap = map[string][]string{
 	modelsv2.AppShapeGENERICX86:    {"linux/amd64"},
 	modelsv2.AppShapeGENERICARM:    {"linux/arm64"},
-	modelsv2.AppShapeGENERICX86ARM: {"linux/amd64", "linux/arm64"},
+	modelsv2.AppShapeGENERICX86ARM: {"linux/arm64", "linux/amd64"},
+}
+
+var TargetPlatformMap = map[string][]string{
+	modelsv2.AppShapeGENERICX86:    {"amd64"},
+	modelsv2.AppShapeGENERICARM:    {"arm64"},
+	modelsv2.AppShapeGENERICX86ARM: {"amd64_arm64"},
 }
 
 func IsVerbose() bool {
@@ -408,15 +416,18 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 	return nil
 }
 
-func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCache bool, architectures []string) []string {
+func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCache bool, architectures []string, containerEngineType string) []string {
 	var buildCommand = "buildx"
 	var name = imageName
 
+	plat:= strings.Join(architectures,"," )
+	fmt.Println("buildX platform is %v", plat)
 	args := []string{
 		buildCommand,
 		"build",
-		"-t", name,
+		//"-t", name,
 		"-f", dockerfile,
+		//"--load",
 		"--platform", strings.Join(architectures, ","),
 	}
 
@@ -435,6 +446,15 @@ func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCac
 		var label = "imageName=" + imageName
 		args = append(args, "--build-arg", arg)
 		args = append(args, "--label", label)
+	}
+
+	if containerEngineType != containerEngineTypeDocker {
+		fmt.Println("*** engine type not docker append load")
+		args = append(args, "--manifest", name)
+		args = append(args, "--load")
+	} else {
+		fmt.Println("*** engine type docker append  push")
+		args = append(args, "-t", name)
 		args = append(args, "--push")
 	}
 
@@ -447,12 +467,16 @@ func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCac
 	return args
 }
 
-func buildDockerCommand(imageName, dockerfile string, buildArgs []string, noCache bool) []string {
+func buildDockerCommand(imageName, dockerfile string, buildArgs []string, noCache bool, architectures []string) []string {
 	var name = imageName
+	plat:= strings.Join(architectures,"," )
+	fmt.Println("build platform is %v", plat)
+
 	args := []string{
 		"build",
 		"-t", name,
 		"-f", dockerfile,
+		"--platform", strings.Join(architectures, ","),
 	}
 
 	if noCache {
@@ -476,6 +500,7 @@ func buildDockerCommand(imageName, dockerfile string, buildArgs []string, noCach
 
 // RunBuild runs function from func.yaml/json/yml.
 func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []string, noCache bool, containerEngineType string, shape string) error {
+	var issuePush bool
 	cancel := make(chan os.Signal, 3)
 	signal.Notify(cancel, os.Interrupt) // and others perhaps
 	defer signal.Stop(cancel)
@@ -511,23 +536,38 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 
 	go func(done chan<- error) {
 		var dockerBuildCmdArgs []string
+
 		// Depending whether architecture list is passed or not trigger docker buildx or docker build accordingly
-		var mappedArchitectures []string
+
 		if arch, ok := ShapeMap[shape]; ok {
+			var mappedArchitectures []string
 			mappedArchitectures = append(mappedArchitectures, arch...)
-			err := initializeContainerBuilder(containerEngineType, mappedArchitectures)
-			if err != nil {
-				done <- err
-				return
+			var hostedPlatform = runtime.GOARCH
+			if platform, ok := TargetPlatformMap[shape]; ok {
+				// create target platform string to compare with hosted platform
+				targetPlatform := strings.Join(platform," ")
+				fmt.Println("hosted platform %v target platform %v", hostedPlatform, targetPlatform)
+				if targetPlatform != hostedPlatform {
+					fmt.Println("TargetedPlatform and hostPlatform are not same")
+					err := initializeContainerBuilder(containerEngineType, mappedArchitectures)
+					if err != nil {
+						done <- err
+						return
+					}
+					dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures, containerEngineType )
+					// perform cleanup
+					defer cleanupContainerBuilder(containerEngineType)
+				} else {
+					fmt.Println("TargetedPlatform and hostPlatform are same")
+					fmt.Println("1. issuePush is ", issuePush)
+					dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures )
+					issuePush = true
+					fmt.Println("2. issuePush is ", issuePush)
+				}
 			}
-
-			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures)
-			// perform cleanup
-			defer cleanupContainerBuilder(containerEngineType)
-		} else {
-			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache)
 		}
-
+        fmt.Println("*****containerEngineType*****",containerEngineType )
+		fmt.Println("*****dockerBuildCmdArgs*******", dockerBuildCmdArgs)
 		cmd := exec.Command(containerEngineType, dockerBuildCmdArgs...)
 		cmd.Dir = dir
 		cmd.Stderr = buildErr // Doesn't look like there's any output to stderr on docker build, whether it's successful or not.
@@ -550,6 +590,31 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 		close(quit)
 		fmt.Fprintln(os.Stderr)
 		return fmt.Errorf("build cancelled on signal %v", signal)
+	}
+	if containerEngineType != containerEngineTypeDocker || issuePush {
+		fmt.Println("Using Container engine", containerEngineType, "to push as --push id only for docker and --load is for podman")
+		// Push to docker registry
+		fmt.Println("Using Container engine", containerEngineType, "to push")
+		fmt.Printf("Pushing %v to docker registry...", imageName)
+		if issuePush == true {
+			// build push
+			fmt.Println("***build push***")
+			cmd := exec.Command(containerEngineType, "push", imageName)
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("error running %v push, are you logged?: %v", containerEngineType, err)
+			}
+		} else {
+			// buildX push for podman
+			fmt.Println("***buildX push for podman***")
+			cmd := exec.Command(containerEngineType, "manifest", "push", imageName)
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("error running %v push, are you logged?: %v", containerEngineType, err)
+			}
+		}
 	}
 	return nil
 }
@@ -620,6 +685,10 @@ func isSupportedByDefaultBuildxPlatforms(containerEngineType string, platforms [
 
 func initializeContainerBuilder(containerEngineType string, platforms []string) error {
 
+	if containerEngineType != containerEngineTypeDocker {
+		fmt.Println("engine type not docker return nil")
+		return nil
+	}
 	if isSupportedByDefaultBuildxPlatforms(containerEngineType, platforms) {
 		return nil
 	}
