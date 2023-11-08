@@ -32,6 +32,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 	"unicode"
@@ -64,6 +65,12 @@ var ShapeMap = map[string][]string{
 	modelsv2.AppShapeGENERICX86:    {"linux/amd64"},
 	modelsv2.AppShapeGENERICARM:    {"linux/arm64"},
 	modelsv2.AppShapeGENERICX86ARM: {"linux/amd64", "linux/arm64"},
+}
+
+var TargetPlatformMap = map[string][]string{
+	modelsv2.AppShapeGENERICX86:    {"amd64"},
+	modelsv2.AppShapeGENERICARM:    {"arm64"},
+	modelsv2.AppShapeGENERICX86ARM: {"amd64_arm64"},
 }
 
 func IsVerbose() bool {
@@ -513,19 +520,42 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 		var dockerBuildCmdArgs []string
 		// Depending whether architecture list is passed or not trigger docker buildx or docker build accordingly
 		var mappedArchitectures []string
+		var test bool
+		test = true
+		arch:= ShapeMap[shape]
+		fmt.Println("1. shape is", shape)
 		if arch, ok := ShapeMap[shape]; ok {
-			mappedArchitectures = append(mappedArchitectures, arch...)
-			err := initializeContainerBuilder(containerEngineType, mappedArchitectures)
-			if err != nil {
-				done <- err
-				return
-			}
+			fmt.Println("1. arch is", arch)
+		}
 
-			dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures)
-			// perform cleanup
-			defer cleanupContainerBuilder(containerEngineType)
-		} else {
-			dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache)
+		//if arch, ok := ShapeMap[shape]; ok {
+		//arch:= ShapeMap[shape]
+		if test {
+			mappedArchitectures = append(mappedArchitectures, arch...)
+			var hostedPlatform = runtime.GOARCH
+			platform := TargetPlatformMap[shape]
+			//if platform, ok := TargetPlatformMap[shape]; ok {
+			if test {
+				targetPlatform := strings.Join(platform, " ")
+				fmt.Println("logs:", hostedPlatform, targetPlatform)
+				//if targetPlatform != hostedPlatform {
+				if test {
+					err := initializeContainerBuilder(containerEngineType, mappedArchitectures)
+					if err != nil {
+						done <- err
+						return
+					}
+					fmt.Println("arch is", arch)
+
+					dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures)
+					//dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache)
+					// perform cleanup
+					defer cleanupContainerBuilder(containerEngineType)
+				} else {
+					//	fmt.Println("arch is",arch)
+					dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache)
+				}
+			}
 		}
 
 		cmd := exec.Command(containerEngineType, dockerBuildCmdArgs...)
