@@ -39,6 +39,7 @@ var runtimes = []string{
 	"node16",
 	"node14",
 	"python",
+	"python3.11",
 	"python3.9",
 	"python3.8",
 }
