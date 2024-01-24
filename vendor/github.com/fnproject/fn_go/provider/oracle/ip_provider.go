@@ -26,10 +26,19 @@ func NewIPProvider(configSource provider.ConfigSource, passphraseSource provider
 	compartmentID := configSource.GetString(CfgCompartmentID)
 	if compartmentID == "" {
 		// Get the local compartment ID from the metadata endpoint
-		resp, err := http.DefaultClient.Get(CompartmentMetadata)
+		req, err := http.NewRequest("GET", CompartmentMetadata, nil)
 		if err != nil {
 			return nil, fmt.Errorf("problem fetching compartment OCID from metadata endpoint %s", err)
 		}
+
+		// IMDS v2 requires authorisation header for any request
+		req.Header.Add("Authorization", "Bearer Oracle")
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("problem fetching compartment OCID from metadata endpoint %s", err)
+		}
+
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return nil, fmt.Errorf("problem fetching compartment OCID from metadata endpoint %s", err)
