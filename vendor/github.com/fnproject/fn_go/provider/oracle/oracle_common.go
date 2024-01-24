@@ -26,9 +26,9 @@ const (
 	CfgCompartmentID                      = "oracle.compartment-id"
 	CfgImageCompartmentID                 = "oracle.image-compartment-id"
 	CfgDisableCerts                       = "oracle.disable-certs"
-	CompartmentMetadata                   = "http://169.254.169.254/opc/v1/instance/compartmentId"
+	CompartmentMetadata                   = "http://169.254.169.254/opc/v2/instance/compartmentId"
 	FunctionsAPIURLTmpl                   = "https://functions.%s.oci.%s"
-	realmDomainMetadata                   = "http://169.254.169.254/opc/v1/instance/regionInfo/realmDomainComponent"
+	realmDomainMetadata                   = "http://169.254.169.254/opc/v2/instance/regionInfo/realmDomainComponent"
 	requestHeaderOpcRequestID             = "Opc-Request-Id"
 	requestHeaderOpcCompId                = "opc-compartment-id"
 	requestHeaderOpcOboToken              = "opc-obo-token"
@@ -47,11 +47,11 @@ const (
 )
 
 type Response struct {
-	Annotations   Annotations `json:"annotations"`
-	CreatedAt     string      `json:"created_at"`
-	UpdatedAt     string      `json:"updated_at"`
-	Name          string      `json:"name"`
-	Shape         string      `json:shape`
+	Annotations Annotations `json:"annotations"`
+	CreatedAt   string      `json:"created_at"`
+	UpdatedAt   string      `json:"updated_at"`
+	Name        string      `json:"name"`
+	Shape       string      `json:shape`
 }
 
 type Annotations struct {
@@ -220,7 +220,16 @@ func GetRealmDomain() (string, error) {
 	client := &http.Client{
 		Timeout: time.Second * 10,
 	}
-	resp, err := client.Get(realmDomainMetadata)
+
+	req, err := http.NewRequest("GET", realmDomainMetadata, nil)
+	if err != nil {
+		return "", fmt.Errorf("problem fetching realm domain from metadata endpoint %s", err)
+	}
+
+	// IMDS v2 requires authorisation header for any request
+	req.Header.Add("Authorization", "Bearer Oracle")
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("problem fetching realm domain from metadata endpoint %s", err)
 	}
