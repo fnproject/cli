@@ -44,7 +44,6 @@ var Runtimes = []struct {
 	{"node14", ""},
 	{"ruby", ""},
 	{"ruby3.1", ""},
-	{"ruby2.7", ""},
 	{"python", ""},
 	{"python3.8", ""},
 	{"python3.9", ""},

@@ -33,7 +33,6 @@ var runtimes = []string{
 	"kotlin",
 	"ruby",
 	"ruby3.1",
-	"ruby2.7",
 	"node",
 	"node18",
 	"node16",
