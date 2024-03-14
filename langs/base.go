@@ -55,7 +55,7 @@ func init() {
 	registerHelper(&KotlinLangHelper{})
 
 	// for older versions support backwards compatibility
-	fallBackOlderVersions["ruby"] = &RubyLangHelper{Version: "2.5"}
+	fallBackOlderVersions["ruby"] = &RubyLangHelper{Version: "3.1"}
 	fallBackOlderVersions["node"] = &NodeLangHelper{Version: "11"}
 	fallBackOlderVersions["go"] = &GoLangHelper{Version: "1.11"}
 }
