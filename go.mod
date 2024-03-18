@@ -3,7 +3,7 @@ module github.com/fnproject/cli
 require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
-	github.com/fnproject/fn_go v0.8.9
+	github.com/fnproject/fn_go v0.8.10
 	github.com/ghodss/yaml v1.0.0
 	github.com/giantswarm/semver-bump v0.0.0-20140912095342-88e6c9f2fe39
 	github.com/go-openapi/runtime v0.19.23
