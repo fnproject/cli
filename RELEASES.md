@@ -1,6 +1,11 @@
 
 # Releases
 
+## v 0.6.30
+* 
+* Fix security vulnerability issue
+* Remove Ruby 2.7 support
+
 ## v 0.6.26
 
 * Enabling support for node18, node16, go1.19, go1.18, ruby3.1.
