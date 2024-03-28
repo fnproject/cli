@@ -1,6 +1,11 @@
 
 # Releases
 
+## v 0.6.31
+
+* Enabling support for node20
+* Removing support for node16, node 14
+
 ## v 0.6.30
 * 
 * Fix security vulnerability issue
