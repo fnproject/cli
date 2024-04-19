@@ -558,7 +558,7 @@ func getRepositoryName(ff *common.FuncFileV20180708) (string, error) {
 	if len(parts) != 2 {
 		return "", fmt.Errorf("cannot parse image %s", ff.ImageNameV20180708())
 	}
-	pattern := regexp.MustCompile("(.*)\\.ocir\\.io/([^/]*)/(.*)")
+	pattern := regexp.MustCompile("(.*)/([^/]*)/(.*)")
 	parts = pattern.FindStringSubmatch(parts[0])
 	if len(parts) != 4 {
 		return "", fmt.Errorf("cannot parse registry for image %s", ff.ImageNameV20180708())
