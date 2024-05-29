@@ -28,8 +28,8 @@ var Runtimes = []struct {
 	callInput string
 }{
 	{"go", ""},
+	{"go1.20", ""},
 	{"go1.19", ""},
-	{"go1.18", ""},
 	{"dotnet", ""},
 	{"dotnet3.1", ""},
 	{"dotnet6.0", ""},
