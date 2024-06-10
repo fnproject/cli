@@ -1,6 +1,10 @@
 
 # Releases
 
+## v 0.6.34
+
+* Enabling support for go1.20
+
 ## v 0.6.31
 
 * Enabling support for node20
