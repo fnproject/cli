@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:current
     working_directory: ~/go/src/github.com/fnproject/cli
     environment: # apparently expansion doesn't work here yet: https://discuss.circleci.com/t/environment-variable-expansion-in-working-directory/11322
       - GO111MODULE=on
@@ -11,6 +11,7 @@ jobs:
       - GOVERSION=1.17
       - OS=linux
       - ARCH=amd64
+      - DOCKER_VERSION=5:26.1.4-1~ubuntu.20.04~focal
     steps:
       - checkout
       # update Go
@@ -20,7 +21,7 @@ jobs:
           mkdir tmp
           cd tmp
           sudo rm -rf /usr/local/go
-          wget https://storage.googleapis.com/golang/go$GOVERSION.$OS-$ARCH.tar.gz
+          wget https://dl.google.com/go/go$GOVERSION.$OS-$ARCH.tar.gz
           sudo tar -C /usr/local -xzf go$GOVERSION.$OS-$ARCH.tar.gz
           export PATH=$PATH:$HOME/go/bin
       - run: go version
@@ -28,7 +29,17 @@ jobs:
       - run: |
           docker version
           sudo service docker stop
-          curl -fsSL https://get.docker.com/ | sudo sh
+          sudo apt-get update
+          sudo apt-get install ca-certificates
+          sudo install -m 0755 -d /etc/apt/keyrings
+          sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+          sudo chmod a+r /etc/apt/keyrings/docker.asc
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+            $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+            sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install docker-ce=$DOCKER_VERSION docker-ce-cli=$DOCKER_VERSION
       - run: docker version
       - run:
           name: build and test
