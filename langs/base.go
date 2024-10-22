@@ -34,8 +34,8 @@ func init() {
 	registerHelper(&DotnetLangHelper{Version: "8.0"})
 	registerHelper(&DotnetLangHelper{Version: "6.0"})
 	registerHelper(&DotnetLangHelper{Version: "3.1"})
+	registerHelper(&GoLangHelper{Version: "1.23"})
 	registerHelper(&GoLangHelper{Version: "1.20"})
-	registerHelper(&GoLangHelper{Version: "1.19"})
 	// order matter, 'java' will pick up the first JavaLangHelper
 	registerHelper(&JavaLangHelper{version: "17"})
 	registerHelper(&JavaLangHelper{version: "11"})
