@@ -24,7 +24,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"log"
@@ -36,6 +35,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/fatih/color"
@@ -51,12 +52,12 @@ import (
 
 // Global docker variables.
 const (
-	FunctionsDockerImage     = "fnproject/fnserver"
-	FuncfileDockerRuntime    = "docker"
-	MinRequiredDockerVersion = "17.5.0"
-	BuildxBuilderInstance    = "oci_fn_builder"
-	DefaultAppShape          = modelsv2.AppShapeGENERICX86
-	containerEngineTypeDocker      = "docker"
+	FunctionsDockerImage      = "fnproject/fnserver"
+	FuncfileDockerRuntime     = "docker"
+	MinRequiredDockerVersion  = "17.5.0"
+	BuildxBuilderInstance     = "oci_fn_builder"
+	DefaultAppShape           = modelsv2.AppShapeGENERICX86
+	containerEngineTypeDocker = "docker"
 )
 
 var GlobalVerbose bool
@@ -444,13 +445,14 @@ func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCac
 		args = append(args, "--label", label)
 	}
 
-	if containerEngineType != containerEngineTypeDocker {
-	    // Need to append load for podman as push option is not supported
+	b := determineIsDockerWrapperOfPodman(containerEngineTypeDocker)
+	if containerEngineType != containerEngineTypeDocker || (containerEngineType == containerEngineTypeDocker && b) {
+		// Need to append load for podman as push option is not supported
 		// podman push will be issued later
 		args = append(args, "--manifest", name)
 		args = append(args, "--load")
 	} else {
-	    // container engine type is Docker 
+		// container engine type is Docker
 		args = append(args, "-t", name)
 		args = append(args, "--push")
 	}
@@ -474,7 +476,7 @@ func buildDockerCommand(imageName, dockerfile string, buildArgs []string, noCach
 	}
 
 	if len(architectures) > 0 {
-		args = append(args, "--platform",strings.Join(architectures, ",") )
+		args = append(args, "--platform", strings.Join(architectures, ","))
 	}
 
 	if noCache {
@@ -543,19 +545,19 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 			var hostedPlatform = runtime.GOARCH
 			if platform, ok := TargetPlatformMap[shape]; ok {
 				// create target platform string to compare with hosted platform
-				targetPlatform := strings.Join(platform," ")
-				fmt.Println("TargetedPlatform: ",targetPlatform + "HostPlatform: ", hostedPlatform)
+				targetPlatform := strings.Join(platform, " ")
+				fmt.Println("TargetedPlatform: ", targetPlatform+"HostPlatform: ", hostedPlatform)
 				if targetPlatform != hostedPlatform {
 					err := initializeContainerBuilder(containerEngineType, mappedArchitectures)
 					if err != nil {
 						done <- err
 						return
 					}
-					dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures, containerEngineType )
+					dockerBuildCmdArgs = buildXDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures, containerEngineType)
 					// perform cleanup
 					defer cleanupContainerBuilder(containerEngineType)
 				} else {
-					dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures )
+					dockerBuildCmdArgs = buildDockerCommand(imageName, dockerfile, buildArgs, noCache, mappedArchitectures)
 					issuePush = true
 				}
 			}
@@ -588,26 +590,26 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 		return fmt.Errorf("build cancelled on signal %v", signal)
 	}
 	if !isLocal && (containerEngineType != containerEngineTypeDocker || issuePush) {
-			// Push to docker registry
-			fmt.Println("Using Container engine ", containerEngineType, " to push")
-			fmt.Printf("Pushing %v to docker registry...", imageName)
-			if issuePush == true {
-				// build push for same targetedPlatform and hostPlatform
-				cmd := exec.Command(containerEngineType, "push", imageName)
-				cmd.Stderr = os.Stderr
-				cmd.Stdout = os.Stdout
-				if err := cmd.Run(); err != nil {
-					return fmt.Errorf("error running %v push: %v", containerEngineType, err)
-				}
-			} else {
-				// push for podman
-				cmd := exec.Command(containerEngineType, "manifest", "push", imageName)
-				cmd.Stderr = os.Stderr
-				cmd.Stdout = os.Stdout
-				if err := cmd.Run(); err != nil {
-					return fmt.Errorf("error running %v push: %v", containerEngineType, err)
-				}
+		// Push to docker registry
+		fmt.Println("Using Container engine ", containerEngineType, " to push")
+		fmt.Printf("Pushing %v to docker registry...", imageName)
+		if issuePush == true {
+			// build push for same targetedPlatform and hostPlatform
+			cmd := exec.Command(containerEngineType, "push", imageName)
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("error running %v push: %v", containerEngineType, err)
 			}
+		} else {
+			// push for podman
+			cmd := exec.Command(containerEngineType, "manifest", "push", imageName)
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("error running %v push: %v", containerEngineType, err)
+			}
+		}
 	}
 	return nil
 }
@@ -625,15 +627,42 @@ func containerEngineVersionCheck(containerEngineType string) error {
 		return fmt.Errorf("could not check %v version: %v", containerEngineType, err)
 	}
 	if containerEngineType == "docker" {
-		vMin, err := semver.NewVersion(MinRequiredDockerVersion)
-		if err != nil {
-			return fmt.Errorf("our bad, sorry... please make an issue, detailed error: %v", err)
-		}
-		if v.LessThan(*vMin) {
-			return fmt.Errorf("please upgrade your version of Docker to %s or greater", MinRequiredDockerVersion)
+		b := determineIsDockerWrapperOfPodman(containerEngineType)
+		if b == false {
+			vMin, err := semver.NewVersion(MinRequiredDockerVersion)
+			if err != nil {
+				return fmt.Errorf("our bad, sorry... please make an issue, detailed error: %v", err)
+			}
+			if v.LessThan(*vMin) {
+				return fmt.Errorf("please upgrade your version of Docker to %s or greater", MinRequiredDockerVersion)
+			}
 		}
 	}
 	return nil
+}
+
+func determineIsDockerWrapperOfPodman(containerEngineType string) bool {
+	podmanContainerEngineType := "podman"
+	podmanVersionOut, err := exec.Command(podmanContainerEngineType, "--version").Output()
+	if err != nil {
+		fmt.Printf("ContainerEngine %v, is not installed skipping check to determine if docker is wrapper of podman %v", containerEngineType, err)
+		return false
+	}
+
+	dockerVersionOut, err := exec.Command(containerEngineType, "--version").Output()
+	if err != nil {
+		//If docker is installed, the fn build will fail before this condition, hence just return nil
+		return false
+	}
+
+	podmanVersion := strings.TrimSpace(string(podmanVersionOut))
+	dockerVersion := strings.TrimSpace(string(dockerVersionOut))
+
+	if podmanVersion == dockerVersion {
+		fmt.Printf("ContainerEngine %v version is equal to version of ContainerEnginer %v, docker is wrapper of podman.", containerEngineType, podmanContainerEngineType)
+		return true
+	}
+	return false
 }
 
 func isSupportedByDefaultBuildxPlatforms(containerEngineType string, platforms []string) bool {
@@ -681,6 +710,15 @@ func initializeContainerBuilder(containerEngineType string, platforms []string) 
 	if containerEngineType != containerEngineTypeDocker {
 		//engine type not docker return
 		return nil
+	}
+
+	if containerEngineType == "docker" {
+		b := determineIsDockerWrapperOfPodman(containerEngineType)
+		if b {
+			// If Docker is wrapper on top of podman we don't need this
+			fmt.Println("Docker is wrapper of podman, skip creating builder instance for docker.")
+			return nil
+		}
 	}
 	if isSupportedByDefaultBuildxPlatforms(containerEngineType, platforms) {
 		return nil
@@ -1058,7 +1096,7 @@ func ListFnsAndTriggersInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.
 	return fns, trs, nil
 }
 
-//DeleteFunctions deletes all the functions provided to it. if provided nil it is a no-op
+// DeleteFunctions deletes all the functions provided to it. if provided nil it is a no-op
 func DeleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) error {
 	if fns == nil {
 		return nil
@@ -1075,7 +1113,7 @@ func DeleteFunctions(c *cli.Context, client *fnclient.Fn, fns []*modelsv2.Fn) er
 	return nil
 }
 
-//DeleteTriggers deletes all the triggers provided to it. if provided nil it is a no-op
+// DeleteTriggers deletes all the triggers provided to it. if provided nil it is a no-op
 func DeleteTriggers(c *cli.Context, client *fnclient.Fn, triggers []*modelsv2.Trigger) error {
 	if triggers == nil {
 		return nil
@@ -1092,7 +1130,7 @@ func DeleteTriggers(c *cli.Context, client *fnclient.Fn, triggers []*modelsv2.Tr
 	return nil
 }
 
-//ListFnsInApp gets all the functions associated with an app
+// ListFnsInApp gets all the functions associated with an app
 func ListFnsInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*modelsv2.Fn, error) {
 	params := &apifns.ListFnsParams{
 		Context: context.Background(),
@@ -1120,7 +1158,7 @@ func ListFnsInApp(c *cli.Context, client *fnclient.Fn, app *modelsv2.App) ([]*mo
 	return resFns, nil
 }
 
-//ListTriggersInFunc gets all the triggers associated with a function
+// ListTriggersInFunc gets all the triggers associated with a function
 func ListTriggersInFunc(c *cli.Context, client *fnclient.Fn, fn *modelsv2.Fn) ([]*modelsv2.Trigger, error) {
 	params := &apitriggers.ListTriggersParams{
 		Context: context.Background(),
