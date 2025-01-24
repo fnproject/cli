@@ -80,7 +80,7 @@ func Invoke(provider provider.Provider, ireq InvokeRequest) (*http.Response, err
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
 	} else {
-		req.Header.Set("Content-Type", "text/plain")
+		req.Header.Set("Content-Type", "application/json")
 	}
 
 	if len(env) > 0 {
