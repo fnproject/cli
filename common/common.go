@@ -62,6 +62,7 @@ const (
 
 var GlobalVerbose bool
 var CommandVerbose bool
+var isdockerWrapperOfPodman bool
 
 var ShapeMap = map[string][]string{
 	modelsv2.AppShapeGENERICX86:    {"linux/amd64"},
@@ -445,8 +446,7 @@ func buildXDockerCommand(imageName, dockerfile string, buildArgs []string, noCac
 		args = append(args, "--label", label)
 	}
 
-	b := determineIsDockerWrapperOfPodman(containerEngineTypeDocker)
-	if containerEngineType != containerEngineTypeDocker || (containerEngineType == containerEngineTypeDocker && b) {
+	if containerEngineType != containerEngineTypeDocker || (containerEngineType == containerEngineTypeDocker && isdockerWrapperOfPodman) {
 		// Need to append load for podman as push option is not supported
 		// podman push will be issued later
 		args = append(args, "--manifest", name)
@@ -627,8 +627,8 @@ func containerEngineVersionCheck(containerEngineType string) error {
 		return fmt.Errorf("could not check %v version: %v", containerEngineType, err)
 	}
 	if containerEngineType == "docker" {
-		b := determineIsDockerWrapperOfPodman(containerEngineType)
-		if b == false {
+		isdockerWrapperOfPodman = determineIsDockerWrapperOfPodman(containerEngineType)
+		if !isdockerWrapperOfPodman {
 			vMin, err := semver.NewVersion(MinRequiredDockerVersion)
 			if err != nil {
 				return fmt.Errorf("our bad, sorry... please make an issue, detailed error: %v", err)
@@ -645,13 +645,13 @@ func determineIsDockerWrapperOfPodman(containerEngineType string) bool {
 	podmanContainerEngineType := "podman"
 	podmanVersionOut, err := exec.Command(podmanContainerEngineType, "--version").Output()
 	if err != nil {
-		fmt.Printf("ContainerEngine %v, is not installed skipping check to determine if docker is wrapper of podman %v", containerEngineType, err)
+		fmt.Printf("ContainerEngine %v, is not installed skipping check to determine if docker is wrapper of podman\n", containerEngineType)
 		return false
 	}
 
 	dockerVersionOut, err := exec.Command(containerEngineType, "--version").Output()
 	if err != nil {
-		//If docker is installed, the fn build will fail before this condition, hence just return nil
+		//If docker is not installed, the fn build will fail before this condition, hence just return nil
 		return false
 	}
 
@@ -659,7 +659,7 @@ func determineIsDockerWrapperOfPodman(containerEngineType string) bool {
 	dockerVersion := strings.TrimSpace(string(dockerVersionOut))
 
 	if podmanVersion == dockerVersion {
-		fmt.Printf("ContainerEngine %v version is equal to version of ContainerEnginer %v, docker is wrapper of podman.", containerEngineType, podmanContainerEngineType)
+		fmt.Printf("ContainerEngine %v version is equal to version of ContainerEnginer %v, docker is a wrapper of podman\n", containerEngineType, podmanContainerEngineType)
 		return true
 	}
 	return false
@@ -713,10 +713,9 @@ func initializeContainerBuilder(containerEngineType string, platforms []string) 
 	}
 
 	if containerEngineType == "docker" {
-		b := determineIsDockerWrapperOfPodman(containerEngineType)
-		if b {
+		if isdockerWrapperOfPodman {
 			// If Docker is wrapper on top of podman we don't need this
-			fmt.Println("Docker is wrapper of podman, skip creating builder instance for docker.")
+			fmt.Println("Docker is wrapper of podman, skip creating builder instance for docker")
 			return nil
 		}
 	}
