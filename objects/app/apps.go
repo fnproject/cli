@@ -352,24 +352,26 @@ func (a *appsCmd) delete(c *cli.Context) error {
 
 	//recursive delete of sub-objects
 	if c.Bool("recursive") {
-		fns, triggers, err := common.ListFnsAndTriggersInApp(c, a.client, app)
+
+		fns, err := common.ListFnsInApp(c, a.client, app)
 		if err != nil {
 			return fmt.Errorf("Failed to get associated objects: %s", err)
 		}
+
+		//fns, triggers, err := common.ListFnsAndTriggersInApp(c, a.client, app)
+		//if err != nil {
+		//	return fmt.Errorf("Failed to get associated objects: %s", err)
+		//}
 
 		//Forced deletion
 		var shouldContinue bool
 		if c.Bool("force") {
 			shouldContinue = true
 		} else {
-			shouldContinue = common.UserConfirmedMultiResourceDeletion([]*modelsv2.App{app}, fns, triggers)
+			shouldContinue = common.UserConfirmedMultiResourceDeletion([]*modelsv2.App{app}, fns)
 		}
 
 		if shouldContinue {
-			err := common.DeleteTriggers(c, a.client, triggers)
-			if err != nil {
-				return fmt.Errorf("Failed to delete associated objects: %s", err)
-			}
 			err = common.DeleteFunctions(c, a.client, fns)
 			if err != nil {
 				return fmt.Errorf("Failed to delete associated objects: %s", err)
