@@ -52,11 +52,17 @@ const (
 	EnvFnRegistry = "registry"
 	EnvFnContext  = "context"
 
-	OCI_CLI_AUTH_ENV_VAR            = "OCI_CLI_AUTH"
-	OCI_CLI_AUTH_INSTANCE_PRINCIPAL = "instance_principal"
-	OCI_CLI_AUTH_INSTANCE_OBO_USER  = "instance_obo_user"
-	DefaultContainerEngineType      = "docker"
+	OCI_CLI_AUTH_ENV_VAR                  = "OCI_CLI_AUTH"
+	OCI_CLI_CLOUDSHELL_ENV_VAR            = "OCI_CLI_CLOUD_SHELL"
+	OCI_CLOUDSHELL_OS_NAME                = "Oracle Linux Server"
+	OCI_CLOUDSHELL_OL8_VERSION_IDENTIFIER = "el8"
+	DEFAULT_LINUX_OS_RELEASE_FILE_PATH    = "/etc/os-release"
+	OCI_CLI_AUTH_INSTANCE_PRINCIPAL       = "instance_principal"
+	OCI_CLI_AUTH_INSTANCE_OBO_USER        = "instance_obo_user"
+	DefaultContainerEngineType            = "docker"
 )
+
+var EnvIsOL8CloudShell bool = false
 
 var defaultRootConfigContents = &ContextMap{CurrentContext: "default", CurrentCliVersion: Version, ContainerEngineType: DefaultContainerEngineType}
 
@@ -188,7 +194,6 @@ func ensureConfiguration() error {
 				return err
 			}
 		}
-
 	}
 
 	contextConfigFilePath := filepath.Join(rootConfigPath, contextConfigFileName)
@@ -201,6 +206,20 @@ func ensureConfiguration() error {
 		err = WriteYamlFile(file.Name(), rootConfigContents)
 		if err != nil {
 			return err
+		}
+	}
+
+	// This check is specific for running fn-cli on Oracle Cloud Shell based on OL8
+	if os.Getenv(OCI_CLI_CLOUDSHELL_ENV_VAR) == "True" {
+		osrelease, err := Parse(DEFAULT_LINUX_OS_RELEASE_FILE_PATH)
+		if err != nil {
+			return fmt.Errorf("failed to parse /etc/os-relese file: %v", err)
+		}
+
+		if osrelease.Name == OCI_CLOUDSHELL_OS_NAME {
+			if strings.Contains(osrelease.PlatformID, OCI_CLOUDSHELL_OL8_VERSION_IDENTIFIER) {
+				EnvIsOL8CloudShell = true
+			}
 		}
 	}
 

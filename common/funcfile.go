@@ -389,7 +389,8 @@ func (ff *FuncFileV20180708) ImageNameV20180708() string {
 }
 
 // Merge the func.init.yaml from the initImage with a.ff
-//     write out the new func file
+//
+//	write out the new func file
 func MergeFuncFileInitYAML(path string, ff *FuncFileV20180708) error {
 	var initFf, err = ParseFuncfile(path)
 	if err != nil {
