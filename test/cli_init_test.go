@@ -24,7 +24,7 @@ import (
 
 var runtimes = []string{
 	"go",
-	"go1.20",
+	"go1.24",
 	"go1.23",
 	"java",
 	"java8",
