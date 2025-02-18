@@ -1,6 +1,6 @@
 
 # Releases
-## v 0.6.37
+## v 0.6.39
 
 * Make fn-cli compatiable with Oracle Cloud Shell based on OL8
 
