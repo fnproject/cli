@@ -1,3 +1,3 @@
-# github.com/fnproject/fdk-go v0.0.33
-## explicit; go 1.19
+# github.com/fnproject/fdk-go v0.0.55
+## explicit; go 1.23
 github.com/fnproject/fdk-go

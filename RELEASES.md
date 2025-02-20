@@ -1,5 +1,10 @@
 
 # Releases
+## v 0.6.39
+
+* Enabling support for go1.24
+* Removing support for go1.20
+ 
 ## v 0.6.37
 
 * Make fn-cli compatiable with Oracle Cloud Shell based on OL8
