@@ -548,7 +548,7 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 				fmt.Println("TargetedPlatform: ", targetPlatform+"HostPlatform: ", hostedPlatform)
 				if targetPlatform != hostedPlatform {
 					if config.EnvIsOL8CloudShell {
-						done <- fmt.Errorf("OL8 Cloud Shell does not support multi-arch builds for functions")
+						done <- fmt.Errorf("OL8 CloudShell does not support cross-compilation and multi-arch functions builds. Please ensure the architecture of your App matches the CloudShell architecture.")
 						return
 					}
 					err := initializeContainerBuilder(containerEngineType, mappedArchitectures)
