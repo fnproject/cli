@@ -145,10 +145,11 @@ func ensureConfiguration() error {
 
 	defaultContextPath := filepath.Join(contextsPath, defaultContextFileName)
 	if _, err := os.Stat(defaultContextPath); os.IsNotExist(err) {
-		_, err = os.Create(defaultContextPath)
+		f, err := os.Create(defaultContextPath)
 		if err != nil {
 			return fmt.Errorf("error creating default.yaml context file %v", err)
 		}
+		defer f.Close()
 
 		err = WriteYamlFile(defaultContextPath, DefaultContextConfigContents())
 		if err != nil {
@@ -292,13 +293,7 @@ func WriteConfigValueToConfigFile(key, value string) error {
 	home := GetHomeDir()
 
 	configFilePath := filepath.Join(home, rootConfigPathName, contextConfigFileName)
-	f, err := os.OpenFile(configFilePath, os.O_RDWR, ReadWritePerms)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	file, err := DecodeYAMLFile(f.Name())
+	file, err := DecodeYAMLFile(configFilePath)
 	if err != nil {
 		return err
 	}
@@ -313,7 +308,7 @@ func WriteConfigValueToConfigFile(key, value string) error {
 	}
 	configValues[key] = value
 
-	err = atomicwrite(f.Name(), &configValues)
+	err = atomicwrite(configFilePath, &configValues)
 	if err != nil {
 		return err
 	}
@@ -330,13 +325,14 @@ func atomicwrite(file string, c *ContextMap) (err error) {
 		return fmt.Errorf("cannot create temp file: %v", err)
 	}
 
-	defer f.Close()
 	defer os.Remove(f.Name())
 
 	err = WriteYamlFile(f.Name(), c)
 	if err != nil {
+		f.Close()
 		return err
 	}
+	f.Close()
 
 	info, err := os.Stat(file)
 	if err != nil {
@@ -344,6 +340,8 @@ func atomicwrite(file string, c *ContextMap) (err error) {
 	} else {
 		_ = os.Chmod(f.Name(), info.Mode())
 	}
+
+	os.Remove(file)
 
 	// replace file with the tempfile
 	err = os.Rename(f.Name(), file)
