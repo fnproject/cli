@@ -1,5 +1,13 @@
 
 # Releases
+## v 0.6.41
+
+* Add missing release note for v0.6.40
+
+## v 0.6.40
+
+* Small tweak to the OL8 cross build error message
+
 ## v 0.6.39
 
 * Enabling support for go1.24
