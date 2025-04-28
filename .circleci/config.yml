@@ -8,7 +8,7 @@ jobs:
       - GO111MODULE=on
       - GOFLAGS=-mod=vendor
       - GOPATH=/home/circleci/go
-      - GOVERSION=1.17
+      - GOVERSION=1.23.8
       - OS=linux
       - ARCH=amd64
       - DOCKER_VERSION=5:26.1.4-1~ubuntu.20.04~focal
@@ -21,7 +21,7 @@ jobs:
           mkdir tmp
           cd tmp
           sudo rm -rf /usr/local/go
-          wget https://dl.google.com/go/go$GOVERSION.$OS-$ARCH.tar.gz
+          wget https://go.dev/dl/go$GOVERSION.$OS-$ARCH.tar.gz
           sudo tar -C /usr/local -xzf go$GOVERSION.$OS-$ARCH.tar.gz
           export PATH=$PATH:$HOME/go/bin
       - run: go version
