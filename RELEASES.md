@@ -1,5 +1,8 @@
 
 # Releases
+## v 0.6.43
+
+* Upgrade the Go version to 1.23.10 to mitigate the CVE-2025-22874
 ## v 0.6.41
 
 * Add missing release note for v0.6.40
