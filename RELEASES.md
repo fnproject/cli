@@ -25,6 +25,10 @@
 * Enabling support for go1.23
 * Removing support for go1.19
 
+## v 0.6.35
+
+* Enabling support for ruby3.3
+
 ## v 0.6.34
 
 * Enabling support for go1.20
