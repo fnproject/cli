@@ -1,5 +1,10 @@
 
 # Releases
+## v 0.6.44
+
+* Removing support for node20
+* Enabling support for node22
+
 ## v 0.6.43
 
 * Upgrade the Go version to 1.23.10 to mitigate the CVE-2025-22874
