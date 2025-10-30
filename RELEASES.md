@@ -1,5 +1,10 @@
 
 # Releases
+## v 0.6.45
+
+* Removing support for dotnet 3.1 and dotnet 6.0
+* Enabling support for dotnet 9.0
+
 ## v 0.6.44
 
 * Removing support for node20

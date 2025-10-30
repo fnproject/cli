@@ -25,9 +25,8 @@ import (
 )
 
 var dotnetToFrameworkVersionMap = map[string]string{
-	"3.1": "netcoreapp3.1",
-	"6.0": "net6.0",
 	"8.0": "net8.0",
+	"9.0": "net9.0",
 }
 
 type DotnetLangHelper struct {
