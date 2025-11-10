@@ -1,5 +1,10 @@
 
 # Releases
+## v 0.6.46
+
+* Removing support for python 3.8 and python 3.9 versions
+* Enabling support for python 3.12 version
+
 ## v 0.6.45
 
 * Removing support for dotnet 3.1 and dotnet 6.0
