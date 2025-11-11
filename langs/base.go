@@ -42,9 +42,7 @@ func init() {
 	registerHelper(&NodeLangHelper{Version: "22"})
 	// order matter, 'python' will pick up the first PythonLangHelper
 	registerHelper(&PythonLangHelper{Version: "3.11"})
-	registerHelper(&PythonLangHelper{Version: "3.9"})
-	registerHelper(&PythonLangHelper{Version: "3.8"})
-	registerHelper(&PythonLangHelper{Version: "3.8.5"})
+	registerHelper(&PythonLangHelper{Version: "3.12"})
 
 	//New runtime support for Ruby 3.1
 	// order matter, 'ruby' will pick up the first RubyLangHelper

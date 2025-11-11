@@ -37,8 +37,7 @@ var runtimes = []string{
 	"node22",
 	"python",
 	"python3.11",
-	"python3.9",
-	"python3.8",
+	"python3.12",
 }
 
 func TestSettingFuncName(t *testing.T) {
