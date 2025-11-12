@@ -1,5 +1,11 @@
 
 # Releases
+## v 0.6.47
+
+* Update default version for python to 3.12
+* Update default version for dotnet to 9.0
+* Removing support for ruby 3.1 and adding support for ruby 3.3 
+
 ## v 0.6.46
 
 * Removing support for python 3.8 and python 3.9 versions

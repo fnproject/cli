@@ -32,12 +32,15 @@ var runtimes = []string{
 	"java17",
 	"kotlin",
 	"ruby",
-	"ruby3.1",
+	"ruby3.3",
 	"node",
 	"node22",
 	"python",
-	"python3.11",
 	"python3.12",
+	"python3.11",
+	"dotnet",
+	"dotnet9.0",
+	"dotnet8.0",
 }
 
 func TestSettingFuncName(t *testing.T) {
