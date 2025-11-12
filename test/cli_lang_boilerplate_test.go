@@ -31,8 +31,8 @@ var Runtimes = []struct {
 	{"go1.24", ""},
 	{"go1.23", ""},
 	{"dotnet", ""},
-	{"dotnet8.0", ""},
 	{"dotnet9.0", ""},
+	{"dotnet8.0", ""},
 	{"java", ""},
 	{"java8", ""},
 	{"java11", ""},
@@ -41,10 +41,10 @@ var Runtimes = []struct {
 	{"node", ""},
 	{"node22", ""},
 	{"ruby", ""},
-	{"ruby3.1", ""},
+	{"ruby3.3", ""},
 	{"python", ""},
-	{"python3.11", ""},
 	{"python3.12", ""},
+	{"python3.11", ""},
 }
 
 func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {
