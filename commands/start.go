@@ -61,6 +61,11 @@ func StartCommand() cli.Command {
 				Value: 8080,
 				Usage: "Specify port number to bind to on the host.",
 			},
+			cli.StringFlag{
+				Name: "iofs-dir",
+				Usage: "Directory or container-engine volume where Fn Server creates the UNIX socket for " +
+					"cross-container communication. Defaults to named volume \"fnserversocket\"",
+			},
 		},
 	}
 }
@@ -75,10 +80,30 @@ func start(c *cli.Context) error {
 		fnDir = filepath.Join(home, ".fn")
 	}
 
+	/*
+			User could override "iofs" directory. The iofs path is used by Fn Server to create unix socket file
+			for the communication between Fn Server and Fn Containers.
+
+			By default, the iofs directory is a container engine volume that will be created by container engine
+		    automatically. We switched from plain directory on host machine to container engine volume because:
+
+			1. For user who is using Podman or Rancher desktop, there is an issue that the socket file could not be created
+		    under HOME directory (see: https://github.com/fnproject/fn/issues/1577#issuecomment-1297736260).
+
+			2. On Windows docker desktop, if we use OS directory as iofs path, we also observed that the fsnotify did not
+			notify fnserver container when the socket file was created. However, named volume worked well.
+
+			As a result, we decided to use named volume as default as it works in all cases.
+	*/
+	iofsDir := "fnserversocket"
+	if c.String("iofs-dir") != "" {
+		iofsDir = c.String("iofs-dir")
+	}
+
 	args := []string{"run", "--rm", "-i",
 		"--name", "fnserver",
-		"-v", fmt.Sprintf("%s/iofs:/iofs", fnDir),
-		"-e", fmt.Sprintf("FN_IOFS_DOCKER_PATH=%s/iofs", fnDir),
+		"-v", fmt.Sprintf("%s:/iofs:z", iofsDir),
+		"-e", fmt.Sprintf("FN_IOFS_DOCKER_PATH=%s", iofsDir),
 		"-e", "FN_IOFS_PATH=/iofs",
 		"-v", fmt.Sprintf("%s/data:/app/data", fnDir),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
