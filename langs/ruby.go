@@ -56,7 +56,7 @@ func (h *RubyLangHelper) RunFromImage() (string, error) {
 	return fmt.Sprintf("fnproject/ruby:%s", h.Version), nil
 }
 
-func (h *RubyLangHelper) DockerfileBuildCmds() []string {
+func (h *RubyLangHelper) DockerfileBuildCmds(localDebug bool) []string {
 	r := []string{}
 	if exists("Gemfile") {
 		r = append(r,
@@ -67,7 +67,7 @@ func (h *RubyLangHelper) DockerfileBuildCmds() []string {
 	return r
 }
 
-func (h *RubyLangHelper) DockerfileCopyCmds() []string {
+func (h *RubyLangHelper) DockerfileCopyCmds(localDebug bool) []string {
 	return []string{
 		"COPY --from=build-stage /usr/lib/ruby/gems/ /usr/lib/ruby/gems/", // skip this if no Gemfile?  Does it matter?
 		"COPY . /function/",

@@ -10,6 +10,9 @@ github.com/asaskevich/govalidator
 # github.com/coreos/go-semver v0.3.0
 ## explicit
 github.com/coreos/go-semver/semver
+# github.com/davecgh/go-spew v1.1.1
+## explicit
+github.com/davecgh/go-spew/spew
 # github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
 ## explicit
 github.com/fatih/color
@@ -135,6 +138,9 @@ github.com/oracle/oci-go-sdk/v65/keymanagement
 # github.com/pelletier/go-toml v1.7.0
 ## explicit; go 1.12
 github.com/pelletier/go-toml
+# github.com/pmezard/go-difflib v1.0.0
+## explicit
+github.com/pmezard/go-difflib/difflib
 # github.com/sony/gobreaker v0.5.0
 ## explicit; go 1.12
 github.com/sony/gobreaker
@@ -154,6 +160,14 @@ github.com/spf13/pflag
 # github.com/spf13/viper v1.6.2
 ## explicit; go 1.12
 github.com/spf13/viper
+# github.com/stretchr/objx v0.5.2
+## explicit; go 1.20
+github.com/stretchr/objx
+# github.com/stretchr/testify v1.11.1
+## explicit; go 1.17
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/assert/yaml
+github.com/stretchr/testify/mock
 # github.com/subosito/gotenv v1.2.0
 ## explicit
 github.com/subosito/gotenv
@@ -206,3 +220,6 @@ gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.3.0
 ## explicit
 gopkg.in/yaml.v2
+# gopkg.in/yaml.v3 v3.0.1
+## explicit
+gopkg.in/yaml.v3

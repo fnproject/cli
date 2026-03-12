@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/fnproject/cli/utils"
 	"io"
 	"io/ioutil"
 	"log"
@@ -33,6 +34,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 	"unicode"
 
@@ -58,6 +60,7 @@ const (
 	BuildxBuilderInstance     = "oci_fn_builder"
 	DefaultAppShape           = modelsv2.AppShapeGENERICX86
 	containerEngineTypeDocker = "docker"
+	DefaultLocalDebugPort     = 5678
 )
 
 var GlobalVerbose bool
@@ -139,7 +142,7 @@ func BuildFunc(verbose bool, fpath string, funcfile *FuncFile, buildArg []string
 }
 
 // BuildFunc bumps version and builds function.
-func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool, shape string) (*FuncFileV20180708, error) {
+func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708, buildArg []string, noCache bool, shape string, localDebug bool) (*FuncFileV20180708, error) {
 	var err error
 
 	if funcfile.Version == "" {
@@ -157,7 +160,7 @@ func BuildFuncV20180708(verbose bool, fpath string, funcfile *FuncFileV20180708,
 	if err := localBuild(fpath, funcfile.Build); err != nil {
 		return nil, err
 	}
-	if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache, shape); err != nil {
+	if err := containerEngineBuildV20180708(verbose, fpath, funcfile, buildArg, noCache, shape, localDebug); err != nil {
 		return nil, err
 	}
 
@@ -365,7 +368,7 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 	return nil
 }
 
-func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool, shape string) error {
+func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool, shape string, localDebug bool) error {
 	containerEngineType, err := GetContainerEngineType()
 	if err != nil {
 		return err
@@ -390,7 +393,7 @@ func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV2018
 		if helper == nil {
 			return fmt.Errorf("Cannot build, no language helper found for %v", ff.Runtime)
 		}
-		dockerfile, err = writeTmpDockerfileV20180708(helper, dir, ff)
+		dockerfile, err = writeTmpDockerfileV20180708(helper, dir, ff, localDebug)
 		if err != nil {
 			return err
 		}
@@ -762,7 +765,7 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", bi))
 	}
 	dfLines = append(dfLines, "WORKDIR /function")
-	dfLines = append(dfLines, helper.DockerfileBuildCmds()...)
+	dfLines = append(dfLines, helper.DockerfileBuildCmds(false)...)
 	if helper.IsMultiStage() {
 		// final stage
 		ri := ff.RunImage
@@ -780,13 +783,13 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 		}
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")
-		dfLines = append(dfLines, helper.DockerfileCopyCmds()...)
+		dfLines = append(dfLines, helper.DockerfileCopyCmds(false)...)
 	}
 	if ff.Entrypoint != "" {
-		dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", stringToSlice(ff.Entrypoint)))
+		dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", utils.StringToSlice(ff.Entrypoint)))
 	}
 	if ff.Cmd != "" {
-		dfLines = append(dfLines, fmt.Sprintf("CMD [%s]", stringToSlice(ff.Cmd)))
+		dfLines = append(dfLines, fmt.Sprintf("CMD [%s]", utils.StringToSlice(ff.Cmd)))
 	}
 	err = writeLines(fd, dfLines)
 	if err != nil {
@@ -795,7 +798,7 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 	return fd.Name(), err
 }
 
-func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFileV20180708) (string, error) {
+func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFileV20180708, localDebug bool) (string, error) {
 	if ff.Entrypoint == "" && ff.Cmd == "" {
 		return "", errors.New("entrypoint and cmd are missing, you must provide one or the other")
 	}
@@ -823,10 +826,11 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", bi))
 	}
 	dfLines = append(dfLines, "WORKDIR /function")
-	dfLines = append(dfLines, helper.DockerfileBuildCmds()...)
+	dfLines = append(dfLines, helper.DockerfileBuildCmds(localDebug)...)
+
+	ri := ff.Run_image
 	if helper.IsMultiStage() {
 		// final stage
-		ri := ff.Run_image
 		if ri == "" {
 			ri, err = helper.RunFromImage()
 			if err != nil {
@@ -835,13 +839,36 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 		}
 		dfLines = append(dfLines, fmt.Sprintf("FROM %s", ri))
 		dfLines = append(dfLines, "WORKDIR /function")
-		dfLines = append(dfLines, helper.DockerfileCopyCmds()...)
+		dfLines = append(dfLines, helper.DockerfileCopyCmds(localDebug)...)
 	}
+	// if localDebug,
+	//    if entrypoint is defined, add the debug options in the entry point
+	//    else
+	//        if the cmd is defined, add the debug options in the cmd
+	isDebugOptionInjected := false
+	// FDK java provides default entrypoint in fdk runtime image so we need to handle that
+	fdkDefaultEntrypoint, err := getEntrypointFromImage(ri)
+	if err != nil {
+		return "", err
+	}
+	finalEntrypoint := fdkDefaultEntrypoint
 	if ff.Entrypoint != "" {
-		dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", stringToSlice(ff.Entrypoint)))
+		finalEntrypoint = ff.Entrypoint
+	}
+	if finalEntrypoint != "" {
+		if localDebug {
+			dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", utils.StringToSlice(helper.DebugEntrypoint(finalEntrypoint))))
+			isDebugOptionInjected = true
+		} else {
+			dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", utils.StringToSlice(finalEntrypoint)))
+		}
 	}
 	if ff.Cmd != "" {
-		dfLines = append(dfLines, fmt.Sprintf("CMD [%s]", stringToSlice(ff.Cmd)))
+		if localDebug && !isDebugOptionInjected {
+			dfLines = append(dfLines, fmt.Sprintf("CMD [%s]", utils.StringToSlice(helper.DebugCmd(ff.Cmd))))
+		} else {
+			dfLines = append(dfLines, fmt.Sprintf("CMD [%s]", utils.StringToSlice(ff.Cmd)))
+		}
 	}
 	err = writeLines(fd, dfLines)
 	if err != nil {
@@ -860,20 +887,6 @@ func writeLines(w io.Writer, lines []string) error {
 	}
 	writer.Flush()
 	return nil
-}
-
-func stringToSlice(in string) string {
-	epvals := strings.Fields(in)
-	var buffer bytes.Buffer
-	for i, s := range epvals {
-		if i > 0 {
-			buffer.WriteString(", ")
-		}
-		buffer.WriteString("\"")
-		buffer.WriteString(s)
-		buffer.WriteString("\"")
-	}
-	return buffer.String()
 }
 
 // ExtractConfig parses key-value configuration into a map
@@ -1239,4 +1252,70 @@ func untarStream(r io.Reader) error {
 			_ = f.Close()
 		}
 	}
+}
+
+func PullImage(image string) error {
+	containerEngineType, err := GetContainerEngineType()
+	if err != nil {
+		return err
+	}
+
+	args := []string{"pull", image}
+	cmd := ShellCommander(containerEngineType, args...)
+	cmd.SetStdOut(os.Stdout)
+	cmd.SetStdErr(os.Stderr)
+	err = cmd.Start()
+	if err != nil {
+		log.Fatalln("Starting command failed:", err)
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- cmd.Wait()
+	}()
+	// catch ctrl-c and kill
+	sigC := make(chan os.Signal, 2)
+	signal.Notify(sigC, os.Interrupt, syscall.SIGTERM)
+	select {
+	case <-sigC:
+		log.Println("Interrupt caught, exiting")
+		err = cmd.Kill()
+		if err != nil {
+			log.Println("Error: could not kill process")
+		}
+	case err := <-done:
+		if err != nil {
+			log.Println("Processed finished with error:", err)
+		} else {
+			log.Println("Process finished gracefully")
+		}
+	}
+	return nil
+}
+
+func getEntrypointFromImage(image string) (string, error) {
+	containerEngineType, err := GetContainerEngineType()
+	if err != nil {
+		return "", err
+	}
+	// Need to pull image before we can inspect entry point
+	err = PullImage(image)
+	if err != nil {
+		return "", err
+	}
+	cmd := ShellCommander(containerEngineType, "inspect", "-f", "'{{.Config.Entrypoint}}'", image)
+
+	// Capture stdout and stderr
+	var stdout, stderr bytes.Buffer
+
+	cmd.SetStdOut(&stdout)
+	cmd.SetStdErr(&stderr)
+
+	// Execute the command
+	if err := cmd.Run(); err != nil {
+		// Include Docker's stderr output to give more context
+		return "", fmt.Errorf("docker inspect failed: %v – %s", err, stderr.String())
+	}
+
+	return stdout.String(), nil
 }

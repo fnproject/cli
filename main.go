@@ -167,7 +167,7 @@ func newFn() *cli.App {
 	return app
 }
 
-//Trim HelpName, removing 'fn' from the HelpName string
+// Trim HelpName, removing 'fn' from the HelpName string
 func TrimLeftChars(s string, n int) string {
 	m := 0
 	for i := range s {
@@ -179,7 +179,7 @@ func TrimLeftChars(s string, n int) string {
 	return s[:0]
 }
 
-//Override function for customised app template
+// Override function for customised app template
 func printHelpCustom(out io.Writer, templ string, data interface{}, customFunc map[string]interface{}) {
 	funcMap := color.Colors
 	for key, value := range customFunc {
@@ -254,7 +254,6 @@ func commandArgOverrides(c *cli.Context) {
 }
 
 func main() {
-
 	app := newFn()
 	err := app.Run(os.Args)
 

@@ -34,7 +34,7 @@ import (
 // JavaLangHelper provides a set of helper methods for the lifecycle of Java Maven projects
 type JavaLangHelper struct {
 	BaseHelper
-	version          string
+	Version          string
 	latestFdkVersion string
 	pomType          string
 }
@@ -47,7 +47,7 @@ func (h *JavaLangHelper) Runtime() string {
 }
 
 func (h *JavaLangHelper) LangStrings() []string {
-	return []string{"java", fmt.Sprintf("java%s", h.version)}
+	return []string{"java", fmt.Sprintf("java%s", h.Version)}
 }
 
 func (h *JavaLangHelper) Extensions() []string {
@@ -62,14 +62,14 @@ func (h *JavaLangHelper) BuildFromImage() (string, error) {
 		return "", err
 	}
 
-	if h.version == "8" {
+	if h.Version == "8" {
 		return fmt.Sprintf("fnproject/fn-java-fdk-build:%s", fdkVersion), nil
-	} else if h.version == "11" {
+	} else if h.Version == "11" {
 		return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk11-%s", fdkVersion), nil
-	} else if h.version == "17" {
+	} else if h.Version == "17" {
 		return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk17-%s", fdkVersion), nil
 	} else {
-		return "", fmt.Errorf("unsupported java version %s", h.version)
+		return "", fmt.Errorf("unsupported java version %s", h.Version)
 	}
 }
 
@@ -79,14 +79,14 @@ func (h *JavaLangHelper) RunFromImage() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if h.version == "8" {
+	if h.Version == "8" {
 		return fmt.Sprintf("fnproject/fn-java-fdk:%s", fdkVersion), nil
-	} else if h.version == "11" {
+	} else if h.Version == "11" {
 		return fmt.Sprintf("fnproject/fn-java-fdk:jre11-%s", fdkVersion), nil
-	} else if h.version == "17" {
+	} else if h.Version == "17" {
 		return fmt.Sprintf("fnproject/fn-java-fdk:jre17-%s", fdkVersion), nil
 	} else {
-		return "", fmt.Errorf("unsupported java version %s", h.version)
+		return "", fmt.Errorf("unsupported java version %s", h.Version)
 	}
 }
 
@@ -109,7 +109,7 @@ func (h *JavaLangHelper) GenerateBoilerplate(path string) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, h.version, h.pomType)), os.FileMode(0644)); err != nil {
+	if err := ioutil.WriteFile(pathToPomFile, []byte(pomFileContent(apiVersion, h.Version, h.pomType)), os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -126,15 +126,29 @@ func (h *JavaLangHelper) Cmd() (string, error) {
 	return "com.example.fn.HelloFunction::handleRequest", nil
 }
 
+func (lh *JavaLangHelper) DebugEntrypoint(entryPoint string) string {
+	// inspect the base image entry point and inject debug options
+	trimmedEntryPoint := strings.TrimPrefix(strings.TrimSuffix(strings.TrimSpace(entryPoint), "]'"), "'[")
+	fields := strings.Fields(trimmedEntryPoint)
+	args := make([]string, 0)
+	for _, arg := range fields {
+		if arg == "com.fnproject.fn.runtime.EntryPoint" {
+			args = append(args, fmt.Sprintf("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:%d", FnContainerDebugPort))
+		}
+		args = append(args, arg)
+	}
+	return strings.Join(args, " ")
+}
+
 // DockerfileCopyCmds returns the Docker COPY command to copy the compiled Java function jar and dependencies.
-func (h *JavaLangHelper) DockerfileCopyCmds() []string {
+func (h *JavaLangHelper) DockerfileCopyCmds(localDebug bool) []string {
 	return []string{
 		"COPY --from=build-stage /function/target/*.jar /function/app/",
 	}
 }
 
 // DockerfileBuildCmds returns the build stage steps to compile the Maven function project.
-func (h *JavaLangHelper) DockerfileBuildCmds() []string {
+func (h *JavaLangHelper) DockerfileBuildCmds(localDebug bool) []string {
 	return []string{
 		fmt.Sprintf("ENV MAVEN_OPTS %s", mavenOpts()),
 		"ADD pom.xml /function/pom.xml",
@@ -183,7 +197,9 @@ func mavenOpts() string {
 	return opts.String()
 }
 
-/*    TODO temporarily generate maven project boilerplate from hardcoded values.
+/*
+	TODO temporarily generate maven project boilerplate from hardcoded values.
+
 Will eventually move to using a maven archetype.
 */
 func pomFileContent(APIversion, javaVersion, pomType string) string {

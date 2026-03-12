@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type GoLangHelper struct {
@@ -55,7 +56,7 @@ func (lh *GoLangHelper) RunFromImage() (string, error) {
 	return fmt.Sprintf("fnproject/go:%s", lh.Version), nil
 }
 
-func (h *GoLangHelper) DockerfileBuildCmds() []string {
+func (h *GoLangHelper) DockerfileBuildCmds(localDebug bool) []string {
 	r := []string{}
 	// more info on Go multi-stage builds: https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a
 	// TODO: if we keep the go.sum on user's drive, we can put this after the dep commands and then the dep layers will be cached.
@@ -83,19 +84,41 @@ func (h *GoLangHelper) DockerfileBuildCmds() []string {
 		r = append(r, "ADD . /go/src/func/")
 	}
 
-	r = append(r, "RUN go build -o func -v")
+	debugFlag := ""
+	if localDebug {
+		debugFlag = "-gcflags=\"all=-N -l\""
+	}
+
+	r = append(r, strings.Join(strings.Fields(fmt.Sprintf("RUN go build %s -o func -v", debugFlag)), " "))
+
+	if localDebug {
+		r = append(r, "RUN go install github.com/go-delve/delve/cmd/dlv@latest")
+	}
 
 	return r
 }
 
-func (h *GoLangHelper) DockerfileCopyCmds() []string {
-	return []string{
+func (h *GoLangHelper) DockerfileCopyCmds(localDebug bool) []string {
+	commands := []string{
 		"COPY --from=build-stage /go/src/func/func /function/",
 	}
+	if localDebug {
+		commands = append(commands, "COPY --from=build-stage /go/bin/dlv /function")
+	}
+	return commands
 }
 
 func (lh *GoLangHelper) Entrypoint() (string, error) {
 	return "./func", nil
+}
+
+func (lh *GoLangHelper) DebugEntrypoint(entryPoint string) string {
+	return fmt.Sprintf("/function/dlv --listen=:%d --headless=true --api-version=2 --accept-multiclient exec %s", FnContainerDebugPort, entryPoint)
+}
+
+func (lh *GoLangHelper) DebugCmd(cmd string) string {
+	// debug option will only be injected if entryPoint is not used
+	return fmt.Sprintf("/function/dlv --listen=:%d --headless=true --api-version=2 --accept-multiclient exec %s", FnContainerDebugPort, cmd)
 }
 
 func (lh *GoLangHelper) HasBoilerplate() bool { return true }

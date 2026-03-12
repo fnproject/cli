@@ -111,7 +111,7 @@ func (h *NodeLangHelper) Entrypoint() (string, error) {
 	return "node func.js", nil
 }
 
-func (h *NodeLangHelper) DockerfileBuildCmds() []string {
+func (h *NodeLangHelper) DockerfileBuildCmds(localDebug bool) []string {
 	r := []string{}
 	// skip npm -install if node_modules is local - allows local development
 	if exists("package.json") && !exists("node_modules") {
@@ -127,7 +127,7 @@ func (h *NodeLangHelper) DockerfileBuildCmds() []string {
 	return r
 }
 
-func (h *NodeLangHelper) DockerfileCopyCmds() []string {
+func (h *NodeLangHelper) DockerfileCopyCmds(localDebug bool) []string {
 	// excessive but content could be anything really
 	r := []string{"ADD . /function/"}
 	if exists("package.json") && !exists("node_modules") {

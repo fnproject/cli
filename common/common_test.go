@@ -17,10 +17,34 @@
 package common
 
 import (
+	"fmt"
+	"github.com/fnproject/cli/config"
+	"github.com/fnproject/cli/langs"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
+	"io"
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/mock"
 )
+
+type ShellCommanderFactory func(name string, arg ...string) ShellCommand
+
+type mockShellCommand struct {
+	ShellCommand
+	mock.Mock
+	args         []string
+	stdoutWriter io.Writer
+}
+
+func (m *mockShellCommand) Start() error                     { return m.Called().Error(0) }
+func (m *mockShellCommand) Run() error                       { return m.Called().Error(0) }
+func (m *mockShellCommand) Wait() error                      { return m.Called().Error(0) }
+func (m *mockShellCommand) Kill() error                      { return m.Called().Error(0) }
+func (m *mockShellCommand) SetStdOut(stdoutWriter io.Writer) { m.stdoutWriter = stdoutWriter }
+func (m *mockShellCommand) SetStdErr(io.Writer)              {}
 
 func TestValidateImageName(t *testing.T) {
 	testCases := []struct {
@@ -84,3 +108,241 @@ func Test_proxyArgs(t *testing.T) {
 		}
 	}
 }
+
+func Test_writeTmpDockerfileV20180708(t *testing.T) {
+	defer func() { ShellCommander = newExecShellCommander }()
+	dir, _ := os.MkdirTemp("", fmt.Sprintf("%s_*", t.Name()))
+	viper.SetDefault(config.ContainerEngineType, "docker")
+	type args struct {
+		helper                 langs.LangHelper
+		dir                    string
+		ff                     *FuncFileV20180708
+		localDebug             bool
+		baseFdkImageEntrypoint string
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{"python-debug-image",
+			args{&langs.PythonLangHelper{Version: "3.12"}, dir, &pythonFuncFile, true, ""},
+			pythonDebugDockerfile,
+		},
+		{"python-normal-image",
+			args{&langs.PythonLangHelper{Version: "3.12"}, dir, &pythonFuncFile, false, ""},
+			pythonDockerfile,
+		},
+		{"go-debug-image",
+			args{&langs.GoLangHelper{Version: "1.24"}, dir, &goFuncFile, true, ""},
+			goDebugDockerfile,
+		},
+		{"go-normal-image",
+			args{&langs.GoLangHelper{Version: "1.24"}, dir, &goFuncFile, false, ""},
+			goDockerfile,
+		},
+		{"java-debug-image",
+			args{&langs.JavaLangHelper{Version: "17"}, dir, &javaFuncFile, true, javaFdkEntryPoint},
+			javaDebugDockerfile,
+		},
+		{"java-normal-image",
+			args{&langs.JavaLangHelper{Version: "17"}, dir, &javaFuncFile, false, javaFdkEntryPoint},
+			javaDockerfile,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// setup
+			pullImageMockCommand := &mockShellCommand{}
+			pullImageMockCommand.On("Start").Return(nil)
+			pullImageMockCommand.On("Wait").Return(nil)
+			inspectImageMockCommand := &mockShellCommand{}
+			inspectImageMockCommand.On("Run").Run(
+				func(args mock.Arguments) {
+					_, _ = inspectImageMockCommand.stdoutWriter.Write([]byte(tt.args.baseFdkImageEntrypoint))
+				},
+			).Return(nil)
+			ShellCommander = createMockShellCommander(t, pullImageMockCommand, inspectImageMockCommand)
+
+			// Run
+			actualDockerfile, err := writeTmpDockerfileV20180708(tt.args.helper, tt.args.dir, tt.args.ff, tt.args.localDebug)
+			if err != nil {
+				t.Errorf("writeTmpDockerfileV20180708() error = %v", err)
+				return
+			}
+
+			// verify dockerfile content
+			content, err := os.ReadFile(actualDockerfile)
+			if err != nil {
+				t.Errorf("Failed to read the generated dockerfile: %s. Error: %v", actualDockerfile, err)
+			}
+			if string(content) != tt.want {
+				t.Errorf("writeTmpDockerfileV20180708() dockerfile content = %v, want %v", string(content), tt.want)
+			}
+			assert.Equal(t, []string{"pull", tt.args.ff.Run_image}, pullImageMockCommand.args)
+			pullImageMockCommand.AssertCalled(t, "Start")
+			pullImageMockCommand.AssertCalled(t, "Wait")
+			assert.Equal(t, []string{"inspect", "-f", "'{{.Config.Entrypoint}}'", tt.args.ff.Run_image}, inspectImageMockCommand.args)
+			inspectImageMockCommand.AssertCalled(t, "Run")
+		})
+	}
+}
+
+func createMockShellCommander(t *testing.T, pullImageMockCommand *mockShellCommand, inspectImageMockCommand *mockShellCommand) ShellCommanderFactory {
+	return func(name string, arg ...string) ShellCommand {
+		if name != "docker" {
+			t.Errorf("Unexpected shell command: %s", name)
+		}
+		switch arg[0] {
+		case "pull":
+			pullImageMockCommand.args = arg
+			return pullImageMockCommand
+		case "inspect":
+			inspectImageMockCommand.args = arg
+			return inspectImageMockCommand
+		default:
+			t.Errorf("Unexpected docker command: %s", arg[0])
+		}
+		return nil
+	}
+}
+
+var pythonFuncFile = FuncFileV20180708{
+	Schema_version: 20180708,
+	Name:           "test",
+	Version:        "0.0.1",
+	Runtime:        "python",
+	Build_image:    "fnproject/python:3.12-dev",
+	Run_image:      "fnproject/python:3.12",
+	Cmd:            "",
+	Entrypoint:     "/python/bin/fdk /function/func.py handler",
+	Content_type:   "",
+	Type:           "",
+	Memory:         128,
+	Timeout:        nil,
+	IDLE_timeout:   nil,
+	Config:         nil,
+	Annotations:    nil,
+	Build:          nil,
+	Expects:        Expects{},
+	Triggers:       nil,
+}
+
+var goFuncFile = FuncFileV20180708{
+	Schema_version: 20180708,
+	Name:           "test",
+	Version:        "0.0.1",
+	Runtime:        "go",
+	Build_image:    "fnproject/go:1.24-dev",
+	Run_image:      "fnproject/go:1.24",
+	Cmd:            "",
+	Entrypoint:     "./func",
+	Content_type:   "",
+	Type:           "",
+	Memory:         128,
+	Timeout:        nil,
+	IDLE_timeout:   nil,
+	Config:         nil,
+	Annotations:    nil,
+	Build:          nil,
+	Expects:        Expects{},
+	Triggers:       nil,
+}
+
+var javaFuncFile = FuncFileV20180708{
+	Schema_version: 20180708,
+	Name:           "test",
+	Version:        "0.0.1",
+	Runtime:        "java",
+	Build_image:    "fnproject/fn-java-fdk-build:jdk17-1.1.7",
+	Run_image:      "fnproject/fn-java-fdk-build:jre17-1.1.7",
+	Cmd:            "com.example.fn.HelloFunction::handleRequest",
+	Entrypoint:     "",
+	Content_type:   "",
+	Type:           "",
+	Memory:         128,
+	Timeout:        nil,
+	IDLE_timeout:   nil,
+	Config:         nil,
+	Annotations:    nil,
+	Build:          nil,
+	Expects:        Expects{},
+	Triggers:       nil,
+}
+
+const (
+	pythonDebugDockerfile = `FROM fnproject/python:3.12-dev as build-stage
+WORKDIR /function
+RUN pip3 install --target /python/ --no-cache --no-cache-dir debugpy
+RUN rm -rf /python/bin
+ADD . /function/
+RUN rm -fr /function/.pip_cache
+FROM fnproject/python:3.12
+WORKDIR /function
+COPY --from=build-stage /python /python
+COPY --from=build-stage /function /function
+RUN chmod -R o+r /function
+ENV PYTHONPATH=/function:/python
+ENTRYPOINT ["python3.12", "-m", "debugpy", "--listen", "0.0.0.0:5678", "--wait-for-client", "/python/bin/fdk", "/function/func.py", "handler"]
+`
+	pythonDockerfile = `FROM fnproject/python:3.12-dev as build-stage
+WORKDIR /function
+ADD . /function/
+RUN rm -fr /function/.pip_cache
+FROM fnproject/python:3.12
+WORKDIR /function
+COPY --from=build-stage /python /python
+COPY --from=build-stage /function /function
+RUN chmod -R o+r /function
+ENV PYTHONPATH=/function:/python
+ENTRYPOINT ["/python/bin/fdk", "/function/func.py", "handler"]
+`
+	goDebugDockerfile = `FROM fnproject/go:1.24-dev as build-stage
+WORKDIR /function
+ADD . /go/src/func/
+RUN go build -gcflags="all=-N -l" -o func -v
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
+FROM fnproject/go:1.24
+WORKDIR /function
+COPY --from=build-stage /go/src/func/func /function/
+COPY --from=build-stage /go/bin/dlv /function
+ENTRYPOINT ["/function/dlv", "--listen=:5678", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "./func"]
+`
+	goDockerfile = `FROM fnproject/go:1.24-dev as build-stage
+WORKDIR /function
+ADD . /go/src/func/
+RUN go build -o func -v
+FROM fnproject/go:1.24
+WORKDIR /function
+COPY --from=build-stage /go/src/func/func /function/
+ENTRYPOINT ["./func"]
+`
+	javaDebugDockerfile = `FROM fnproject/fn-java-fdk-build:jdk17-1.1.7 as build-stage
+WORKDIR /function
+ENV MAVEN_OPTS -Dhttp.proxyHost= -Dhttp.proxyPort= -Dhttps.proxyHost= -Dhttps.proxyPort= -Dhttp.nonProxyHosts= -Dmaven.repo.local=/usr/share/maven/ref/repository
+ADD pom.xml /function/pom.xml
+RUN ["mvn", "package", "dependency:copy-dependencies", "-DincludeScope=runtime", "-DskipTests=true", "-Dmdep.prependGroupId=true", "-DoutputDirectory=target", "--fail-never"]
+ADD src /function/src
+RUN ["mvn", "package"]
+FROM fnproject/fn-java-fdk-build:jre17-1.1.7
+WORKDIR /function
+COPY --from=build-stage /function/target/*.jar /function/app/
+ENTRYPOINT ["/usr/local/openjdk-17/bin/java", "-XX:-UsePerfData", "-XX:+UseSerialGC", "-Xshare:auto", "-Djava.awt.headless=true", "-Djava.library.path=/function/runtime/lib", "-cp", "/function/app/*:/function/runtime/*:/function/app:/function/app/resources", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5678", "com.fnproject.fn.runtime.EntryPoint"]
+CMD ["com.example.fn.HelloFunction::handleRequest"]
+`
+	javaDockerfile = `FROM fnproject/fn-java-fdk-build:jdk17-1.1.7 as build-stage
+WORKDIR /function
+ENV MAVEN_OPTS -Dhttp.proxyHost= -Dhttp.proxyPort= -Dhttps.proxyHost= -Dhttps.proxyPort= -Dhttp.nonProxyHosts= -Dmaven.repo.local=/usr/share/maven/ref/repository
+ADD pom.xml /function/pom.xml
+RUN ["mvn", "package", "dependency:copy-dependencies", "-DincludeScope=runtime", "-DskipTests=true", "-Dmdep.prependGroupId=true", "-DoutputDirectory=target", "--fail-never"]
+ADD src /function/src
+RUN ["mvn", "package"]
+FROM fnproject/fn-java-fdk-build:jre17-1.1.7
+WORKDIR /function
+COPY --from=build-stage /function/target/*.jar /function/app/
+ENTRYPOINT ["/usr/local/openjdk-17/bin/java", "-XX:-UsePerfData", "-XX:+UseSerialGC", "-Xshare:auto", "-Djava.awt.headless=true", "-Djava.library.path=/function/runtime/lib", "-cp", "/function/app/*:/function/runtime/*:/function/app:/function/app/resources", "com.fnproject.fn.runtime.EntryPoint"]
+CMD ["com.example.fn.HelloFunction::handleRequest"]
+`
+	javaFdkEntryPoint = "/usr/local/openjdk-17/bin/java -XX:-UsePerfData -XX:+UseSerialGC -Xshare:auto -Djava.awt.headless=true -Djava.library.path=/function/runtime/lib -cp /function/app/*:/function/runtime/*:/function/app:/function/app/resources com.fnproject.fn.runtime.EntryPoint"
+)

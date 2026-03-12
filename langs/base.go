@@ -30,15 +30,17 @@ import (
 var helpers = []LangHelper{}
 var fallBackOlderVersions = map[string]LangHelper{}
 
+const FnContainerDebugPort = 5678
+
 func init() {
 	registerHelper(&DotnetLangHelper{Version: "9.0"})
 	registerHelper(&DotnetLangHelper{Version: "8.0"})
 	registerHelper(&GoLangHelper{Version: "1.24"})
 	registerHelper(&GoLangHelper{Version: "1.23"})
 	// order matter, 'java' will pick up the first JavaLangHelper
-	registerHelper(&JavaLangHelper{version: "17"})
-	registerHelper(&JavaLangHelper{version: "11"})
-	registerHelper(&JavaLangHelper{version: "8"})
+	registerHelper(&JavaLangHelper{Version: "17"})
+	registerHelper(&JavaLangHelper{Version: "11"})
+	registerHelper(&JavaLangHelper{Version: "8"})
 	registerHelper(&NodeLangHelper{Version: "22"})
 	// order matter, 'python' will pick up the first PythonLangHelper
 	registerHelper(&PythonLangHelper{Version: "3.12"})
@@ -105,13 +107,18 @@ type LangHelper interface {
 	// If set to false, it will use a single Docker build step, rather than multi-stage
 	IsMultiStage() bool
 	// Dockerfile build lines for building dependencies or anything else language specific
-	DockerfileBuildCmds() []string
+	DockerfileBuildCmds(localDebug bool) []string
 	// DockerfileCopyCmds will run in second/final stage of multi-stage build to copy artifacts form the build stage
-	DockerfileCopyCmds() []string
+	DockerfileCopyCmds(localDebug bool) []string
 	// Entrypoint sets the Docker Entrypoint. One of Entrypoint or Cmd is required.
 	Entrypoint() (string, error)
+	// DebugEntrypoint add language specific local debug point to the existing entrypoint
+	DebugEntrypoint(entryPoint string) string
 	// Cmd sets the Docker command. One of Entrypoint or Cmd is required.
 	Cmd() (string, error)
+	// DebugCmd add language specific local debug point to the existing cmd. If option is added in the DebugEntrypoint
+	//   the debug option will not be added to DebugCmd
+	DebugCmd(cmd string) string
 	// CustomMemory allows a helper to specify a base memory amount, return "" to leave unspecified and let the runtime decide.
 	CustomMemory() uint64
 	HasPreBuild() bool
@@ -141,19 +148,21 @@ func defaultHandles(h LangHelper, lang string) bool {
 type BaseHelper struct {
 }
 
-func (h *BaseHelper) IsMultiStage() bool                   { return true }
-func (h *BaseHelper) DockerfileBuildCmds() []string        { return []string{} }
-func (h *BaseHelper) DockerfileCopyCmds() []string         { return []string{} }
-func (h *BaseHelper) Entrypoint() (string, error)          { return "", nil }
-func (h *BaseHelper) Cmd() (string, error)                 { return "", nil }
-func (h *BaseHelper) HasPreBuild() bool                    { return false }
-func (h *BaseHelper) PreBuild() error                      { return nil }
-func (h *BaseHelper) AfterBuild() error                    { return nil }
-func (h *BaseHelper) HasBoilerplate() bool                 { return false }
-func (h *BaseHelper) GenerateBoilerplate(string) error     { return nil }
-func (h *BaseHelper) CustomMemory() uint64                 { return 0 }
-func (h *BaseHelper) FixImagesOnInit() bool                { return false }
-func (h *BaseHelper) GetLatestFDKVersion() (string, error) { return "", nil }
+func (h *BaseHelper) IsMultiStage() bool                           { return true }
+func (h *BaseHelper) DockerfileBuildCmds(localDebug bool) []string { return []string{} }
+func (h *BaseHelper) DockerfileCopyCmds(localDebug bool) []string  { return []string{} }
+func (h *BaseHelper) Entrypoint() (string, error)                  { return "", nil }
+func (h *BaseHelper) DebugEntrypoint(entryPoint string) string     { return entryPoint }
+func (h *BaseHelper) Cmd() (string, error)                         { return "", nil }
+func (h *BaseHelper) DebugCmd(cmd string) string                   { return cmd }
+func (h *BaseHelper) HasPreBuild() bool                            { return false }
+func (h *BaseHelper) PreBuild() error                              { return nil }
+func (h *BaseHelper) AfterBuild() error                            { return nil }
+func (h *BaseHelper) HasBoilerplate() bool                         { return false }
+func (h *BaseHelper) GenerateBoilerplate(string) error             { return nil }
+func (h *BaseHelper) CustomMemory() uint64                         { return 0 }
+func (h *BaseHelper) FixImagesOnInit() bool                        { return false }
+func (h *BaseHelper) GetLatestFDKVersion() (string, error)         { return "", nil }
 
 // exists checks if a file exists
 func exists(name string) bool {
