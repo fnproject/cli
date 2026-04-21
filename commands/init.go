@@ -39,6 +39,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -51,10 +52,13 @@ import (
 )
 
 type initFnCmd struct {
-	force       bool
-	triggerType string
-	wd          string
-	ff          *common.FuncFileV20180708
+	force             bool
+	codeOnly          bool
+	triggerType       string
+	wd                string
+	runtimeName       string
+	runtimeConfigType string
+	ff                *common.FuncFileV20180708
 }
 
 func initFlags(a *initFnCmd) []cli.Flag {
@@ -68,9 +72,24 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Usage:       "Overwrite existing func.yaml",
 			Destination: &a.force,
 		},
+		cli.BoolFlag{
+			Name:        "code-only",
+			Usage:       "Initialize a code-only function",
+			Destination: &a.codeOnly,
+		},
 		cli.StringFlag{
 			Name:  "runtime",
 			Usage: "Choose an existing runtime - " + langsList(),
+		},
+		cli.StringFlag{
+			Name:        "runtime-name",
+			Usage:       "Specify the managed runtime name (e.g. python39.ol9) for code-only functions.",
+			Destination: &a.runtimeName,
+		},
+		cli.StringFlag{
+			Name:        "runtime-config-type",
+			Usage:       "Set the runtime configuration type for managed runtimes. Required for code-only functions.",
+			Destination: &a.runtimeConfigType,
 		},
 		cli.StringFlag{
 			Name:  "init-image",
@@ -179,12 +198,28 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	runtime := c.String("runtime")
 	initImage := c.String("init-image")
+	a.runtimeName = strings.TrimSpace(a.runtimeName)
+	a.runtimeConfigType = strings.TrimSpace(a.runtimeConfigType)
 
 	if runtime != "" && initImage != "" {
 		return fmt.Errorf("You can't supply --runtime with --init-image")
 	}
+	if (a.codeOnly || a.runtimeName != "") && initImage != "" {
+		return fmt.Errorf("You can't supply --code-only with --init-image")
+	}
+	if runtime != "" && a.runtimeName != "" {
+		return fmt.Errorf("Specify either --runtime or --runtime-name, not both")
+	}
+	if a.codeOnly && runtime == common.FuncfileDockerRuntime {
+		return fmt.Errorf("Init does not support the '%s' runtime for code-only functions", runtime)
+	}
 
 	runtimeSpecified := runtime != ""
+	codeOnlyInit := a.codeOnly || a.runtimeName != ""
+	precheckedRuntime := ""
+	if codeOnlyInit && a.runtimeConfigType == "" {
+		return fmt.Errorf("Code-only init requires --runtime-config-type")
+	}
 
 	a.ff.Schema_version = common.LatestYamlVersion
 	if runtimeSpecified {
@@ -195,6 +230,15 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		if deprecatedPythonRuntime(runtime) {
 			return fmt.Errorf("Runtime %s is no more supported for new apps. Please use python or %s runtime for new apps.", runtime, runtime[:strings.LastIndex(runtime, ".")])
 		}
+	}
+
+	if runtime != "" {
+		precheckedRuntime = runtime
+	} else if a.runtimeName != "" {
+		precheckedRuntime = a.runtimeName
+	}
+	if err := precheckToolingForRuntime(precheckedRuntime); err != nil {
+		return err
 	}
 
 	path := c.Args().First()
@@ -262,9 +306,23 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			return errors.New("Function file already exists, aborting")
 		}
 	}
-	err = a.BuildFuncFileV20180708(c, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
-	if err != nil {
-		return err
+
+	if codeOnlyInit {
+		err = a.buildCodeOnlyFuncFile(c, runtime)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = a.BuildFuncFileV20180708(c, dir) // TODO: Return LangHelper here, then don't need to refind the helper in generateBoilerplate() below
+		if err != nil {
+			return err
+		}
+	}
+
+	if precheckedRuntime == "" {
+		if err := a.precheckTooling(); err != nil {
+			return err
+		}
 	}
 
 	a.ff.Schema_version = common.LatestYamlVersion
@@ -277,7 +335,12 @@ func (a *initFnCmd) init(c *cli.Context) error {
 	} else {
 		// TODO: why don't we treat "docker" runtime as just another language helper?
 		// Then can get rid of several Docker specific if/else's like this one.
-		if runtimeSpecified && runtime != common.FuncfileDockerRuntime {
+		if codeOnlyInit {
+			err := a.generateCodeOnlyBoilerplate(dir, runtime)
+			if err != nil {
+				return err
+			}
+		} else if runtimeSpecified && runtime != common.FuncfileDockerRuntime {
 			err := a.generateBoilerplate(dir, runtime)
 			if err != nil {
 				return err
@@ -291,6 +354,44 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	fmt.Println("func.yaml created.")
 	return nil
+}
+
+func (a *initFnCmd) buildCodeOnlyFuncFile(c *cli.Context, runtime string) error {
+	a.ff.Version = c.String("version")
+	if err := ValidateFuncName(a.ff.Name); err != nil {
+		return err
+	}
+
+	runtimeName := runtime
+	if runtimeName == "" {
+		runtimeName = a.runtimeName
+	}
+	if runtimeName == "" {
+		return fmt.Errorf("Code-only init requires --runtime-name or --runtime")
+	}
+
+	a.setupCodeOnlyFuncFile(runtimeName)
+	return nil
+}
+
+func (a *initFnCmd) setupCodeOnlyFuncFile(runtimeName string) {
+	a.ff.Code_only = true
+	a.ff.Runtime = ""
+	a.ff.Build_image = ""
+	a.ff.Run_image = ""
+	a.ff.Cmd = ""
+	a.ff.Entrypoint = ""
+	a.ff.Build = nil
+
+	a.ff.Runtime_config = &common.RuntimeConfigV20180708{
+		Type:               a.runtimeConfigType,
+		Runtime_name:       runtimeName,
+		Runtime_version_id: "",
+	}
+
+	if requiresCodeOnlyHandler(runtimeName) {
+		a.ff.Handler = defaultCodeOnlyHandler(runtimeName)
+	}
 }
 
 func (a *initFnCmd) doInitImage(initImage string, c *cli.Context) error {
@@ -325,6 +426,258 @@ func (a *initFnCmd) generateBoilerplate(path, runtime string) error {
 		fmt.Println("Function boilerplate generated.")
 	}
 	return nil
+}
+
+func (a *initFnCmd) generateCodeOnlyBoilerplate(path, runtime string) error {
+	runtimeName := runtime
+	if runtimeName == "" {
+		runtimeName = a.runtimeName
+	}
+	if runtimeName == "" && a.ff.Runtime_config != nil {
+		runtimeName = a.ff.Runtime_config.Runtime_name
+	}
+	if runtimeName == "" {
+		return nil
+	}
+
+	baseRuntime := baseRuntimeFromName(runtimeName)
+	switch {
+	case strings.HasPrefix(baseRuntime, "python"):
+		generated, err := createPythonCodeOnlyBoilerplate(path)
+		if err != nil {
+			return err
+		}
+		if generated {
+			fmt.Println("Function boilerplate generated.")
+		}
+	case strings.HasPrefix(baseRuntime, "node"), strings.HasPrefix(baseRuntime, "javascript"):
+		generated, err := createNodeCodeOnlyBoilerplate(path)
+		if err != nil {
+			return err
+		}
+		if generated {
+			fmt.Println("Function boilerplate generated.")
+		}
+	case strings.HasPrefix(baseRuntime, "java"):
+		generated, err := createJavaCodeOnlyBoilerplate(path, runtimeName)
+		if err != nil {
+			return err
+		}
+		if generated {
+			fmt.Println("Function boilerplate generated.")
+		}
+	case strings.HasPrefix(baseRuntime, "go"):
+		generated, err := createGoCodeOnlyBoilerplate(path, runtimeName)
+		if err != nil {
+			return err
+		}
+		if generated {
+			fmt.Println("Function boilerplate generated.")
+		}
+	default:
+		helper := langs.GetLangHelper(runtime)
+		if helper == nil {
+			helper = langs.GetLangHelper(baseRuntime)
+		}
+		if helper != nil && helper.HasBoilerplate() {
+			if err := helper.GenerateBoilerplate(path); err != nil {
+				if err == langs.ErrBoilerplateExists {
+					return nil
+				}
+				return err
+			}
+			fmt.Println("Function boilerplate generated.")
+		}
+	}
+
+	return nil
+}
+
+func (a *initFnCmd) precheckTooling() error {
+	runtime := a.ff.Runtime
+	if a.ff.Runtime_config != nil && a.ff.Runtime_config.Runtime_name != "" {
+		runtime = a.ff.Runtime_config.Runtime_name
+	}
+
+	return precheckToolingForRuntime(runtime)
+}
+
+
+func precheckToolingForRuntime(runtime string) error {
+	runtimeName, requiredTool, candidates := runtimeToolRequirement(runtime)
+	if requiredTool == "" {
+		return nil
+	}
+
+	for _, candidate := range candidates {
+		if _, err := exec.LookPath(candidate); err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("%s runtime selected, but %s was not found in PATH. Install %s and rerun `fn init`, or choose a different runtime", runtimeName, requiredTool, requiredTool)
+}
+
+func runtimeToolRequirement(runtime string) (string, string, []string) {
+	baseRuntime := baseRuntimeFromName(runtime)
+	switch {
+	case strings.HasPrefix(baseRuntime, "java"), strings.HasPrefix(baseRuntime, "kotlin"):
+		return runtimeDisplayName(runtime), "Maven", []string{"mvn"}
+	case strings.HasPrefix(baseRuntime, "python"):
+		return runtimeDisplayName(runtime), "Python", []string{"python3", "python"}
+	case strings.HasPrefix(baseRuntime, "ruby"):
+		return runtimeDisplayName(runtime), "Ruby", []string{"ruby"}
+	case strings.HasPrefix(baseRuntime, "go"):
+		return runtimeDisplayName(runtime), "Go", []string{"go"}
+	default:
+		return "", "", nil
+	}
+}
+
+func runtimeDisplayName(runtime string) string {
+	baseRuntime := baseRuntimeFromName(runtime)
+	switch {
+	case strings.HasPrefix(baseRuntime, "java"):
+		return "Java"
+	case strings.HasPrefix(baseRuntime, "kotlin"):
+		return "Kotlin"
+	case strings.HasPrefix(baseRuntime, "python"):
+		return "Python"
+	case strings.HasPrefix(baseRuntime, "ruby"):
+		return "Ruby"
+	case strings.HasPrefix(baseRuntime, "go"):
+		return "Go"
+	default:
+		if runtime == "" {
+			return "Selected"
+		}
+		return strings.Title(baseRuntime)
+	}
+}
+
+func requiresCodeOnlyHandler(runtime string) bool {
+	baseRuntime := baseRuntimeFromName(runtime)
+	return strings.HasPrefix(baseRuntime, "java") ||
+		strings.HasPrefix(baseRuntime, "python") ||
+		strings.HasPrefix(baseRuntime, "node") ||
+		strings.HasPrefix(baseRuntime, "javascript")
+}
+
+func defaultCodeOnlyHandler(runtime string) string {
+	baseRuntime := baseRuntimeFromName(runtime)
+	switch {
+	case strings.HasPrefix(baseRuntime, "java"):
+		return "com.example.fn.HelloFunction::handleRequest"
+	case strings.HasPrefix(baseRuntime, "python"):
+		return "hello_world.handler"
+	case strings.HasPrefix(baseRuntime, "node"), strings.HasPrefix(baseRuntime, "javascript"):
+		return "hello-world.handler"
+	default:
+		return "handler"
+	}
+}
+
+func baseRuntimeFromName(runtimeName string) string {
+	lower := strings.ToLower(strings.TrimSpace(runtimeName))
+	for _, sep := range []string{".", "-"} {
+		if idx := strings.Index(lower, sep); idx != -1 {
+			lower = lower[:idx]
+			break
+		}
+	}
+	return lower
+}
+
+func createPythonCodeOnlyBoilerplate(path string) (bool, error) {
+	filePath := filepath.Join(path, "hello_world.py")
+	if _, err := os.Stat(filePath); err == nil {
+		return false, nil
+	} else if !os.IsNotExist(err) {
+		return false, err
+	}
+
+	content := "import json\n\n" +
+		"def handler(context, data=None):\n" +
+		"    name = \"World\"\n" +
+		"    if data:\n" +
+		"        try:\n" +
+		"            text = data.decode() if isinstance(data, (bytes, bytearray)) else str(data)\n" +
+		"            payload = json.loads(text)\n" +
+		"            name = payload.get(\"name\", name)\n" +
+		"        except Exception:\n" +
+		"            pass\n" +
+		"    return {\n" +
+		"        \"message\": f\"Hello {name}\"\n" +
+		"    }\n"
+
+	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func createNodeCodeOnlyBoilerplate(path string) (bool, error) {
+	filePath := filepath.Join(path, "hello-world.js")
+	if _, err := os.Stat(filePath); err == nil {
+		return false, nil
+	} else if !os.IsNotExist(err) {
+		return false, err
+	}
+
+	content := "exports.handler = async function (context, data) {\n" +
+		"  let payload = data;\n" +
+		"  if (Buffer.isBuffer(payload)) {\n" +
+		"    try { payload = JSON.parse(payload.toString(\"utf8\")); } catch (e) {}\n" +
+		"  } else if (typeof payload === \"string\") {\n" +
+		"    try { payload = JSON.parse(payload); } catch (e) {}\n" +
+		"  }\n" +
+		"  let name = \"World\";\n" +
+		"  if (payload && typeof payload === \"object\") {\n" +
+		"    name = payload.name || name;\n" +
+		"  }\n" +
+		"  return { message: `Hello ${name}` };\n" +
+		"};\n"
+
+	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func createJavaCodeOnlyBoilerplate(path, runtimeName string) (bool, error) {
+	helper := langs.GetLangHelper(runtimeName)
+	if helper == nil {
+		helper = langs.GetLangHelper(baseRuntimeFromName(runtimeName))
+	}
+	if helper == nil || !helper.HasBoilerplate() {
+		return false, nil
+	}
+	if err := helper.GenerateBoilerplate(path); err != nil {
+		if err == langs.ErrBoilerplateExists {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func createGoCodeOnlyBoilerplate(path, runtimeName string) (bool, error) {
+	helper := langs.GetLangHelper(runtimeName)
+	if helper == nil {
+		helper = langs.GetLangHelper(baseRuntimeFromName(runtimeName))
+	}
+	if helper == nil || !helper.HasBoilerplate() {
+		return false, nil
+	}
+	if err := helper.GenerateBoilerplate(path); err != nil {
+		if err == langs.ErrBoilerplateExists {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 func (a *initFnCmd) bindFn(fn *modelsV2.Fn) {

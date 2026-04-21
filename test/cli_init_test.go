@@ -85,6 +85,53 @@ func TestSettingRuntimeAndBuildImage(t *testing.T) {
 	}
 }
 
+func TestCodeOnlyInit(t *testing.T) {
+	t.Run("`fn init --code-only` should generate code-only func.yaml", func(t *testing.T) {
+		t.Parallel()
+		h := testharness.Create(t)
+		defer h.Cleanup()
+
+		appName := h.NewAppName()
+		funcName := h.NewFuncName(appName)
+		dirName := funcName + "_dir"
+		h.Fn("init", "--code-only", "--runtime", "python", "--name", funcName, dirName).AssertSuccess()
+
+		h.Cd(dirName)
+		yamlFile := h.GetYamlFile("func.yaml")
+
+		if !yamlFile.Code_only {
+			t.Fatal("code_only was not set in func.yaml")
+		}
+		if yamlFile.Runtime_config == nil {
+			t.Fatal("runtime_config was not set in func.yaml")
+		}
+		if yamlFile.Runtime_config.Type != "function-update" {
+			t.Fatalf("runtime_config.type was %q, expected function-update", yamlFile.Runtime_config.Type)
+		}
+		if yamlFile.Runtime_config.Runtime_name != "python" {
+			t.Fatalf("runtime_config.runtime_name was %q, expected python", yamlFile.Runtime_config.Runtime_name)
+		}
+		if yamlFile.Handler != "handler" {
+			t.Fatalf("handler was %q, expected handler", yamlFile.Handler)
+		}
+		if yamlFile.Build_image != "" || yamlFile.Run_image != "" {
+			t.Fatal("code-only func.yaml should not contain build_image or run_image")
+		}
+		if yamlFile.Runtime != "" {
+			t.Fatal("code-only func.yaml should not contain runtime")
+		}
+	})
+
+	t.Run("`fn init --code-only --runtime java` should require Maven", func(t *testing.T) {
+		t.Parallel()
+		h := testharness.Create(t)
+		defer h.Cleanup()
+
+		h.WithEnv("PATH", "/usr/bin:/bin")
+		h.Fn("init", "--code-only", "--runtime", "java", "hello-java").AssertFailed().AssertStderrContains("Maven was not found in PATH")
+	})
+}
+
 func TestInitImage(t *testing.T) {
 
 	// NB this test creates a function with `fn init --runtime` then creates an init-image from that
