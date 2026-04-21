@@ -25,6 +25,26 @@ curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
 ## CLI Development
 * Refer to the [Fn CLI Wiki](https://github.com/fnproject/cli/wiki) for development details.
 
+## Watch (local auto-deploy)
+To watch a directory and automatically redeploy to a local Fn server when files change:
+
+```sh
+fn watch --app <app>
+```
+
+This watches the current directory recursively and triggers:
+
+```sh
+fn deploy --app <app> --local
+```
+
+### Ignoring paths
+`fn watch` ignores these directories by default:
+
+- `.git`, `.fn`, `node_modules`, `target`, `dist`, `vendor`, `Dockerfile-fn-temp*`
+
+You can add more ignore rules by creating a `.fnignore` file in the watched directory (one pattern per line; `#` comments supported), and/or by passing `--ignore` flags.
+
 ### Build from source
 See [CONTRIBUTING](https://github.com/fnproject/cli/blob/master/CONTRIBUTING.md) for instructions to build the CLI from source.
 
