@@ -91,23 +91,28 @@ func (h *PythonLangHelper) Entrypoint() (string, error) {
 	return "/python/bin/fdk /function/func.py handler", nil
 }
 
-func (h *PythonLangHelper) DockerfileBuildCmds() []string {
+func (h *PythonLangHelper) DockerfileBuildCmds(localDebug bool) []string {
 	var r []string
+
+	pip_cmd := `RUN pip3 install --target /python/ --no-cache --no-cache-dir`
+	if localDebug {
+		r = append(r, fmt.Sprintf("%s debugpy", pip_cmd))
+		r = append(r, "RUN rm -rf /python/bin")
+	}
 	if exists("requirements.txt") {
-		pip_cmd := `RUN pip3 install --target /python/  --no-cache --no-cache-dir`
 		if exists(".pip_cache") {
 			r = append(r, "ADD .pip_cache /function/.pip_cache")
 			pip_cmd += " --no-index --find-links /function/.pip_cache"
 		}
 		r = append(r, "ADD requirements.txt /function/")
-		r = append(r, fmt.Sprintf(`
-			%v -r requirements.txt &&\
+		r = append(r, fmt.Sprintf(
+			`%v -r requirements.txt &&\
 			    rm -fr ~/.cache/pip /tmp* requirements.txt func.yaml Dockerfile .venv &&\
 			    chmod -R o+r /python`, pip_cmd))
 	}
 	r = append(r, "ADD . /function/")
 	if exists("setup.py") {
-		r = append(r, "python setup.py install")
+		r = append(r, fmt.Sprintf("%s .", pip_cmd))
 	}
 	r = append(r, "RUN rm -fr /function/.pip_cache")
 
@@ -144,13 +149,24 @@ def handler(ctx, data: io.BytesIO = None):
 	reqsPythonSrcBoilerplate = `fdk%s`
 )
 
-func (h *PythonLangHelper) DockerfileCopyCmds() []string {
+func (h *PythonLangHelper) DockerfileCopyCmds(localDebug bool) []string {
 	return []string{
 		"COPY --from=build-stage /python /python",
 		"COPY --from=build-stage /function /function",
 		"RUN chmod -R o+r /function",
 		"ENV PYTHONPATH=/function:/python",
 	}
+}
+
+func (h *PythonLangHelper) DebugEntrypoint(entryPoint string) string {
+	python := fmt.Sprintf("python%s", h.Version)
+	return fmt.Sprintf("%s -m debugpy --listen 0.0.0.0:%d --wait-for-client %s", python, FnContainerDebugPort, entryPoint)
+}
+
+func (h *PythonLangHelper) DebugCmd(cmd string) string {
+	// debug option will only be injected if entryPoint is not used
+	python := fmt.Sprintf("python%s", h.Version)
+	return fmt.Sprintf("%s -m debugpy --listen 0.0.0.0:%d --wait-for-client %s", python, FnContainerDebugPort, cmd)
 }
 
 func (h *PythonLangHelper) FixImagesOnInit() bool {

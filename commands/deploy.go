@@ -110,14 +110,15 @@ func DeployCommand() cli.Command {
 type deploycmd struct {
 	clientV2 *v2Client.Fn
 
-	appName   string
-	createApp bool
-	wd        string
-	local     bool
-	noCache   bool
-	registry  string
-	all       bool
-	noBump    bool
+	appName    string
+	createApp  bool
+	wd         string
+	local      bool
+	localDebug bool
+	noCache    bool
+	registry   string
+	all        bool
+	noBump     bool
 }
 
 func (p *deploycmd) flags() []cli.Flag {
@@ -146,6 +147,11 @@ func (p *deploycmd) flags() []cli.Flag {
 			Name:        "local, skip-push", // todo: deprecate skip-push
 			Usage:       "Do not push Docker built images onto Docker Hub - useful for local development.",
 			Destination: &p.local,
+		},
+		cli.BoolFlag{
+			Name:        "local-debug",
+			Usage:       "Build function image with remote debug options and deploy to local. It won't push Docker built images onto Docker Hub - useful for debugging in local development.",
+			Destination: &p.localDebug,
 		},
 		cli.StringFlag{
 			Name:        "registry",
@@ -387,7 +393,7 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 
 	// In case of local ignore the architectures parameter
 	shape := ""
-	if !p.local {
+	if !p.local && !p.localDebug {
 		// fetch the architectures
 		shape = app.Shape
 		if shape == "" {
@@ -400,7 +406,7 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 		}
 	}
 
-	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, shape)
+	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, shape, p.localDebug)
 	if err != nil {
 		return err
 	}

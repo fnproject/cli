@@ -119,14 +119,14 @@ func (lh *KotlinLangHelper) Cmd() (string, error) {
 }
 
 // DockerfileCopyCmds returns the Docker COPY command to copy the compiled Kotlin function jar and dependencies.
-func (lh *KotlinLangHelper) DockerfileCopyCmds() []string {
+func (lh *KotlinLangHelper) DockerfileCopyCmds(localDebug bool) []string {
 	return []string{
 		`COPY --from=build-stage /function/target/*.jar /function/app/`,
 	}
 }
 
 // DockerfileBuildCmds returns the build stage steps to compile the Maven function project.
-func (lh *KotlinLangHelper) DockerfileBuildCmds() []string {
+func (lh *KotlinLangHelper) DockerfileBuildCmds(localDebug bool) []string {
 	return []string{
 		fmt.Sprintf(`ENV MAVEN_OPTS %s`, kotlinMavenOpts()),
 		`ADD pom.xml /function/pom.xml`,
@@ -175,8 +175,11 @@ func kotlinMavenOpts() string {
 	return opts.String()
 }
 
-/*    TODO temporarily generate maven project boilerplate from hardcoded values.
-      Will eventually move to using a maven archetype.*/
+/*
+TODO temporarily generate maven project boilerplate from hardcoded values.
+
+	Will eventually move to using a maven archetype.
+*/
 func kotlinPomFileContent(APIversion, pomType string) string {
 	if pomType == "maven" {
 		return fmt.Sprintf(mavenKotlinPomFile, APIversion)

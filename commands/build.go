@@ -98,7 +98,7 @@ func (b *buildcmd) build(c *cli.Context) error {
 		buildArgs := c.StringSlice("build-arg")
 
 		// Passing empty shape for build command
-		ff, err = common.BuildFuncV20180708(common.IsVerbose(), fpath, ff, buildArgs, b.noCache, "")
+		ff, err = common.BuildFuncV20180708(common.IsVerbose(), fpath, ff, buildArgs, b.noCache, "", false)
 		if err != nil {
 			return err
 		}

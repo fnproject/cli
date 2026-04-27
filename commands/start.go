@@ -66,6 +66,15 @@ func StartCommand() cli.Command {
 				Usage: "Directory or container-engine volume where Fn Server creates the UNIX socket for " +
 					"cross-container communication. Defaults to named volume \"fnserversocket\"",
 			},
+			cli.BoolFlag{
+				Name:  "local-debug",
+				Usage: "Start up function container with local-debug-port exposed for debugger to attach to the function container.",
+			},
+			cli.IntFlag{
+				Name:  "local-debug-port",
+				Value: common.DefaultLocalDebugPort,
+				Usage: "Specify port number for function code local debugging.",
+			},
 		},
 	}
 }
@@ -105,6 +114,8 @@ func start(c *cli.Context) error {
 		"-v", fmt.Sprintf("%s:/iofs:z", iofsDir),
 		"-e", fmt.Sprintf("FN_IOFS_DOCKER_PATH=%s", iofsDir),
 		"-e", "FN_IOFS_PATH=/iofs",
+		"-e", fmt.Sprintf("FN_LOCAL_DEBUG=%v", c.Bool("local-debug")),
+		"-e", fmt.Sprintf("FN_LOCAL_DEBUG_PORT=%d", c.Int("local-debug-port")),
 		"-v", fmt.Sprintf("%s/data:/app/data", fnDir),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"--privileged",

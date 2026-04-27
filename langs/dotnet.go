@@ -64,7 +64,7 @@ func (lh *DotnetLangHelper) RunFromImage() (string, error) {
 	return fmt.Sprintf("fnproject/dotnet:%s-%s", lh.Version, fdkVersion), nil
 }
 
-func (h *DotnetLangHelper) DockerfileBuildCmds() []string {
+func (h *DotnetLangHelper) DockerfileBuildCmds(localDebug bool) []string {
 	r := []string{"COPY . ."}
 	r = append(r, "RUN dotnet sln add src/Function/Function.csproj tests/Function.Tests/Function.Tests.csproj")
 	r = append(r, "RUN dotnet build -c Release")
@@ -73,7 +73,7 @@ func (h *DotnetLangHelper) DockerfileBuildCmds() []string {
 	return r
 }
 
-func (h *DotnetLangHelper) DockerfileCopyCmds() []string {
+func (h *DotnetLangHelper) DockerfileCopyCmds(localDebug bool) []string {
 	return []string{
 		"COPY --from=build-stage /function/out/ /function/",
 	}
