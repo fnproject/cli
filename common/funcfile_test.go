@@ -104,6 +104,63 @@ entrypoint: ./func
 	}
 }
 
+func TestMergeFuncFileInitYAMLCopiesDeploySection(t *testing.T) {
+	ff := FuncFileV20180708{Name: "hello"}
+	initYAML := `
+schema_version: 20180708
+runtime: go
+deploy:
+  oci:
+    provisioned_concurrency:
+      strategy: CONSTANT
+      count: 3
+    detached_mode:
+      timeout: 20m
+      on_success:
+        type: stream
+        ocid: ocid1.stream.oc1..example
+`
+	folder, filePath := createInitYAML(initYAML)
+	defer os.RemoveAll(folder)
+
+	if err := MergeFuncFileInitYAML(filePath, &ff); err != nil {
+		t.Fatalf("MergeFuncFileInitYAML() error = %v", err)
+	}
+	if ff.Deploy == nil || ff.Deploy.OCI == nil || ff.Deploy.OCI.ProvisionedConcurrency == nil {
+		t.Fatalf("expected deploy.oci.provisioned_concurrency to be copied from init yaml")
+	}
+	if ff.Deploy.OCI.ProvisionedConcurrency.Strategy != "CONSTANT" {
+		t.Fatalf("expected provisioned concurrency strategy CONSTANT, got %q", ff.Deploy.OCI.ProvisionedConcurrency.Strategy)
+	}
+	if ff.Deploy.OCI.ProvisionedConcurrency.Count == nil || *ff.Deploy.OCI.ProvisionedConcurrency.Count != 3 {
+		t.Fatalf("expected provisioned concurrency count 3, got %#v", ff.Deploy.OCI.ProvisionedConcurrency.Count)
+	}
+	if ff.Deploy.OCI.DetachedMode == nil || ff.Deploy.OCI.DetachedMode.Timeout != "20m" {
+		t.Fatalf("expected detached mode timeout to be copied, got %#v", ff.Deploy.OCI.DetachedMode)
+	}
+}
+
+func TestFuncFileV20180708OCIManagedFunctionSettingsHelpers(t *testing.T) {
+	count := 5
+	ff := &FuncFileV20180708{
+		Deploy: &FuncDeployConfig{
+			OCI: &OCIFunctionDeployConfig{
+				ProvisionedConcurrency: &OCIProvisionedConcurrencyConfig{Strategy: "CONSTANT", Count: &count},
+				DetachedMode:           &OCIDetachedModeConfig{Timeout: "20m"},
+			},
+		},
+	}
+
+	if !ff.HasOCIManagedFunctionSettings() {
+		t.Fatal("expected HasOCIManagedFunctionSettings to return true")
+	}
+	want := []string{"provisioned_concurrency", "detached_mode"}
+	got := ff.OCIManagedFunctionSettingNames()
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("expected OCIManagedFunctionSettingNames %v, got %v", want, got)
+	}
+}
+
 func createInitYAML(contents string) (string, string) {
 	folder, err := ioutil.TempDir(os.TempDir(), "fn-tests")
 	if err != nil {

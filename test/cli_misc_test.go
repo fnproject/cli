@@ -24,6 +24,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/testharness"
 )
 
@@ -162,6 +163,51 @@ func TestSettingMemoryWorks(t *testing.T) {
 	h.Fn("create", "fn", appName, "another", "some_random_registry/"+funcName+":0.0.2").AssertSuccess()
 
 	h.Fn("invoke", appName, "another").AssertSuccess()
+}
+
+func TestFuncYamlWithOCIManagedSettingsParsesInHarness(t *testing.T) {
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+	h.MkDir("hello")
+	h.Cd("hello")
+	withMinimalFunction(h)
+	count := 1
+	h.WriteYamlFile("func.yaml", common.FuncFileV20180708{
+		Schema_version: common.LatestYamlVersion,
+		Name:           "hello",
+		Version:        "0.0.1",
+		Runtime:        "go",
+		Entrypoint:     "./func",
+		Build_image:    "fnproject/go:dev",
+		Run_image:      "fnproject/go",
+		Deploy: &common.FuncDeployConfig{
+			OCI: &common.OCIFunctionDeployConfig{
+				ProvisionedConcurrency: &common.OCIProvisionedConcurrencyConfig{
+					Strategy: "CONSTANT",
+					Count:    &count,
+				},
+				DetachedMode: &common.OCIDetachedModeConfig{
+					Timeout: "20m",
+				},
+			},
+		},
+	})
+
+	yamlFile := h.GetYamlFile("func.yaml")
+	if yamlFile.Deploy == nil || yamlFile.Deploy.OCI == nil {
+		t.Fatal("expected deploy.oci to be parsed from func.yaml")
+	}
+	if yamlFile.Deploy.OCI.ProvisionedConcurrency == nil || yamlFile.Deploy.OCI.ProvisionedConcurrency.Strategy != "CONSTANT" {
+		t.Fatalf("expected provisioned concurrency settings to be parsed, got %#v", yamlFile.Deploy.OCI.ProvisionedConcurrency)
+	}
+	if yamlFile.Deploy.OCI.ProvisionedConcurrency.Count == nil || *yamlFile.Deploy.OCI.ProvisionedConcurrency.Count != 1 {
+		t.Fatalf("expected provisioned concurrency count 1, got %#v", yamlFile.Deploy.OCI.ProvisionedConcurrency.Count)
+	}
+	if yamlFile.Deploy.OCI.DetachedMode == nil || yamlFile.Deploy.OCI.DetachedMode.Timeout != "20m" {
+		t.Fatalf("expected detached mode timeout 20m, got %#v", yamlFile.Deploy.OCI.DetachedMode)
+	}
 }
 
 func TestAllMainCommandsExist(t *testing.T) {

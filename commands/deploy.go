@@ -39,6 +39,7 @@ import (
 	trigger "github.com/fnproject/cli/objects/trigger"
 	v2Client "github.com/fnproject/fn_go/clientv2"
 	models "github.com/fnproject/fn_go/modelsv2"
+	fnprovider "github.com/fnproject/fn_go/provider"
 	"github.com/oracle/oci-go-sdk/v65/artifacts"
 	ociCommon "github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/keymanagement"
@@ -109,6 +110,7 @@ func DeployCommand() cli.Command {
 
 type deploycmd struct {
 	clientV2 *v2Client.Fn
+	provider fnprovider.Provider
 
 	appName    string
 	createApp  bool
@@ -349,6 +351,7 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	if funcfile.Name == "" {
 		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
 	}
+	common.WarnIfOCIManagedFunctionSettingsUnsupported(os.Stderr, p.provider, funcfile.Name, funcfile)
 
 	oracleProvider, _ := getOracleProvider()
 	if oracleProvider != nil && oracleProvider.ImageCompartmentID != "" {
