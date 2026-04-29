@@ -28,7 +28,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-//Cmd is a mapping from a commands name to its corresponding structure
+// Cmd is a mapping from a commands name to its corresponding structure
 type Cmd map[string]cli.Command
 
 // Commands map of all top-level commands
@@ -36,6 +36,7 @@ var Commands = Cmd{
 	"build":        BuildCommand(),
 	"build-server": BuildServerCommand(),
 	"bump":         common.BumpCommand(),
+	"watch":        WatchCommand(),
 	"invoke":       InvokeCommand(),
 	"configure":    ConfigureCommand(),
 	"create":       CreateCommand(),

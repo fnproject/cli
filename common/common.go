@@ -738,7 +738,7 @@ func writeTmpDockerfile(helper langs.LangHelper, dir string, ff *FuncFile) (stri
 		return "", errors.New("entrypoint and cmd are missing, you must provide one or the other")
 	}
 
-	fd, err := ioutil.TempFile(dir, "Dockerfile")
+	fd, err := ioutil.TempFile(dir, "Dockerfile-fn-tmp")
 	if err != nil {
 		return "", err
 	}
@@ -803,7 +803,7 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 		return "", errors.New("entrypoint and cmd are missing, you must provide one or the other")
 	}
 
-	fd, err := ioutil.TempFile(dir, "Dockerfile")
+	fd, err := ioutil.TempFile(dir, "Dockerfile-fn-tmp")
 	if err != nil {
 		return "", err
 	}

@@ -32,8 +32,10 @@ func TestTopLevelAutoComplete(t *testing.T) {
 	h := testharness.Create(t)
 	defer h.Cleanup()
 
+	topLevelCmd := commands.Commands
+	topLevelCmd["version"] = commands.VersionCommand()
 	allCmds := map[string]commands.Cmd{
-		" ":       commands.Commands, //only has top level commands
+		" ":       topLevelCmd, //only has top level commands
 		"create":  commands.CreateCmds,
 		"config":  commands.ConfigCmds,
 		"delete":  commands.DeleteCmds,
