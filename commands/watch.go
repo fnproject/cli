@@ -232,7 +232,12 @@ func (w *watchcmd) watchLoop(ctx context.Context, root string, appName string, w
 }
 
 func runFnDeployLocal(ctx context.Context, dir string, appName string) error {
-	cmd := exec.CommandContext(ctx, "fn", "deploy", "--app", appName, "--local", "--no-bump")
+	executable, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.CommandContext(ctx, executable, "deploy", "--app", appName, "--local", "--no-bump")
 	cmd.Dir = dir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -296,6 +301,11 @@ func (w watchIgnore) shouldIgnore(root string, path string, isDir bool) bool {
 		for _, s := range segs {
 			if s == p {
 				return true
+			}
+			if !strings.Contains(p, "/") {
+				if ok, _ := filepath.Match(p, s); ok {
+					return true
+				}
 			}
 		}
 

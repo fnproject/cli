@@ -194,6 +194,9 @@ func TestLoadWatchIgnoreReadsFnIgnoreAndExtras(t *testing.T) {
 	if !ig.shouldIgnore(root, filepath.Join(root, "a.log"), false) {
 		t.Fatal("expected glob-based ignore to match")
 	}
+	if !ig.shouldIgnore(root, filepath.Join(root, "nested", "agit .log"), false) {
+		t.Fatal("expected glob-based segment ignore to match nested file")
+	}
 }
 
 func TestWatchRequiresAppFlag(t *testing.T) {

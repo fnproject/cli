@@ -35,19 +35,18 @@ fn watch --app <app>
 This watches the current directory recursively and triggers:
 
 ```sh
-fn deploy --app <app> --local
+fn deploy --app <app> --local --no-bump
 ```
 
 ### Ignoring paths
 `fn watch` ignores these directories by default:
 
-- `.git`, `.fn`, `node_modules`, `target`, `dist`, `vendor`, `Dockerfile-fn-temp*`
+- `.git`, `.fn`, `node_modules`, `target`, `dist`, `vendor`, `Dockerfile-fn-tmp*`
 
 You can add more ignore rules by creating a `.fnignore` file in the watched directory (one pattern per line; `#` comments supported), and/or by passing `--ignore` flags.
 
 ### Build from source
 See [CONTRIBUTING](https://github.com/fnproject/cli/blob/master/CONTRIBUTING.md) for instructions to build the CLI from source.
-
 
 
 
