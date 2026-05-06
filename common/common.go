@@ -182,11 +182,10 @@ func imageStampFuncFile(fpath string, funcfile *FuncFile) (*FuncFile, error) {
 			return funcfile, fmt.Errorf("runtime [%s] is not supported", funcfile.Runtime)
 		}
 
-		// get the lang without any version
+		// only apply fallback for versionless legacy runtimes such as "node" or "java"
 		langRuntime := helper.Runtime()
 
-		// if fallback is not supported then continue with same lang helper
-		if langs.IsFallbackSupported(langRuntime) {
+		if funcfile.Runtime == langRuntime && langs.IsFallbackSupported(langRuntime) {
 			helper = langs.GetFallbackLangHelper(langRuntime)
 		}
 
@@ -232,11 +231,10 @@ func imageStampFuncFileV20180708(fpath string, funcfile *FuncFileV20180708) (*Fu
 			return funcfile, fmt.Errorf("runtime [%s] is not supported", funcfile.Runtime)
 		}
 
-		// get the lang without any version
+		// only apply fallback for versionless legacy runtimes such as "node" or "java"
 		langRuntime := helper.Runtime()
 
-		// if fallback is not supported then continue with same lang helper
-		if langs.IsFallbackSupported(langRuntime) {
+		if funcfile.Runtime == langRuntime && langs.IsFallbackSupported(langRuntime) {
 			helper = langs.GetFallbackLangHelper(langRuntime)
 		}
 
