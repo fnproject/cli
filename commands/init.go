@@ -119,6 +119,10 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Name:  "annotation",
 			Usage: "Function annotation (can be specified multiple times)",
 		},
+		cli.StringFlag{
+			Name:  "provisioned-concurrency",
+			Usage: "Set OCI provisioned concurrency using 'none' or 'constant:<count>'",
+		},
 	}
 
 	return fgs
@@ -176,6 +180,11 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	function.WithFlags(c, &fn)
 	a.bindFn(&fn)
+	pcConfig, err := common.ParseProvisionedConcurrencySpec(c.String("provisioned-concurrency"))
+	if err != nil {
+		return err
+	}
+	common.SetProvisionedConcurrency(a.ff, pcConfig)
 
 	runtime := c.String("runtime")
 	initImage := c.String("init-image")

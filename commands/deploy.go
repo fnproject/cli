@@ -97,6 +97,7 @@ func DeployCommand() cli.Command {
 			if err != nil {
 				return err
 			}
+			cmd.provider = provider
 			cmd.clientV2 = provider.APIClientv2()
 			return nil
 		},
@@ -422,19 +423,31 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 
 func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.FuncFileV20180708) error {
 	fmt.Printf("Updating function %s using image %s...\n", ff.Name, ff.ImageNameV20180708())
+	if ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.ProvisionedConcurrency != nil {
+		if err := common.ValidateProvisionedConcurrencyConfig(ff.Deploy.OCI.ProvisionedConcurrency); err != nil {
+			return err
+		}
+	}
 
 	fn := &models.Fn{}
 	if err := function.WithFuncFileV20180708(ff, fn); err != nil {
 		return fmt.Errorf("Error getting function with funcfile: %s", err)
 	}
+	created := false
 
 	fnRes, err := function.GetFnByName(p.clientV2, appID, ff.Name)
 	if _, ok := err.(function.NameNotFoundError); ok {
 		fn.Name = ff.Name
+		if ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.ProvisionedConcurrency != nil && common.IsOracleProvider(p.provider) {
+			if err := function.SetProvisionedConcurrencyAnnotations(fn, ff.Deploy.OCI.ProvisionedConcurrency); err != nil {
+				return err
+			}
+		}
 		fn, err = function.CreateFn(p.clientV2, appID, fn)
 		if err != nil {
 			return err
 		}
+		created = true
 	} else if err != nil {
 		// probably service is down or something...
 		return err
@@ -471,6 +484,11 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 					return err
 				}
 			}
+		}
+	}
+	if !created && ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.ProvisionedConcurrency != nil && common.IsOracleProvider(p.provider) {
+		if err := function.ApplyProvisionedConcurrency(p.provider, fn.ID, ff.Deploy.OCI.ProvisionedConcurrency); err != nil {
+			return err
 		}
 	}
 	return nil

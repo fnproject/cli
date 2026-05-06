@@ -35,12 +35,46 @@ import (
 	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider"
 	"github.com/jmoiron/jsonq"
+	fnprovideroracle "github.com/fnproject/fn_go/provider/oracle"
+	ocifunctions "github.com/oracle/oci-go-sdk/v65/functions"
 	"github.com/urfave/cli"
 )
 
 type fnsCmd struct {
 	provider provider.Provider
 	client   *fnclient.Fn
+}
+
+const (
+	annotationProvisionedConcurrencyStrategy = "oracle.com/oci/provisionedConcurrencyStrategy"
+	annotationProvisionedConcurrencyCount    = "oracle.com/oci/provisionedConcurrencyCount"
+)
+
+// SetProvisionedConcurrencyAnnotations adds the internal annotations used to
+// carry provisioned concurrency through the create payload into the OCI shim.
+func SetProvisionedConcurrencyAnnotations(fn *models.Fn, cfg *common.OCIProvisionedConcurrencyConfig) error {
+	if fn == nil || cfg == nil {
+		return nil
+	}
+	if err := common.ValidateProvisionedConcurrencyConfig(cfg); err != nil {
+		return err
+	}
+	if fn.Annotations == nil {
+		fn.Annotations = make(map[string]interface{})
+	}
+	strategy := strings.ToUpper(strings.TrimSpace(cfg.Strategy))
+	fn.Annotations[annotationProvisionedConcurrencyStrategy] = strategy
+	if strategy == common.ProvisionedConcurrencyStrategyConstant && cfg.Count != nil {
+		fn.Annotations[annotationProvisionedConcurrencyCount] = *cfg.Count
+	} else {
+		delete(fn.Annotations, annotationProvisionedConcurrencyCount)
+	}
+	return nil
+}
+
+type provisionedConcurrencyView struct {
+	Strategy string `json:"strategy"`
+	Count    *int   `json:"count,omitempty"`
 }
 
 // FnFlags used to create/update functions
@@ -69,6 +103,10 @@ var FnFlags = []cli.Flag{
 		Name:  "image",
 		Usage: "Function image",
 	},
+	cli.StringFlag{
+		Name:  "provisioned-concurrency",
+		Usage: "Set OCI provisioned concurrency using 'none' or 'constant:<count>'",
+	},
 }
 var updateFnFlags = FnFlags
 
@@ -95,13 +133,15 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 		var newFns []interface{}
 		for _, fn := range fns {
 			newFns = append(newFns, struct {
-				Name  string `json:"name"`
-				Image string `json:"image"`
-				ID    string `json:"id"`
+				Name                   string                      `json:"name"`
+				Image                  string                      `json:"image"`
+				ID                     string                      `json:"id"`
+				ProvisionedConcurrency *provisionedConcurrencyView `json:"provisionedConcurrency,omitempty"`
 			}{
-				fn.Name,
-				fn.Image,
-				fn.ID,
+				Name:                   fn.Name,
+				Image:                  fn.Image,
+				ID:                     fn.ID,
+				ProvisionedConcurrency: getProvisionedConcurrencyView(fn),
 			})
 		}
 		b, err := json.MarshalIndent(newFns, "", "    ")
@@ -111,16 +151,81 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 		fmt.Fprint(os.Stdout, string(b))
 	} else {
 		w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-		fmt.Fprint(w, "NAME", "\t", "IMAGE", "\t", "ID", "\n")
+		fmt.Fprint(w, "NAME", "\t", "IMAGE", "\t", "PC", "\t", "ID", "\n")
 
 		for _, f := range fns {
-			fmt.Fprint(w, f.Name, "\t", f.Image, "\t", f.ID, "\t", "\n")
+			fmt.Fprint(w, f.Name, "\t", f.Image, "\t", formatProvisionedConcurrencyDisplay(f), "\t", f.ID, "\t", "\n")
 		}
 		if err := w.Flush(); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func getProvisionedConcurrencyView(fn *models.Fn) *provisionedConcurrencyView {
+	if fn == nil || fn.Annotations == nil {
+		return nil
+	}
+	strategyRaw, ok := fn.Annotations[annotationProvisionedConcurrencyStrategy]
+	if !ok {
+		return nil
+	}
+	strategy, ok := strategyRaw.(string)
+	if !ok || strings.TrimSpace(strategy) == "" {
+		return nil
+	}
+	view := &provisionedConcurrencyView{Strategy: strings.ToUpper(strategy)}
+	if countRaw, ok := fn.Annotations[annotationProvisionedConcurrencyCount]; ok {
+		switch typed := countRaw.(type) {
+		case int:
+			count := typed
+			view.Count = &count
+		case int32:
+			count := int(typed)
+			view.Count = &count
+		case int64:
+			count := int(typed)
+			view.Count = &count
+		case float64:
+			count := int(typed)
+			view.Count = &count
+		}
+	}
+	return view
+}
+
+func formatProvisionedConcurrencyDisplay(fn *models.Fn) string {
+	view := getProvisionedConcurrencyView(fn)
+	if view == nil {
+		return ""
+	}
+	switch strings.ToUpper(view.Strategy) {
+	case "NONE":
+		return "none"
+	case "CONSTANT":
+		if view.Count == nil {
+			return "constant"
+		}
+		return fmt.Sprintf("constant:%d", *view.Count)
+	default:
+		return strings.ToLower(view.Strategy)
+	}
+}
+
+func buildInspectFnMap(fn *models.Fn) (map[string]interface{}, error) {
+	data, err := json.Marshal(fn)
+	if err != nil {
+		return nil, err
+	}
+	inspect := map[string]interface{}{}
+	if err := json.Unmarshal(data, &inspect); err != nil {
+		return nil, err
+	}
+	if pc := getProvisionedConcurrencyView(fn); pc != nil {
+		inspect["provisionedConcurrency"] = pc
+	}
+	return inspect, nil
 }
 
 func (f *fnsCmd) list(c *cli.Context) error {
@@ -258,9 +363,72 @@ func WithFuncFileV20180708(ff *common.FuncFileV20180708, fn *models.Fn) error {
 	return nil
 }
 
+func warnUnsupportedProvisionedConcurrency() {
+	fmt.Fprintln(os.Stderr, "Warning: --provisioned-concurrency is only supported with an oracle provider and will be ignored.")
+}
+
+func buildFunctionsManagementClient(oracleProvider *fnprovideroracle.OracleProvider) (*ocifunctions.FunctionsManagementClient, error) {
+	client, err := ocifunctions.NewFunctionsManagementClientWithConfigurationProvider(oracleProvider.ConfigurationProvider)
+	if err != nil {
+		return nil, err
+	}
+	if oracleProvider.FnApiUrl != nil {
+		client.Host = oracleProvider.FnApiUrl.String()
+	} else {
+		region, _ := oracleProvider.ConfigurationProvider.Region()
+		if region != "" {
+			client.SetRegion(region)
+		}
+	}
+	return &client, nil
+}
+
+// ApplyProvisionedConcurrency applies OCI provisioned concurrency to a function when the active provider is Oracle.
+func ApplyProvisionedConcurrency(p provider.Provider, fnID string, cfg *common.OCIProvisionedConcurrencyConfig) error {
+	if p == nil || cfg == nil || fnID == "" {
+		return nil
+	}
+	if err := common.ValidateProvisionedConcurrencyConfig(cfg); err != nil {
+		return err
+	}
+	oracleProvider, ok := p.(*fnprovideroracle.OracleProvider)
+	if !ok || oracleProvider == nil {
+		return nil
+	}
+	mgmtClient, err := buildFunctionsManagementClient(oracleProvider)
+	if err != nil {
+		return err
+	}
+
+	var pcConfig ocifunctions.FunctionProvisionedConcurrencyConfig
+	switch strings.ToUpper(cfg.Strategy) {
+	case common.ProvisionedConcurrencyStrategyNone:
+		pcConfig = ocifunctions.NoneProvisionedConcurrencyConfig{}
+	case common.ProvisionedConcurrencyStrategyConstant:
+		if cfg.Count == nil {
+			return fmt.Errorf("provisioned concurrency count is required for CONSTANT strategy")
+		}
+		pcConfig = ocifunctions.ConstantProvisionedConcurrencyConfig{Count: cfg.Count}
+	default:
+		return fmt.Errorf("unsupported provisioned concurrency strategy %q", cfg.Strategy)
+	}
+
+	_, err = mgmtClient.UpdateFunction(context.Background(), ocifunctions.UpdateFunctionRequest{
+		FunctionId: &fnID,
+		UpdateFunctionDetails: ocifunctions.UpdateFunctionDetails{
+			ProvisionedConcurrencyConfig: pcConfig,
+		},
+	})
+	return err
+}
+
 func (f *fnsCmd) create(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
+	pcConfig, err := common.ParseProvisionedConcurrencySpec(c.String("provisioned-concurrency"))
+	if err != nil {
+		return err
+	}
 
 	fn := &models.Fn{}
 	fn.Name = fnName
@@ -273,6 +441,13 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	}
 	if fn.Image == "" {
 		return errors.New("no image specified")
+	}
+	if pcConfig != nil {
+		if !common.IsOracleProvider(f.provider) {
+			warnUnsupportedProvisionedConcurrency()
+		} else if err := SetProvisionedConcurrencyAnnotations(fn, pcConfig); err != nil {
+			return err
+		}
 	}
 
 	a, err := app.GetAppByName(f.client, appName)
@@ -375,6 +550,13 @@ func GetFnByName(client *fnclient.Fn, appID, fnName string) (*models.Fn, error) 
 func (f *fnsCmd) update(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
+	pcConfig, err := common.ParseProvisionedConcurrencySpec(c.String("provisioned-concurrency"))
+	if err != nil {
+		return err
+	}
+	if err := common.ValidateProvisionedConcurrencyConfig(pcConfig); err != nil {
+		return err
+	}
 
 	app, err := app.GetAppByName(f.client, appName)
 	if err != nil {
@@ -390,6 +572,13 @@ func (f *fnsCmd) update(c *cli.Context) error {
 	err = PutFn(f.client, fn.ID, fn)
 	if err != nil {
 		return err
+	}
+	if pcConfig != nil {
+		if !common.IsOracleProvider(f.provider) {
+			warnUnsupportedProvisionedConcurrency()
+		} else if err := ApplyProvisionedConcurrency(f.provider, fn.ID, pcConfig); err != nil {
+			return err
+		}
 	}
 
 	fmt.Println(appName, fnName, "updated")
@@ -529,19 +718,14 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "\t")
 
-	if prop == "" {
-		enc.Encode(fn)
-		return nil
+	inspect, err := buildInspectFnMap(fn)
+	if err != nil {
+		return fmt.Errorf("failed to inspect %s: %s", fnName, err)
 	}
 
-	data, err := json.Marshal(fn)
-	if err != nil {
-		return fmt.Errorf("failed to inspect %s: %s", fnName, err)
-	}
-	var inspect map[string]interface{}
-	err = json.Unmarshal(data, &inspect)
-	if err != nil {
-		return fmt.Errorf("failed to inspect %s: %s", fnName, err)
+	if prop == "" {
+		enc.Encode(inspect)
+		return nil
 	}
 
 	jq := jsonq.NewQuery(inspect)

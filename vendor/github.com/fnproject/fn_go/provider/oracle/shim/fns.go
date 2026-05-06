@@ -2,6 +2,7 @@ package shim
 
 import (
 	"fmt"
+	"strings"
 	"github.com/fnproject/fn_go/clientv2/fns"
 	"github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider/oracle/shim/client"
@@ -15,6 +16,8 @@ const (
 
 	annotationImageDigest    = "oracle.com/oci/imageDigest"
 	annotationInvokeEndpoint = "fnproject.io/fn/invokeEndpoint"
+	annotationPCStrategy     = "oracle.com/oci/provisionedConcurrencyStrategy"
+	annotationPCCount        = "oracle.com/oci/provisionedConcurrencyCount"
 
 	invokeEndpointFmtString = "%s/20181201/functions/%s/actions/invoke"
 )
@@ -40,12 +43,18 @@ func (s *fnsShim) CreateFn(params *fns.CreateFnParams) (*fns.CreateFnOK, error) 
 		return nil, err
 	}
 
+	pcConfig, err := parseProvisionedConcurrencyAnnotation(params.Body.Annotations)
+	if err != nil {
+		return nil, err
+	}
+
 	details := functions.CreateFunctionDetails{
 		DisplayName:      &params.Body.Name,
 		ApplicationId:    &params.Body.AppID,
 		Image:            &params.Body.Image,
 		MemoryInMBs:      &memory,
 		ImageDigest:      digest,
+		ProvisionedConcurrencyConfig: pcConfig,
 		Config:           params.Body.Config,
 		TimeoutInSeconds: parseTimeout(params.Body.Timeout),
 	}
@@ -237,6 +246,67 @@ func parseDigestAnnotation(annotations map[string]interface{}) (*string, error) 
 	return &digest, nil
 }
 
+func parseProvisionedConcurrencyAnnotation(annotations map[string]interface{}) (functions.FunctionProvisionedConcurrencyConfig, error) {
+	if annotations == nil || len(annotations) == 0 {
+		return nil, nil
+	}
+	strategyRaw, ok := annotations[annotationPCStrategy]
+	if !ok {
+		return nil, nil
+	}
+	strategy, ok := strategyRaw.(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid provisioned concurrency strategy")
+	}
+	switch strings.ToUpper(strings.TrimSpace(strategy)) {
+	case "NONE":
+		return functions.NoneProvisionedConcurrencyConfig{}, nil
+	case "CONSTANT":
+		countRaw, ok := annotations[annotationPCCount]
+		if !ok {
+			return nil, fmt.Errorf("invalid provisioned concurrency count")
+		}
+		var count int
+		switch typed := countRaw.(type) {
+		case int:
+			count = typed
+		case int32:
+			count = int(typed)
+		case int64:
+			count = int(typed)
+		case float64:
+			count = int(typed)
+		default:
+			return nil, fmt.Errorf("invalid provisioned concurrency count")
+		}
+		return functions.ConstantProvisionedConcurrencyConfig{Count: &count}, nil
+	default:
+		return nil, fmt.Errorf("invalid provisioned concurrency strategy")
+	}
+}
+
+func addProvisionedConcurrencyAnnotations(annotations map[string]interface{}, cfg functions.FunctionProvisionedConcurrencyConfig) {
+	strategy := "NONE"
+	var count *int
+
+	switch typed := cfg.(type) {
+	case functions.ConstantProvisionedConcurrencyConfig:
+		strategy = "CONSTANT"
+		count = typed.Count
+	case functions.NoneProvisionedConcurrencyConfig:
+		strategy = "NONE"
+	case nil:
+		strategy = "NONE"
+	default:
+		strategy = "NONE"
+	}
+
+	annotations[annotationPCStrategy] = strategy
+	if count != nil {
+		annotations[annotationPCCount] = *count
+	}
+}
+
 func ociFnToV2(ociFn functions.Function) *modelsv2.Fn {
 	annotations := make(map[string]interface{})
 	invokeEndpoint := fmt.Sprintf(invokeEndpointFmtString, *ociFn.InvokeEndpoint, *ociFn.Id)
@@ -255,6 +325,7 @@ func ociFnToV2(ociFn functions.Function) *modelsv2.Fn {
 
 	annotations[annotationImageDigest] = imageDigest
 	annotations[annotationInvokeEndpoint] = invokeEndpoint
+	addProvisionedConcurrencyAnnotations(annotations, ociFn.ProvisionedConcurrencyConfig)
 
 	var timeoutPtr *int32
 	if ociFn.TimeoutInSeconds != nil {
@@ -295,6 +366,7 @@ func ociFnSummaryToV2(ociFnSummary functions.FunctionSummary) *modelsv2.Fn {
 
 	annotations[annotationImageDigest] = imageDigest
 	annotations[annotationInvokeEndpoint] = invokeEndpoint
+	addProvisionedConcurrencyAnnotations(annotations, ociFnSummary.ProvisionedConcurrencyConfig)
 
 	var timeoutPtr *int32
 	if ociFnSummary.TimeoutInSeconds != nil {
