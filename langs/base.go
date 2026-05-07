@@ -38,9 +38,11 @@ func init() {
 	registerHelper(&GoLangHelper{Version: "1.24"})
 	registerHelper(&GoLangHelper{Version: "1.23"})
 	// order matter, 'java' will pick up the first JavaLangHelper
+	registerHelper(&JavaLangHelper{Version: "21"})
 	registerHelper(&JavaLangHelper{Version: "17"})
 	registerHelper(&JavaLangHelper{Version: "11"})
 	registerHelper(&JavaLangHelper{Version: "8"})
+	registerHelper(&NodeLangHelper{Version: "24"})
 	registerHelper(&NodeLangHelper{Version: "22"})
 	// order matter, 'python' will pick up the first PythonLangHelper
 	registerHelper(&PythonLangHelper{Version: "3.12"})
@@ -54,7 +56,8 @@ func init() {
 
 	// for older versions support backwards compatibility
 	fallBackOlderVersions["ruby"] = &RubyLangHelper{Version: "3.1"}
-	fallBackOlderVersions["node"] = &NodeLangHelper{Version: "20"}
+	fallBackOlderVersions["node"] = &NodeLangHelper{Version: "22"}
+	fallBackOlderVersions["java"] = &JavaLangHelper{Version: "17"}
 	fallBackOlderVersions["go"] = &GoLangHelper{Version: "1.11"}
 	fallBackOlderVersions["dotnet"] = &DotnetLangHelper{Version: "3.1"}
 }

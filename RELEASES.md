@@ -1,5 +1,10 @@
 
 # Releases
+## Unreleased
+
+* Enabling support for node24
+* Enabling support for java21
+
 ## v 0.6.47
 
 * Update default version for python to 3.12
