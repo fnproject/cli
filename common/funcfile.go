@@ -68,6 +68,36 @@ type Expects struct {
 	Config []inputVar `yaml:"config" json:"config"`
 }
 
+// OCIDestination represents an OCI destination reference stored in func.yaml.
+type OCIDestination struct {
+	Type string `yaml:"type,omitempty" json:"type,omitempty"`
+	OCID string `yaml:"ocid,omitempty" json:"ocid,omitempty"`
+}
+
+// OCIDetachedModeConfig stores detached mode settings for OCI Functions.
+type OCIDetachedModeConfig struct {
+	Timeout   string          `yaml:"timeout,omitempty" json:"timeout,omitempty"`
+	OnSuccess *OCIDestination `yaml:"on_success,omitempty" json:"on_success,omitempty"`
+	OnFailure *OCIDestination `yaml:"on_failure,omitempty" json:"on_failure,omitempty"`
+}
+
+// OCIProvisionedConcurrencyConfig stores provisioned concurrency settings for OCI Functions.
+type OCIProvisionedConcurrencyConfig struct {
+	Strategy string `yaml:"strategy,omitempty" json:"strategy,omitempty"`
+	Count    *int   `yaml:"count,omitempty" json:"count,omitempty"`
+}
+
+// OCIFunctionDeployConfig stores OCI-specific deploy configuration for a function.
+type OCIFunctionDeployConfig struct {
+	ProvisionedConcurrency *OCIProvisionedConcurrencyConfig `yaml:"provisioned_concurrency,omitempty" json:"provisioned_concurrency,omitempty"`
+	DetachedMode           *OCIDetachedModeConfig          `yaml:"detached_mode,omitempty" json:"detached_mode,omitempty"`
+}
+
+// FuncDeployConfig stores deploy-time configuration sections in func.yaml.
+type FuncDeployConfig struct {
+	OCI *OCIFunctionDeployConfig `yaml:"oci,omitempty" json:"oci,omitempty"`
+}
+
 // FuncFile defines the internal structure of a func.yaml/json/yml
 type FuncFile struct {
 	// just for posterity, this won't be set on old files, but we can check that
@@ -96,6 +126,7 @@ type FuncFile struct {
 	Config      map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
 	IDLETimeout *int32                 `yaml:"idle_timeout,omitempty" json:"idle_timeout,omitempty"`
 	Annotations map[string]interface{} `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Deploy      *FuncDeployConfig      `yaml:"deploy,omitempty" json:"deploy,omitempty"`
 
 	// Run/test
 	Expects Expects `yaml:"expects,omitempty" json:"expects,omitempty"`
@@ -128,6 +159,7 @@ type FuncFileV20180708 struct {
 
 	Config      map[string]string      `yaml:"config,omitempty" json:"config,omitempty"`
 	Annotations map[string]interface{} `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Deploy      *FuncDeployConfig      `yaml:"deploy,omitempty" json:"deploy,omitempty"`
 
 	SigningDetails SigningDetails `yaml:"signing_details,omitempty" json:"signing_details,omitempty""`
 
@@ -388,6 +420,43 @@ func (ff *FuncFileV20180708) ImageNameV20180708() string {
 	return fname
 }
 
+// HasOCIManagedFunctionSettings reports whether the func.yaml contains OCI-specific
+// managed function settings that require OCI provider support.
+func (ff *FuncFileV20180708) HasOCIManagedFunctionSettings() bool {
+	if ff == nil || ff.Deploy == nil || ff.Deploy.OCI == nil {
+		return false
+	}
+
+	oci := ff.Deploy.OCI
+	if oci.ProvisionedConcurrency != nil && (oci.ProvisionedConcurrency.Strategy != "" || oci.ProvisionedConcurrency.Count != nil) {
+		return true
+	}
+	if oci.DetachedMode != nil && (oci.DetachedMode.Timeout != "" || oci.DetachedMode.OnSuccess != nil || oci.DetachedMode.OnFailure != nil) {
+		return true
+	}
+
+	return false
+}
+
+// OCIManagedFunctionSettingNames returns the OCI-managed function setting groups
+// present in func.yaml in a stable order for warnings and diagnostics.
+func (ff *FuncFileV20180708) OCIManagedFunctionSettingNames() []string {
+	if ff == nil || ff.Deploy == nil || ff.Deploy.OCI == nil {
+		return nil
+	}
+
+	var settings []string
+	oci := ff.Deploy.OCI
+	if oci.ProvisionedConcurrency != nil && (oci.ProvisionedConcurrency.Strategy != "" || oci.ProvisionedConcurrency.Count != nil) {
+		settings = append(settings, "provisioned_concurrency")
+	}
+	if oci.DetachedMode != nil && (oci.DetachedMode.Timeout != "" || oci.DetachedMode.OnSuccess != nil || oci.DetachedMode.OnFailure != nil) {
+		settings = append(settings, "detached_mode")
+	}
+
+	return settings
+}
+
 // Merge the func.init.yaml from the initImage with a.ff
 //
 //	write out the new func file
@@ -409,5 +478,8 @@ func MergeFuncFileInitYAML(path string, ff *FuncFileV20180708) error {
 	ff.Expects = initFf.Expects
 	ff.Run_image = initFf.RunImage
 	ff.Runtime = initFf.Runtime
+	if initFf.Deploy != nil {
+		ff.Deploy = initFf.Deploy
+	}
 	return nil
 }

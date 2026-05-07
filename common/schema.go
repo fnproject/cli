@@ -72,6 +72,57 @@ const V20180708Schema = `{
         "config": {
             "type": "object"
         },
+        "deploy": {
+            "type": "object",
+            "properties": {
+                "oci": {
+                    "type": "object",
+                    "properties": {
+                        "provisioned_concurrency": {
+                            "type": "object",
+                            "properties": {
+                                "strategy": {
+                                    "type": "string"
+                                },
+                                "count": {
+                                    "type": "integer"
+                                }
+                            }
+                        },
+                        "detached_mode": {
+                            "type": "object",
+                            "properties": {
+                                "timeout": {
+                                    "type": "string"
+                                },
+                                "on_success": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "ocid": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "on_failure": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "ocid": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "triggers": {
             "type": "array",
             "properties": {
