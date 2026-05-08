@@ -18,6 +18,7 @@ package test
 
 import (
 	"fmt"
+	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/testharness"
 	"testing"
 )
@@ -146,4 +147,28 @@ func TestInitImage(t *testing.T) {
 		}
 
 	})
+}
+
+func TestInitProvisionedConcurrencyWritesYaml(t *testing.T) {
+	t.Parallel()
+
+	h := testharness.Create(t)
+	defer h.Cleanup()
+
+	appName := h.NewAppName()
+	funcName := h.NewFuncName(appName)
+	dirName := funcName + "_dir"
+	h.Fn("init", "--runtime", "go", "--name", funcName, "--provisioned-concurrency", "constant:40", dirName).AssertSuccess()
+
+	h.Cd(dirName)
+	yamlFile := h.GetYamlFile("func.yaml")
+	if yamlFile.Deploy == nil || yamlFile.Deploy.OCI == nil || yamlFile.Deploy.OCI.ProvisionedConcurrency == nil {
+		t.Fatal("expected provisioned concurrency settings in func.yaml")
+	}
+	if yamlFile.Deploy.OCI.ProvisionedConcurrency.Strategy != common.ProvisionedConcurrencyStrategyConstant {
+		t.Fatalf("expected strategy %q, got %q", common.ProvisionedConcurrencyStrategyConstant, yamlFile.Deploy.OCI.ProvisionedConcurrency.Strategy)
+	}
+	if yamlFile.Deploy.OCI.ProvisionedConcurrency.Count == nil || *yamlFile.Deploy.OCI.ProvisionedConcurrency.Count != 40 {
+		t.Fatalf("expected count 40, got %#v", yamlFile.Deploy.OCI.ProvisionedConcurrency.Count)
+	}
 }

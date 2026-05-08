@@ -228,6 +228,7 @@ func NewMockFunctionsManagementClientBasic(ctrl *gomock.Controller) FunctionsMan
 				digest := "GetFunctionDigest"
 				memory := int64(128)
 				timeout := 30
+				pcCount := 5
 				invokeEndpoint := "GetFunctionInvokeEndpoint"
 				return functions.GetFunctionResponse{
 					Function: functions.Function{
@@ -240,6 +241,7 @@ func NewMockFunctionsManagementClientBasic(ctrl *gomock.Controller) FunctionsMan
 						ImageDigest:      &digest,
 						MemoryInMBs:      &memory,
 						TimeoutInSeconds: &timeout,
+						ProvisionedConcurrencyConfig: functions.ConstantProvisionedConcurrencyConfig{Count: &pcCount},
 						InvokeEndpoint:   &invokeEndpoint,
 						Config: map[string]string{
 							"GetFunctionKey1": "GetFunctionValue1",
@@ -391,6 +393,7 @@ func newBasicFunctionSummary(n int, application *string) functions.FunctionSumma
 	digest := "FunctionSummaryDigest"
 	memory := int64(128)
 	timeout := 30
+	pcCount := n + 1
 	invokeEndpoint := "FunctionSummaryInvokeEndpoint"
 	return functions.FunctionSummary{
 		Id:               &id,
@@ -402,6 +405,7 @@ func newBasicFunctionSummary(n int, application *string) functions.FunctionSumma
 		ImageDigest:      &digest,
 		MemoryInMBs:      &memory,
 		TimeoutInSeconds: &timeout,
+		ProvisionedConcurrencyConfig: functions.ConstantProvisionedConcurrencyConfig{Count: &pcCount},
 		InvokeEndpoint:   &invokeEndpoint,
 		FreeformTags:     nil,
 		DefinedTags:      nil,
