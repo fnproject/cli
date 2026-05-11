@@ -21,10 +21,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/fnproject/cli/common"
+	"io"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"syscall"
@@ -39,6 +42,8 @@ const (
 	fnIgnoreFileName     = ".fnignore"
 )
 
+var watchFuncYamlVersionLine = regexp.MustCompile(`(?m)^\s*version\s*:\s*.*$`)
+
 // WatchCommand returns watch cli.Command.
 //
 // Usage: fn watch --app <app>
@@ -51,7 +56,7 @@ func WatchCommand() cli.Command {
 		Usage:    "\tWatches the current directory and redeploys to a local Fn server on changes.",
 		Category: "DEVELOPMENT COMMANDS",
 		Description: "Watches all files under the current directory recursively. " +
-			"When a file changes, it runs: fn deploy --app <app> --local --no-bump. " +
+			"When a file changes, it runs: fn deploy --app <app> --local. " +
 			"Paths can be ignored via default ignores and optionally a .fnignore file.",
 		Flags: []cli.Flag{
 			cli.StringFlag{
@@ -140,6 +145,14 @@ func (w *watchcmd) watchLoop(ctx context.Context, root string, appName string, w
 		debounceTimer  *time.Timer
 	)
 
+	// If func.yaml changes only by its "version:" line, ignore it (those changes are
+	// frequently made automatically by tools and do not affect the deploy outcome).
+	funcYamlPath, err := common.FindFuncfile(root)
+	if err != nil {
+		return err
+	}
+	prevFuncYamlFiltered, _ := readFileFilterFuncYamlVersion(funcYamlPath)
+
 	var triggerDeploy func()
 
 	triggerDeploy = func() {
@@ -217,6 +230,20 @@ func (w *watchcmd) watchLoop(ctx context.Context, root string, appName string, w
 				break
 			}
 
+			// Special-case func.yaml: ignore changes where the only modification is
+			// the value of the top-level `version:` key.
+			if samePath(event.Name, funcYamlPath) && event.Op&(fsnotify.Write|fsnotify.Create) != 0 {
+				curFiltered, err := readFileFilterFuncYamlVersion(funcYamlPath)
+				if err == nil {
+					if prevFuncYamlFiltered != nil && string(curFiltered) == string(prevFuncYamlFiltered) {
+						// Ignore the event.
+						break
+					}
+					prevFuncYamlFiltered = curFiltered
+				}
+				// If we can't read, fall back to normal change behavior.
+			}
+
 			// Treat any write/create/remove/rename as a change signal.
 			if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Remove|fsnotify.Rename) != 0 {
 				scheduleDeploy(event.Name)
@@ -237,7 +264,7 @@ func runFnDeployLocal(ctx context.Context, dir string, appName string) error {
 		return err
 	}
 
-	cmd := exec.CommandContext(ctx, executable, "deploy", "--app", appName, "--local", "--no-bump")
+	cmd := exec.CommandContext(ctx, executable, "deploy", "--app", appName, "--local")
 	cmd.Dir = dir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -340,4 +367,33 @@ func addRecursiveWatches(watcher *fsnotify.Watcher, root string, ignore watchIgn
 		}
 		return nil
 	})
+}
+
+func samePath(a, b string) bool {
+	aa, err := filepath.Abs(a)
+	if err != nil {
+		aa = a
+	}
+	bb, err := filepath.Abs(b)
+	if err != nil {
+		bb = b
+	}
+	return filepath.Clean(aa) == filepath.Clean(bb)
+}
+
+func readFileFilterFuncYamlVersion(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	b, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+
+	// Remove any version lines so changes to those lines do not trigger deploy.
+	filtered := watchFuncYamlVersionLine.ReplaceAll(b, []byte(""))
+	return filtered, nil
 }
