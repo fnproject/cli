@@ -1,11 +1,14 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2026, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 // Code generated. DO NOT EDIT.
 
 // Artifacts and Container Images API
 //
-// API covering the Artifacts and Registry (https://docs.cloud.oracle.com/iaas/Content/Registry/Concepts/registryoverview.htm) services.
-// Use this API to manage resources such as generic artifacts and container images.
+// Use the Artifacts and Container Images API to manage container images and non-container generic artifacts.
+// - For container images such as Docker images, use the ContainerImage resource. Save the images in a ContainerRepository.
+// - For non-container generic artifacts or blobs, use the GenericArtifact resource. Save the artifacts in an Repository.
+// - To upload and download non-container generic artifacts, instead of the Artifacts and Container Images API, use the Generic Artifacts Content API.
+// For more information, see the user guides for Container Registry (https://docs.oracle.com/iaas/Content/Registry/home.htm) and Artifact Registry (https://docs.oracle.com/iaas/Content/artifacts/home.htm).
 //
 
 package artifacts
@@ -19,7 +22,7 @@ import (
 // ContainerImageSignature Container image signature metadata.
 type ContainerImageSignature struct {
 
-	// The OCID (https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) of the compartment in which the container repository exists.
+	// The OCID (https://docs.oracle.com/iaas/Content/General/Concepts/identifiers.htm) of the compartment in which the container repository exists.
 	CompartmentId *string `mandatory:"true" json:"compartmentId"`
 
 	// The id of the user or principal that created the resource.
@@ -29,19 +32,19 @@ type ContainerImageSignature struct {
 	// Example: `wrmz22sixa::qdwyc2ptun::SHA_256_RSA_PKCS_PSS::2vwmobasva`
 	DisplayName *string `mandatory:"true" json:"displayName"`
 
-	// The OCID (https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) of the container image signature.
+	// The OCID (https://docs.oracle.com/iaas/Content/General/Concepts/identifiers.htm) of the container image signature.
 	// Example: `ocid1.containerimagesignature.oc1..exampleuniqueID`
 	Id *string `mandatory:"true" json:"id"`
 
-	// The OCID (https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) of the container image.
+	// The OCID (https://docs.oracle.com/iaas/Content/General/Concepts/identifiers.htm) of the container image.
 	// Example: `ocid1.containerimage.oc1..exampleuniqueID`
 	ImageId *string `mandatory:"true" json:"imageId"`
 
-	// The OCID (https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) of the kmsKeyId used to sign the container image.
+	// The OCID (https://docs.oracle.com/iaas/Content/General/Concepts/identifiers.htm) of the kmsKeyId used to sign the container image.
 	// Example: `ocid1.key.oc1..exampleuniqueID`
 	KmsKeyId *string `mandatory:"true" json:"kmsKeyId"`
 
-	// The OCID (https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) of the kmsKeyVersionId used to sign the container image.
+	// The OCID (https://docs.oracle.com/iaas/Content/General/Concepts/identifiers.htm) of the kmsKeyVersionId used to sign the container image.
 	// Example: `ocid1.keyversion.oc1..exampleuniqueID`
 	KmsKeyVersionId *string `mandatory:"true" json:"kmsKeyVersionId"`
 
@@ -56,6 +59,23 @@ type ContainerImageSignature struct {
 
 	// An RFC 3339 timestamp indicating when the image was created.
 	TimeCreated *common.SDKTime `mandatory:"true" json:"timeCreated"`
+
+	// The current state of the container image signature.
+	LifecycleState ContainerImageSignatureLifecycleStateEnum `mandatory:"true" json:"lifecycleState"`
+
+	// Free-form tags for this resource. Each tag is a simple key-value pair with no
+	// predefined name, type, or namespace. For more information, see Resource Tags (https://docs.oracle.com/iaas/Content/General/Concepts/resourcetags.htm).
+	// Example: `{"Department": "Finance"}`
+	FreeformTags map[string]string `mandatory:"true" json:"freeformTags"`
+
+	// Defined tags for this resource. Each key is predefined and scoped to a
+	// namespace. For more information, see Resource Tags (https://docs.oracle.com/iaas/Content/General/Concepts/resourcetags.htm).
+	// Example: `{"Operations": {"CostCenter": "42"}}`
+	DefinedTags map[string]map[string]interface{} `mandatory:"true" json:"definedTags"`
+
+	// The system tags for this resource. Each key is predefined and scoped to a namespace.
+	// Example: `{"orcl-cloud": {"free-tier-retained": "true"}}`
+	SystemTags map[string]map[string]interface{} `mandatory:"true" json:"systemTags"`
 }
 
 func (m ContainerImageSignature) String() string {
@@ -70,9 +90,12 @@ func (m ContainerImageSignature) ValidateEnumValue() (bool, error) {
 	if _, ok := GetMappingContainerImageSignatureSigningAlgorithmEnum(string(m.SigningAlgorithm)); !ok && m.SigningAlgorithm != "" {
 		errMessage = append(errMessage, fmt.Sprintf("unsupported enum value for SigningAlgorithm: %s. Supported values are: %s.", m.SigningAlgorithm, strings.Join(GetContainerImageSignatureSigningAlgorithmEnumStringValues(), ",")))
 	}
+	if _, ok := GetMappingContainerImageSignatureLifecycleStateEnum(string(m.LifecycleState)); !ok && m.LifecycleState != "" {
+		errMessage = append(errMessage, fmt.Sprintf("unsupported enum value for LifecycleState: %s. Supported values are: %s.", m.LifecycleState, strings.Join(GetContainerImageSignatureLifecycleStateEnumStringValues(), ",")))
+	}
 
 	if len(errMessage) > 0 {
-		return true, fmt.Errorf(strings.Join(errMessage, "\n"))
+		return true, fmt.Errorf("%s", strings.Join(errMessage, "\n"))
 	}
 	return false, nil
 }
@@ -124,5 +147,51 @@ func GetContainerImageSignatureSigningAlgorithmEnumStringValues() []string {
 // GetMappingContainerImageSignatureSigningAlgorithmEnum performs case Insensitive comparison on enum value and return the desired enum
 func GetMappingContainerImageSignatureSigningAlgorithmEnum(val string) (ContainerImageSignatureSigningAlgorithmEnum, bool) {
 	enum, ok := mappingContainerImageSignatureSigningAlgorithmEnumLowerCase[strings.ToLower(val)]
+	return enum, ok
+}
+
+// ContainerImageSignatureLifecycleStateEnum Enum with underlying type: string
+type ContainerImageSignatureLifecycleStateEnum string
+
+// Set of constants representing the allowable values for ContainerImageSignatureLifecycleStateEnum
+const (
+	ContainerImageSignatureLifecycleStateAvailable ContainerImageSignatureLifecycleStateEnum = "AVAILABLE"
+	ContainerImageSignatureLifecycleStateDeleting  ContainerImageSignatureLifecycleStateEnum = "DELETING"
+	ContainerImageSignatureLifecycleStateDeleted   ContainerImageSignatureLifecycleStateEnum = "DELETED"
+)
+
+var mappingContainerImageSignatureLifecycleStateEnum = map[string]ContainerImageSignatureLifecycleStateEnum{
+	"AVAILABLE": ContainerImageSignatureLifecycleStateAvailable,
+	"DELETING":  ContainerImageSignatureLifecycleStateDeleting,
+	"DELETED":   ContainerImageSignatureLifecycleStateDeleted,
+}
+
+var mappingContainerImageSignatureLifecycleStateEnumLowerCase = map[string]ContainerImageSignatureLifecycleStateEnum{
+	"available": ContainerImageSignatureLifecycleStateAvailable,
+	"deleting":  ContainerImageSignatureLifecycleStateDeleting,
+	"deleted":   ContainerImageSignatureLifecycleStateDeleted,
+}
+
+// GetContainerImageSignatureLifecycleStateEnumValues Enumerates the set of values for ContainerImageSignatureLifecycleStateEnum
+func GetContainerImageSignatureLifecycleStateEnumValues() []ContainerImageSignatureLifecycleStateEnum {
+	values := make([]ContainerImageSignatureLifecycleStateEnum, 0)
+	for _, v := range mappingContainerImageSignatureLifecycleStateEnum {
+		values = append(values, v)
+	}
+	return values
+}
+
+// GetContainerImageSignatureLifecycleStateEnumStringValues Enumerates the set of values in String for ContainerImageSignatureLifecycleStateEnum
+func GetContainerImageSignatureLifecycleStateEnumStringValues() []string {
+	return []string{
+		"AVAILABLE",
+		"DELETING",
+		"DELETED",
+	}
+}
+
+// GetMappingContainerImageSignatureLifecycleStateEnum performs case Insensitive comparison on enum value and return the desired enum
+func GetMappingContainerImageSignatureLifecycleStateEnum(val string) (ContainerImageSignatureLifecycleStateEnum, bool) {
+	enum, ok := mappingContainerImageSignatureLifecycleStateEnumLowerCase[strings.ToLower(val)]
 	return enum, ok
 }

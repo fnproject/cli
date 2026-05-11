@@ -1,4 +1,4 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2026, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 // Code generated. DO NOT EDIT.
 
@@ -16,10 +16,10 @@ import (
 //
 // # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/InvokeFunction.go.html to see an example of how to use InvokeFunctionRequest.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/InvokeFunction.go.html to see an example of how to use InvokeFunctionRequest.
 type InvokeFunctionRequest struct {
 
-	// The OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm) of this function.
+	// The OCID (https://docs.oracle.com/iaas/Content/General/Concepts/identifiers.htm) of this function.
 	FunctionId *string `mandatory:"true" contributesTo:"path" name:"functionId"`
 
 	// The body of the function invocation.
@@ -36,6 +36,9 @@ type InvokeFunctionRequest struct {
 	// The unique Oracle-assigned identifier for the request. If you need to contact Oracle about a
 	// particular request, please provide the request ID.
 	OpcRequestId *string `mandatory:"false" contributesTo:"header" name:"opc-request-id"`
+
+	// Indicates that the request is a dry run, if set to "true". A dry run request does not execute the function.
+	IsDryRun *bool `mandatory:"false" contributesTo:"header" name:"is-dry-run"`
 
 	// Metadata about the request. This information will not be transmitted to the service, but
 	// represents information that the SDK will consume to drive retry behavior.
@@ -82,7 +85,7 @@ func (request InvokeFunctionRequest) ValidateEnumValue() (bool, error) {
 		errMessage = append(errMessage, fmt.Sprintf("unsupported enum value for FnInvokeType: %s. Supported values are: %s.", request.FnInvokeType, strings.Join(GetInvokeFunctionFnInvokeTypeEnumStringValues(), ",")))
 	}
 	if len(errMessage) > 0 {
-		return true, fmt.Errorf(strings.Join(errMessage, "\n"))
+		return true, fmt.Errorf("%s", strings.Join(errMessage, "\n"))
 	}
 	return false, nil
 }

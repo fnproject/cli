@@ -52,6 +52,7 @@ type InvokeRequest struct {
 	Content     io.Reader
 	Env         []string
 	ContentType string
+	FnInvokeType string
 	// TODO headers should be their real type?
 }
 
@@ -81,6 +82,9 @@ func Invoke(provider provider.Provider, ireq InvokeRequest) (*http.Response, err
 		req.Header.Set("Content-Type", contentType)
 	} else {
 		req.Header.Set("Content-Type", "text/plain")
+	}
+	if ireq.FnInvokeType != "" {
+		req.Header.Set("fn-invoke-type", ireq.FnInvokeType)
 	}
 
 	if len(env) > 0 {

@@ -1,4 +1,4 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2026, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 // Code generated. DO NOT EDIT.
 
@@ -15,7 +15,7 @@ import (
 //
 // # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/CreateKeyVersion.go.html to see an example of how to use CreateKeyVersionRequest.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/CreateKeyVersion.go.html to see an example of how to use CreateKeyVersionRequest.
 type CreateKeyVersionRequest struct {
 
 	// The OCID of the key.
@@ -33,6 +33,9 @@ type CreateKeyVersionRequest struct {
 	// deleted and purged from the system, then a retry of the original
 	// creation request may be rejected).
 	OpcRetryToken *string `mandatory:"false" contributesTo:"header" name:"opc-retry-token"`
+
+	// CreateKeyMetadataDetails
+	CreateKeyMetadataDetails ExternalKeyVersionReference `contributesTo:"body"`
 
 	// Metadata about the request. This information will not be transmitted to the service, but
 	// represents information that the SDK will consume to drive retry behavior.
@@ -71,7 +74,7 @@ func (request CreateKeyVersionRequest) RetryPolicy() *common.RetryPolicy {
 func (request CreateKeyVersionRequest) ValidateEnumValue() (bool, error) {
 	errMessage := []string{}
 	if len(errMessage) > 0 {
-		return true, fmt.Errorf(strings.Join(errMessage, "\n"))
+		return true, fmt.Errorf("%s", strings.Join(errMessage, "\n"))
 	}
 	return false, nil
 }

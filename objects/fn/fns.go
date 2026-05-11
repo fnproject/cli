@@ -25,6 +25,7 @@ import (
 	"path"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	client "github.com/fnproject/cli/client"
 	"github.com/fnproject/cli/common"
@@ -34,8 +35,8 @@ import (
 	"github.com/fnproject/fn_go/modelsv2"
 	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider"
-	"github.com/jmoiron/jsonq"
 	fnprovideroracle "github.com/fnproject/fn_go/provider/oracle"
+	"github.com/jmoiron/jsonq"
 	ocifunctions "github.com/oracle/oci-go-sdk/v65/functions"
 	"github.com/urfave/cli"
 )
@@ -49,6 +50,31 @@ const (
 	annotationProvisionedConcurrencyStrategy = "oracle.com/oci/provisionedConcurrencyStrategy"
 	annotationProvisionedConcurrencyCount    = "oracle.com/oci/provisionedConcurrencyCount"
 )
+
+const annotationDetachedTimeoutSeconds = "oracle.com/oci/detachedModeTimeoutInSeconds"
+
+const (
+	annotationSuccessDestinationKind = "oracle.com/oci/successDestinationKind"
+	annotationSuccessDestinationOCID = "oracle.com/oci/successDestinationOcid"
+	annotationFailureDestinationKind = "oracle.com/oci/failureDestinationKind"
+	annotationFailureDestinationOCID = "oracle.com/oci/failureDestinationOcid"
+)
+
+type detachedDestinationView struct {
+	Type string `json:"type,omitempty"`
+	OCID string `json:"ocid,omitempty"`
+}
+
+type detachedModeView struct {
+	Timeout   string                   `json:"timeout,omitempty"`
+	OnSuccess *detachedDestinationView `json:"onSuccess,omitempty"`
+	OnFailure *detachedDestinationView `json:"onFailure,omitempty"`
+}
+
+type provisionedConcurrencyView struct {
+	Strategy string `json:"strategy"`
+	Count    *int   `json:"count,omitempty"`
+}
 
 // SetProvisionedConcurrencyAnnotations adds the internal annotations used to
 // carry provisioned concurrency through the create payload into the OCI shim.
@@ -70,11 +96,6 @@ func SetProvisionedConcurrencyAnnotations(fn *models.Fn, cfg *common.OCIProvisio
 		delete(fn.Annotations, annotationProvisionedConcurrencyCount)
 	}
 	return nil
-}
-
-type provisionedConcurrencyView struct {
-	Strategy string `json:"strategy"`
-	Count    *int   `json:"count,omitempty"`
 }
 
 // FnFlags used to create/update functions
@@ -107,8 +128,228 @@ var FnFlags = []cli.Flag{
 		Name:  "provisioned-concurrency",
 		Usage: "Set OCI provisioned concurrency using 'none' or 'constant:<count>'",
 	},
+	cli.StringFlag{
+		Name:  "detached-timeout",
+		Usage: "Set OCI detached mode timeout using a duration like 20m or 1h",
+	},
+	cli.StringFlag{
+		Name:  "on-success",
+		Usage: "Set OCI detached success destination using <stream|queue|notifications>:<ocid>",
+	},
+	cli.StringFlag{
+		Name:  "on-failure",
+		Usage: "Set OCI detached failure destination using <stream|queue|notifications>:<ocid>",
+	},
 }
-var updateFnFlags = FnFlags
+var updateFnFlags = append(append([]cli.Flag{}, FnFlags...),
+	cli.BoolFlag{
+		Name:  "clear-on-success",
+		Usage: "Clear OCI detached success destination",
+	},
+	cli.BoolFlag{
+		Name:  "clear-on-failure",
+		Usage: "Clear OCI detached failure destination",
+	},
+)
+
+type clearDestinationRequest struct {
+	Success bool
+	Failure bool
+}
+
+func warnUnsupportedDetachedTimeout() {
+	fmt.Fprintln(os.Stderr, "Warning: --detached-timeout is only supported with an oracle provider and will be ignored.")
+}
+
+func SetDetachedTimeoutAnnotation(fn *models.Fn, seconds int) {
+	if fn == nil || seconds <= 0 {
+		return
+	}
+	if fn.Annotations == nil {
+		fn.Annotations = make(map[string]interface{})
+	}
+	fn.Annotations[annotationDetachedTimeoutSeconds] = seconds
+}
+
+func warnUnsupportedDestination(flagName string) {
+	fmt.Fprintf(os.Stderr, "Warning: %s is only supported with an oracle provider and will be ignored.\n", flagName)
+}
+
+func validateDestinationFlagCombination(c *cli.Context) (*clearDestinationRequest, error) {
+	clearReq := &clearDestinationRequest{
+		Success: c.Bool("clear-on-success"),
+		Failure: c.Bool("clear-on-failure"),
+	}
+	if clearReq.Success && strings.TrimSpace(c.String("on-success")) != "" {
+		return nil, fmt.Errorf("--on-success and --clear-on-success cannot be used together")
+	}
+	if clearReq.Failure && strings.TrimSpace(c.String("on-failure")) != "" {
+		return nil, fmt.Errorf("--on-failure and --clear-on-failure cannot be used together")
+	}
+	return clearReq, nil
+}
+
+func SetDestinationAnnotations(fn *models.Fn, onSuccess, onFailure *common.OCIDestination) {
+	if fn == nil {
+		return
+	}
+	if fn.Annotations == nil {
+		fn.Annotations = make(map[string]interface{})
+	}
+	if onSuccess != nil {
+		fn.Annotations[annotationSuccessDestinationKind] = strings.ToUpper(onSuccess.Type)
+		fn.Annotations[annotationSuccessDestinationOCID] = onSuccess.OCID
+	}
+	if onFailure != nil {
+		fn.Annotations[annotationFailureDestinationKind] = strings.ToUpper(onFailure.Type)
+		fn.Annotations[annotationFailureDestinationOCID] = onFailure.OCID
+	}
+}
+
+func SetClearDestinationAnnotations(fn *models.Fn, clearSuccess, clearFailure bool) {
+	if fn == nil || (!clearSuccess && !clearFailure) {
+		return
+	}
+	if fn.Annotations == nil {
+		fn.Annotations = make(map[string]interface{})
+	}
+	if clearSuccess {
+		fn.Annotations[annotationSuccessDestinationKind] = "NONE"
+		fn.Annotations[annotationSuccessDestinationOCID] = ""
+	}
+	if clearFailure {
+		fn.Annotations[annotationFailureDestinationKind] = "NONE"
+		fn.Annotations[annotationFailureDestinationOCID] = ""
+	}
+}
+
+func formatDetachedTimeout(seconds int) string {
+	if seconds <= 0 {
+		return ""
+	}
+	d := time.Duration(seconds) * time.Second
+	if d%time.Hour == 0 {
+		return fmt.Sprintf("%dh", int(d/time.Hour))
+	}
+	if d%time.Minute == 0 {
+		return fmt.Sprintf("%dm", int(d/time.Minute))
+	}
+	return fmt.Sprintf("%ds", seconds)
+}
+
+func parseDetachedTimeoutFromAnnotations(fn *models.Fn) string {
+	if fn == nil || fn.Annotations == nil {
+		return ""
+	}
+	raw, ok := fn.Annotations[annotationDetachedTimeoutSeconds]
+	if !ok {
+		return ""
+	}
+	switch typed := raw.(type) {
+	case int:
+		return formatDetachedTimeout(typed)
+	case int32:
+		return formatDetachedTimeout(int(typed))
+	case int64:
+		return formatDetachedTimeout(int(typed))
+	case float64:
+		return formatDetachedTimeout(int(typed))
+	default:
+		return ""
+	}
+}
+
+func parseDetachedDestinationFromAnnotations(fn *models.Fn, kindKey, ocidKey string) *detachedDestinationView {
+	if fn == nil || fn.Annotations == nil {
+		return nil
+	}
+	kindRaw, ok := fn.Annotations[kindKey]
+	if !ok {
+		return nil
+	}
+	kind, ok := kindRaw.(string)
+	if !ok || strings.TrimSpace(kind) == "" {
+		return nil
+	}
+	ocidRaw, ok := fn.Annotations[ocidKey]
+	if !ok {
+		return &detachedDestinationView{Type: strings.ToLower(kind)}
+	}
+	ocid, ok := ocidRaw.(string)
+	if !ok {
+		return &detachedDestinationView{Type: strings.ToLower(kind)}
+	}
+	return &detachedDestinationView{Type: strings.ToLower(kind), OCID: ocid}
+}
+
+func getDetachedModeView(fn *models.Fn) *detachedModeView {
+	timeout := parseDetachedTimeoutFromAnnotations(fn)
+	onSuccess := parseDetachedDestinationFromAnnotations(fn, annotationSuccessDestinationKind, annotationSuccessDestinationOCID)
+	onFailure := parseDetachedDestinationFromAnnotations(fn, annotationFailureDestinationKind, annotationFailureDestinationOCID)
+	if timeout == "" && onSuccess == nil && onFailure == nil {
+		return nil
+	}
+	return &detachedModeView{Timeout: timeout, OnSuccess: onSuccess, OnFailure: onFailure}
+}
+
+func formatDetachedDestination(view *detachedDestinationView) string {
+	if view == nil {
+		return ""
+	}
+	if view.OCID == "" {
+		return view.Type
+	}
+	return fmt.Sprintf("%s:%s", view.Type, view.OCID)
+}
+
+func formatDetachedDestinations(fn *models.Fn) string {
+	view := getDetachedModeView(fn)
+	if view == nil {
+		return ""
+	}
+	parts := []string{}
+	if view.OnSuccess != nil {
+		parts = append(parts, "success="+formatDetachedDestination(view.OnSuccess))
+	}
+	if view.OnFailure != nil {
+		parts = append(parts, "failure="+formatDetachedDestination(view.OnFailure))
+	}
+	return strings.Join(parts, ",")
+}
+
+func buildInspectFnMap(fn *models.Fn) (map[string]interface{}, error) {
+	data, err := json.Marshal(fn)
+	if err != nil {
+		return nil, err
+	}
+	inspect := map[string]interface{}{}
+	if err := json.Unmarshal(data, &inspect); err != nil {
+		return nil, err
+	}
+	if detached := getDetachedModeView(fn); detached != nil {
+		detachedData, err := json.Marshal(detached)
+		if err != nil {
+			return nil, err
+		}
+		var detachedValue map[string]interface{}
+		if err := json.Unmarshal(detachedData, &detachedValue); err != nil {
+			return nil, err
+		}
+		inspect["detachedMode"] = detachedValue
+	}
+	if pc := getProvisionedConcurrencyView(fn); pc != nil {
+		pcData, err := json.Marshal(pc)
+		if err != nil {
+			return nil, err
+		}
+		var pcValue map[string]interface{}
+		if err := json.Unmarshal(pcData, &pcValue); err != nil {
+			return nil, err
+		}
+		inspect["provisionedConcurrency"] = pcValue
+	}
+	return inspect, nil
+}
 
 // WithSlash appends "/" to function path
 func WithSlash(p string) string {
@@ -137,11 +378,13 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 				Image                  string                      `json:"image"`
 				ID                     string                      `json:"id"`
 				ProvisionedConcurrency *provisionedConcurrencyView `json:"provisionedConcurrency,omitempty"`
+				DetachedMode           *detachedModeView           `json:"detachedMode,omitempty"`
 			}{
 				Name:                   fn.Name,
 				Image:                  fn.Image,
 				ID:                     fn.ID,
 				ProvisionedConcurrency: getProvisionedConcurrencyView(fn),
+				DetachedMode:           getDetachedModeView(fn),
 			})
 		}
 		b, err := json.MarshalIndent(newFns, "", "    ")
@@ -151,10 +394,15 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 		fmt.Fprint(os.Stdout, string(b))
 	} else {
 		w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-		fmt.Fprint(w, "NAME", "\t", "IMAGE", "\t", "PC", "\t", "ID", "\n")
+		fmt.Fprint(w, "NAME", "\t", "IMAGE", "\t", "PC", "\t", "DETACHED_TIMEOUT", "\t", "DESTINATIONS", "\t", "ID", "\n")
 
 		for _, f := range fns {
-			fmt.Fprint(w, f.Name, "\t", f.Image, "\t", formatProvisionedConcurrencyDisplay(f), "\t", f.ID, "\t", "\n")
+			view := getDetachedModeView(f)
+			timeout := ""
+			if view != nil {
+				timeout = view.Timeout
+			}
+			fmt.Fprint(w, f.Name, "\t", f.Image, "\t", formatProvisionedConcurrencyDisplay(f), "\t", timeout, "\t", formatDetachedDestinations(f), "\t", f.ID, "\t", "\n")
 		}
 		if err := w.Flush(); err != nil {
 			return err
@@ -211,21 +459,6 @@ func formatProvisionedConcurrencyDisplay(fn *models.Fn) string {
 	default:
 		return strings.ToLower(view.Strategy)
 	}
-}
-
-func buildInspectFnMap(fn *models.Fn) (map[string]interface{}, error) {
-	data, err := json.Marshal(fn)
-	if err != nil {
-		return nil, err
-	}
-	inspect := map[string]interface{}{}
-	if err := json.Unmarshal(data, &inspect); err != nil {
-		return nil, err
-	}
-	if pc := getProvisionedConcurrencyView(fn); pc != nil {
-		inspect["provisionedConcurrency"] = pc
-	}
-	return inspect, nil
 }
 
 func (f *fnsCmd) list(c *cli.Context) error {
@@ -429,6 +662,22 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	_, detachedSeconds, err := common.ParseDetachedTimeoutSpec(c.String("detached-timeout"))
+	if err != nil {
+		return err
+	}
+	onSuccess, err := common.ParseOCIDestinationSpec("--on-success", c.String("on-success"))
+	if err != nil {
+		return err
+	}
+	onFailure, err := common.ParseOCIDestinationSpec("--on-failure", c.String("on-failure"))
+	if err != nil {
+		return err
+	}
+	clearReq, err := validateDestinationFlagCombination(c)
+	if err != nil {
+		return err
+	}
 
 	fn := &models.Fn{}
 	fn.Name = fnName
@@ -447,6 +696,37 @@ func (f *fnsCmd) create(c *cli.Context) error {
 			warnUnsupportedProvisionedConcurrency()
 		} else if err := SetProvisionedConcurrencyAnnotations(fn, pcConfig); err != nil {
 			return err
+		}
+	}
+	if detachedSeconds > 0 {
+		if !common.IsOracleProvider(f.provider) {
+			warnUnsupportedDetachedTimeout()
+		} else {
+			SetDetachedTimeoutAnnotation(fn, detachedSeconds)
+		}
+	}
+	if onSuccess != nil || onFailure != nil {
+		if !common.IsOracleProvider(f.provider) {
+			if onSuccess != nil {
+				warnUnsupportedDestination("--on-success")
+			}
+			if onFailure != nil {
+				warnUnsupportedDestination("--on-failure")
+			}
+		} else {
+			SetDestinationAnnotations(fn, onSuccess, onFailure)
+		}
+	}
+	if clearReq.Success || clearReq.Failure {
+		if !common.IsOracleProvider(f.provider) {
+			if clearReq.Success {
+				warnUnsupportedDestination("--clear-on-success")
+			}
+			if clearReq.Failure {
+				warnUnsupportedDestination("--clear-on-failure")
+			}
+		} else {
+			SetClearDestinationAnnotations(fn, clearReq.Success, clearReq.Failure)
 		}
 	}
 
@@ -557,6 +837,22 @@ func (f *fnsCmd) update(c *cli.Context) error {
 	if err := common.ValidateProvisionedConcurrencyConfig(pcConfig); err != nil {
 		return err
 	}
+	_, detachedSeconds, err := common.ParseDetachedTimeoutSpec(c.String("detached-timeout"))
+	if err != nil {
+		return err
+	}
+	onSuccess, err := common.ParseOCIDestinationSpec("--on-success", c.String("on-success"))
+	if err != nil {
+		return err
+	}
+	onFailure, err := common.ParseOCIDestinationSpec("--on-failure", c.String("on-failure"))
+	if err != nil {
+		return err
+	}
+	clearReq, err := validateDestinationFlagCombination(c)
+	if err != nil {
+		return err
+	}
 
 	app, err := app.GetAppByName(f.client, appName)
 	if err != nil {
@@ -568,6 +864,37 @@ func (f *fnsCmd) update(c *cli.Context) error {
 	}
 
 	WithFlags(c, fn)
+	if detachedSeconds > 0 {
+		if !common.IsOracleProvider(f.provider) {
+			warnUnsupportedDetachedTimeout()
+		} else {
+			SetDetachedTimeoutAnnotation(fn, detachedSeconds)
+		}
+	}
+	if onSuccess != nil || onFailure != nil {
+		if !common.IsOracleProvider(f.provider) {
+			if onSuccess != nil {
+				warnUnsupportedDestination("--on-success")
+			}
+			if onFailure != nil {
+				warnUnsupportedDestination("--on-failure")
+			}
+		} else {
+			SetDestinationAnnotations(fn, onSuccess, onFailure)
+		}
+	}
+	if clearReq.Success || clearReq.Failure {
+		if !common.IsOracleProvider(f.provider) {
+			if clearReq.Success {
+				warnUnsupportedDestination("--clear-on-success")
+			}
+			if clearReq.Failure {
+				warnUnsupportedDestination("--clear-on-failure")
+			}
+		} else {
+			SetClearDestinationAnnotations(fn, clearReq.Success, clearReq.Failure)
+		}
+	}
 
 	err = PutFn(f.client, fn.ID, fn)
 	if err != nil {
@@ -717,7 +1044,6 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "\t")
-
 	inspect, err := buildInspectFnMap(fn)
 	if err != nil {
 		return fmt.Errorf("failed to inspect %s: %s", fnName, err)

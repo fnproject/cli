@@ -1,4 +1,4 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2026, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 // Code generated. DO NOT EDIT.
 
@@ -26,6 +26,9 @@ type FunctionsInvokeClient struct {
 // NewFunctionsInvokeClientWithConfigurationProvider Creates a new default FunctionsInvoke client with the given configuration provider.
 // the configuration provider will be used for the default signer
 func NewFunctionsInvokeClientWithConfigurationProvider(configProvider common.ConfigurationProvider, endpoint string) (client FunctionsInvokeClient, err error) {
+	if enabled := common.CheckForEnabledServices("functions"); !enabled {
+		return client, fmt.Errorf("the Developer Tool configuration disabled this service, this behavior is controlled by OciSdkEnabledServicesMap variables. Please check if your local developer-tool-configuration.json file configured the service you're targeting or contact the cloud provider on the availability of this service")
+	}
 	provider, err := auth.GetGenericConfigurationProvider(configProvider)
 	if err != nil {
 		return client, err
@@ -78,9 +81,9 @@ func (client *FunctionsInvokeClient) ConfigurationProvider() *common.Configurati
 
 // InvokeFunction Invokes a function
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/InvokeFunction.go.html to see an example of how to use InvokeFunction API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/InvokeFunction.go.html to see an example of how to use InvokeFunction API.
 func (client FunctionsInvokeClient) InvokeFunction(ctx context.Context, request InvokeFunctionRequest) (response InvokeFunctionResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()
@@ -120,7 +123,7 @@ func (client FunctionsInvokeClient) invokeFunction(ctx context.Context, request 
 
 	var response InvokeFunctionResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsInvoke", "InvokeFunction")
 	response.RawResponse = httpResponse
 	if err != nil {
 		apiReferenceLink := "https://docs.oracle.com/iaas/api/#/en/functions/20181201/Function/InvokeFunction"

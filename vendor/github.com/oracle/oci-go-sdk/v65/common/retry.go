@@ -1,4 +1,4 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2026, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 
 package common
@@ -74,6 +74,7 @@ const (
 var (
 	defaultRetryStatusCodeMap = map[StatErrCode]bool{
 		{409, "IncorrectState"}:  true,
+		{409, "LockConflict"}:    true,
 		{429, "TooManyRequests"}: true,
 
 		{501, "MethodNotImplemented"}: false,
@@ -184,10 +185,20 @@ var GlobalRetry *RetryPolicy = nil
 // RetryPolicyOption is the type of the options for NewRetryPolicy.
 type RetryPolicyOption func(rp *RetryPolicy)
 
-// Convert retry policy to human-readable string representation
-func (rp RetryPolicy) String() string {
+// String converts retry policy to human-readable string representation
+// Safe to call on a nil *RetryPolicy
+func (rp *RetryPolicy) String() string {
+	if rp == nil {
+		return "<nil>"
+	}
+
+	nonECPolicy := "<nil>"
+	if rp.NonEventuallyConsistentPolicy != nil {
+		nonECPolicy = rp.NonEventuallyConsistentPolicy.String()
+	}
+
 	return fmt.Sprintf("{MaximumNumberAttempts=%v, MinSleepBetween=%v, MaxSleepBetween=%v, ExponentialBackoffBase=%v, NonEventuallyConsistentPolicy=%v}",
-		rp.MaximumNumberAttempts, rp.MinSleepBetween, rp.MaxSleepBetween, rp.ExponentialBackoffBase, rp.NonEventuallyConsistentPolicy)
+		rp.MaximumNumberAttempts, rp.MinSleepBetween, rp.MaxSleepBetween, rp.ExponentialBackoffBase, nonECPolicy)
 }
 
 // Validate returns true if the RetryPolicy is valid; if not, it also returns an error.
@@ -369,7 +380,7 @@ func DefaultShouldRetryOperation(r OCIOperationResponse) bool {
 }
 
 // DefaultRetryPolicy is a helper method that assembles and returns a return policy that is defined to be a default one
-// The default retry policy will retry on (409, IncorrectState), (429, TooManyRequests) and any 5XX errors except (501, MethodNotImplemented)
+// The default retry policy will retry on (409, IncorrectState), (409, LockConflict), (429, TooManyRequests) and any 5XX errors except (501, MethodNotImplemented)
 // The default retry behavior is using exponential backoff with jitter, the maximum wait time is 30s plus 1s jitter
 // The maximum cumulative backoff after all 8 attempts have been made is about 1.5 minutes.
 // It will also retry on errors affected by eventual consistency.
@@ -382,7 +393,7 @@ func DefaultRetryPolicy() RetryPolicy {
 }
 
 // DefaultRetryPolicyWithoutEventualConsistency is a helper method that assembles and returns a return policy that is defined to be a default one
-// The default retry policy will retry on (409, IncorrectState), (429, TooManyRequests) and any 5XX errors except (501, MethodNotImplemented)
+// The default retry policy will retry on (409, IncorrectState), (409, LockConflict), (429, TooManyRequests) and any 5XX errors except (501, MethodNotImplemented)
 // It will not retry on errors affected by eventual consistency.
 // The default retry behavior is using exponential backoff with jitter, the maximum wait time is 30s plus 1s jitter
 func DefaultRetryPolicyWithoutEventualConsistency() RetryPolicy {
@@ -753,7 +764,7 @@ func determinePolicyToUse(policy RetryPolicy) (RetryPolicy, *time.Time, float64)
 	var useDefaultTimingInstead = true
 	var endOfWindowTime = (*time.Time)(nil)
 	var backoffScalingFactor = 1.0
-	var policyToUse RetryPolicy = policy
+	var policyToUse = policy
 
 	eowt := EcContext.GetEndOfWindow()
 	if eowt != nil {
@@ -774,17 +785,17 @@ func determinePolicyToUse(policy RetryPolicy) (RetryPolicy, *time.Time, float64)
 				Debugln(fmt.Sprintf("Use eventually consistent timing, durationToEndOfWindow = %v, maximumCumulativeBackoffWithoutJitter = %v, backoffScalingFactor = %.2f",
 					durationToEndOfWindow, maximumCumulativeBackoffWithoutJitter, backoffScalingFactor))
 			} else {
-				Debugln(fmt.Sprintf("Use default timing, end of EC window is sooner than default retries"))
+				Debugln("Use default timing, end of EC window is sooner than default retries")
 			}
 		} else {
 			useDefaultTimingInstead = false
 			policyToUse = *policy.NonEventuallyConsistentPolicy
-			Debugln(fmt.Sprintf("Use default timing and strategy, end of EC window is in the past"))
+			Debugln("Use default timing and strategy, end of EC window is in the past")
 		}
 	} else {
 		useDefaultTimingInstead = false
 		policyToUse = *policy.NonEventuallyConsistentPolicy
-		Debugln(fmt.Sprintf("Use default timing and strategy, no EC window set"))
+		Debugln("Use default timing and strategy, no EC window set")
 	}
 
 	if useDefaultTimingInstead {

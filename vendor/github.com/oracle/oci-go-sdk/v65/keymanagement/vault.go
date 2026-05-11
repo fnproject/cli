@@ -1,11 +1,10 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2026, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 // Code generated. DO NOT EDIT.
 
-// Vault Service Key Management API
+// Vault Key Management API
 //
-// API for managing and performing operations with keys and vaults. (For the API for managing secrets, see the Vault Service
-// Secret Management API. For the API for retrieving secrets, see the Vault Service Secret Retrieval API.)
+// Use the Key Management API to manage vaults and keys. For more information, see Managing Vaults (https://docs.oracle.com/iaas/Content/KeyManagement/Tasks/managingvaults.htm) and Managing Keys (https://docs.oracle.com/iaas/Content/KeyManagement/Tasks/managingkeys.htm).
 //
 
 package keymanagement
@@ -16,15 +15,15 @@ import (
 	"strings"
 )
 
-// Vault The representation of Vault
+// Vault The logical entity where the Vault service creates and durably stores keys.
 type Vault struct {
 
 	// The OCID of the compartment that contains this vault.
 	CompartmentId *string `mandatory:"true" json:"compartmentId"`
 
 	// The service endpoint to perform cryptographic operations against. Cryptographic operations include
-	// Encrypt (https://docs.cloud.oracle.com/api/#/en/key/latest/EncryptedData/Encrypt), Decrypt (https://docs.cloud.oracle.com/api/#/en/key/latest/DecryptedData/Decrypt),
-	// and GenerateDataEncryptionKey (https://docs.cloud.oracle.com/api/#/en/key/latest/GeneratedKey/GenerateDataEncryptionKey) operations.
+	// Encrypt (https://docs.oracle.com/iaas/api/#/en/key/latest/EncryptedData/Encrypt), Decrypt (https://docs.oracle.com/iaas/api/#/en/key/latest/DecryptedData/Decrypt),
+	// and GenerateDataEncryptionKey (https://docs.oracle.com/iaas/api/#/en/key/latest/GeneratedKey/GenerateDataEncryptionKey) operations.
 	CryptoEndpoint *string `mandatory:"true" json:"cryptoEndpoint"`
 
 	// A user-friendly name for the vault. It does not have to be unique, and it is changeable.
@@ -53,12 +52,12 @@ type Vault struct {
 	WrappingkeyId *string `mandatory:"true" json:"wrappingkeyId"`
 
 	// Defined tags for this resource. Each key is predefined and scoped to a namespace.
-	// For more information, see Resource Tags (https://docs.cloud.oracle.com/Content/General/Concepts/resourcetags.htm).
+	// For more information, see Resource Tags (https://docs.oracle.com/iaas/Content/General/Concepts/resourcetags.htm).
 	// Example: `{"Operations": {"CostCenter": "42"}}`
 	DefinedTags map[string]map[string]interface{} `mandatory:"false" json:"definedTags"`
 
 	// Free-form tags for this resource. Each tag is a simple key-value pair with no predefined name, type, or namespace.
-	// For more information, see Resource Tags (https://docs.cloud.oracle.com/Content/General/Concepts/resourcetags.htm).
+	// For more information, see Resource Tags (https://docs.oracle.com/iaas/Content/General/Concepts/resourcetags.htm).
 	// Example: `{"Department": "Finance"}`
 	FreeformTags map[string]string `mandatory:"false" json:"freeformTags"`
 
@@ -73,7 +72,13 @@ type Vault struct {
 
 	ReplicaDetails *VaultReplicaDetails `mandatory:"false" json:"replicaDetails"`
 
+	// A Boolean value that indicates whether the Vault is primary Vault or replica Vault.
 	IsPrimary *bool `mandatory:"false" json:"isPrimary"`
+
+	// A Boolean value that indicates whether the Vault has cross region replication capability. Always true for Virtual Private Vaults.
+	IsVaultReplicable *bool `mandatory:"false" json:"isVaultReplicable"`
+
+	ExternalKeyManagerMetadataSummary *ExternalKeyManagerMetadataSummary `mandatory:"false" json:"externalKeyManagerMetadataSummary"`
 }
 
 func (m Vault) String() string {
@@ -93,7 +98,7 @@ func (m Vault) ValidateEnumValue() (bool, error) {
 	}
 
 	if len(errMessage) > 0 {
-		return true, fmt.Errorf(strings.Join(errMessage, "\n"))
+		return true, fmt.Errorf("%s", strings.Join(errMessage, "\n"))
 	}
 	return false, nil
 }
@@ -179,16 +184,19 @@ type VaultVaultTypeEnum string
 const (
 	VaultVaultTypeVirtualPrivate VaultVaultTypeEnum = "VIRTUAL_PRIVATE"
 	VaultVaultTypeDefault        VaultVaultTypeEnum = "DEFAULT"
+	VaultVaultTypeExternal       VaultVaultTypeEnum = "EXTERNAL"
 )
 
 var mappingVaultVaultTypeEnum = map[string]VaultVaultTypeEnum{
 	"VIRTUAL_PRIVATE": VaultVaultTypeVirtualPrivate,
 	"DEFAULT":         VaultVaultTypeDefault,
+	"EXTERNAL":        VaultVaultTypeExternal,
 }
 
 var mappingVaultVaultTypeEnumLowerCase = map[string]VaultVaultTypeEnum{
 	"virtual_private": VaultVaultTypeVirtualPrivate,
 	"default":         VaultVaultTypeDefault,
+	"external":        VaultVaultTypeExternal,
 }
 
 // GetVaultVaultTypeEnumValues Enumerates the set of values for VaultVaultTypeEnum
@@ -205,6 +213,7 @@ func GetVaultVaultTypeEnumStringValues() []string {
 	return []string{
 		"VIRTUAL_PRIVATE",
 		"DEFAULT",
+		"EXTERNAL",
 	}
 }
 

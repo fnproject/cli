@@ -120,6 +120,18 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Usage: "Function annotation (can be specified multiple times)",
 		},
 		cli.StringFlag{
+			Name:  "detached-timeout",
+			Usage: "Set OCI detached mode timeout using a duration like 20m or 1h",
+		},
+		cli.StringFlag{
+			Name:  "on-success",
+			Usage: "Set OCI detached success destination using <stream|queue|notifications>:<ocid>",
+		},
+		cli.StringFlag{
+			Name:  "on-failure",
+			Usage: "Set OCI detached failure destination using <stream|queue|notifications>:<ocid>",
+		},
+		cli.StringFlag{
 			Name:  "provisioned-concurrency",
 			Usage: "Set OCI provisioned concurrency using 'none' or 'constant:<count>'",
 		},
@@ -180,6 +192,21 @@ func (a *initFnCmd) init(c *cli.Context) error {
 
 	function.WithFlags(c, &fn)
 	a.bindFn(&fn)
+	if timeoutSpec, _, err := common.ParseDetachedTimeoutSpec(c.String("detached-timeout")); err != nil {
+		return err
+	} else {
+		common.SetDetachedTimeout(a.ff, timeoutSpec)
+	}
+	if dest, err := common.ParseOCIDestinationSpec("--on-success", c.String("on-success")); err != nil {
+		return err
+	} else {
+		common.SetOnSuccessDestination(a.ff, dest)
+	}
+	if dest, err := common.ParseOCIDestinationSpec("--on-failure", c.String("on-failure")); err != nil {
+		return err
+	} else {
+		common.SetOnFailureDestination(a.ff, dest)
+	}
 	pcConfig, err := common.ParseProvisionedConcurrencySpec(c.String("provisioned-concurrency"))
 	if err != nil {
 		return err

@@ -2,22 +2,28 @@ package shim
 
 import (
 	"fmt"
-	"strings"
 	"github.com/fnproject/fn_go/clientv2/fns"
 	"github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider/oracle/shim/client"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 	"github.com/oracle/oci-go-sdk/v65/functions"
+	"strconv"
+	"strings"
 )
 
 const (
 	defaultMemory int64 = 128 // MB
 
-	annotationImageDigest    = "oracle.com/oci/imageDigest"
-	annotationInvokeEndpoint = "fnproject.io/fn/invokeEndpoint"
-	annotationPCStrategy     = "oracle.com/oci/provisionedConcurrencyStrategy"
-	annotationPCCount        = "oracle.com/oci/provisionedConcurrencyCount"
+	annotationImageDigest            = "oracle.com/oci/imageDigest"
+	annotationInvokeEndpoint         = "fnproject.io/fn/invokeEndpoint"
+	annotationPCStrategy             = "oracle.com/oci/provisionedConcurrencyStrategy"
+	annotationPCCount                = "oracle.com/oci/provisionedConcurrencyCount"
+	annotationDetachedTimeoutSeconds = "oracle.com/oci/detachedModeTimeoutInSeconds"
+	annotationSuccessDestinationKind = "oracle.com/oci/successDestinationKind"
+	annotationSuccessDestinationOCID = "oracle.com/oci/successDestinationOcid"
+	annotationFailureDestinationKind = "oracle.com/oci/failureDestinationKind"
+	annotationFailureDestinationOCID = "oracle.com/oci/failureDestinationOcid"
 
 	invokeEndpointFmtString = "%s/20181201/functions/%s/actions/invoke"
 )
@@ -49,14 +55,25 @@ func (s *fnsShim) CreateFn(params *fns.CreateFnParams) (*fns.CreateFnOK, error) 
 	}
 
 	details := functions.CreateFunctionDetails{
-		DisplayName:      &params.Body.Name,
-		ApplicationId:    &params.Body.AppID,
-		Image:            &params.Body.Image,
-		MemoryInMBs:      &memory,
-		ImageDigest:      digest,
+		DisplayName:                  &params.Body.Name,
+		ApplicationId:                &params.Body.AppID,
+		Image:                        &params.Body.Image,
+		MemoryInMBs:                  &memory,
+		ImageDigest:                  digest,
 		ProvisionedConcurrencyConfig: pcConfig,
-		Config:           params.Body.Config,
-		TimeoutInSeconds: parseTimeout(params.Body.Timeout),
+		Config:                       params.Body.Config,
+		TimeoutInSeconds:             parseTimeout(params.Body.Timeout),
+	}
+	if detachedTimeoutSeconds, err := parseDetachedTimeoutAnnotation(params.Body.Annotations); err != nil {
+		return nil, err
+	} else if detachedTimeoutSeconds != nil {
+		details.DetachedModeTimeoutInSeconds = detachedTimeoutSeconds
+	}
+	if successDestination, failureDestination, err := parseDestinationAnnotations(params.Body.Annotations); err != nil {
+		return nil, err
+	} else {
+		details.SuccessDestination = successDestination
+		details.FailureDestination = failureDestination
 	}
 
 	req := functions.CreateFunctionRequest{CreateFunctionDetails: details}
@@ -195,6 +212,17 @@ func (s *fnsShim) UpdateFn(params *fns.UpdateFnParams) (*fns.UpdateFnOK, error) 
 		Config:           params.Body.Config,
 		TimeoutInSeconds: parseTimeout(params.Body.Timeout),
 	}
+	if detachedTimeoutSeconds, err := parseDetachedTimeoutAnnotation(params.Body.Annotations); err != nil {
+		return nil, err
+	} else if detachedTimeoutSeconds != nil {
+		details.DetachedModeTimeoutInSeconds = detachedTimeoutSeconds
+	}
+	if successDestination, failureDestination, err := parseDestinationAnnotations(params.Body.Annotations); err != nil {
+		return nil, err
+	} else {
+		details.SuccessDestination = successDestination
+		details.FailureDestination = failureDestination
+	}
 
 	req := functions.UpdateFunctionRequest{
 		FunctionId:            &params.FnID,
@@ -285,6 +313,114 @@ func parseProvisionedConcurrencyAnnotation(annotations map[string]interface{}) (
 	}
 }
 
+func parseDetachedTimeoutAnnotation(annotations map[string]interface{}) (*int, error) {
+	if annotations == nil || len(annotations) == 0 {
+		return nil, nil
+	}
+	raw, ok := annotations[annotationDetachedTimeoutSeconds]
+	if !ok {
+		return nil, nil
+	}
+	switch typed := raw.(type) {
+	case int:
+		return &typed, nil
+	case int32:
+		v := int(typed)
+		return &v, nil
+	case int64:
+		v := int(typed)
+		return &v, nil
+	case float64:
+		v := int(typed)
+		return &v, nil
+	case string:
+		v, err := strconv.Atoi(typed)
+		if err != nil {
+			return nil, fmt.Errorf("invalid detached timeout annotation")
+		}
+		return &v, nil
+	default:
+		return nil, fmt.Errorf("invalid detached timeout annotation")
+	}
+}
+
+func parseDestinationAnnotations(annotations map[string]interface{}) (functions.SuccessDestinationDetails, functions.FailureDestinationDetails, error) {
+	var success functions.SuccessDestinationDetails
+	var failure functions.FailureDestinationDetails
+	if annotations == nil || len(annotations) == 0 {
+		return nil, nil, nil
+	}
+	if kindRaw, ok := annotations[annotationSuccessDestinationKind]; ok {
+		kind, ok := kindRaw.(string)
+		if !ok {
+			return nil, nil, fmt.Errorf("invalid success destination kind")
+		}
+		ocidRaw, ok := annotations[annotationSuccessDestinationOCID]
+		if !ok {
+			return nil, nil, fmt.Errorf("invalid success destination ocid")
+		}
+		ocid, ok := ocidRaw.(string)
+		if !ok {
+			return nil, nil, fmt.Errorf("invalid success destination ocid")
+		}
+		s, err := parseSuccessDestination(strings.ToUpper(strings.TrimSpace(kind)), ocid)
+		if err != nil {
+			return nil, nil, err
+		}
+		success = s
+	}
+	if kindRaw, ok := annotations[annotationFailureDestinationKind]; ok {
+		kind, ok := kindRaw.(string)
+		if !ok {
+			return nil, nil, fmt.Errorf("invalid failure destination kind")
+		}
+		ocidRaw, ok := annotations[annotationFailureDestinationOCID]
+		if !ok {
+			return nil, nil, fmt.Errorf("invalid failure destination ocid")
+		}
+		ocid, ok := ocidRaw.(string)
+		if !ok {
+			return nil, nil, fmt.Errorf("invalid failure destination ocid")
+		}
+		f, err := parseFailureDestination(strings.ToUpper(strings.TrimSpace(kind)), ocid)
+		if err != nil {
+			return nil, nil, err
+		}
+		failure = f
+	}
+	return success, failure, nil
+}
+
+func parseSuccessDestination(kind, ocid string) (functions.SuccessDestinationDetails, error) {
+	switch kind {
+	case "STREAM":
+		return functions.StreamSuccessDestinationDetails{StreamId: &ocid}, nil
+	case "QUEUE":
+		return functions.QueueSuccessDestinationDetails{QueueId: &ocid}, nil
+	case "NOTIFICATIONS", "NOTIFICATION":
+		return functions.NotificationSuccessDestinationDetails{TopicId: &ocid}, nil
+	case "NONE":
+		return functions.NoneSuccessDestinationDetails{}, nil
+	default:
+		return nil, fmt.Errorf("invalid success destination kind %q", kind)
+	}
+}
+
+func parseFailureDestination(kind, ocid string) (functions.FailureDestinationDetails, error) {
+	switch kind {
+	case "STREAM":
+		return functions.StreamFailureDestinationDetails{StreamId: &ocid}, nil
+	case "QUEUE":
+		return functions.QueueFailureDestinationDetails{QueueId: &ocid}, nil
+	case "NOTIFICATIONS", "NOTIFICATION":
+		return functions.NotificationFailureDestinationDetails{TopicId: &ocid}, nil
+	case "NONE":
+		return functions.NoneFailureDestinationDetails{}, nil
+	default:
+		return nil, fmt.Errorf("invalid failure destination kind %q", kind)
+	}
+}
+
 func addProvisionedConcurrencyAnnotations(annotations map[string]interface{}, cfg functions.FunctionProvisionedConcurrencyConfig) {
 	strategy := "NONE"
 	var count *int
@@ -326,6 +462,10 @@ func ociFnToV2(ociFn functions.Function) *modelsv2.Fn {
 	annotations[annotationImageDigest] = imageDigest
 	annotations[annotationInvokeEndpoint] = invokeEndpoint
 	addProvisionedConcurrencyAnnotations(annotations, ociFn.ProvisionedConcurrencyConfig)
+	if ociFn.DetachedModeTimeoutInSeconds != nil {
+		annotations[annotationDetachedTimeoutSeconds] = *ociFn.DetachedModeTimeoutInSeconds
+	}
+	addDestinationAnnotations(annotations, ociFn.SuccessDestination, ociFn.FailureDestination)
 
 	var timeoutPtr *int32
 	if ociFn.TimeoutInSeconds != nil {
@@ -343,7 +483,7 @@ func ociFnToV2(ociFn functions.Function) *modelsv2.Fn {
 		Memory:      uint64(*ociFn.MemoryInMBs),
 		Name:        *ociFn.DisplayName,
 		Timeout:     timeoutPtr,
-		Shape: 		 string(ociFn.Shape),
+		Shape:       string(ociFn.Shape),
 		UpdatedAt:   strfmt.DateTime(ociFn.TimeUpdated.Time),
 	}
 }
@@ -367,6 +507,10 @@ func ociFnSummaryToV2(ociFnSummary functions.FunctionSummary) *modelsv2.Fn {
 	annotations[annotationImageDigest] = imageDigest
 	annotations[annotationInvokeEndpoint] = invokeEndpoint
 	addProvisionedConcurrencyAnnotations(annotations, ociFnSummary.ProvisionedConcurrencyConfig)
+	if ociFnSummary.DetachedModeTimeoutInSeconds != nil {
+		annotations[annotationDetachedTimeoutSeconds] = *ociFnSummary.DetachedModeTimeoutInSeconds
+	}
+	addDestinationAnnotations(annotations, ociFnSummary.SuccessDestination, ociFnSummary.FailureDestination)
 
 	var timeoutPtr *int32
 	if ociFnSummary.TimeoutInSeconds != nil {
@@ -385,5 +529,49 @@ func ociFnSummaryToV2(ociFnSummary functions.FunctionSummary) *modelsv2.Fn {
 		Shape:       string(ociFnSummary.Shape),
 		Timeout:     timeoutPtr,
 		UpdatedAt:   strfmt.DateTime(ociFnSummary.TimeUpdated.Time),
+	}
+}
+
+func addDestinationAnnotations(annotations map[string]interface{}, success functions.SuccessDestinationDetails, failure functions.FailureDestinationDetails) {
+	if annotations == nil {
+		return
+	}
+	if success != nil {
+		switch typed := success.(type) {
+		case functions.StreamSuccessDestinationDetails:
+			annotations[annotationSuccessDestinationKind] = "STREAM"
+			if typed.StreamId != nil {
+				annotations[annotationSuccessDestinationOCID] = *typed.StreamId
+			}
+		case functions.QueueSuccessDestinationDetails:
+			annotations[annotationSuccessDestinationKind] = "QUEUE"
+			if typed.QueueId != nil {
+				annotations[annotationSuccessDestinationOCID] = *typed.QueueId
+			}
+		case functions.NotificationSuccessDestinationDetails:
+			annotations[annotationSuccessDestinationKind] = "NOTIFICATIONS"
+			if typed.TopicId != nil {
+				annotations[annotationSuccessDestinationOCID] = *typed.TopicId
+			}
+		}
+	}
+	if failure != nil {
+		switch typed := failure.(type) {
+		case functions.StreamFailureDestinationDetails:
+			annotations[annotationFailureDestinationKind] = "STREAM"
+			if typed.StreamId != nil {
+				annotations[annotationFailureDestinationOCID] = *typed.StreamId
+			}
+		case functions.QueueFailureDestinationDetails:
+			annotations[annotationFailureDestinationKind] = "QUEUE"
+			if typed.QueueId != nil {
+				annotations[annotationFailureDestinationOCID] = *typed.QueueId
+			}
+		case functions.NotificationFailureDestinationDetails:
+			annotations[annotationFailureDestinationKind] = "NOTIFICATIONS"
+			if typed.TopicId != nil {
+				annotations[annotationFailureDestinationOCID] = *typed.TopicId
+			}
+		}
 	}
 }
