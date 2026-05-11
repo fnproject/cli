@@ -1,11 +1,10 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2026, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 // Code generated. DO NOT EDIT.
 
-// Vault Service Key Management API
+// Vault Key Management API
 //
-// API for managing and performing operations with keys and vaults. (For the API for managing secrets, see the Vault Service
-// Secret Management API. For the API for retrieving secrets, see the Vault Service Secret Retrieval API.)
+// Use the Key Management API to manage vaults and keys. For more information, see Managing Vaults (https://docs.oracle.com/iaas/Content/KeyManagement/Tasks/managingvaults.htm) and Managing Keys (https://docs.oracle.com/iaas/Content/KeyManagement/Tasks/managingkeys.htm).
 //
 
 package keymanagement
@@ -16,7 +15,7 @@ import (
 	"strings"
 )
 
-// KeySummary The representation of KeySummary
+// KeySummary The details of the Key.
 type KeySummary struct {
 
 	// The OCID of the compartment that contains the key.
@@ -41,12 +40,12 @@ type KeySummary struct {
 	VaultId *string `mandatory:"true" json:"vaultId"`
 
 	// Defined tags for this resource. Each key is predefined and scoped to a namespace.
-	// For more information, see Resource Tags (https://docs.cloud.oracle.com/Content/General/Concepts/resourcetags.htm).
+	// For more information, see Resource Tags (https://docs.oracle.com/iaas/Content/General/Concepts/resourcetags.htm).
 	// Example: `{"Operations": {"CostCenter": "42"}}`
 	DefinedTags map[string]map[string]interface{} `mandatory:"false" json:"definedTags"`
 
 	// Free-form tags for this resource. Each tag is a simple key-value pair with no predefined name, type, or namespace.
-	// For more information, see Resource Tags (https://docs.cloud.oracle.com/Content/General/Concepts/resourcetags.htm).
+	// For more information, see Resource Tags (https://docs.oracle.com/iaas/Content/General/Concepts/resourcetags.htm).
 	// Example: `{"Department": "Finance"}`
 	FreeformTags map[string]string `mandatory:"false" json:"freeformTags"`
 
@@ -55,10 +54,18 @@ type KeySummary struct {
 	// the HSM. A protection mode of `SOFTWARE` means that the key persists on the server, protected by the vault's RSA wrapping key which persists
 	// on the HSM. All cryptographic operations that use a key with a protection mode of `SOFTWARE` are performed on the server. By default,
 	// a key's protection mode is set to `HSM`. You can't change a key's protection mode after the key is created or imported.
+	// A protection mode of `EXTERNAL` mean that the key persists on the customer's external key manager which is hosted externally outside of oracle.
+	// Oracle only hold a reference to that key.
+	// All cryptographic operations that use a key with a protection mode of `EXTERNAL` are performed by external key manager.
 	ProtectionMode KeySummaryProtectionModeEnum `mandatory:"false" json:"protectionMode,omitempty"`
 
 	// The algorithm used by a key's key versions to encrypt or decrypt data.
 	Algorithm KeySummaryAlgorithmEnum `mandatory:"false" json:"algorithm,omitempty"`
+
+	ExternalKeyReferenceDetails *ExternalKeyReferenceDetails `mandatory:"false" json:"externalKeyReferenceDetails"`
+
+	// A parameter specifying whether the auto key rotation is enabled or not.
+	IsAutoRotationEnabled *bool `mandatory:"false" json:"isAutoRotationEnabled"`
 }
 
 func (m KeySummary) String() string {
@@ -81,7 +88,7 @@ func (m KeySummary) ValidateEnumValue() (bool, error) {
 		errMessage = append(errMessage, fmt.Sprintf("unsupported enum value for Algorithm: %s. Supported values are: %s.", m.Algorithm, strings.Join(GetKeySummaryAlgorithmEnumStringValues(), ",")))
 	}
 	if len(errMessage) > 0 {
-		return true, fmt.Errorf(strings.Join(errMessage, "\n"))
+		return true, fmt.Errorf("%s", strings.Join(errMessage, "\n"))
 	}
 	return false, nil
 }
@@ -179,16 +186,19 @@ type KeySummaryProtectionModeEnum string
 const (
 	KeySummaryProtectionModeHsm      KeySummaryProtectionModeEnum = "HSM"
 	KeySummaryProtectionModeSoftware KeySummaryProtectionModeEnum = "SOFTWARE"
+	KeySummaryProtectionModeExternal KeySummaryProtectionModeEnum = "EXTERNAL"
 )
 
 var mappingKeySummaryProtectionModeEnum = map[string]KeySummaryProtectionModeEnum{
 	"HSM":      KeySummaryProtectionModeHsm,
 	"SOFTWARE": KeySummaryProtectionModeSoftware,
+	"EXTERNAL": KeySummaryProtectionModeExternal,
 }
 
 var mappingKeySummaryProtectionModeEnumLowerCase = map[string]KeySummaryProtectionModeEnum{
 	"hsm":      KeySummaryProtectionModeHsm,
 	"software": KeySummaryProtectionModeSoftware,
+	"external": KeySummaryProtectionModeExternal,
 }
 
 // GetKeySummaryProtectionModeEnumValues Enumerates the set of values for KeySummaryProtectionModeEnum
@@ -205,6 +215,7 @@ func GetKeySummaryProtectionModeEnumStringValues() []string {
 	return []string{
 		"HSM",
 		"SOFTWARE",
+		"EXTERNAL",
 	}
 }
 

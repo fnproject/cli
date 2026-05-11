@@ -1,11 +1,10 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2026, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 // Code generated. DO NOT EDIT.
 
-// Vault Service Key Management API
+// Vault Key Management API
 //
-// API for managing and performing operations with keys and vaults. (For the API for managing secrets, see the Vault Service
-// Secret Management API. For the API for retrieving secrets, see the Vault Service Secret Retrieval API.)
+// Use the Key Management API to manage vaults and keys. For more information, see Managing Vaults (https://docs.oracle.com/iaas/Content/KeyManagement/Tasks/managingvaults.htm) and Managing Keys (https://docs.oracle.com/iaas/Content/KeyManagement/Tasks/managingkeys.htm).
 //
 
 package keymanagement
@@ -27,6 +26,9 @@ type KmsCryptoClient struct {
 // NewKmsCryptoClientWithConfigurationProvider Creates a new default KmsCrypto client with the given configuration provider.
 // the configuration provider will be used for the default signer
 func NewKmsCryptoClientWithConfigurationProvider(configProvider common.ConfigurationProvider, endpoint string) (client KmsCryptoClient, err error) {
+	if enabled := common.CheckForEnabledServices("keymanagement"); !enabled {
+		return client, fmt.Errorf("the Developer Tool configuration disabled this service, this behavior is controlled by OciSdkEnabledServicesMap variables. Please check if your local developer-tool-configuration.json file configured the service you're targeting or contact the cloud provider on the availability of this service")
+	}
 	provider, err := auth.GetGenericConfigurationProvider(configProvider)
 	if err != nil {
 		return client, err
@@ -77,11 +79,11 @@ func (client *KmsCryptoClient) ConfigurationProvider() *common.ConfigurationProv
 	return client.config
 }
 
-// Decrypt Decrypts data using the given DecryptDataDetails (https://docs.cloud.oracle.com/api/#/en/key/latest/datatypes/DecryptDataDetails) resource.
+// Decrypt Decrypts data using the given DecryptDataDetails (https://docs.oracle.com/iaas/api/#/en/key/latest/datatypes/DecryptDataDetails) resource.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/Decrypt.go.html to see an example of how to use Decrypt API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/Decrypt.go.html to see an example of how to use Decrypt API.
 func (client KmsCryptoClient) Decrypt(ctx context.Context, request DecryptRequest) (response DecryptResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()
@@ -121,11 +123,11 @@ func (client KmsCryptoClient) decrypt(ctx context.Context, request common.OCIReq
 
 	var response DecryptResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "kmsCrypto", "Decrypt")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
-		apiReferenceLink := ""
+		apiReferenceLink := "https://docs.oracle.com/iaas/api/#/en/key/release/DecryptedData/Decrypt"
 		err = common.PostProcessServiceError(err, "KmsCrypto", "Decrypt", apiReferenceLink)
 		return response, err
 	}
@@ -134,12 +136,12 @@ func (client KmsCryptoClient) decrypt(ctx context.Context, request common.OCIReq
 	return response, err
 }
 
-// Encrypt Encrypts data using the given EncryptDataDetails (https://docs.cloud.oracle.com/api/#/en/key/latest/datatypes/EncryptDataDetails) resource.
+// Encrypt Encrypts data using the given EncryptDataDetails (https://docs.oracle.com/iaas/api/#/en/key/latest/datatypes/EncryptDataDetails) resource.
 // Plaintext included in the example request is a base64-encoded value of a UTF-8 string.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/Encrypt.go.html to see an example of how to use Encrypt API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/Encrypt.go.html to see an example of how to use Encrypt API.
 func (client KmsCryptoClient) Encrypt(ctx context.Context, request EncryptRequest) (response EncryptResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()
@@ -179,11 +181,11 @@ func (client KmsCryptoClient) encrypt(ctx context.Context, request common.OCIReq
 
 	var response EncryptResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "kmsCrypto", "Encrypt")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
-		apiReferenceLink := ""
+		apiReferenceLink := "https://docs.oracle.com/iaas/api/#/en/key/release/EncryptedData/Encrypt"
 		err = common.PostProcessServiceError(err, "KmsCrypto", "Encrypt", apiReferenceLink)
 		return response, err
 	}
@@ -195,10 +197,11 @@ func (client KmsCryptoClient) encrypt(ctx context.Context, request common.OCIReq
 // ExportKey Exports a specific version of a master encryption key according to the details of the request. For their protection,
 // keys that you create and store on a hardware security module (HSM) can never leave the HSM. You can only export keys
 // stored on the server. For export, the key version is encrypted by an RSA public key that you provide.
+// This operation is not supported for keys having protection mode `EXTERNAL`.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/ExportKey.go.html to see an example of how to use ExportKey API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/ExportKey.go.html to see an example of how to use ExportKey API.
 func (client KmsCryptoClient) ExportKey(ctx context.Context, request ExportKeyRequest) (response ExportKeyResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()
@@ -238,11 +241,11 @@ func (client KmsCryptoClient) exportKey(ctx context.Context, request common.OCIR
 
 	var response ExportKeyResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "kmsCrypto", "ExportKey")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
-		apiReferenceLink := ""
+		apiReferenceLink := "https://docs.oracle.com/iaas/api/#/en/key/release/ExportedKeyData/ExportKey"
 		err = common.PostProcessServiceError(err, "KmsCrypto", "ExportKey", apiReferenceLink)
 		return response, err
 	}
@@ -253,9 +256,9 @@ func (client KmsCryptoClient) exportKey(ctx context.Context, request common.OCIR
 
 // GenerateDataEncryptionKey Generates a key that you can use to encrypt or decrypt data.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/GenerateDataEncryptionKey.go.html to see an example of how to use GenerateDataEncryptionKey API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/GenerateDataEncryptionKey.go.html to see an example of how to use GenerateDataEncryptionKey API.
 func (client KmsCryptoClient) GenerateDataEncryptionKey(ctx context.Context, request GenerateDataEncryptionKeyRequest) (response GenerateDataEncryptionKeyResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()
@@ -295,11 +298,11 @@ func (client KmsCryptoClient) generateDataEncryptionKey(ctx context.Context, req
 
 	var response GenerateDataEncryptionKeyResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "kmsCrypto", "GenerateDataEncryptionKey")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
-		apiReferenceLink := ""
+		apiReferenceLink := "https://docs.oracle.com/iaas/api/#/en/key/release/GeneratedKey/GenerateDataEncryptionKey"
 		err = common.PostProcessServiceError(err, "KmsCrypto", "GenerateDataEncryptionKey", apiReferenceLink)
 		return response, err
 	}
@@ -309,12 +312,13 @@ func (client KmsCryptoClient) generateDataEncryptionKey(ctx context.Context, req
 }
 
 // Sign Creates a digital signature for a message or message digest by using the private key of a public-private key pair,
-// also known as an asymmetric key. To verify the generated signature, you can use the Verify (https://docs.cloud.oracle.com/api/#/en/key/latest/VerifiedData/Verify)
+// also known as an asymmetric key. To verify the generated signature, you can use the Verify (https://docs.oracle.com/iaas/api/#/en/key/latest/VerifiedData/Verify)
 // operation. Or, if you want to validate the signature outside of the service, you can do so by using the public key of the same asymmetric key.
+// This operation is not supported for keys having protection mode `EXTERNAL`.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/Sign.go.html to see an example of how to use Sign API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/Sign.go.html to see an example of how to use Sign API.
 func (client KmsCryptoClient) Sign(ctx context.Context, request SignRequest) (response SignResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()
@@ -354,11 +358,11 @@ func (client KmsCryptoClient) sign(ctx context.Context, request common.OCIReques
 
 	var response SignResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "kmsCrypto", "Sign")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
-		apiReferenceLink := ""
+		apiReferenceLink := "https://docs.oracle.com/iaas/api/#/en/key/release/SignedData/Sign"
 		err = common.PostProcessServiceError(err, "KmsCrypto", "Sign", apiReferenceLink)
 		return response, err
 	}
@@ -367,13 +371,14 @@ func (client KmsCryptoClient) sign(ctx context.Context, request common.OCIReques
 	return response, err
 }
 
-// Verify Verifies a digital signature that was generated by the Sign (https://docs.cloud.oracle.com/api/#/en/key/latest/SignedData/Sign) operation
+// Verify Verifies a digital signature that was generated by the Sign (https://docs.oracle.com/iaas/api/#/en/key/latest/SignedData/Sign) operation
 // by using the public key of the same asymmetric key that was used to sign the data. If you want to validate the
 // digital signature outside of the service, you can do so by using the public key of the asymmetric key.
+// This operation is not supported for keys having protection mode `EXTERNAL`.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/Verify.go.html to see an example of how to use Verify API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/keymanagement/Verify.go.html to see an example of how to use Verify API.
 func (client KmsCryptoClient) Verify(ctx context.Context, request VerifyRequest) (response VerifyResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()
@@ -413,11 +418,11 @@ func (client KmsCryptoClient) verify(ctx context.Context, request common.OCIRequ
 
 	var response VerifyResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "kmsCrypto", "Verify")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
-		apiReferenceLink := ""
+		apiReferenceLink := "https://docs.oracle.com/iaas/api/#/en/key/release/VerifiedData/Verify"
 		err = common.PostProcessServiceError(err, "KmsCrypto", "Verify", apiReferenceLink)
 		return response, err
 	}

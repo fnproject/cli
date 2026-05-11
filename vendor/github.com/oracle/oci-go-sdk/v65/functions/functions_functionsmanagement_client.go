@@ -1,4 +1,4 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2026, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 // Code generated. DO NOT EDIT.
 
@@ -26,6 +26,9 @@ type FunctionsManagementClient struct {
 // NewFunctionsManagementClientWithConfigurationProvider Creates a new default FunctionsManagement client with the given configuration provider.
 // the configuration provider will be used for the default signer as well as reading the region
 func NewFunctionsManagementClientWithConfigurationProvider(configProvider common.ConfigurationProvider) (client FunctionsManagementClient, err error) {
+	if enabled := common.CheckForEnabledServices("functions"); !enabled {
+		return client, fmt.Errorf("the Developer Tool configuration disabled this service, this behavior is controlled by OciSdkEnabledServicesMap variables. Please check if your local developer-tool-configuration.json file configured the service you're targeting or contact the cloud provider on the availability of this service")
+	}
 	provider, err := auth.GetGenericConfigurationProvider(configProvider)
 	if err != nil {
 		return client, err
@@ -77,7 +80,7 @@ func (client *FunctionsManagementClient) setConfigurationProvider(configProvider
 	region, _ := configProvider.Region()
 	client.SetRegion(region)
 	if client.Host == "" {
-		return fmt.Errorf("Invalid region or Host. Endpoint cannot be constructed without endpointServiceName or serviceEndpointTemplate for a dotted region")
+		return fmt.Errorf("invalid region or Host. Endpoint cannot be constructed without endpointServiceName or serviceEndpointTemplate for a dotted region")
 	}
 	client.config = &configProvider
 	return nil
@@ -89,11 +92,11 @@ func (client *FunctionsManagementClient) ConfigurationProvider() *common.Configu
 }
 
 // ChangeApplicationCompartment Moves an application into a different compartment within the same tenancy.
-// For information about moving resources between compartments, see Moving Resources Between Compartments (https://docs.cloud.oracle.com/iaas/Content/Identity/Tasks/managingcompartments.htm#moveRes).
+// For information about moving resources between compartments, see Moving Resources Between Compartments (https://docs.oracle.com/iaas/Content/Identity/Tasks/managingcompartments.htm#moveRes).
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/ChangeApplicationCompartment.go.html to see an example of how to use ChangeApplicationCompartment API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/ChangeApplicationCompartment.go.html to see an example of how to use ChangeApplicationCompartment API.
 // A default retry strategy applies to this operation ChangeApplicationCompartment()
 func (client FunctionsManagementClient) ChangeApplicationCompartment(ctx context.Context, request ChangeApplicationCompartmentRequest) (response ChangeApplicationCompartmentResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -134,7 +137,7 @@ func (client FunctionsManagementClient) changeApplicationCompartment(ctx context
 
 	var response ChangeApplicationCompartmentResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "ChangeApplicationCompartment")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -149,9 +152,9 @@ func (client FunctionsManagementClient) changeApplicationCompartment(ctx context
 
 // CreateApplication Creates a new application.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/CreateApplication.go.html to see an example of how to use CreateApplication API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/CreateApplication.go.html to see an example of how to use CreateApplication API.
 // A default retry strategy applies to this operation CreateApplication()
 func (client FunctionsManagementClient) CreateApplication(ctx context.Context, request CreateApplicationRequest) (response CreateApplicationResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -192,7 +195,7 @@ func (client FunctionsManagementClient) createApplication(ctx context.Context, r
 
 	var response CreateApplicationResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "CreateApplication")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -207,9 +210,9 @@ func (client FunctionsManagementClient) createApplication(ctx context.Context, r
 
 // CreateFunction Creates a new function.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/CreateFunction.go.html to see an example of how to use CreateFunction API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/CreateFunction.go.html to see an example of how to use CreateFunction API.
 // A default retry strategy applies to this operation CreateFunction()
 func (client FunctionsManagementClient) CreateFunction(ctx context.Context, request CreateFunctionRequest) (response CreateFunctionResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -250,7 +253,7 @@ func (client FunctionsManagementClient) createFunction(ctx context.Context, requ
 
 	var response CreateFunctionResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "CreateFunction")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -265,9 +268,9 @@ func (client FunctionsManagementClient) createFunction(ctx context.Context, requ
 
 // DeleteApplication Deletes an application.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/DeleteApplication.go.html to see an example of how to use DeleteApplication API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/DeleteApplication.go.html to see an example of how to use DeleteApplication API.
 // A default retry strategy applies to this operation DeleteApplication()
 func (client FunctionsManagementClient) DeleteApplication(ctx context.Context, request DeleteApplicationRequest) (response DeleteApplicationResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -308,7 +311,7 @@ func (client FunctionsManagementClient) deleteApplication(ctx context.Context, r
 
 	var response DeleteApplicationResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "DeleteApplication")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -323,9 +326,9 @@ func (client FunctionsManagementClient) deleteApplication(ctx context.Context, r
 
 // DeleteFunction Deletes a function.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/DeleteFunction.go.html to see an example of how to use DeleteFunction API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/DeleteFunction.go.html to see an example of how to use DeleteFunction API.
 // A default retry strategy applies to this operation DeleteFunction()
 func (client FunctionsManagementClient) DeleteFunction(ctx context.Context, request DeleteFunctionRequest) (response DeleteFunctionResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -366,7 +369,7 @@ func (client FunctionsManagementClient) deleteFunction(ctx context.Context, requ
 
 	var response DeleteFunctionResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "DeleteFunction")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -381,9 +384,9 @@ func (client FunctionsManagementClient) deleteFunction(ctx context.Context, requ
 
 // GetApplication Retrieves an application.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/GetApplication.go.html to see an example of how to use GetApplication API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/GetApplication.go.html to see an example of how to use GetApplication API.
 // A default retry strategy applies to this operation GetApplication()
 func (client FunctionsManagementClient) GetApplication(ctx context.Context, request GetApplicationRequest) (response GetApplicationResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -424,7 +427,7 @@ func (client FunctionsManagementClient) getApplication(ctx context.Context, requ
 
 	var response GetApplicationResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "GetApplication")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -439,9 +442,9 @@ func (client FunctionsManagementClient) getApplication(ctx context.Context, requ
 
 // GetFunction Retrieves a function.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/GetFunction.go.html to see an example of how to use GetFunction API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/GetFunction.go.html to see an example of how to use GetFunction API.
 // A default retry strategy applies to this operation GetFunction()
 func (client FunctionsManagementClient) GetFunction(ctx context.Context, request GetFunctionRequest) (response GetFunctionResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -482,7 +485,7 @@ func (client FunctionsManagementClient) getFunction(ctx context.Context, request
 
 	var response GetFunctionResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "GetFunction")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -497,9 +500,9 @@ func (client FunctionsManagementClient) getFunction(ctx context.Context, request
 
 // GetPbfListing Fetches a Pre-built Function(PBF) Listing. Returns a PbfListing response model.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/GetPbfListing.go.html to see an example of how to use GetPbfListing API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/GetPbfListing.go.html to see an example of how to use GetPbfListing API.
 // A default retry strategy applies to this operation GetPbfListing()
 func (client FunctionsManagementClient) GetPbfListing(ctx context.Context, request GetPbfListingRequest) (response GetPbfListingResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -540,7 +543,7 @@ func (client FunctionsManagementClient) getPbfListing(ctx context.Context, reque
 
 	var response GetPbfListingResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "GetPbfListing")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -555,9 +558,9 @@ func (client FunctionsManagementClient) getPbfListing(ctx context.Context, reque
 
 // GetPbfListingVersion Gets a PbfListingVersion by identifier for a PbfListing.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/GetPbfListingVersion.go.html to see an example of how to use GetPbfListingVersion API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/GetPbfListingVersion.go.html to see an example of how to use GetPbfListingVersion API.
 // A default retry strategy applies to this operation GetPbfListingVersion()
 func (client FunctionsManagementClient) GetPbfListingVersion(ctx context.Context, request GetPbfListingVersionRequest) (response GetPbfListingVersionResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -598,7 +601,7 @@ func (client FunctionsManagementClient) getPbfListingVersion(ctx context.Context
 
 	var response GetPbfListingVersionResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "GetPbfListingVersion")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -613,9 +616,9 @@ func (client FunctionsManagementClient) getPbfListingVersion(ctx context.Context
 
 // ListApplications Lists applications for a compartment.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/ListApplications.go.html to see an example of how to use ListApplications API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/ListApplications.go.html to see an example of how to use ListApplications API.
 // A default retry strategy applies to this operation ListApplications()
 func (client FunctionsManagementClient) ListApplications(ctx context.Context, request ListApplicationsRequest) (response ListApplicationsResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -656,7 +659,7 @@ func (client FunctionsManagementClient) listApplications(ctx context.Context, re
 
 	var response ListApplicationsResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "ListApplications")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -671,9 +674,9 @@ func (client FunctionsManagementClient) listApplications(ctx context.Context, re
 
 // ListFunctions Lists functions for an application.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/ListFunctions.go.html to see an example of how to use ListFunctions API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/ListFunctions.go.html to see an example of how to use ListFunctions API.
 // A default retry strategy applies to this operation ListFunctions()
 func (client FunctionsManagementClient) ListFunctions(ctx context.Context, request ListFunctionsRequest) (response ListFunctionsResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -714,7 +717,7 @@ func (client FunctionsManagementClient) listFunctions(ctx context.Context, reque
 
 	var response ListFunctionsResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "ListFunctions")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -732,9 +735,9 @@ func (client FunctionsManagementClient) listFunctions(ctx context.Context, reque
 // Note that the PbfListingIdentifier must be provided as a query parameter, otherwise an exception shall
 // be thrown.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/ListPbfListingVersions.go.html to see an example of how to use ListPbfListingVersions API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/ListPbfListingVersions.go.html to see an example of how to use ListPbfListingVersions API.
 // A default retry strategy applies to this operation ListPbfListingVersions()
 func (client FunctionsManagementClient) ListPbfListingVersions(ctx context.Context, request ListPbfListingVersionsRequest) (response ListPbfListingVersionsResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -775,7 +778,7 @@ func (client FunctionsManagementClient) listPbfListingVersions(ctx context.Conte
 
 	var response ListPbfListingVersionsResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "ListPbfListingVersions")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -791,9 +794,9 @@ func (client FunctionsManagementClient) listPbfListingVersions(ctx context.Conte
 // ListPbfListings Fetches a wrapped list of all Pre-built Function(PBF) Listings. Returns a PbfListingCollection containing
 // an array of PbfListingSummary response models.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/ListPbfListings.go.html to see an example of how to use ListPbfListings API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/ListPbfListings.go.html to see an example of how to use ListPbfListings API.
 // A default retry strategy applies to this operation ListPbfListings()
 func (client FunctionsManagementClient) ListPbfListings(ctx context.Context, request ListPbfListingsRequest) (response ListPbfListingsResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -834,7 +837,7 @@ func (client FunctionsManagementClient) listPbfListings(ctx context.Context, req
 
 	var response ListPbfListingsResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "ListPbfListings")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -849,9 +852,9 @@ func (client FunctionsManagementClient) listPbfListings(ctx context.Context, req
 
 // ListTriggers Returns a list of Triggers.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/ListTriggers.go.html to see an example of how to use ListTriggers API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/ListTriggers.go.html to see an example of how to use ListTriggers API.
 // A default retry strategy applies to this operation ListTriggers()
 func (client FunctionsManagementClient) ListTriggers(ctx context.Context, request ListTriggersRequest) (response ListTriggersResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -892,7 +895,7 @@ func (client FunctionsManagementClient) listTriggers(ctx context.Context, reques
 
 	var response ListTriggersResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "ListTriggers")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -907,9 +910,9 @@ func (client FunctionsManagementClient) listTriggers(ctx context.Context, reques
 
 // UpdateApplication Modifies an application
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/UpdateApplication.go.html to see an example of how to use UpdateApplication API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/UpdateApplication.go.html to see an example of how to use UpdateApplication API.
 // A default retry strategy applies to this operation UpdateApplication()
 func (client FunctionsManagementClient) UpdateApplication(ctx context.Context, request UpdateApplicationRequest) (response UpdateApplicationResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -950,7 +953,7 @@ func (client FunctionsManagementClient) updateApplication(ctx context.Context, r
 
 	var response UpdateApplicationResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "UpdateApplication")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -965,9 +968,9 @@ func (client FunctionsManagementClient) updateApplication(ctx context.Context, r
 
 // UpdateFunction Modifies a function
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/UpdateFunction.go.html to see an example of how to use UpdateFunction API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/functions/UpdateFunction.go.html to see an example of how to use UpdateFunction API.
 // A default retry strategy applies to this operation UpdateFunction()
 func (client FunctionsManagementClient) UpdateFunction(ctx context.Context, request UpdateFunctionRequest) (response UpdateFunctionResponse, err error) {
 	var ociResponse common.OCIResponse
@@ -1008,7 +1011,7 @@ func (client FunctionsManagementClient) updateFunction(ctx context.Context, requ
 
 	var response UpdateFunctionResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "functionsManagement", "UpdateFunction")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {

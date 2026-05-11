@@ -423,6 +423,14 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 
 func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.FuncFileV20180708) error {
 	fmt.Printf("Updating function %s using image %s...\n", ff.Name, ff.ImageNameV20180708())
+	var detachedSeconds int
+	if ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.DetachedMode != nil && ff.Deploy.OCI.DetachedMode.Timeout != "" {
+		_, seconds, err := common.ParseDetachedTimeoutSpec(ff.Deploy.OCI.DetachedMode.Timeout)
+		if err != nil {
+			return err
+		}
+		detachedSeconds = seconds
+	}
 	if ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.ProvisionedConcurrency != nil {
 		if err := common.ValidateProvisionedConcurrencyConfig(ff.Deploy.OCI.ProvisionedConcurrency); err != nil {
 			return err
@@ -432,6 +440,12 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 	fn := &models.Fn{}
 	if err := function.WithFuncFileV20180708(ff, fn); err != nil {
 		return fmt.Errorf("Error getting function with funcfile: %s", err)
+	}
+	if detachedSeconds > 0 && common.IsOracleProvider(p.provider) {
+		function.SetDetachedTimeoutAnnotation(fn, detachedSeconds)
+	}
+	if common.IsOracleProvider(p.provider) && ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.DetachedMode != nil {
+		function.SetDestinationAnnotations(fn, ff.Deploy.OCI.DetachedMode.OnSuccess, ff.Deploy.OCI.DetachedMode.OnFailure)
 	}
 	created := false
 

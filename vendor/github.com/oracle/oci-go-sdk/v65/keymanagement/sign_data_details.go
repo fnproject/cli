@@ -1,11 +1,10 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2026, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 // Code generated. DO NOT EDIT.
 
-// Vault Service Key Management API
+// Vault Key Management API
 //
-// API for managing and performing operations with keys and vaults. (For the API for managing secrets, see the Vault Service
-// Secret Management API. For the API for retrieving secrets, see the Vault Service Secret Retrieval API.)
+// Use the Key Management API to manage vaults and keys. For more information, see Managing Vaults (https://docs.oracle.com/iaas/Content/KeyManagement/Tasks/managingvaults.htm) and Managing Keys (https://docs.oracle.com/iaas/Content/KeyManagement/Tasks/managingkeys.htm).
 //
 
 package keymanagement
@@ -16,7 +15,7 @@ import (
 	"strings"
 )
 
-// SignDataDetails The representation of SignDataDetails
+// SignDataDetails The details of the message that you want to sign.
 type SignDataDetails struct {
 
 	// The base64-encoded binary data object denoting the message or message digest to sign. You can have a message up to 4096 bytes in size. To sign a larger message, provide the message digest.
@@ -39,6 +38,10 @@ type SignDataDetails struct {
 	// Denotes whether the value of the message parameter is a raw message or a message digest.
 	// The default value, `RAW`, indicates a message. To indicate a message digest, use `DIGEST`.
 	MessageType SignDataDetailsMessageTypeEnum `mandatory:"false" json:"messageType,omitempty"`
+
+	// Information that can be used to provide context for audit logging. It is a map that contains any additional
+	// data that you provide to include with audit logs, if audit logging is enabled.
+	LoggingContext map[string]string `mandatory:"false" json:"loggingContext"`
 }
 
 func (m SignDataDetails) String() string {
@@ -58,7 +61,7 @@ func (m SignDataDetails) ValidateEnumValue() (bool, error) {
 		errMessage = append(errMessage, fmt.Sprintf("unsupported enum value for MessageType: %s. Supported values are: %s.", m.MessageType, strings.Join(GetSignDataDetailsMessageTypeEnumStringValues(), ",")))
 	}
 	if len(errMessage) > 0 {
-		return true, fmt.Errorf(strings.Join(errMessage, "\n"))
+		return true, fmt.Errorf("%s", strings.Join(errMessage, "\n"))
 	}
 	return false, nil
 }

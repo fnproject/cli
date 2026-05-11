@@ -1,4 +1,4 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2026, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 
 package common
@@ -22,6 +22,10 @@ import (
 const (
 	//UsingExpectHeaderEnvVar is the key to determine whether expect 100-continue is enabled or not
 	UsingExpectHeaderEnvVar = "OCI_GOSDK_USING_EXPECT_HEADER"
+	//EncodePathParamsEnvVar determines if special characters in path params such as / and & are URL encoded
+	EncodePathParamsEnvVar = "OCI_GOSDK_ENCODE_PATH_PARAMS"
+	// EscapeJSONToASCIIEnvVar determines if non-ASCII characters in JSON strings are escaped
+	EscapeJSONToASCIIEnvVar = "OCI_GOSDK_ESCAPE_JSON_ASCII"
 )
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -255,6 +259,49 @@ func removeNilFieldsInJSONWithTaggedStruct(rawJSON []byte, value reflect.Value) 
 	return json.Marshal(fixedMap)
 }
 
+// escapeJSONToASCII takes a JSON payload and returns an equivalent JSON where all string values are escaped to ASCII
+func escapeJSONToASCII(rawJSON []byte) ([]byte, error) {
+	var rawInterface interface{}
+	decoder := json.NewDecoder(bytes.NewReader(rawJSON))
+	decoder.UseNumber()
+	if err := decoder.Decode(&rawInterface); err != nil {
+		return nil, err
+	}
+
+	// transform recursively visits the JSON value:
+	// 		- For objects (map[string[interface{}]]), recurse on each value
+	// 		- For arrays ([]interface{}), recurse on each element
+	// 		- For strings, produce a JSON-quoted ASCII-only representation
+	// 		- For other types, return as is
+	var transform func(interface{}) interface{}
+	transform = func(x interface{}) interface{} {
+		switch t := x.(type) {
+		case map[string]interface{}:
+			m := make(map[string]interface{}, len(t))
+			for key, val := range t {
+				m[key] = transform(val)
+			}
+			return m
+		case []interface{}:
+			s := make([]interface{}, len(t))
+			for i, val := range t {
+				s[i] = transform(val)
+			}
+			return s
+		case string:
+			// QuoteToASCII returns a 'quoted' JSON string containing only ASCII characters
+			// ex: input: "ハッピー" -> "\"\\u30cf\\u30c3\\u30d4\\u30fc\""
+			// Returns as json.RawMessage so it gets embedded directly
+			q := strconv.AppendQuoteToASCII(nil, t)
+			return json.RawMessage(q)
+		default:
+			return x
+		}
+	}
+
+	return json.Marshal(transform(rawInterface))
+}
+
 func addToBody(request *http.Request, value reflect.Value, field reflect.StructField, binaryBodySpecified *bool) (e error) {
 	Debugln("Marshaling to body from field:", field.Name)
 	if request.Body != nil {
@@ -277,6 +324,13 @@ func addToBody(request *http.Request, value reflect.Value, field reflect.StructF
 		return
 	}
 
+	if IsEnvVarTrue(EscapeJSONToASCIIEnvVar) {
+		marshaled, e = escapeJSONToASCII(marshaled)
+		if e != nil {
+			return
+		}
+	}
+
 	if defaultLogger.LogLevel() == verboseLogging {
 		Debugf("Marshaled body is: %s\n", string(marshaled))
 	}
@@ -296,7 +350,7 @@ func addToBody(request *http.Request, value reflect.Value, field reflect.StructF
 }
 
 func checkBinaryBodyLength(request *http.Request) (contentLen int64, err error) {
-	if reflect.TypeOf(request.Body) == reflect.TypeOf(ioutil.NopCloser(nil)) {
+	if isNopCloser(request.Body) {
 		ioReader := reflect.ValueOf(request.Body).Field(0).Interface().(io.Reader)
 		switch t := ioReader.(type) {
 		case *bytes.Reader:
@@ -319,10 +373,34 @@ func checkBinaryBodyLength(request *http.Request) (contentLen int64, err error) 
 	return getNormalBinaryBodyLength(request)
 }
 
+// Helper function to judge if this struct is a nopCloser or nopCloserWriterTo
+func isNopCloser(readCloser io.ReadCloser) bool {
+	if reflect.TypeOf(readCloser) == reflect.TypeOf(io.NopCloser(nil)) || reflect.TypeOf(readCloser) == reflect.TypeOf(io.NopCloser(struct {
+		io.Reader
+		io.WriterTo
+	}{})) {
+		return true
+	}
+	return false
+}
+
 func getNormalBinaryBodyLength(request *http.Request) (contentLen int64, err error) {
-	dumpRequestBody := ioutil.NopCloser(bytes.NewBuffer(nil))
+	// If binary body is seekable
+	seeker := getSeeker(request.Body)
+	if seeker != nil {
+		// save the current position, calculate the unread body length and seek it back to current position
+		if curPos, err := seeker.Seek(0, io.SeekCurrent); err == nil {
+			if endPos, err := seeker.Seek(0, io.SeekEnd); err == nil {
+				contentLen = endPos - curPos
+				if _, err = seeker.Seek(curPos, io.SeekStart); err == nil {
+					return contentLen, nil
+				}
+			}
+		}
+	}
+
+	var dumpRequestBody io.ReadCloser
 	if dumpRequestBody, request.Body, err = drainBody(request.Body); err != nil {
-		dumpRequestBody = ioutil.NopCloser(bytes.NewBuffer(nil))
 		return contentLen, err
 	}
 	contentBody, err := ioutil.ReadAll(dumpRequestBody)
@@ -330,6 +408,19 @@ func getNormalBinaryBodyLength(request *http.Request) (contentLen int64, err err
 		return contentLen, err
 	}
 	return int64(len(contentBody)), nil
+}
+
+func getSeeker(readCloser io.ReadCloser) (seeker io.Seeker) {
+	if seeker, ok := readCloser.(io.Seeker); ok {
+		return seeker
+	}
+	// the binary body is wrapped with io.NopCloser
+	if isNopCloser(readCloser) {
+		if seeker, ok := reflect.ValueOf(readCloser).Field(0).Interface().(io.Seeker); ok {
+			return seeker
+		}
+	}
+	return seeker
 }
 
 func addToQuery(request *http.Request, value reflect.Value, field reflect.StructField) (e error) {
@@ -424,6 +515,11 @@ func addToPath(request *http.Request, value reflect.Value, field reflect.StructF
 		return fmt.Errorf("value cannot be empty for field %s in path", field.Name)
 	}
 
+	// encode path param if EncodePathParamsEnvVar is set
+	if IsEnvVarTrue(EncodePathParamsEnvVar) {
+		additionalURLPathPart = url.PathEscape(additionalURLPathPart)
+	}
+
 	if request.URL == nil {
 		request.URL = &url.URL{}
 		request.URL.Path = ""
@@ -489,8 +585,29 @@ func addToHeader(request *http.Request, value reflect.Value, field reflect.Struc
 	}
 
 	//Otherwise get value and set header
-	if headerValue, e = toStringValue(value, field); e != nil {
-		return
+	encoding := strings.ToLower(field.Tag.Get("collectionFormat"))
+	var collectionFormatStringValues []string
+	switch encoding {
+	case "csv", "multi":
+		if value.Kind() != reflect.Slice && value.Kind() != reflect.Array {
+			e = fmt.Errorf("header is tagged as csv or multi yet its type is neither an Array nor a Slice: %s", field.Name)
+			return
+		}
+
+		numOfElements := value.Len()
+		collectionFormatStringValues = make([]string, numOfElements)
+		for i := 0; i < numOfElements; i++ {
+			collectionFormatStringValues[i], e = toStringValue(value.Index(i), field)
+			if e != nil {
+				Debugf("Header element could not be marshalled to a string: %w", e)
+				return
+			}
+		}
+		headerValue = strings.Join(collectionFormatStringValues, ",")
+	default:
+		if headerValue, e = toStringValue(value, field); e != nil {
+			return
+		}
 	}
 
 	if e = setWellKnownHeaders(request, headerName, headerValue, contentLenSpecified); e != nil {
@@ -972,7 +1089,7 @@ func addFromHeaderCollection(response *http.Response, value *reflect.Value, fiel
 	Debugln("Unmarshaling from header-collection to field:", field.Name)
 	var headerPrefix string
 	if headerPrefix = field.Tag.Get("prefix"); headerPrefix == "" {
-		return fmt.Errorf("Unmarshaling response to a header-collection requires the 'prefix' tag for field: %s", field.Name)
+		return fmt.Errorf("unmarshaling response to a header-collection requires the 'prefix' tag for field: %s", field.Name)
 	}
 
 	mapCollection := make(map[string]string)
@@ -1030,6 +1147,11 @@ func responseToStruct(response *http.Response, val *reflect.Value, unmarshaler P
 // Further this method will consume the body it should be safe to close it after this function
 // Notice the current implementation only supports native types:int, strings, floats, bool as the field types
 func UnmarshalResponse(httpResponse *http.Response, responseStruct interface{}) (err error) {
+
+	// Check for text/event-stream content type, and return without unmarshalling
+	if httpResponse != nil && httpResponse.Header != nil && strings.ToLower(httpResponse.Header.Get("content-type")) == "text/event-stream" {
+		return
+	}
 
 	var val *reflect.Value
 	if val, err = checkForValidResponseStruct(responseStruct); err != nil {

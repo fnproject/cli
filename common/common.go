@@ -293,7 +293,7 @@ func PrintContextualInfo() {
 func PrintDockerfileContent(dockerfile string, stdout io.Writer) {
 	file, err := os.Open(dockerfile)
 	if err != nil {
-		fmt.Fprintf(stdout, err.Error())
+		fmt.Fprint(stdout, err.Error())
 		fmt.Fprintf(stdout, "\n")
 		return
 	}

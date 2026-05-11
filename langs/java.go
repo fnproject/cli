@@ -201,6 +201,11 @@ func mavenOpts() string {
 	return opts.String()
 }
 
+// MavenOptsForTest exposes the computed Maven opts for tests that verify generated Dockerfiles.
+func MavenOptsForTest() string {
+	return mavenOpts()
+}
+
 /*
 	TODO temporarily generate maven project boilerplate from hardcoded values.
 

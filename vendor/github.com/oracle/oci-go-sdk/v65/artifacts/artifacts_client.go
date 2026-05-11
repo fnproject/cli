@@ -1,11 +1,14 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2026, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 // Code generated. DO NOT EDIT.
 
 // Artifacts and Container Images API
 //
-// API covering the Artifacts and Registry (https://docs.cloud.oracle.com/iaas/Content/Registry/Concepts/registryoverview.htm) services.
-// Use this API to manage resources such as generic artifacts and container images.
+// Use the Artifacts and Container Images API to manage container images and non-container generic artifacts.
+// - For container images such as Docker images, use the ContainerImage resource. Save the images in a ContainerRepository.
+// - For non-container generic artifacts or blobs, use the GenericArtifact resource. Save the artifacts in an Repository.
+// - To upload and download non-container generic artifacts, instead of the Artifacts and Container Images API, use the Generic Artifacts Content API.
+// For more information, see the user guides for Container Registry (https://docs.oracle.com/iaas/Content/Registry/home.htm) and Artifact Registry (https://docs.oracle.com/iaas/Content/artifacts/home.htm).
 //
 
 package artifacts
@@ -27,6 +30,9 @@ type ArtifactsClient struct {
 // NewArtifactsClientWithConfigurationProvider Creates a new default Artifacts client with the given configuration provider.
 // the configuration provider will be used for the default signer as well as reading the region
 func NewArtifactsClientWithConfigurationProvider(configProvider common.ConfigurationProvider) (client ArtifactsClient, err error) {
+	if enabled := common.CheckForEnabledServices("artifacts"); !enabled {
+		return client, fmt.Errorf("the Developer Tool configuration disabled this service, this behavior is controlled by OciSdkEnabledServicesMap variables. Please check if your local developer-tool-configuration.json file configured the service you're targeting or contact the cloud provider on the availability of this service")
+	}
 	provider, err := auth.GetGenericConfigurationProvider(configProvider)
 	if err != nil {
 		return client, err
@@ -78,7 +84,7 @@ func (client *ArtifactsClient) setConfigurationProvider(configProvider common.Co
 	region, _ := configProvider.Region()
 	client.SetRegion(region)
 	if client.Host == "" {
-		return fmt.Errorf("Invalid region or Host. Endpoint cannot be constructed without endpointServiceName or serviceEndpointTemplate for a dotted region")
+		return fmt.Errorf("invalid region or Host. Endpoint cannot be constructed without endpointServiceName or serviceEndpointTemplate for a dotted region")
 	}
 	client.config = &configProvider
 	return nil
@@ -91,14 +97,15 @@ func (client *ArtifactsClient) ConfigurationProvider() *common.ConfigurationProv
 
 // ChangeContainerRepositoryCompartment Moves a container repository into a different compartment within the same tenancy. For information about moving
 // resources between compartments, see
-// Moving Resources to a Different Compartment (https://docs.cloud.oracle.com/iaas/Content/Identity/Tasks/managingcompartments.htm#moveRes).
+// Moving Resources to a Different Compartment (https://docs.oracle.com/iaas/Content/Identity/Tasks/managingcompartments.htm#moveRes).
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ChangeContainerRepositoryCompartment.go.html to see an example of how to use ChangeContainerRepositoryCompartment API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ChangeContainerRepositoryCompartment.go.html to see an example of how to use ChangeContainerRepositoryCompartment API.
+// A default retry strategy applies to this operation ChangeContainerRepositoryCompartment()
 func (client ArtifactsClient) ChangeContainerRepositoryCompartment(ctx context.Context, request ChangeContainerRepositoryCompartmentRequest) (response ChangeContainerRepositoryCompartmentResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -140,7 +147,7 @@ func (client ArtifactsClient) changeContainerRepositoryCompartment(ctx context.C
 
 	var response ChangeContainerRepositoryCompartmentResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "ChangeContainerRepositoryCompartment")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -155,14 +162,15 @@ func (client ArtifactsClient) changeContainerRepositoryCompartment(ctx context.C
 
 // ChangeRepositoryCompartment Moves a repository into a different compartment within the same tenancy. For information about moving
 // resources between compartments, see
-// Moving Resources to a Different Compartment (https://docs.cloud.oracle.com/iaas/Content/Identity/Tasks/managingcompartments.htm#moveRes).
+// Moving Resources to a Different Compartment (https://docs.oracle.com/iaas/Content/Identity/Tasks/managingcompartments.htm#moveRes).
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ChangeRepositoryCompartment.go.html to see an example of how to use ChangeRepositoryCompartment API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ChangeRepositoryCompartment.go.html to see an example of how to use ChangeRepositoryCompartment API.
+// A default retry strategy applies to this operation ChangeRepositoryCompartment()
 func (client ArtifactsClient) ChangeRepositoryCompartment(ctx context.Context, request ChangeRepositoryCompartmentRequest) (response ChangeRepositoryCompartmentResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -204,7 +212,7 @@ func (client ArtifactsClient) changeRepositoryCompartment(ctx context.Context, r
 
 	var response ChangeRepositoryCompartmentResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "ChangeRepositoryCompartment")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -219,12 +227,13 @@ func (client ArtifactsClient) changeRepositoryCompartment(ctx context.Context, r
 
 // CreateContainerImageSignature Upload a signature to an image.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/CreateContainerImageSignature.go.html to see an example of how to use CreateContainerImageSignature API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/CreateContainerImageSignature.go.html to see an example of how to use CreateContainerImageSignature API.
+// A default retry strategy applies to this operation CreateContainerImageSignature()
 func (client ArtifactsClient) CreateContainerImageSignature(ctx context.Context, request CreateContainerImageSignatureRequest) (response CreateContainerImageSignatureResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -266,7 +275,7 @@ func (client ArtifactsClient) createContainerImageSignature(ctx context.Context,
 
 	var response CreateContainerImageSignatureResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "CreateContainerImageSignature")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -281,12 +290,13 @@ func (client ArtifactsClient) createContainerImageSignature(ctx context.Context,
 
 // CreateContainerRepository Create a new empty container repository. Avoid entering confidential information.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/CreateContainerRepository.go.html to see an example of how to use CreateContainerRepository API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/CreateContainerRepository.go.html to see an example of how to use CreateContainerRepository API.
+// A default retry strategy applies to this operation CreateContainerRepository()
 func (client ArtifactsClient) CreateContainerRepository(ctx context.Context, request CreateContainerRepositoryRequest) (response CreateContainerRepositoryResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -328,7 +338,7 @@ func (client ArtifactsClient) createContainerRepository(ctx context.Context, req
 
 	var response CreateContainerRepositoryResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "CreateContainerRepository")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -343,9 +353,9 @@ func (client ArtifactsClient) createContainerRepository(ctx context.Context, req
 
 // CreateRepository Creates a new repository for storing artifacts.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/CreateRepository.go.html to see an example of how to use CreateRepository API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/CreateRepository.go.html to see an example of how to use CreateRepository API.
 func (client ArtifactsClient) CreateRepository(ctx context.Context, request CreateRepositoryRequest) (response CreateRepositoryResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()
@@ -390,7 +400,7 @@ func (client ArtifactsClient) createRepository(ctx context.Context, request comm
 
 	var response CreateRepositoryResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "CreateRepository")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -405,12 +415,13 @@ func (client ArtifactsClient) createRepository(ctx context.Context, request comm
 
 // DeleteContainerImage Delete a container image.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/DeleteContainerImage.go.html to see an example of how to use DeleteContainerImage API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/DeleteContainerImage.go.html to see an example of how to use DeleteContainerImage API.
+// A default retry strategy applies to this operation DeleteContainerImage()
 func (client ArtifactsClient) DeleteContainerImage(ctx context.Context, request DeleteContainerImageRequest) (response DeleteContainerImageResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -447,7 +458,7 @@ func (client ArtifactsClient) deleteContainerImage(ctx context.Context, request 
 
 	var response DeleteContainerImageResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "DeleteContainerImage")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -462,12 +473,13 @@ func (client ArtifactsClient) deleteContainerImage(ctx context.Context, request 
 
 // DeleteContainerImageSignature Delete a container image signature.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/DeleteContainerImageSignature.go.html to see an example of how to use DeleteContainerImageSignature API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/DeleteContainerImageSignature.go.html to see an example of how to use DeleteContainerImageSignature API.
+// A default retry strategy applies to this operation DeleteContainerImageSignature()
 func (client ArtifactsClient) DeleteContainerImageSignature(ctx context.Context, request DeleteContainerImageSignatureRequest) (response DeleteContainerImageSignatureResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -504,7 +516,7 @@ func (client ArtifactsClient) deleteContainerImageSignature(ctx context.Context,
 
 	var response DeleteContainerImageSignatureResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "DeleteContainerImageSignature")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -519,12 +531,13 @@ func (client ArtifactsClient) deleteContainerImageSignature(ctx context.Context,
 
 // DeleteContainerRepository Delete container repository.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/DeleteContainerRepository.go.html to see an example of how to use DeleteContainerRepository API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/DeleteContainerRepository.go.html to see an example of how to use DeleteContainerRepository API.
+// A default retry strategy applies to this operation DeleteContainerRepository()
 func (client ArtifactsClient) DeleteContainerRepository(ctx context.Context, request DeleteContainerRepositoryRequest) (response DeleteContainerRepositoryResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -561,7 +574,7 @@ func (client ArtifactsClient) deleteContainerRepository(ctx context.Context, req
 
 	var response DeleteContainerRepositoryResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "DeleteContainerRepository")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -574,14 +587,15 @@ func (client ArtifactsClient) deleteContainerRepository(ctx context.Context, req
 	return response, err
 }
 
-// DeleteGenericArtifact Deletes an artifact with a specified OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm).
+// DeleteGenericArtifact Deletes an artifact with a specified OCID (https://docs.oracle.com/iaas/Content/General/Concepts/identifiers.htm).
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/DeleteGenericArtifact.go.html to see an example of how to use DeleteGenericArtifact API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/DeleteGenericArtifact.go.html to see an example of how to use DeleteGenericArtifact API.
+// A default retry strategy applies to this operation DeleteGenericArtifact()
 func (client ArtifactsClient) DeleteGenericArtifact(ctx context.Context, request DeleteGenericArtifactRequest) (response DeleteGenericArtifactResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -618,7 +632,7 @@ func (client ArtifactsClient) deleteGenericArtifact(ctx context.Context, request
 
 	var response DeleteGenericArtifactResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "DeleteGenericArtifact")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -633,12 +647,13 @@ func (client ArtifactsClient) deleteGenericArtifact(ctx context.Context, request
 
 // DeleteGenericArtifactByPath Deletes an artifact with a specified `artifactPath` and `version`.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/DeleteGenericArtifactByPath.go.html to see an example of how to use DeleteGenericArtifactByPath API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/DeleteGenericArtifactByPath.go.html to see an example of how to use DeleteGenericArtifactByPath API.
+// A default retry strategy applies to this operation DeleteGenericArtifactByPath()
 func (client ArtifactsClient) DeleteGenericArtifactByPath(ctx context.Context, request DeleteGenericArtifactByPathRequest) (response DeleteGenericArtifactByPathResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -675,7 +690,7 @@ func (client ArtifactsClient) deleteGenericArtifactByPath(ctx context.Context, r
 
 	var response DeleteGenericArtifactByPathResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "DeleteGenericArtifactByPath")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -690,12 +705,13 @@ func (client ArtifactsClient) deleteGenericArtifactByPath(ctx context.Context, r
 
 // DeleteRepository Deletes the specified repository. This operation fails unless all associated artifacts are in a DELETED state. You must delete all associated artifacts before deleting a repository.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/DeleteRepository.go.html to see an example of how to use DeleteRepository API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/DeleteRepository.go.html to see an example of how to use DeleteRepository API.
+// A default retry strategy applies to this operation DeleteRepository()
 func (client ArtifactsClient) DeleteRepository(ctx context.Context, request DeleteRepositoryRequest) (response DeleteRepositoryResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -732,7 +748,7 @@ func (client ArtifactsClient) deleteRepository(ctx context.Context, request comm
 
 	var response DeleteRepositoryResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "DeleteRepository")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -747,12 +763,13 @@ func (client ArtifactsClient) deleteRepository(ctx context.Context, request comm
 
 // GetContainerConfiguration Get container configuration.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetContainerConfiguration.go.html to see an example of how to use GetContainerConfiguration API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetContainerConfiguration.go.html to see an example of how to use GetContainerConfiguration API.
+// A default retry strategy applies to this operation GetContainerConfiguration()
 func (client ArtifactsClient) GetContainerConfiguration(ctx context.Context, request GetContainerConfigurationRequest) (response GetContainerConfigurationResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -789,7 +806,7 @@ func (client ArtifactsClient) getContainerConfiguration(ctx context.Context, req
 
 	var response GetContainerConfigurationResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "GetContainerConfiguration")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -804,12 +821,13 @@ func (client ArtifactsClient) getContainerConfiguration(ctx context.Context, req
 
 // GetContainerImage Get container image metadata.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetContainerImage.go.html to see an example of how to use GetContainerImage API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetContainerImage.go.html to see an example of how to use GetContainerImage API.
+// A default retry strategy applies to this operation GetContainerImage()
 func (client ArtifactsClient) GetContainerImage(ctx context.Context, request GetContainerImageRequest) (response GetContainerImageResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -846,7 +864,7 @@ func (client ArtifactsClient) getContainerImage(ctx context.Context, request com
 
 	var response GetContainerImageResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "GetContainerImage")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -861,12 +879,13 @@ func (client ArtifactsClient) getContainerImage(ctx context.Context, request com
 
 // GetContainerImageSignature Get container image signature metadata.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetContainerImageSignature.go.html to see an example of how to use GetContainerImageSignature API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetContainerImageSignature.go.html to see an example of how to use GetContainerImageSignature API.
+// A default retry strategy applies to this operation GetContainerImageSignature()
 func (client ArtifactsClient) GetContainerImageSignature(ctx context.Context, request GetContainerImageSignatureRequest) (response GetContainerImageSignatureResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -903,7 +922,7 @@ func (client ArtifactsClient) getContainerImageSignature(ctx context.Context, re
 
 	var response GetContainerImageSignatureResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "GetContainerImageSignature")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -918,12 +937,13 @@ func (client ArtifactsClient) getContainerImageSignature(ctx context.Context, re
 
 // GetContainerRepository Get container repository.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetContainerRepository.go.html to see an example of how to use GetContainerRepository API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetContainerRepository.go.html to see an example of how to use GetContainerRepository API.
+// A default retry strategy applies to this operation GetContainerRepository()
 func (client ArtifactsClient) GetContainerRepository(ctx context.Context, request GetContainerRepositoryRequest) (response GetContainerRepositoryResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -960,7 +980,7 @@ func (client ArtifactsClient) getContainerRepository(ctx context.Context, reques
 
 	var response GetContainerRepositoryResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "GetContainerRepository")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -973,14 +993,15 @@ func (client ArtifactsClient) getContainerRepository(ctx context.Context, reques
 	return response, err
 }
 
-// GetGenericArtifact Gets information about an artifact with a specified OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm).
+// GetGenericArtifact Gets information about an artifact with a specified OCID (https://docs.oracle.com/iaas/Content/General/Concepts/identifiers.htm).
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetGenericArtifact.go.html to see an example of how to use GetGenericArtifact API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetGenericArtifact.go.html to see an example of how to use GetGenericArtifact API.
+// A default retry strategy applies to this operation GetGenericArtifact()
 func (client ArtifactsClient) GetGenericArtifact(ctx context.Context, request GetGenericArtifactRequest) (response GetGenericArtifactResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1017,7 +1038,7 @@ func (client ArtifactsClient) getGenericArtifact(ctx context.Context, request co
 
 	var response GetGenericArtifactResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "GetGenericArtifact")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1032,12 +1053,13 @@ func (client ArtifactsClient) getGenericArtifact(ctx context.Context, request co
 
 // GetGenericArtifactByPath Gets information about an artifact with a specified `artifactPath` and `version`.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetGenericArtifactByPath.go.html to see an example of how to use GetGenericArtifactByPath API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetGenericArtifactByPath.go.html to see an example of how to use GetGenericArtifactByPath API.
+// A default retry strategy applies to this operation GetGenericArtifactByPath()
 func (client ArtifactsClient) GetGenericArtifactByPath(ctx context.Context, request GetGenericArtifactByPathRequest) (response GetGenericArtifactByPathResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1074,7 +1096,7 @@ func (client ArtifactsClient) getGenericArtifactByPath(ctx context.Context, requ
 
 	var response GetGenericArtifactByPathResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "GetGenericArtifactByPath")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1089,12 +1111,13 @@ func (client ArtifactsClient) getGenericArtifactByPath(ctx context.Context, requ
 
 // GetRepository Gets the specified repository's information.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetRepository.go.html to see an example of how to use GetRepository API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/GetRepository.go.html to see an example of how to use GetRepository API.
+// A default retry strategy applies to this operation GetRepository()
 func (client ArtifactsClient) GetRepository(ctx context.Context, request GetRepositoryRequest) (response GetRepositoryResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1131,7 +1154,7 @@ func (client ArtifactsClient) getRepository(ctx context.Context, request common.
 
 	var response GetRepositoryResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "GetRepository")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1146,12 +1169,13 @@ func (client ArtifactsClient) getRepository(ctx context.Context, request common.
 
 // ListContainerImageSignatures List container image signatures in an image.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ListContainerImageSignatures.go.html to see an example of how to use ListContainerImageSignatures API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ListContainerImageSignatures.go.html to see an example of how to use ListContainerImageSignatures API.
+// A default retry strategy applies to this operation ListContainerImageSignatures()
 func (client ArtifactsClient) ListContainerImageSignatures(ctx context.Context, request ListContainerImageSignaturesRequest) (response ListContainerImageSignaturesResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1188,7 +1212,7 @@ func (client ArtifactsClient) listContainerImageSignatures(ctx context.Context, 
 
 	var response ListContainerImageSignaturesResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "ListContainerImageSignatures")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1203,12 +1227,13 @@ func (client ArtifactsClient) listContainerImageSignatures(ctx context.Context, 
 
 // ListContainerImages List container images in a compartment.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ListContainerImages.go.html to see an example of how to use ListContainerImages API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ListContainerImages.go.html to see an example of how to use ListContainerImages API.
+// A default retry strategy applies to this operation ListContainerImages()
 func (client ArtifactsClient) ListContainerImages(ctx context.Context, request ListContainerImagesRequest) (response ListContainerImagesResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1245,7 +1270,7 @@ func (client ArtifactsClient) listContainerImages(ctx context.Context, request c
 
 	var response ListContainerImagesResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "ListContainerImages")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1260,12 +1285,13 @@ func (client ArtifactsClient) listContainerImages(ctx context.Context, request c
 
 // ListContainerRepositories List container repositories in a compartment.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ListContainerRepositories.go.html to see an example of how to use ListContainerRepositories API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ListContainerRepositories.go.html to see an example of how to use ListContainerRepositories API.
+// A default retry strategy applies to this operation ListContainerRepositories()
 func (client ArtifactsClient) ListContainerRepositories(ctx context.Context, request ListContainerRepositoriesRequest) (response ListContainerRepositoriesResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1302,7 +1328,7 @@ func (client ArtifactsClient) listContainerRepositories(ctx context.Context, req
 
 	var response ListContainerRepositoriesResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "ListContainerRepositories")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1317,12 +1343,13 @@ func (client ArtifactsClient) listContainerRepositories(ctx context.Context, req
 
 // ListGenericArtifacts Lists artifacts in the specified repository.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ListGenericArtifacts.go.html to see an example of how to use ListGenericArtifacts API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ListGenericArtifacts.go.html to see an example of how to use ListGenericArtifacts API.
+// A default retry strategy applies to this operation ListGenericArtifacts()
 func (client ArtifactsClient) ListGenericArtifacts(ctx context.Context, request ListGenericArtifactsRequest) (response ListGenericArtifactsResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1359,7 +1386,7 @@ func (client ArtifactsClient) listGenericArtifacts(ctx context.Context, request 
 
 	var response ListGenericArtifactsResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "ListGenericArtifacts")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1374,12 +1401,13 @@ func (client ArtifactsClient) listGenericArtifacts(ctx context.Context, request 
 
 // ListRepositories Lists repositories in the specified compartment.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ListRepositories.go.html to see an example of how to use ListRepositories API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/ListRepositories.go.html to see an example of how to use ListRepositories API.
+// A default retry strategy applies to this operation ListRepositories()
 func (client ArtifactsClient) ListRepositories(ctx context.Context, request ListRepositoriesRequest) (response ListRepositoriesResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1416,7 +1444,7 @@ func (client ArtifactsClient) listRepositories(ctx context.Context, request comm
 
 	var response ListRepositoriesResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "ListRepositories")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1429,14 +1457,73 @@ func (client ArtifactsClient) listRepositories(ctx context.Context, request comm
 	return response, err
 }
 
+// LookupContainerImageByUri Get container image metadata by URI.
+//
+// # See also
+//
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/LookupContainerImageByUri.go.html to see an example of how to use LookupContainerImageByUri API.
+// A default retry strategy applies to this operation LookupContainerImageByUri()
+func (client ArtifactsClient) LookupContainerImageByUri(ctx context.Context, request LookupContainerImageByUriRequest) (response LookupContainerImageByUriResponse, err error) {
+	var ociResponse common.OCIResponse
+	policy := common.DefaultRetryPolicy()
+	if client.RetryPolicy() != nil {
+		policy = *client.RetryPolicy()
+	}
+	if request.RetryPolicy() != nil {
+		policy = *request.RetryPolicy()
+	}
+	ociResponse, err = common.Retry(ctx, request, client.lookupContainerImageByUri, policy)
+	if err != nil {
+		if ociResponse != nil {
+			if httpResponse := ociResponse.HTTPResponse(); httpResponse != nil {
+				opcRequestId := httpResponse.Header.Get("opc-request-id")
+				response = LookupContainerImageByUriResponse{RawResponse: httpResponse, OpcRequestId: &opcRequestId}
+			} else {
+				response = LookupContainerImageByUriResponse{}
+			}
+		}
+		return
+	}
+	if convertedResponse, ok := ociResponse.(LookupContainerImageByUriResponse); ok {
+		response = convertedResponse
+	} else {
+		err = fmt.Errorf("failed to convert OCIResponse into LookupContainerImageByUriResponse")
+	}
+	return
+}
+
+// lookupContainerImageByUri implements the OCIOperation interface (enables retrying operations)
+func (client ArtifactsClient) lookupContainerImageByUri(ctx context.Context, request common.OCIRequest, binaryReqBody *common.OCIReadSeekCloser, extraHeaders map[string]string) (common.OCIResponse, error) {
+
+	httpRequest, err := request.HTTPRequest(http.MethodPost, "/container/images/actions/lookupImageByUri", binaryReqBody, extraHeaders)
+	if err != nil {
+		return nil, err
+	}
+
+	var response LookupContainerImageByUriResponse
+	var httpResponse *http.Response
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "LookupContainerImageByUri")
+	defer common.CloseBodyIfValid(httpResponse)
+	response.RawResponse = httpResponse
+	if err != nil {
+		apiReferenceLink := "https://docs.oracle.com/iaas/api/#/en/registry/20160918/ContainerImage/LookupContainerImageByUri"
+		err = common.PostProcessServiceError(err, "Artifacts", "LookupContainerImageByUri", apiReferenceLink)
+		return response, err
+	}
+
+	err = common.UnmarshalResponse(httpResponse, &response)
+	return response, err
+}
+
 // RemoveContainerVersion Remove version from container image.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/RemoveContainerVersion.go.html to see an example of how to use RemoveContainerVersion API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/RemoveContainerVersion.go.html to see an example of how to use RemoveContainerVersion API.
+// A default retry strategy applies to this operation RemoveContainerVersion()
 func (client ArtifactsClient) RemoveContainerVersion(ctx context.Context, request RemoveContainerVersionRequest) (response RemoveContainerVersionResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1478,7 +1565,7 @@ func (client ArtifactsClient) removeContainerVersion(ctx context.Context, reques
 
 	var response RemoveContainerVersionResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "RemoveContainerVersion")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1493,12 +1580,13 @@ func (client ArtifactsClient) removeContainerVersion(ctx context.Context, reques
 
 // RestoreContainerImage Restore a container image.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/RestoreContainerImage.go.html to see an example of how to use RestoreContainerImage API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/RestoreContainerImage.go.html to see an example of how to use RestoreContainerImage API.
+// A default retry strategy applies to this operation RestoreContainerImage()
 func (client ArtifactsClient) RestoreContainerImage(ctx context.Context, request RestoreContainerImageRequest) (response RestoreContainerImageResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1540,7 +1628,7 @@ func (client ArtifactsClient) restoreContainerImage(ctx context.Context, request
 
 	var response RestoreContainerImageResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "RestoreContainerImage")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1555,12 +1643,13 @@ func (client ArtifactsClient) restoreContainerImage(ctx context.Context, request
 
 // UpdateContainerConfiguration Update container configuration.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/UpdateContainerConfiguration.go.html to see an example of how to use UpdateContainerConfiguration API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/UpdateContainerConfiguration.go.html to see an example of how to use UpdateContainerConfiguration API.
+// A default retry strategy applies to this operation UpdateContainerConfiguration()
 func (client ArtifactsClient) UpdateContainerConfiguration(ctx context.Context, request UpdateContainerConfigurationRequest) (response UpdateContainerConfigurationResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1597,7 +1686,7 @@ func (client ArtifactsClient) updateContainerConfiguration(ctx context.Context, 
 
 	var response UpdateContainerConfigurationResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "UpdateContainerConfiguration")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1610,14 +1699,131 @@ func (client ArtifactsClient) updateContainerConfiguration(ctx context.Context, 
 	return response, err
 }
 
+// UpdateContainerImage Modify the properties of a container image. Avoid entering confidential information.
+//
+// # See also
+//
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/UpdateContainerImage.go.html to see an example of how to use UpdateContainerImage API.
+// A default retry strategy applies to this operation UpdateContainerImage()
+func (client ArtifactsClient) UpdateContainerImage(ctx context.Context, request UpdateContainerImageRequest) (response UpdateContainerImageResponse, err error) {
+	var ociResponse common.OCIResponse
+	policy := common.DefaultRetryPolicy()
+	if client.RetryPolicy() != nil {
+		policy = *client.RetryPolicy()
+	}
+	if request.RetryPolicy() != nil {
+		policy = *request.RetryPolicy()
+	}
+	ociResponse, err = common.Retry(ctx, request, client.updateContainerImage, policy)
+	if err != nil {
+		if ociResponse != nil {
+			if httpResponse := ociResponse.HTTPResponse(); httpResponse != nil {
+				opcRequestId := httpResponse.Header.Get("opc-request-id")
+				response = UpdateContainerImageResponse{RawResponse: httpResponse, OpcRequestId: &opcRequestId}
+			} else {
+				response = UpdateContainerImageResponse{}
+			}
+		}
+		return
+	}
+	if convertedResponse, ok := ociResponse.(UpdateContainerImageResponse); ok {
+		response = convertedResponse
+	} else {
+		err = fmt.Errorf("failed to convert OCIResponse into UpdateContainerImageResponse")
+	}
+	return
+}
+
+// updateContainerImage implements the OCIOperation interface (enables retrying operations)
+func (client ArtifactsClient) updateContainerImage(ctx context.Context, request common.OCIRequest, binaryReqBody *common.OCIReadSeekCloser, extraHeaders map[string]string) (common.OCIResponse, error) {
+
+	httpRequest, err := request.HTTPRequest(http.MethodPut, "/container/images/{imageId}", binaryReqBody, extraHeaders)
+	if err != nil {
+		return nil, err
+	}
+
+	var response UpdateContainerImageResponse
+	var httpResponse *http.Response
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "UpdateContainerImage")
+	defer common.CloseBodyIfValid(httpResponse)
+	response.RawResponse = httpResponse
+	if err != nil {
+		apiReferenceLink := "https://docs.oracle.com/iaas/api/#/en/registry/20160918/ContainerImage/UpdateContainerImage"
+		err = common.PostProcessServiceError(err, "Artifacts", "UpdateContainerImage", apiReferenceLink)
+		return response, err
+	}
+
+	err = common.UnmarshalResponse(httpResponse, &response)
+	return response, err
+}
+
+// UpdateContainerImageSignature Modify the properties of a container image signature. Avoid entering confidential information.
+//
+// # See also
+//
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/UpdateContainerImageSignature.go.html to see an example of how to use UpdateContainerImageSignature API.
+// A default retry strategy applies to this operation UpdateContainerImageSignature()
+func (client ArtifactsClient) UpdateContainerImageSignature(ctx context.Context, request UpdateContainerImageSignatureRequest) (response UpdateContainerImageSignatureResponse, err error) {
+	var ociResponse common.OCIResponse
+	policy := common.DefaultRetryPolicy()
+	if client.RetryPolicy() != nil {
+		policy = *client.RetryPolicy()
+	}
+	if request.RetryPolicy() != nil {
+		policy = *request.RetryPolicy()
+	}
+	ociResponse, err = common.Retry(ctx, request, client.updateContainerImageSignature, policy)
+	if err != nil {
+		if ociResponse != nil {
+			if httpResponse := ociResponse.HTTPResponse(); httpResponse != nil {
+				opcRequestId := httpResponse.Header.Get("opc-request-id")
+				response = UpdateContainerImageSignatureResponse{RawResponse: httpResponse, OpcRequestId: &opcRequestId}
+			} else {
+				response = UpdateContainerImageSignatureResponse{}
+			}
+		}
+		return
+	}
+	if convertedResponse, ok := ociResponse.(UpdateContainerImageSignatureResponse); ok {
+		response = convertedResponse
+	} else {
+		err = fmt.Errorf("failed to convert OCIResponse into UpdateContainerImageSignatureResponse")
+	}
+	return
+}
+
+// updateContainerImageSignature implements the OCIOperation interface (enables retrying operations)
+func (client ArtifactsClient) updateContainerImageSignature(ctx context.Context, request common.OCIRequest, binaryReqBody *common.OCIReadSeekCloser, extraHeaders map[string]string) (common.OCIResponse, error) {
+
+	httpRequest, err := request.HTTPRequest(http.MethodPut, "/container/imageSignatures/{imageSignatureId}", binaryReqBody, extraHeaders)
+	if err != nil {
+		return nil, err
+	}
+
+	var response UpdateContainerImageSignatureResponse
+	var httpResponse *http.Response
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "UpdateContainerImageSignature")
+	defer common.CloseBodyIfValid(httpResponse)
+	response.RawResponse = httpResponse
+	if err != nil {
+		apiReferenceLink := "https://docs.oracle.com/iaas/api/#/en/registry/20160918/ContainerImageSignature/UpdateContainerImageSignature"
+		err = common.PostProcessServiceError(err, "Artifacts", "UpdateContainerImageSignature", apiReferenceLink)
+		return response, err
+	}
+
+	err = common.UnmarshalResponse(httpResponse, &response)
+	return response, err
+}
+
 // UpdateContainerRepository Modify the properties of a container repository. Avoid entering confidential information.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/UpdateContainerRepository.go.html to see an example of how to use UpdateContainerRepository API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/UpdateContainerRepository.go.html to see an example of how to use UpdateContainerRepository API.
+// A default retry strategy applies to this operation UpdateContainerRepository()
 func (client ArtifactsClient) UpdateContainerRepository(ctx context.Context, request UpdateContainerRepositoryRequest) (response UpdateContainerRepositoryResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1654,7 +1860,7 @@ func (client ArtifactsClient) updateContainerRepository(ctx context.Context, req
 
 	var response UpdateContainerRepositoryResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "UpdateContainerRepository")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1667,14 +1873,15 @@ func (client ArtifactsClient) updateContainerRepository(ctx context.Context, req
 	return response, err
 }
 
-// UpdateGenericArtifact Updates the artifact with the specified OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm). You can only update the tags of an artifact.
+// UpdateGenericArtifact Updates the artifact with the specified OCID (https://docs.oracle.com/iaas/Content/General/Concepts/identifiers.htm). You can only update the tags of an artifact.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/UpdateGenericArtifact.go.html to see an example of how to use UpdateGenericArtifact API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/UpdateGenericArtifact.go.html to see an example of how to use UpdateGenericArtifact API.
+// A default retry strategy applies to this operation UpdateGenericArtifact()
 func (client ArtifactsClient) UpdateGenericArtifact(ctx context.Context, request UpdateGenericArtifactRequest) (response UpdateGenericArtifactResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1711,7 +1918,7 @@ func (client ArtifactsClient) updateGenericArtifact(ctx context.Context, request
 
 	var response UpdateGenericArtifactResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "UpdateGenericArtifact")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1726,12 +1933,13 @@ func (client ArtifactsClient) updateGenericArtifact(ctx context.Context, request
 
 // UpdateGenericArtifactByPath Updates an artifact with a specified `artifactPath` and `version`. You can only update the tags of an artifact.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/UpdateGenericArtifactByPath.go.html to see an example of how to use UpdateGenericArtifactByPath API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/UpdateGenericArtifactByPath.go.html to see an example of how to use UpdateGenericArtifactByPath API.
+// A default retry strategy applies to this operation UpdateGenericArtifactByPath()
 func (client ArtifactsClient) UpdateGenericArtifactByPath(ctx context.Context, request UpdateGenericArtifactByPathRequest) (response UpdateGenericArtifactByPathResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1768,7 +1976,7 @@ func (client ArtifactsClient) updateGenericArtifactByPath(ctx context.Context, r
 
 	var response UpdateGenericArtifactByPathResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "UpdateGenericArtifactByPath")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {
@@ -1783,12 +1991,13 @@ func (client ArtifactsClient) updateGenericArtifactByPath(ctx context.Context, r
 
 // UpdateRepository Updates the properties of a repository. You can update the `displayName` and  `description` properties.
 //
-// See also
+// # See also
 //
-// Click https://docs.cloud.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/UpdateRepository.go.html to see an example of how to use UpdateRepository API.
+// Click https://docs.oracle.com/en-us/iaas/tools/go-sdk-examples/latest/artifacts/UpdateRepository.go.html to see an example of how to use UpdateRepository API.
+// A default retry strategy applies to this operation UpdateRepository()
 func (client ArtifactsClient) UpdateRepository(ctx context.Context, request UpdateRepositoryRequest) (response UpdateRepositoryResponse, err error) {
 	var ociResponse common.OCIResponse
-	policy := common.NoRetryPolicy()
+	policy := common.DefaultRetryPolicy()
 	if client.RetryPolicy() != nil {
 		policy = *client.RetryPolicy()
 	}
@@ -1825,7 +2034,7 @@ func (client ArtifactsClient) updateRepository(ctx context.Context, request comm
 
 	var response UpdateRepositoryResponse
 	var httpResponse *http.Response
-	httpResponse, err = client.Call(ctx, &httpRequest)
+	httpResponse, err = client.CallWithServiceAndOperationName(ctx, &httpRequest, "artifacts", "UpdateRepository")
 	defer common.CloseBodyIfValid(httpResponse)
 	response.RawResponse = httpResponse
 	if err != nil {

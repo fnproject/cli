@@ -147,8 +147,8 @@ func newFn() *cli.App {
 	app.CommandNotFound = func(c *cli.Context, cmd string) {
 		fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+"'"+color.Red("%v")+"' is not a Fn Command ", cmd)
 		//fmt.Fprintf(os.Stderr, "\n\nNote the fn CLI command structure has changed, please change your command to use the new structure.\n")
-		fmt.Fprintf(os.Stderr, color.Italic("\n\nSee ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information."))
-		fmt.Fprintf(os.Stderr, color.BrightCyan(" Note ")+"the fn CLI command structure has changed, please change your command to use the new structure.\n")
+		fmt.Fprint(os.Stderr, color.Italic("\n\nSee ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information."))
+		fmt.Fprint(os.Stderr, color.BrightCyan(" Note ")+"the fn CLI command structure has changed, please change your command to use the new structure.\n")
 		os.Exit(1)
 	}
 
@@ -230,7 +230,7 @@ func prepareCmdArgsValidation(cmds []cli.Command) {
 				} else {
 					fmt.Fprintf(os.Stderr, color.Bold("\nFn: ")+c.Command.Usage+" using "+color.Cyan(c.Command.HelpName)+" requires the missing arguments '"+color.Red("%v")+"'\n", strings.Join(reqArgs[c.NArg():], " "))
 				}
-				fmt.Fprintf(os.Stderr, color.Italic("\nSee ")+"'"+color.BrightCyan(c.Command.HelpName+" --help")+"'"+color.Italic(" for more information.\n"))
+				fmt.Fprint(os.Stderr, color.Italic("\nSee ")+"'"+color.BrightCyan(c.Command.HelpName+" --help")+"'"+color.Italic(" for more information.\n"))
 				os.Exit(1)
 			}
 			return cli.HandleAction(action, c)
@@ -260,7 +260,7 @@ func main() {
 	if err != nil {
 		// TODO: this doesn't seem to get called even when an error returns from a command, but maybe urfave is doing a non zero exit anyways? nope: https://github.com/urfave/cli/issues/610
 		fmt.Fprintf(os.Stderr, color.Bold("\nFn:")+" %v", err)
-		fmt.Fprintf(os.Stderr, color.Italic("\n\nSee ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information."))
+		fmt.Fprint(os.Stderr, color.Italic("\n\nSee ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information."))
 		fmt.Fprintf(os.Stderr, " Client version: %s\n", config.Version)
 		os.Exit(1)
 	}

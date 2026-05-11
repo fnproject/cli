@@ -65,6 +65,10 @@ var InvokeFnFlags = []cli.Flag{
 		Name:  "output",
 		Usage: "Output format (json)",
 	},
+	cli.StringFlag{
+		Name:  "fn-invoke-type",
+		Usage: "Invoke type for Oracle Functions: sync or detached",
+	},
 }
 
 // InvokeCommand returns call cli.command
@@ -129,6 +133,14 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 	}
 	content := stdin()
 	wd := common.GetWd()
+	invokeType := strings.ToLower(strings.TrimSpace(c.String("fn-invoke-type")))
+	if invokeType != "" && invokeType != "sync" && invokeType != "detached" {
+		return fmt.Errorf("invalid value for --fn-invoke-type: %q", invokeType)
+	}
+	if invokeType == "detached" && !common.IsOracleProvider(cl.provider) {
+		fmt.Fprintln(os.Stderr, "Warning: --fn-invoke-type=detached is only supported with an oracle provider and will be ignored.")
+		invokeType = ""
+	}
 
 	if c.String("content-type") != "" {
 		contentType = c.String("content-type")
@@ -145,6 +157,7 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 			Content:     content,
 			Env:         c.StringSlice("e"),
 			ContentType: contentType,
+			FnInvokeType: invokeType,
 		},
 	)
 	if err != nil {

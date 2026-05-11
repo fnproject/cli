@@ -144,11 +144,11 @@ func Test_writeTmpDockerfileV20180708(t *testing.T) {
 		},
 		{"java-debug-image",
 			args{&langs.JavaLangHelper{Version: "17"}, dir, &javaFuncFile, true, javaFdkEntryPoint},
-			javaDebugDockerfile,
+			fmt.Sprintf(javaDebugDockerfile, langs.MavenOptsForTest()),
 		},
 		{"java-normal-image",
 			args{&langs.JavaLangHelper{Version: "17"}, dir, &javaFuncFile, false, javaFdkEntryPoint},
-			javaDockerfile,
+			fmt.Sprintf(javaDockerfile, langs.MavenOptsForTest()),
 		},
 	}
 	for _, tt := range tests {
@@ -318,9 +318,9 @@ WORKDIR /function
 COPY --from=build-stage /go/src/func/func /function/
 ENTRYPOINT ["./func"]
 `
-	javaDebugDockerfile = `FROM fnproject/fn-java-fdk-build:jdk17-1.1.7 as build-stage
+ 	javaDebugDockerfile = `FROM fnproject/fn-java-fdk-build:jdk17-1.1.7 as build-stage
 WORKDIR /function
-ENV MAVEN_OPTS -Dhttp.proxyHost= -Dhttp.proxyPort= -Dhttps.proxyHost= -Dhttps.proxyPort= -Dhttp.nonProxyHosts= -Dmaven.repo.local=/usr/share/maven/ref/repository
+ENV MAVEN_OPTS %s
 ADD pom.xml /function/pom.xml
 RUN ["mvn", "package", "dependency:copy-dependencies", "-DincludeScope=runtime", "-DskipTests=true", "-Dmdep.prependGroupId=true", "-DoutputDirectory=target", "--fail-never"]
 ADD src /function/src
@@ -333,7 +333,7 @@ CMD ["com.example.fn.HelloFunction::handleRequest"]
 `
 	javaDockerfile = `FROM fnproject/fn-java-fdk-build:jdk17-1.1.7 as build-stage
 WORKDIR /function
-ENV MAVEN_OPTS -Dhttp.proxyHost= -Dhttp.proxyPort= -Dhttps.proxyHost= -Dhttps.proxyPort= -Dhttp.nonProxyHosts= -Dmaven.repo.local=/usr/share/maven/ref/repository
+ENV MAVEN_OPTS %s
 ADD pom.xml /function/pom.xml
 RUN ["mvn", "package", "dependency:copy-dependencies", "-DincludeScope=runtime", "-DskipTests=true", "-Dmdep.prependGroupId=true", "-DoutputDirectory=target", "--fail-never"]
 ADD src /function/src

@@ -1,4 +1,4 @@
-// Copyright (c) 2016, 2018, 2023, Oracle and/or its affiliates.  All rights reserved.
+// Copyright (c) 2016, 2018, 2026, Oracle and/or its affiliates.  All rights reserved.
 // This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
 // Code generated. DO NOT EDIT.
 
@@ -43,14 +43,21 @@ type UpdateFunctionDetails struct {
 
 	ProvisionedConcurrencyConfig FunctionProvisionedConcurrencyConfig `mandatory:"false" json:"provisionedConcurrencyConfig"`
 
+	// Timeout for detached function invocations. Value in seconds.
+	DetachedModeTimeoutInSeconds *int `mandatory:"false" json:"detachedModeTimeoutInSeconds"`
+
+	FailureDestination FailureDestinationDetails `mandatory:"false" json:"failureDestination"`
+
+	SuccessDestination SuccessDestinationDetails `mandatory:"false" json:"successDestination"`
+
 	TraceConfig *FunctionTraceConfig `mandatory:"false" json:"traceConfig"`
 
 	// Free-form tags for this resource. Each tag is a simple key-value pair with no predefined name, type, or namespace.
-	// For more information, see Resource Tags (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/resourcetags.htm).
+	// For more information, see Resource Tags (https://docs.oracle.com/iaas/Content/General/Concepts/resourcetags.htm).
 	// Example: `{"Department": "Finance"}`
 	FreeformTags map[string]string `mandatory:"false" json:"freeformTags"`
 
-	// Defined tags for this resource. Each key is predefined and scoped to a namespace. For more information, see Resource Tags (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/resourcetags.htm).
+	// Defined tags for this resource. Each key is predefined and scoped to a namespace. For more information, see Resource Tags (https://docs.oracle.com/iaas/Content/General/Concepts/resourcetags.htm).
 	// Example: `{"Operations": {"CostCenter": "42"}}`
 	DefinedTags map[string]map[string]interface{} `mandatory:"false" json:"definedTags"`
 }
@@ -66,7 +73,7 @@ func (m UpdateFunctionDetails) ValidateEnumValue() (bool, error) {
 	errMessage := []string{}
 
 	if len(errMessage) > 0 {
-		return true, fmt.Errorf(strings.Join(errMessage, "\n"))
+		return true, fmt.Errorf("%s", strings.Join(errMessage, "\n"))
 	}
 	return false, nil
 }
@@ -80,6 +87,9 @@ func (m *UpdateFunctionDetails) UnmarshalJSON(data []byte) (e error) {
 		Config                       map[string]string                    `json:"config"`
 		TimeoutInSeconds             *int                                 `json:"timeoutInSeconds"`
 		ProvisionedConcurrencyConfig functionprovisionedconcurrencyconfig `json:"provisionedConcurrencyConfig"`
+		DetachedModeTimeoutInSeconds *int                                 `json:"detachedModeTimeoutInSeconds"`
+		FailureDestination           failuredestinationdetails            `json:"failureDestination"`
+		SuccessDestination           successdestinationdetails            `json:"successDestination"`
 		TraceConfig                  *FunctionTraceConfig                 `json:"traceConfig"`
 		FreeformTags                 map[string]string                    `json:"freeformTags"`
 		DefinedTags                  map[string]map[string]interface{}    `json:"definedTags"`
@@ -108,6 +118,28 @@ func (m *UpdateFunctionDetails) UnmarshalJSON(data []byte) (e error) {
 		m.ProvisionedConcurrencyConfig = nn.(FunctionProvisionedConcurrencyConfig)
 	} else {
 		m.ProvisionedConcurrencyConfig = nil
+	}
+
+	m.DetachedModeTimeoutInSeconds = model.DetachedModeTimeoutInSeconds
+
+	nn, e = model.FailureDestination.UnmarshalPolymorphicJSON(model.FailureDestination.JsonData)
+	if e != nil {
+		return
+	}
+	if nn != nil {
+		m.FailureDestination = nn.(FailureDestinationDetails)
+	} else {
+		m.FailureDestination = nil
+	}
+
+	nn, e = model.SuccessDestination.UnmarshalPolymorphicJSON(model.SuccessDestination.JsonData)
+	if e != nil {
+		return
+	}
+	if nn != nil {
+		m.SuccessDestination = nn.(SuccessDestinationDetails)
+	} else {
+		m.SuccessDestination = nil
 	}
 
 	m.TraceConfig = model.TraceConfig
