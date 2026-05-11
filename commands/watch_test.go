@@ -19,6 +19,10 @@ func TestWatchLoopSingleChangeTriggersSingleDeploy(t *testing.T) {
 	if err := os.WriteFile(targetFile, []byte("v1"), 0644); err != nil {
 		t.Fatal(err)
 	}
+	funcYamlFile := filepath.Join(root, "func.yaml")
+	if err := os.WriteFile(funcYamlFile, []byte("v1"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	restoreDeployFn := runFnDeployLocalFn
 	defer func() { runFnDeployLocalFn = restoreDeployFn }()
@@ -73,6 +77,10 @@ func TestWatchLoopCoalescesChangesDuringDeployIntoOneFollowUp(t *testing.T) {
 	root := t.TempDir()
 	targetFile := filepath.Join(root, "func.py")
 	if err := os.WriteFile(targetFile, []byte("v1"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	funcYamlFile := filepath.Join(root, "func.yaml")
+	if err := os.WriteFile(funcYamlFile, []byte("v1"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -196,6 +204,79 @@ func TestLoadWatchIgnoreReadsFnIgnoreAndExtras(t *testing.T) {
 	}
 	if !ig.shouldIgnore(root, filepath.Join(root, "nested", "agit .log"), false) {
 		t.Fatal("expected glob-based segment ignore to match nested file")
+	}
+}
+
+func TestWatchLoopIgnoresFuncYamlVersionOnlyChanges(t *testing.T) {
+	root := t.TempDir()
+	funcYaml := filepath.Join(root, "func.yaml")
+	if err := os.WriteFile(funcYaml, []byte("version: 0.0.1\nname: f\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	restoreDeployFn := runFnDeployLocalFn
+	defer func() { runFnDeployLocalFn = restoreDeployFn }()
+
+	var calls int32
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	runFnDeployLocalFn = func(_ context.Context, _ string, _ string) error {
+		atomic.AddInt32(&calls, 1)
+		return nil
+	}
+
+	w := watchcmd{debounce: 20 * time.Millisecond}
+	ignore, err := loadWatchIgnore(root, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- w.watchLoop(ctx, root, "myapp", ignore)
+	}()
+
+	// allow watcher to start
+	time.Sleep(100 * time.Millisecond)
+
+	// Change only the func.yaml version line. This should not trigger deploy.
+	if err := os.WriteFile(funcYaml, []byte("version: 0.0.2\nname: f\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// wait longer than debounce and assert no deploy happened
+	time.Sleep(200 * time.Millisecond)
+	if got := atomic.LoadInt32(&calls); got != 0 {
+		cancel()
+		<-done
+		t.Fatalf("expected 0 deploys for version-only change, got %d", got)
+	}
+
+	// Now make a real change. This should trigger deploy.
+	if err := os.WriteFile(funcYaml, []byte("version: 0.0.3\nname: f2\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// wait for deploy to trigger
+	deadline := time.Now().Add(3 * time.Second)
+	for atomic.LoadInt32(&calls) == 0 && time.Now().Before(deadline) {
+		time.Sleep(20 * time.Millisecond)
+	}
+	if got := atomic.LoadInt32(&calls); got != 1 {
+		cancel()
+		<-done
+		t.Fatalf("expected 1 deploy after non-version change, got %d", got)
+	}
+
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("watch loop failed: %v", err)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("timed out waiting for watch loop")
 	}
 }
 

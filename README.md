@@ -35,7 +35,7 @@ fn watch --app <app>
 This watches the current directory recursively and triggers:
 
 ```sh
-fn deploy --app <app> --local --no-bump
+fn deploy --app <app> --local
 ```
 
 ### Ignoring paths

@@ -125,6 +125,10 @@ func start(c *cli.Context) error {
 	if c.String("log-level") != "" {
 		args = append(args, "-e", fmt.Sprintf("FN_LOG_LEVEL=%v", c.String("log-level")))
 	}
+	if c.Bool("local-debug") {
+		args = append(args, "-e", fmt.Sprintf("FN_HOT_START_TIMEOUT_MSECS=%d", 300000))
+	}
+
 	if c.String("env-file") != "" {
 		args = append(args, "--env-file", c.String("env-file"))
 	}
