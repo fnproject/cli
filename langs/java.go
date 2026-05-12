@@ -132,7 +132,7 @@ func (h *JavaLangHelper) Cmd() (string, error) {
 
 func (lh *JavaLangHelper) DebugEntrypoint(entryPoint string) string {
 	// inspect the base image entry point and inject debug options
-	trimmedEntryPoint := strings.TrimPrefix(strings.TrimSuffix(strings.TrimSpace(entryPoint), "]'"), "'[")
+	trimmedEntryPoint := UnpackSingleQuoteBracket(entryPoint)
 	fields := strings.Fields(trimmedEntryPoint)
 	args := make([]string, 0)
 	for _, arg := range fields {

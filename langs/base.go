@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // not a map because some helpers can handle multiple keys
@@ -206,4 +207,8 @@ func getLatestFDKVersionFromGithub(repoKey string) (string, error) {
 		return "", errors.New("Could not read latest version of FDK from tags")
 	}
 	return responseBody[0].Name, nil
+}
+
+func UnpackSingleQuoteBracket(entryPoint string) string {
+	return strings.TrimPrefix(strings.TrimSuffix(strings.TrimSpace(entryPoint), "]'"), "'[")
 }
