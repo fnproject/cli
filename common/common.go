@@ -858,7 +858,7 @@ func writeTmpDockerfileV20180708(helper langs.LangHelper, dir string, ff *FuncFi
 			dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", utils.StringToSlice(helper.DebugEntrypoint(finalEntrypoint))))
 			isDebugOptionInjected = true
 		} else {
-			dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", utils.StringToSlice(finalEntrypoint)))
+			dfLines = append(dfLines, fmt.Sprintf("ENTRYPOINT [%s]", utils.StringToSlice(langs.UnpackSingleQuoteBracket(finalEntrypoint))))
 		}
 	}
 	if ff.Cmd != "" {
