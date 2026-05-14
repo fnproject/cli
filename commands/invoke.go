@@ -66,8 +66,43 @@ var InvokeFnFlags = []cli.Flag{
 		Usage: "Output format (json)",
 	},
 	cli.StringFlag{
+		Name:  "fn-intent",
+		Usage: "Optional intent header for function invocation, e.g. httprequest or cloudevent",
+	},
+	cli.BoolFlag{
+		Name:  "is-dry-run",
+		Usage: "Send the invocation as a dry run without executing the function when supported by the server",
+	},
+	cli.StringFlag{
 		Name:  "fn-invoke-type",
 		Usage: "Invoke type for Oracle Functions: sync or detached",
+	},
+}
+
+var InvokeDetachedFnFlags = []cli.Flag{
+	cli.StringFlag{
+		Name:  "endpoint",
+		Usage: "Specify the function invoke endpoint for this function, the app-name and func-name parameters will be ignored",
+	},
+	cli.StringFlag{
+		Name:  "content-type",
+		Usage: "The payload Content-Type for the function invocation.",
+	},
+	cli.BoolFlag{
+		Name:  "display-call-id",
+		Usage: "whether display call ID or not",
+	},
+	cli.StringFlag{
+		Name:  "output",
+		Usage: "Output format (json)",
+	},
+	cli.StringFlag{
+		Name:  "fn-intent",
+		Usage: "Optional intent header for function invocation, e.g. httprequest or cloudevent",
+	},
+	cli.BoolFlag{
+		Name:  "is-dry-run",
+		Usage: "Send the invocation as a dry run without executing the function when supported by the server",
 	},
 }
 
@@ -89,6 +124,23 @@ func InvokeCommand() cli.Command {
 		},
 		ArgsUsage:   "[app-name] [function-name]",
 		Flags:       InvokeFnFlags,
+		Subcommands: []cli.Command{
+			{
+				Name:        "detached",
+				Usage:       "\tInvoke a remote function in detached mode",
+				ArgsUsage:   "[app-name] [function-name]",
+				Flags:       InvokeDetachedFnFlags,
+				Action:      cl.InvokeDetached,
+				BashComplete: func(c *cli.Context) {
+					switch len(c.Args()) {
+					case 0:
+						app.BashCompleteApps(c)
+					case 1:
+						fn.BashCompleteFns(c)
+					}
+				},
+			},
+		},
 		Category:    "DEVELOPMENT COMMANDS",
 		Description: `This command invokes a function. Users may send input to their function by passing input to this command via STDIN.`,
 		Action:      cl.Invoke,
@@ -104,6 +156,14 @@ func InvokeCommand() cli.Command {
 }
 
 func (cl *invokeCmd) Invoke(c *cli.Context) error {
+	return cl.invoke(c, "")
+}
+
+func (cl *invokeCmd) InvokeDetached(c *cli.Context) error {
+	return cl.invoke(c, "detached")
+}
+
+func (cl *invokeCmd) invoke(c *cli.Context, forcedInvokeType string) error {
 	var contentType string
 
 	invokeURL := c.String("endpoint")
@@ -133,7 +193,10 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 	}
 	content := stdin()
 	wd := common.GetWd()
-	invokeType := strings.ToLower(strings.TrimSpace(c.String("fn-invoke-type")))
+	invokeType := strings.ToLower(strings.TrimSpace(forcedInvokeType))
+	if invokeType == "" {
+		invokeType = strings.ToLower(strings.TrimSpace(c.String("fn-invoke-type")))
+	}
 	if invokeType != "" && invokeType != "sync" && invokeType != "detached" {
 		return fmt.Errorf("invalid value for --fn-invoke-type: %q", invokeType)
 	}
@@ -141,6 +204,7 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 		fmt.Fprintln(os.Stderr, "Warning: --fn-invoke-type=detached is only supported with an oracle provider and will be ignored.")
 		invokeType = ""
 	}
+	fnIntent := strings.TrimSpace(c.String("fn-intent"))
 
 	if c.String("content-type") != "" {
 		contentType = c.String("content-type")
@@ -157,6 +221,8 @@ func (cl *invokeCmd) Invoke(c *cli.Context) error {
 			Content:     content,
 			Env:         c.StringSlice("e"),
 			ContentType: contentType,
+			FnIntent:    fnIntent,
+			IsDryRun:    c.Bool("is-dry-run"),
 			FnInvokeType: invokeType,
 		},
 	)

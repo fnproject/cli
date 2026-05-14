@@ -46,3 +46,47 @@ func TestInvokeSetsFnInvokeTypeHeader(t *testing.T) {
 	defer resp.Body.Close()
 	_, _ = io.ReadAll(resp.Body)
 }
+
+func TestInvokeSetsFnIntentHeader(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("fn-intent"); got != "cloudevent" {
+			t.Fatalf("expected fn-intent cloudevent, got %q", got)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	resp, err := Invoke(&invokeTestProvider{}, InvokeRequest{
+		URL:      server.URL,
+		FnIntent: "cloudevent",
+		Content:  strings.NewReader("{}"),
+	})
+	if err != nil {
+		t.Fatalf("Invoke() error = %v", err)
+	}
+	defer resp.Body.Close()
+	_, _ = io.ReadAll(resp.Body)
+}
+
+func TestInvokeSetsIsDryRunHeader(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("is-dry-run"); got != "true" {
+			t.Fatalf("expected is-dry-run true, got %q", got)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	resp, err := Invoke(&invokeTestProvider{}, InvokeRequest{
+		URL:      server.URL,
+		IsDryRun: true,
+		Content:  strings.NewReader("{}"),
+	})
+	if err != nil {
+		t.Fatalf("Invoke() error = %v", err)
+	}
+	defer resp.Body.Close()
+	_, _ = io.ReadAll(resp.Body)
+}

@@ -22,6 +22,119 @@ curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
 * For a list of commands see [Fn CLI Command Guide and Reference](https://github.com/fnproject/docs/blob/master/cli/README.md).
 * For general information see Fn [docs](https://github.com/fnproject/docs) and [tutorials](https://fnproject.io/tutorials/).
 
+## OCI Functions configuration
+Fn CLI now supports additional OCI Functions settings for:
+
+- **Provisioned concurrency** via `--provisioned-concurrency`
+- **Detached / long-running functions** via:
+  - `--detached-timeout`
+  - `--on-success`
+  - `--on-failure`
+  - `--clear-on-success`
+  - `--clear-on-failure`
+
+These OCI Functions settings can be used through multiple Fn CLI workflows:
+
+- `fn init` to scaffold and persist them in `func.yaml`
+- `fn create function` / `fn update function` to apply them directly from the CLI
+- `fn deploy` to apply values persisted in `func.yaml`
+
+### Examples
+Initialize a function with provisioned concurrency:
+
+```sh
+fn init --runtime go --provisioned-concurrency constant:40 hello
+```
+
+Create a function with provisioned concurrency directly:
+
+```sh
+fn create function <app-name> <function-name> <image> \
+  --provisioned-concurrency constant:40
+```
+
+Update a function with provisioned concurrency directly:
+
+```sh
+fn update function <app-name> <function-name> \
+  --provisioned-concurrency constant:40
+```
+
+Initialize a function for detached mode with OCI destinations:
+
+```sh
+fn init --runtime go \
+  --detached-timeout 20m \
+  --on-success stream:<stream-ocid> \
+  --on-failure notifications:<topic-ocid> \
+  hello
+```
+
+Create a function with detached-mode settings directly:
+
+```sh
+fn create function <app-name> <function-name> <image> \
+  --detached-timeout 20m \
+  --on-success stream:<stream-ocid> \
+  --on-failure notifications:<topic-ocid>
+```
+
+Update a function with detached-mode settings directly:
+
+```sh
+fn update function <app-name> <function-name> \
+  --detached-timeout 20m \
+  --on-success stream:<stream-ocid> \
+  --on-failure notifications:<topic-ocid>
+```
+
+Example `func.yaml` output:
+
+```yaml
+deploy:
+  oci:
+    provisionedConcurrency:
+      strategy: CONSTANT
+      count: 40
+    detachedMode:
+      timeout: 20m
+      onSuccess:
+        type: stream
+        ocid: <stream-ocid>
+      onFailure:
+        type: notifications
+        ocid: <topic-ocid>
+```
+
+When these OCI-specific flags are used with a non-Oracle provider or local Fn server workflows, Fn CLI accepts them and emits user-friendly warnings where the settings are not applicable.
+
+### Detached invoke examples
+Invoke a function in detached mode:
+
+```sh
+fn invoke detached <app-name> <function-name> --display-call-id
+```
+
+Equivalent OCI-style invoke flag:
+
+```sh
+fn invoke <app-name> <function-name> --fn-invoke-type detached --display-call-id
+```
+
+Invoke with an intent header:
+
+```sh
+fn invoke detached <app-name> <function-name> --fn-intent cloudevent --display-call-id
+```
+
+Invoke as a dry run:
+
+```sh
+fn invoke detached <app-name> <function-name> --is-dry-run --output json
+```
+
+For OCI Functions, detached invocation typically returns immediately and, when requested, prints a call ID that can be used for correlation with downstream success/failure destinations.
+
 ## CLI Development
 * Refer to the [Fn CLI Wiki](https://github.com/fnproject/cli/wiki) for development details.
 

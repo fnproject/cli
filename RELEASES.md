@@ -4,6 +4,13 @@
 
 * Enabling support for node24
 * Enabling support for java21
+* Add OCI Functions provisioned concurrency support to Fn CLI, including CLI flag parsing, `func.yaml` persistence, deploy/update handling, inspect/list output, and OCI shim mappings.
+* Add OCI Functions detached / long-running configuration support, including detached timeout and success/failure destinations persisted via `func.yaml` and applied through deploy/update flows.
+* Add detached invoke support for OCI Functions in Fn CLI, including:
+  * `fn invoke detached <app-name> <function-name>`
+  * `--fn-invoke-type detached`
+  * `--fn-intent`
+  * `--is-dry-run`
 
 ## v 0.6.47
 
