@@ -53,6 +53,8 @@ type InvokeRequest struct {
 	Env         []string
 	ContentType string
 	FnInvokeType string
+	FnIntent    string
+	IsDryRun    bool
 	// TODO headers should be their real type?
 }
 
@@ -85,6 +87,12 @@ func Invoke(provider provider.Provider, ireq InvokeRequest) (*http.Response, err
 	}
 	if ireq.FnInvokeType != "" {
 		req.Header.Set("fn-invoke-type", ireq.FnInvokeType)
+	}
+	if ireq.FnIntent != "" {
+		req.Header.Set("fn-intent", ireq.FnIntent)
+	}
+	if ireq.IsDryRun {
+		req.Header.Set("is-dry-run", "true")
 	}
 
 	if len(env) > 0 {
