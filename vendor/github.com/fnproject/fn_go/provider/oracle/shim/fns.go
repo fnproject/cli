@@ -24,6 +24,8 @@ const (
 	annotationSuccessDestinationOCID = "oracle.com/oci/successDestinationOcid"
 	annotationFailureDestinationKind = "oracle.com/oci/failureDestinationKind"
 	annotationFailureDestinationOCID = "oracle.com/oci/failureDestinationOcid"
+	annotationSourceType             = "oracle.com/oci/sourceType"
+	annotationPbfListingID           = "oracle.com/oci/pbfListingId"
 
 	invokeEndpointFmtString = "%s/20181201/functions/%s/actions/invoke"
 )
@@ -53,15 +55,34 @@ func (s *fnsShim) CreateFn(params *fns.CreateFnParams) (*fns.CreateFnOK, error) 
 	if err != nil {
 		return nil, err
 	}
+	freeformTags, err := parseFreeformTagsAnnotation(params.Body.Annotations)
+	if err != nil {
+		return nil, err
+	}
+	definedTags, err := parseDefinedTagsAnnotation(params.Body.Annotations)
+	if err != nil {
+		return nil, err
+	}
+	sourceDetails, err := parseSourceDetailsAnnotation(params.Body.Annotations)
+	if err != nil {
+		return nil, err
+	}
+	var imagePtr *string
+	if params.Body.Image != "" {
+		imagePtr = &params.Body.Image
+	}
 
 	details := functions.CreateFunctionDetails{
 		DisplayName:                  &params.Body.Name,
 		ApplicationId:                &params.Body.AppID,
-		Image:                        &params.Body.Image,
+		Image:                        imagePtr,
 		MemoryInMBs:                  &memory,
 		ImageDigest:                  digest,
+		SourceDetails:                sourceDetails,
 		ProvisionedConcurrencyConfig: pcConfig,
 		Config:                       params.Body.Config,
+		FreeformTags:                 freeformTags,
+		DefinedTags:                  definedTags,
 		TimeoutInSeconds:             parseTimeout(params.Body.Timeout),
 	}
 	if detachedTimeoutSeconds, err := parseDetachedTimeoutAnnotation(params.Body.Annotations); err != nil {
@@ -204,12 +225,22 @@ func (s *fnsShim) UpdateFn(params *fns.UpdateFnParams) (*fns.UpdateFnOK, error) 
 	if err != nil {
 		return nil, err
 	}
+	freeformTags, err := parseFreeformTagsAnnotation(params.Body.Annotations)
+	if err != nil {
+		return nil, err
+	}
+	definedTags, err := parseDefinedTagsAnnotation(params.Body.Annotations)
+	if err != nil {
+		return nil, err
+	}
 
 	details := functions.UpdateFunctionDetails{
 		Image:            imagePtr,
 		ImageDigest:      digest,
 		MemoryInMBs:      memoryPtr,
 		Config:           params.Body.Config,
+		FreeformTags:     freeformTags,
+		DefinedTags:      definedTags,
 		TimeoutInSeconds: parseTimeout(params.Body.Timeout),
 	}
 	if detachedTimeoutSeconds, err := parseDetachedTimeoutAnnotation(params.Body.Annotations); err != nil {
@@ -421,6 +452,34 @@ func parseFailureDestination(kind, ocid string) (functions.FailureDestinationDet
 	}
 }
 
+func parseSourceDetailsAnnotation(annotations map[string]interface{}) (functions.FunctionSourceDetails, error) {
+	if annotations == nil || len(annotations) == 0 {
+		return nil, nil
+	}
+	rawType, ok := annotations[annotationSourceType]
+	if !ok {
+		return nil, nil
+	}
+	sourceType, ok := rawType.(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid function source type annotation")
+	}
+	switch strings.ToUpper(strings.TrimSpace(sourceType)) {
+	case "PRE_BUILT_FUNCTIONS":
+		rawListingID, ok := annotations[annotationPbfListingID]
+		if !ok {
+			return nil, fmt.Errorf("invalid pbf listing annotation")
+		}
+		listingID, ok := rawListingID.(string)
+		if !ok || strings.TrimSpace(listingID) == "" {
+			return nil, fmt.Errorf("invalid pbf listing annotation")
+		}
+		return functions.PreBuiltFunctionSourceDetails{PbfListingId: &listingID}, nil
+	default:
+		return nil, fmt.Errorf("unsupported function source type %q", sourceType)
+	}
+}
+
 func addProvisionedConcurrencyAnnotations(annotations map[string]interface{}, cfg functions.FunctionProvisionedConcurrencyConfig) {
 	strategy := "NONE"
 	var count *int
@@ -462,6 +521,8 @@ func ociFnToV2(ociFn functions.Function) *modelsv2.Fn {
 	annotations[annotationImageDigest] = imageDigest
 	annotations[annotationInvokeEndpoint] = invokeEndpoint
 	addProvisionedConcurrencyAnnotations(annotations, ociFn.ProvisionedConcurrencyConfig)
+	addTagAnnotations(annotations, ociFn.FreeformTags, ociFn.DefinedTags)
+	addSourceDetailsAnnotations(annotations, ociFn.SourceDetails)
 	if ociFn.DetachedModeTimeoutInSeconds != nil {
 		annotations[annotationDetachedTimeoutSeconds] = *ociFn.DetachedModeTimeoutInSeconds
 	}
@@ -507,6 +568,8 @@ func ociFnSummaryToV2(ociFnSummary functions.FunctionSummary) *modelsv2.Fn {
 	annotations[annotationImageDigest] = imageDigest
 	annotations[annotationInvokeEndpoint] = invokeEndpoint
 	addProvisionedConcurrencyAnnotations(annotations, ociFnSummary.ProvisionedConcurrencyConfig)
+	addTagAnnotations(annotations, ociFnSummary.FreeformTags, ociFnSummary.DefinedTags)
+	addSourceDetailsAnnotations(annotations, ociFnSummary.SourceDetails)
 	if ociFnSummary.DetachedModeTimeoutInSeconds != nil {
 		annotations[annotationDetachedTimeoutSeconds] = *ociFnSummary.DetachedModeTimeoutInSeconds
 	}
@@ -572,6 +635,19 @@ func addDestinationAnnotations(annotations map[string]interface{}, success funct
 			if typed.TopicId != nil {
 				annotations[annotationFailureDestinationOCID] = *typed.TopicId
 			}
+		}
+	}
+}
+
+func addSourceDetailsAnnotations(annotations map[string]interface{}, sourceDetails functions.FunctionSourceDetails) {
+	if annotations == nil || sourceDetails == nil {
+		return
+	}
+	switch typed := sourceDetails.(type) {
+	case functions.PreBuiltFunctionSourceDetails:
+		annotations[annotationSourceType] = "PRE_BUILT_FUNCTIONS"
+		if typed.PbfListingId != nil {
+			annotations[annotationPbfListingID] = *typed.PbfListingId
 		}
 	}
 }

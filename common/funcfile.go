@@ -90,7 +90,9 @@ type OCIProvisionedConcurrencyConfig struct {
 // OCIFunctionDeployConfig stores OCI-specific deploy configuration for a function.
 type OCIFunctionDeployConfig struct {
 	ProvisionedConcurrency *OCIProvisionedConcurrencyConfig `yaml:"provisioned_concurrency,omitempty" json:"provisioned_concurrency,omitempty"`
-	DetachedMode           *OCIDetachedModeConfig          `yaml:"detached_mode,omitempty" json:"detached_mode,omitempty"`
+	DetachedMode           *OCIDetachedModeConfig           `yaml:"detached_mode,omitempty" json:"detached_mode,omitempty"`
+	FreeformTags           map[string]string                `yaml:"freeform_tags,omitempty" json:"freeform_tags,omitempty"`
+	DefinedTags            OCIDefinedTags                   `yaml:"defined_tags,omitempty" json:"defined_tags,omitempty"`
 }
 
 // FuncDeployConfig stores deploy-time configuration sections in func.yaml.
@@ -434,6 +436,9 @@ func (ff *FuncFileV20180708) HasOCIManagedFunctionSettings() bool {
 	if oci.DetachedMode != nil && (oci.DetachedMode.Timeout != "" || oci.DetachedMode.OnSuccess != nil || oci.DetachedMode.OnFailure != nil) {
 		return true
 	}
+	if len(oci.FreeformTags) > 0 || len(oci.DefinedTags) > 0 {
+		return true
+	}
 
 	return false
 }
@@ -453,6 +458,7 @@ func (ff *FuncFileV20180708) OCIManagedFunctionSettingNames() []string {
 	if oci.DetachedMode != nil && (oci.DetachedMode.Timeout != "" || oci.DetachedMode.OnSuccess != nil || oci.DetachedMode.OnFailure != nil) {
 		settings = append(settings, "detached_mode")
 	}
+	settings = append(settings, OCIManagedResourceTagSettingNames(ff)...)
 
 	return settings
 }

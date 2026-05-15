@@ -44,7 +44,7 @@ func Create() cli.Command {
 			f.client = f.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage: "<app-name> <function-name> <image>",
+		ArgsUsage: "<app-name> <function-name> [image]",
 		Action:    f.create,
 		Flags:     FnFlags,
 		BashComplete: func(c *cli.Context) {

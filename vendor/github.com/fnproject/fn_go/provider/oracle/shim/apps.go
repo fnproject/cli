@@ -31,6 +31,14 @@ func (s *appsShim) CreateApp(params *apps.CreateAppParams) (*apps.CreateAppOK, e
 	if err != nil {
 		return nil, err
 	}
+	freeformTags, err := parseFreeformTagsAnnotation(params.Body.Annotations)
+	if err != nil {
+		return nil, err
+	}
+	definedTags, err := parseDefinedTagsAnnotation(params.Body.Annotations)
+	if err != nil {
+		return nil, err
+	}
 
 	shape, err := v2ToOCICreateApplicationShape(params.Body.Shape)
 	if err != nil {
@@ -42,6 +50,8 @@ func (s *appsShim) CreateApp(params *apps.CreateAppParams) (*apps.CreateAppOK, e
 		DisplayName:   &params.Body.Name,
 		SubnetIds:     subnetIds,
 		Config:        params.Body.Config,
+		FreeformTags:  freeformTags,
+		DefinedTags:   definedTags,
 		SyslogUrl:     params.Body.SyslogURL,
 		Shape:         shape,
 	}
@@ -158,10 +168,20 @@ func (s *appsShim) UpdateApp(params *apps.UpdateAppParams) (*apps.UpdateAppOK, e
 
 		etag = res.Etag
 	}
+	freeformTags, err := parseFreeformTagsAnnotation(params.Body.Annotations)
+	if err != nil {
+		return nil, err
+	}
+	definedTags, err := parseDefinedTagsAnnotation(params.Body.Annotations)
+	if err != nil {
+		return nil, err
+	}
 
 	details := functions.UpdateApplicationDetails{
-		Config:        params.Body.Config,
-		SyslogUrl:     params.Body.SyslogURL,
+		Config:       params.Body.Config,
+		FreeformTags: freeformTags,
+		DefinedTags:  definedTags,
+		SyslogUrl:    params.Body.SyslogURL,
 	}
 
 	req := functions.UpdateApplicationRequest{
@@ -216,16 +236,17 @@ func ociAppToV2(ociApp functions.Application) *modelsv2.App {
 	annotations := make(map[string]interface{})
 	annotations[annotationCompartmentId] = *ociApp.CompartmentId
 	annotations[annotationSubnet] = ociSubnetsToAnnotationValue(ociApp.SubnetIds)
+	addTagAnnotations(annotations, ociApp.FreeformTags, ociApp.DefinedTags)
 
 	return &modelsv2.App{
-		Annotations:   annotations,
-		Config:        ociApp.Config,
-		CreatedAt:     strfmt.DateTime(ociApp.TimeCreated.Time),
-		ID:            *ociApp.Id,
-		Name:          *ociApp.DisplayName,
-		Shape:         string(ociApp.Shape),
-		SyslogURL:     ociApp.SyslogUrl,
-		UpdatedAt:     strfmt.DateTime(ociApp.TimeUpdated.Time),
+		Annotations: annotations,
+		Config:      ociApp.Config,
+		CreatedAt:   strfmt.DateTime(ociApp.TimeCreated.Time),
+		ID:          *ociApp.Id,
+		Name:        *ociApp.DisplayName,
+		Shape:       string(ociApp.Shape),
+		SyslogURL:   ociApp.SyslogUrl,
+		UpdatedAt:   strfmt.DateTime(ociApp.TimeUpdated.Time),
 	}
 }
 
@@ -233,14 +254,15 @@ func ociAppSummaryToV2(ociAppSummary functions.ApplicationSummary) *modelsv2.App
 	annotations := make(map[string]interface{})
 	annotations[annotationCompartmentId] = *ociAppSummary.CompartmentId
 	annotations[annotationSubnet] = ociSubnetsToAnnotationValue(ociAppSummary.SubnetIds)
+	addTagAnnotations(annotations, ociAppSummary.FreeformTags, ociAppSummary.DefinedTags)
 
 	return &modelsv2.App{
-		Annotations:   annotations,
-		Shape: 		   string(ociAppSummary.Shape),
-		CreatedAt:     strfmt.DateTime(ociAppSummary.TimeCreated.Time),
-		ID:            *ociAppSummary.Id,
-		Name:          *ociAppSummary.DisplayName,
-		UpdatedAt:     strfmt.DateTime(ociAppSummary.TimeUpdated.Time),
+		Annotations: annotations,
+		Shape:       string(ociAppSummary.Shape),
+		CreatedAt:   strfmt.DateTime(ociAppSummary.TimeCreated.Time),
+		ID:          *ociAppSummary.Id,
+		Name:        *ociAppSummary.DisplayName,
+		UpdatedAt:   strfmt.DateTime(ociAppSummary.TimeUpdated.Time),
 	}
 }
 

@@ -119,6 +119,14 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Name:  "annotation",
 			Usage: "Function annotation (can be specified multiple times)",
 		},
+		cli.StringSliceFlag{
+			Name:  "tag",
+			Usage: "Freeform tag in key=value form (can be specified multiple times)",
+		},
+		cli.StringSliceFlag{
+			Name:  "defined-tag",
+			Usage: "Defined tag in namespace.key=value form (can be specified multiple times)",
+		},
 		cli.StringFlag{
 			Name:  "detached-timeout",
 			Usage: "Set OCI detached mode timeout using a duration like 20m or 1h",
@@ -212,6 +220,15 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		return err
 	}
 	common.SetProvisionedConcurrency(a.ff, pcConfig)
+	freeformTags, err := common.ParseFreeformTagSpecs(c.StringSlice("tag"))
+	if err != nil {
+		return err
+	}
+	definedTags, err := common.ParseDefinedTagSpecs(c.StringSlice("defined-tag"))
+	if err != nil {
+		return err
+	}
+	common.SetOCIResourceTagsOnFuncFile(a.ff, freeformTags, definedTags)
 
 	runtime := c.String("runtime")
 	initImage := c.String("init-image")

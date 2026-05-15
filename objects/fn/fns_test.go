@@ -89,3 +89,67 @@ func TestSetProvisionedConcurrencyAnnotations(t *testing.T) {
 		t.Fatalf("expected count annotation %d, got %#v", count, fn.Annotations[annotationProvisionedConcurrencyCount])
 	}
 }
+
+func TestSetPBFSourceAnnotations(t *testing.T) {
+	fn := &models.Fn{}
+	if err := setPBFSourceAnnotations(fn, "ocid1.pbflisting.oc1..example"); err != nil {
+		t.Fatalf("setPBFSourceAnnotations() error = %v", err)
+	}
+	if got := fn.Annotations[annotationSourceType]; got != "PRE_BUILT_FUNCTIONS" {
+		t.Fatalf("expected PRE_BUILT_FUNCTIONS source type, got %#v", got)
+	}
+	if got := fn.Annotations[annotationPbfListingID]; got != "ocid1.pbflisting.oc1..example" {
+		t.Fatalf("expected pbf listing ocid annotation, got %#v", got)
+	}
+}
+
+func TestWithFuncFileV20180708AppliesResourceTags(t *testing.T) {
+	ff := &common.FuncFileV20180708{
+		Deploy: &common.FuncDeployConfig{
+			OCI: &common.OCIFunctionDeployConfig{
+				FreeformTags: map[string]string{"Department": "Finance"},
+				DefinedTags:  common.OCIDefinedTags{"Operations": {"CostCenter": "42"}},
+			},
+		},
+	}
+	fn := &models.Fn{}
+	if err := WithFuncFileV20180708(ff, fn); err != nil {
+		t.Fatalf("WithFuncFileV20180708() error = %v", err)
+	}
+	freeformRaw, ok := fn.Annotations[common.AnnotationOCIResourceFreeformTags].(map[string]interface{})
+	if !ok || freeformRaw["Department"] != "Finance" {
+		t.Fatalf("expected freeform tag annotation, got %#v", fn.Annotations[common.AnnotationOCIResourceFreeformTags])
+	}
+	definedRaw, ok := fn.Annotations[common.AnnotationOCIResourceDefinedTags].(map[string]map[string]interface{})
+	if !ok || definedRaw["Operations"]["CostCenter"] != "42" {
+		t.Fatalf("expected defined tag annotation, got %#v", fn.Annotations[common.AnnotationOCIResourceDefinedTags])
+	}
+}
+
+func TestCreateCommandAllowsOptionalImageForPBF(t *testing.T) {
+	cmd := Create()
+	if cmd.ArgsUsage != "<app-name> <function-name> [image]" {
+		t.Fatalf("expected optional image args usage for PBF support, got %q", cmd.ArgsUsage)
+	}
+}
+
+func TestResolvePBFMemory(t *testing.T) {
+	min := int64(512)
+	resolved, err := resolvePBFMemory(0, &min)
+	if err != nil {
+		t.Fatalf("resolvePBFMemory(auto) error = %v", err)
+	}
+	if resolved != 512 {
+		t.Fatalf("expected auto-selected memory 512, got %d", resolved)
+	}
+	resolved, err = resolvePBFMemory(1024, &min)
+	if err != nil {
+		t.Fatalf("resolvePBFMemory(override) error = %v", err)
+	}
+	if resolved != 1024 {
+		t.Fatalf("expected user-selected memory 1024, got %d", resolved)
+	}
+	if _, err := resolvePBFMemory(256, &min); err == nil {
+		t.Fatal("expected an error when memory is below the PBF minimum")
+	}
+}

@@ -38,7 +38,8 @@ import (
 )
 
 const (
-	SHAPE_PARAMETER = "shape"
+	SHAPE_PARAMETER  = "shape"
+	annotationSubnet = "oracle.com/oci/subnetIds"
 )
 
 type appsCmd struct {
@@ -133,7 +134,7 @@ func BashCompleteApps(c *cli.Context) {
 	}
 }
 
-func appWithFlags(c *cli.Context, app *modelsv2.App) {
+func appWithFlags(c *cli.Context, app *modelsv2.App) error {
 	if c.IsSet("syslog-url") {
 		str := c.String("syslog-url")
 		app.SyslogURL = &str
@@ -144,6 +145,86 @@ func appWithFlags(c *cli.Context, app *modelsv2.App) {
 	if len(c.StringSlice("annotation")) > 0 {
 		app.Annotations = common.ExtractAnnotations(c)
 	}
+	annotations, err := common.ApplyOCIResourceTagFlagsToAnnotations(
+		app.Annotations,
+		c.StringSlice("tag"),
+		c.StringSlice("defined-tag"),
+		c.StringSlice("remove-tag"),
+		c.StringSlice("remove-defined-tag"),
+		c.Bool("clear-freeform-tags") || c.Bool("clear-tags"),
+		c.Bool("clear-defined-tags") || c.Bool("clear-tags"),
+	)
+	if err != nil {
+		return err
+	}
+	app.Annotations = annotations
+	if err := setSubnetIDAnnotations(app, c.StringSlice("subnet-id")); err != nil {
+		return err
+	}
+	return nil
+}
+
+func normalizeSubnetIDs(subnetIDs []string) ([]string, error) {
+	if len(subnetIDs) == 0 {
+		return nil, nil
+	}
+	normalized := make([]string, 0, len(subnetIDs))
+	for _, subnetID := range subnetIDs {
+		trimmed := strings.TrimSpace(subnetID)
+		if trimmed == "" {
+			return nil, fmt.Errorf("subnet IDs must not be empty")
+		}
+		normalized = append(normalized, trimmed)
+	}
+	return normalized, nil
+}
+
+func subnetIDsToAnnotationValue(subnetIDs []string) []interface{} {
+	values := make([]interface{}, len(subnetIDs))
+	for i, subnetID := range subnetIDs {
+		values[i] = subnetID
+	}
+	return values
+}
+
+func setSubnetIDAnnotations(app *modelsv2.App, subnetIDs []string) error {
+	normalized, err := normalizeSubnetIDs(subnetIDs)
+	if err != nil {
+		return err
+	}
+	if len(normalized) == 0 {
+		return nil
+	}
+	if app.Annotations == nil {
+		app.Annotations = make(map[string]interface{})
+	}
+	if _, exists := app.Annotations[annotationSubnet]; exists {
+		return fmt.Errorf("--subnet-id cannot be used together with --annotation %s", annotationSubnet)
+	}
+	app.Annotations[annotationSubnet] = subnetIDsToAnnotationValue(normalized)
+	return nil
+}
+
+func validateSubnetIDUpdateSupported(p provider.Provider, subnetIDs []string) error {
+	if len(subnetIDs) == 0 {
+		return nil
+	}
+	if common.IsOracleProvider(p) {
+		return fmt.Errorf("--subnet-id is not currently supported with `fn update app` for Oracle-backed apps; use the OCI CLI or recreate the app with the desired subnet IDs")
+	}
+	return nil
+}
+
+func validateSubnetIDCreateRequired(p provider.Provider, app *modelsv2.App) error {
+	if !common.IsOracleProvider(p) {
+		return nil
+	}
+	if app != nil && app.Annotations != nil {
+		if _, ok := app.Annotations[annotationSubnet]; ok {
+			return nil
+		}
+	}
+	return fmt.Errorf("Oracle-backed app creation requires at least one subnet; use --subnet-id <ocid> (or --annotation %s='[\"<subnet-ocid>\"]')", annotationSubnet)
 }
 
 func (a *appsCmd) create(c *cli.Context) error {
@@ -151,7 +232,9 @@ func (a *appsCmd) create(c *cli.Context) error {
 		Name: c.Args().Get(0),
 	}
 
-	appWithFlags(c, app)
+	if err := appWithFlags(c, app); err != nil {
+		return err
+	}
 	// If architectures flag is not set then default it to nil
 	if c.IsSet(SHAPE_PARAMETER) {
 		shapeParam := c.String(SHAPE_PARAMETER)
@@ -165,6 +248,9 @@ func (a *appsCmd) create(c *cli.Context) error {
 			return errors.New("invalid shape specified for the application")
 		}
 		app.Shape = shapeParam
+	}
+	if err := validateSubnetIDCreateRequired(a.provider, app); err != nil {
+		return err
 	}
 	_, err := CreateApp(a.client, app)
 	return err
@@ -198,7 +284,13 @@ func (a *appsCmd) update(c *cli.Context) error {
 		return err
 	}
 
-	appWithFlags(c, app)
+	if err := validateSubnetIDUpdateSupported(a.provider, c.StringSlice("subnet-id")); err != nil {
+		return err
+	}
+
+	if err := appWithFlags(c, app); err != nil {
+		return err
+	}
 
 	if _, err = PutApp(a.client, app.ID, app); err != nil {
 		return err
