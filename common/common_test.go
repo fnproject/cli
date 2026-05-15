@@ -150,6 +150,18 @@ func Test_writeTmpDockerfileV20180708(t *testing.T) {
 			args{&langs.JavaLangHelper{Version: "17"}, dir, &javaFuncFile, false, javaFdkEntryPoint},
 			fmt.Sprintf(javaDockerfile, langs.MavenOptsForTest()),
 		},
+		{"node-normal-image",
+			args{&langs.NodeLangHelper{Version: "24"}, dir, &nodeFuncFile, false, ""},
+			nodeDockerfile,
+		},
+		{"ruby-normal-image",
+			args{&langs.RubyLangHelper{Version: "3.3"}, dir, &rubyFuncFile, false, ""},
+			rubyDockerfile,
+		},
+		{"dotnet-normal-image",
+			args{&langs.DotnetLangHelper{Version: "9.0"}, dir, &dotnetFuncFile, false, ""},
+			dotnetDockerfile,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -271,6 +283,69 @@ var javaFuncFile = FuncFileV20180708{
 	Triggers:       nil,
 }
 
+var nodeFuncFile = FuncFileV20180708{
+	Schema_version: 20180708,
+	Name:           "test",
+	Version:        "0.0.1",
+	Runtime:        "node",
+	Build_image:    "fnproject/node:24-dev",
+	Run_image:      "fnproject/node:24",
+	Cmd:            "",
+	Entrypoint:     "node func.js",
+	Content_type:   "",
+	Type:           "",
+	Memory:         128,
+	Timeout:        nil,
+	IDLE_timeout:   nil,
+	Config:         nil,
+	Annotations:    nil,
+	Build:          nil,
+	Expects:        Expects{},
+	Triggers:       nil,
+}
+
+var rubyFuncFile = FuncFileV20180708{
+	Schema_version: 20180708,
+	Name:           "test",
+	Version:        "0.0.1",
+	Runtime:        "ruby",
+	Build_image:    "fnproject/ruby:3.3-dev",
+	Run_image:      "fnproject/ruby:3.3",
+	Cmd:            "",
+	Entrypoint:     "ruby func.rb",
+	Content_type:   "",
+	Type:           "",
+	Memory:         128,
+	Timeout:        nil,
+	IDLE_timeout:   nil,
+	Config:         nil,
+	Annotations:    nil,
+	Build:          nil,
+	Expects:        Expects{},
+	Triggers:       nil,
+}
+
+var dotnetFuncFile = FuncFileV20180708{
+	Schema_version: 20180708,
+	Name:           "test",
+	Version:        "0.0.1",
+	Runtime:        "dotnet",
+	Build_image:    "fnproject/dotnet:9.0-1.0.57-dev",
+	Run_image:      "fnproject/dotnet:9.0-1.0.57",
+	Cmd:            "Function:Greeter:greet",
+	Entrypoint:     "dotnet Function.dll",
+	Content_type:   "",
+	Type:           "",
+	Memory:         128,
+	Timeout:        nil,
+	IDLE_timeout:   nil,
+	Config:         nil,
+	Annotations:    nil,
+	Build:          nil,
+	Expects:        Expects{},
+	Triggers:       nil,
+}
+
 const (
 	pythonDebugDockerfile = `FROM fnproject/python:3.12-dev as build-stage
 WORKDIR /function
@@ -318,7 +393,7 @@ WORKDIR /function
 COPY --from=build-stage /go/src/func/func /function/
 ENTRYPOINT ["./func"]
 `
- 	javaDebugDockerfile = `FROM fnproject/fn-java-fdk-build:jdk17-1.1.7 as build-stage
+	javaDebugDockerfile = `FROM fnproject/fn-java-fdk-build:jdk17-1.1.7 as build-stage
 WORKDIR /function
 ENV MAVEN_OPTS %s
 ADD pom.xml /function/pom.xml
@@ -344,5 +419,37 @@ COPY --from=build-stage /function/target/*.jar /function/app/
 ENTRYPOINT ["/usr/local/openjdk-17/bin/java", "-XX:-UsePerfData", "-XX:+UseSerialGC", "-Xshare:auto", "-Djava.awt.headless=true", "-Djava.library.path=/function/runtime/lib", "-cp", "/function/app/*:/function/runtime/*:/function/app:/function/app/resources", "com.fnproject.fn.runtime.EntryPoint"]
 CMD ["com.example.fn.HelloFunction::handleRequest"]
 `
-	javaFdkEntryPoint = "/usr/local/openjdk-17/bin/java -XX:-UsePerfData -XX:+UseSerialGC -Xshare:auto -Djava.awt.headless=true -Djava.library.path=/function/runtime/lib -cp /function/app/*:/function/runtime/*:/function/app:/function/app/resources com.fnproject.fn.runtime.EntryPoint"
+
+	nodeDockerfile = `FROM fnproject/node:24-dev as build-stage
+WORKDIR /function
+FROM fnproject/node:24
+WORKDIR /function
+ADD . /function/
+RUN chmod -R o+r /function
+ENTRYPOINT ["node", "func.js"]
+`
+	rubyDockerfile = `FROM fnproject/ruby:3.3-dev as build-stage
+WORKDIR /function
+FROM fnproject/ruby:3.3
+WORKDIR /function
+COPY --from=build-stage /usr/lib/ruby/gems/ /usr/lib/ruby/gems/
+COPY . /function/
+RUN chmod -R o+r /function
+ENTRYPOINT ["ruby", "func.rb"]
+`
+	dotnetDockerfile = `FROM fnproject/dotnet:9.0-1.0.57-dev as build-stage
+WORKDIR /function
+COPY . .
+RUN dotnet sln add src/Function/Function.csproj tests/Function.Tests/Function.Tests.csproj
+RUN dotnet build -c Release
+RUN dotnet test -c Release
+RUN dotnet publish src/Function/Function.csproj -c Release -o out
+FROM fnproject/dotnet:9.0-1.0.57
+WORKDIR /function
+COPY --from=build-stage /function/out/ /function/
+ENTRYPOINT ["dotnet", "Function.dll"]
+CMD ["Function:Greeter:greet"]
+`
+
+	javaFdkEntryPoint = "'[/usr/local/openjdk-17/bin/java -XX:-UsePerfData -XX:+UseSerialGC -Xshare:auto -Djava.awt.headless=true -Djava.library.path=/function/runtime/lib -cp /function/app/*:/function/runtime/*:/function/app:/function/app/resources com.fnproject.fn.runtime.EntryPoint]'"
 )
