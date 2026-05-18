@@ -49,6 +49,8 @@ type fnsCmd struct {
 const (
 	annotationProvisionedConcurrencyStrategy = "oracle.com/oci/provisionedConcurrencyStrategy"
 	annotationProvisionedConcurrencyCount    = "oracle.com/oci/provisionedConcurrencyCount"
+	annotationSourceType                     = "oracle.com/oci/sourceType"
+	annotationPbfListingID                   = "oracle.com/oci/pbfListingId"
 )
 
 const annotationDetachedTimeoutSeconds = "oracle.com/oci/detachedModeTimeoutInSeconds"
@@ -120,9 +122,21 @@ var FnFlags = []cli.Flag{
 		Name:  "annotation",
 		Usage: "Function annotation (can be specified multiple times)",
 	},
+	cli.StringSliceFlag{
+		Name:  "tag",
+		Usage: "Freeform tag in key=value form (can be specified multiple times)",
+	},
+	cli.StringSliceFlag{
+		Name:  "defined-tag",
+		Usage: "Defined tag in namespace.key=value form (can be specified multiple times)",
+	},
 	cli.StringFlag{
 		Name:  "image",
 		Usage: "Function image",
+	},
+	cli.StringFlag{
+		Name:  "pbf",
+		Usage: "Create the function from a Pre-Built Function listing OCID",
 	},
 	cli.StringFlag{
 		Name:  "provisioned-concurrency",
@@ -142,6 +156,26 @@ var FnFlags = []cli.Flag{
 	},
 }
 var updateFnFlags = append(append([]cli.Flag{}, FnFlags...),
+	cli.StringSliceFlag{
+		Name:  "remove-tag",
+		Usage: "Remove a freeform tag by key (can be specified multiple times)",
+	},
+	cli.StringSliceFlag{
+		Name:  "remove-defined-tag",
+		Usage: "Remove a defined tag by namespace.key (can be specified multiple times)",
+	},
+	cli.BoolFlag{
+		Name:  "clear-tags",
+		Usage: "Clear all freeform and defined tags",
+	},
+	cli.BoolFlag{
+		Name:  "clear-freeform-tags",
+		Usage: "Clear all freeform tags",
+	},
+	cli.BoolFlag{
+		Name:  "clear-defined-tags",
+		Usage: "Clear all defined tags",
+	},
 	cli.BoolFlag{
 		Name:  "clear-on-success",
 		Usage: "Clear OCI detached success destination",
@@ -591,6 +625,9 @@ func WithFuncFileV20180708(ff *common.FuncFileV20180708, fn *models.Fn) error {
 	if len(ff.Annotations) != 0 {
 		fn.Annotations = ff.Annotations
 	}
+	if ff.Deploy != nil && ff.Deploy.OCI != nil {
+		fn.Annotations = common.ApplyOCIResourceTagsToAnnotations(fn.Annotations, ff.Deploy.OCI.FreeformTags, ff.Deploy.OCI.DefinedTags)
+	}
 	// do something with triggers here
 
 	return nil
@@ -598,6 +635,61 @@ func WithFuncFileV20180708(ff *common.FuncFileV20180708, fn *models.Fn) error {
 
 func warnUnsupportedProvisionedConcurrency() {
 	fmt.Fprintln(os.Stderr, "Warning: --provisioned-concurrency is only supported with an oracle provider and will be ignored.")
+}
+
+func setPBFSourceAnnotations(fn *models.Fn, listingID string) error {
+	listingID = strings.TrimSpace(listingID)
+	if listingID == "" {
+		return nil
+	}
+	if fn.Annotations == nil {
+		fn.Annotations = make(map[string]interface{})
+	}
+	fn.Annotations[annotationSourceType] = "PRE_BUILT_FUNCTIONS"
+	fn.Annotations[annotationPbfListingID] = listingID
+	return nil
+}
+
+func fetchCurrentPBFMemoryRequirement(p provider.Provider, listingID string) (*int64, error) {
+	oracleProvider, ok := p.(*fnprovideroracle.OracleProvider)
+	if !ok || oracleProvider == nil {
+		return nil, nil
+	}
+	mgmtClient, err := buildFunctionsManagementClient(oracleProvider)
+	if err != nil {
+		return nil, err
+	}
+	isCurrent := true
+	limit := 1
+	res, err := mgmtClient.ListPbfListingVersions(context.Background(), ocifunctions.ListPbfListingVersionsRequest{
+		PbfListingId:     &listingID,
+		IsCurrentVersion: &isCurrent,
+		Limit:            &limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(res.Items) == 0 || res.Items[0].Requirements == nil {
+		return nil, nil
+	}
+	return res.Items[0].Requirements.MinMemoryRequiredInMBs, nil
+}
+
+func resolvePBFMemory(memory uint64, minRequired *int64) (uint64, error) {
+	if minRequired == nil || *minRequired <= 0 {
+		if memory > 0 {
+			return memory, nil
+		}
+		return 0, fmt.Errorf("unable to determine the minimum memory required for this PBF; please supply --memory explicitly")
+	}
+	minimum := uint64(*minRequired)
+	if memory == 0 {
+		return minimum, nil
+	}
+	if memory < minimum {
+		return 0, fmt.Errorf("--memory %d is below the minimum required for this PBF (%d MiB)", memory, minimum)
+	}
+	return memory, nil
 }
 
 func buildFunctionsManagementClient(oracleProvider *fnprovideroracle.OracleProvider) (*ocifunctions.FunctionsManagementClient, error) {
@@ -658,6 +750,7 @@ func ApplyProvisionedConcurrency(p provider.Provider, fnID string, cfg *common.O
 func (f *fnsCmd) create(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
+	pbfListingID := strings.TrimSpace(c.String("pbf"))
 	pcConfig, err := common.ParseProvisionedConcurrencySpec(c.String("provisioned-concurrency"))
 	if err != nil {
 		return err
@@ -684,12 +777,45 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	fn.Image = c.Args().Get(2)
 
 	WithFlags(c, fn)
+	annotations, err := common.ApplyOCIResourceTagFlagsToAnnotations(
+		fn.Annotations,
+		c.StringSlice("tag"),
+		c.StringSlice("defined-tag"),
+		nil,
+		nil,
+		false,
+		false,
+	)
+	if err != nil {
+		return err
+	}
+	fn.Annotations = annotations
 
 	if fn.Name == "" {
 		return errors.New("fnName path is missing")
 	}
-	if fn.Image == "" {
+	if fn.Image != "" && pbfListingID != "" {
+		return errors.New("--image and --pbf cannot be used together")
+	}
+	if fn.Image == "" && pbfListingID == "" {
 		return errors.New("no image specified")
+	}
+	if pbfListingID != "" {
+		if !common.IsOracleProvider(f.provider) {
+			return errors.New("--pbf is only supported with an oracle provider")
+		}
+		if err := setPBFSourceAnnotations(fn, pbfListingID); err != nil {
+			return err
+		}
+		minMemory, err := fetchCurrentPBFMemoryRequirement(f.provider, pbfListingID)
+		if err != nil {
+			return fmt.Errorf("unable to determine PBF memory requirements: %w", err)
+		}
+		resolvedMemory, err := resolvePBFMemory(fn.Memory, minMemory)
+		if err != nil {
+			return err
+		}
+		fn.Memory = resolvedMemory
 	}
 	if pcConfig != nil {
 		if !common.IsOracleProvider(f.provider) {
@@ -742,9 +868,11 @@ func (f *fnsCmd) create(c *cli.Context) error {
 // CreateFn request
 func CreateFn(r *fnclient.Fn, appID string, fn *models.Fn) (*models.Fn, error) {
 	fn.AppID = appID
-	err := common.ValidateTagImageName(fn.Image)
-	if err != nil {
-		return nil, err
+	if fn.Image != "" {
+		err := common.ValidateTagImageName(fn.Image)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	resp, err := r.Fns.CreateFn(&apifns.CreateFnParams{
@@ -830,6 +958,10 @@ func GetFnByName(client *fnclient.Fn, appID, fnName string) (*models.Fn, error) 
 func (f *fnsCmd) update(c *cli.Context) error {
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
+	if strings.TrimSpace(c.String("pbf")) != "" {
+		return errors.New("--pbf is only supported when creating a function")
+	}
+
 	pcConfig, err := common.ParseProvisionedConcurrencySpec(c.String("provisioned-concurrency"))
 	if err != nil {
 		return err
@@ -854,16 +986,30 @@ func (f *fnsCmd) update(c *cli.Context) error {
 		return err
 	}
 
-	app, err := app.GetAppByName(f.client, appName)
+	appObj, err := app.GetAppByName(f.client, appName)
 	if err != nil {
 		return err
 	}
-	fn, err := GetFnByName(f.client, app.ID, fnName)
+	fn, err := GetFnByName(f.client, appObj.ID, fnName)
 	if err != nil {
 		return err
 	}
 
 	WithFlags(c, fn)
+	annotations, err := common.ApplyOCIResourceTagFlagsToAnnotations(
+		fn.Annotations,
+		c.StringSlice("tag"),
+		c.StringSlice("defined-tag"),
+		c.StringSlice("remove-tag"),
+		c.StringSlice("remove-defined-tag"),
+		c.Bool("clear-freeform-tags") || c.Bool("clear-tags"),
+		c.Bool("clear-defined-tags") || c.Bool("clear-tags"),
+	)
+	if err != nil {
+		return err
+	}
+	fn.Annotations = annotations
+
 	if detachedSeconds > 0 {
 		if !common.IsOracleProvider(f.provider) {
 			warnUnsupportedDetachedTimeout()

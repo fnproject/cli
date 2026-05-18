@@ -39,6 +39,44 @@ These OCI Functions settings can be used through multiple Fn CLI workflows:
 - `fn create function` / `fn update function` to apply them directly from the CLI
 - `fn deploy` to apply values persisted in `func.yaml`
 
+### Application networking
+Create an OCI Functions application with a subnet OCID using a dedicated flag:
+
+```sh
+fn create app <app-name> --subnet-id <subnet-ocid>
+```
+
+For Oracle-backed apps, `fn create app` requires at least one subnet. `fn update app --subnet-id` is currently not supported through the current OCI update API model and returns a clear error instead.
+
+### Resource tags
+Add freeform tags using `--tag key=value`:
+
+```sh
+fn create app <app-name> --subnet-id <subnet-ocid> --tag Department=Finance
+fn create function <app-name> <function-name> <image> --tag Team=Payments
+```
+
+Add defined tags using `--defined-tag namespace.key=value`:
+
+```sh
+fn create app <app-name> --subnet-id <subnet-ocid> --defined-tag dry_run_tag.example-tag=10
+fn create function <app-name> <function-name> <image> --defined-tag Operations.CostCenter=42
+```
+
+By default, plain scalar defined-tag values are treated as strings. Use explicit JSON only when needed:
+
+```sh
+fn create app <app-name> --subnet-id <subnet-ocid> \
+  --defined-tag 'custom.meta={"level":2}'
+```
+
+Update flows also support tag removal and clear semantics:
+
+```sh
+fn update app <app-name> --remove-tag Department --clear-defined-tags
+fn update function <app-name> <function-name> --remove-defined-tag Operations.CostCenter
+```
+
 ### Examples
 Initialize a function with provisioned concurrency:
 
@@ -93,6 +131,11 @@ Example `func.yaml` output:
 ```yaml
 deploy:
   oci:
+    freeform_tags:
+      Department: Finance
+    defined_tags:
+      Operations:
+        CostCenter: "42"
     provisionedConcurrency:
       strategy: CONSTANT
       count: 40
@@ -107,6 +150,21 @@ deploy:
 ```
 
 When these OCI-specific flags are used with a non-Oracle provider or local Fn server workflows, Fn CLI accepts them and emits user-friendly warnings where the settings are not applicable.
+
+### Pre-Built Function create support
+Create a function from a Pre-Built Function (PBF) listing OCID:
+
+```sh
+fn create function <app-name> <function-name> --pbf <pbf-listing-ocid>
+```
+
+For PBF create flows:
+- `--image` and `--pbf` are mutually exclusive
+- the image positional argument is optional when `--pbf` is used
+- Fn CLI automatically resolves the minimum required memory from the current PBF version when possible
+- if you specify `--memory`, it must be greater than or equal to the PBF minimum requirement
+
+Current limitation: `--pbf` support is currently focused on `fn create function` and is not yet persisted through `func.yaml` / deploy flows.
 
 ### Detached invoke examples
 Invoke a function in detached mode:

@@ -28,16 +28,17 @@ import (
 func Create() cli.Command {
 	a := appsCmd{}
 	return cli.Command{
-		Name:     "app",
-		Usage:    "Create a new application",
-		Category: "MANAGEMENT COMMAND",
+		Name:        "app",
+		Usage:       "Create a new application",
+		Category:    "MANAGEMENT COMMAND",
 		Description: "This command creates a new application.\n	Fn supports grouping functions into a set that defines an application (or API), making it easy to organize and deploy.\n	Applications define a namespace to organize functions and can contain configuration values that are shared across all functions in that application.",
-		Aliases: []string{"apps", "a"},
+		Aliases:     []string{"apps", "a"},
 		Before: func(c *cli.Context) error {
 			provider, err := client.CurrentProvider()
 			if err != nil {
 				return err
 			}
+			a.provider = provider
 			a.client = provider.APIClientv2()
 			return nil
 		},
@@ -52,6 +53,14 @@ func Create() cli.Command {
 				Name:  "annotation",
 				Usage: "Application annotations",
 			},
+			cli.StringSliceFlag{
+				Name:  "tag",
+				Usage: "Freeform tag in key=value form (can be specified multiple times)",
+			},
+			cli.StringSliceFlag{
+				Name:  "defined-tag",
+				Usage: "Defined tag in namespace.key=value form (can be specified multiple times)",
+			},
 			cli.StringFlag{
 				Name:  "syslog-url",
 				Usage: "Syslog URL to send application logs to",
@@ -59,6 +68,10 @@ func Create() cli.Command {
 			cli.StringFlag{
 				Name:  "shape",
 				Usage: "Valid values are GENERIC_X86, GENERIC_ARM and GENERIC_X86_ARM. Default is GENERIC_X86. Setting this to GENERIC_X86, will run the functions in the application on X86 processor architecture.\n Setting this to GENERIC_ARM, will run the functions in the application on ARM processor architecture.\n When set to 'GENERIC_X86_ARM', functions in the application are run on either X86 or ARM processor architecture.\n Accepted values are:\n GENERIC_X86, GENERIC_ARM, GENERIC_X86_ARM",
+			},
+			cli.StringSliceFlag{
+				Name:  "subnet-id",
+				Usage: "Subnet OCID for OCI Functions applications (can be specified multiple times; maps to oracle.com/oci/subnetIds)",
 			},
 		},
 	}
@@ -78,6 +91,7 @@ func List() cli.Command {
 			if err != nil {
 				return err
 			}
+			a.provider = provider
 			a.client = provider.APIClientv2()
 			return nil
 		},
@@ -115,6 +129,7 @@ func Delete() cli.Command {
 			if err != nil {
 				return err
 			}
+			a.provider = provider
 			a.client = provider.APIClientv2()
 			return nil
 		},
@@ -152,6 +167,7 @@ func Inspect() cli.Command {
 			if err != nil {
 				return err
 			}
+			a.provider = provider
 			a.client = provider.APIClientv2()
 			return nil
 		},
@@ -201,6 +217,7 @@ func Update() cli.Command {
 			if err != nil {
 				return err
 			}
+			a.provider = provider
 			a.client = provider.APIClientv2()
 			return nil
 		},
@@ -215,9 +232,41 @@ func Update() cli.Command {
 				Name:  "annotation",
 				Usage: "Application annotations",
 			},
+			cli.StringSliceFlag{
+				Name:  "tag",
+				Usage: "Freeform tag in key=value form (can be specified multiple times)",
+			},
+			cli.StringSliceFlag{
+				Name:  "defined-tag",
+				Usage: "Defined tag in namespace.key=value form (can be specified multiple times)",
+			},
+			cli.StringSliceFlag{
+				Name:  "remove-tag",
+				Usage: "Remove a freeform tag by key (can be specified multiple times)",
+			},
+			cli.StringSliceFlag{
+				Name:  "remove-defined-tag",
+				Usage: "Remove a defined tag by namespace.key (can be specified multiple times)",
+			},
+			cli.BoolFlag{
+				Name:  "clear-tags",
+				Usage: "Clear all freeform and defined tags",
+			},
+			cli.BoolFlag{
+				Name:  "clear-freeform-tags",
+				Usage: "Clear all freeform tags",
+			},
+			cli.BoolFlag{
+				Name:  "clear-defined-tags",
+				Usage: "Clear all defined tags",
+			},
 			cli.StringFlag{
 				Name:  "syslog-url",
 				Usage: "Syslog URL to send application logs to",
+			},
+			cli.StringSliceFlag{
+				Name:  "subnet-id",
+				Usage: "Subnet OCID for OCI Functions applications (accepted for non-Oracle providers; Oracle-backed update currently not supported)",
 			},
 		},
 		BashComplete: func(c *cli.Context) {
