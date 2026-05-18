@@ -26,7 +26,8 @@ import (
 
 const (
 	V20180708         = 20180708
-	LatestYamlVersion = V20180708
+	V20260325         = 20260325
+	LatestYamlVersion = V20260325
 )
 
 const V20180708Schema = `{
@@ -122,6 +123,86 @@ const V20180708Schema = `{
                     }
                 }
             }
+        },
+        "triggers": {
+            "type": "array",
+            "properties": {
+                "name": {
+                    "type":"string"
+                },
+                "type": {
+                    "type":"string"
+                },
+                "source": {
+                    "type":"string"
+                }
+            }
+        }
+    }
+}`
+
+const V20260325Schema = `{
+    "title": "V20260325 func file schema",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type":"string"
+        },
+        "schema_version": {
+            "type":"integer"
+        },
+        "version": {
+            "type":"string"
+        },
+        "runtime": {
+            "type":"string"
+        },
+        "build_image": {
+            "type":"string"
+        },
+        "run_image": {
+            "type": "string"
+        },
+        "entrypoint": {
+            "type":"string"
+        },
+        "content_type": {
+            "type":"string"
+        },
+        "cmd": {
+            "type":"string"
+        },
+        "memory": {
+            "type":"integer"
+        },
+        "timeout": {
+            "type":"integer"
+        },
+        "idle_timeout": {
+            "type": "integer"
+        },
+        "config": {
+            "type": "object"
+        },
+        "code_only": {
+            "type": "boolean"
+        },
+        "runtime_config": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string"
+                },
+                "runtime_name": {
+                    "type": "string"
+                },
+                "runtime_version_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler": {
+            "type": "string"
         },
         "triggers": {
             "type": "array",
