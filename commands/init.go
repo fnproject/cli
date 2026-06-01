@@ -143,6 +143,10 @@ func initFlags(a *initFnCmd) []cli.Flag {
 			Name:  "provisioned-concurrency",
 			Usage: "Set OCI provisioned concurrency using 'none' or 'constant:<count>'",
 		},
+		cli.StringFlag{
+			Name:  "pbf",
+			Usage: "Initialize func.yaml for a Pre-Built Function using a PBF listing OCID",
+		},
 	}
 
 	return fgs
@@ -220,6 +224,15 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		return err
 	}
 	common.SetProvisionedConcurrency(a.ff, pcConfig)
+	if pbfListingID := strings.TrimSpace(c.String("pbf")); pbfListingID != "" {
+		if a.ff.Deploy == nil {
+			a.ff.Deploy = &common.FuncDeployConfig{}
+		}
+		if a.ff.Deploy.OCI == nil {
+			a.ff.Deploy.OCI = &common.OCIFunctionDeployConfig{}
+		}
+		a.ff.Deploy.OCI.PBF = &common.OCIPBFSourceConfig{ListingID: pbfListingID}
+	}
 	freeformTags, err := common.ParseFreeformTagSpecs(c.StringSlice("tag"))
 	if err != nil {
 		return err
@@ -249,7 +262,6 @@ func (a *initFnCmd) init(c *cli.Context) error {
 			return fmt.Errorf("Runtime %s is no more supported for new apps. Please use python or %s runtime for new apps.", runtime, runtime[:strings.LastIndex(runtime, ".")])
 		}
 	}
-
 	path := c.Args().First()
 	if path != "" {
 		fmt.Printf("Creating function at: ./%s\n", path)
@@ -425,6 +437,9 @@ func (a *initFnCmd) BuildFuncFileV20180708(c *cli.Context, path string) error {
 	}
 
 	if c.String("init-image") != "" {
+		return nil
+	}
+	if strings.TrimSpace(c.String("pbf")) != "" {
 		return nil
 	}
 

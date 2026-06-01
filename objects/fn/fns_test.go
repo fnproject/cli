@@ -153,3 +153,52 @@ func TestResolvePBFMemory(t *testing.T) {
 		t.Fatal("expected an error when memory is below the PBF minimum")
 	}
 }
+
+func TestFormatSourceDisplay(t *testing.T) {
+	fn := &models.Fn{Annotations: map[string]interface{}{
+		annotationSourceType:   "PRE_BUILT_FUNCTIONS",
+		annotationPbfListingID: "ocid1.pbflisting.oc1..example",
+	}}
+	if got := formatSourceDisplay(fn); got != "pbf:ocid1.pbflisting.oc1..example" {
+		t.Fatalf("expected PBF source display, got %q", got)
+	}
+}
+
+func TestBuildCreateFnSuccessMessage(t *testing.T) {
+	imgFn := &models.Fn{Name: "hello", Image: "repo/hello:0.0.1"}
+	if got := buildCreateFnSuccessMessage(imgFn); got != "Successfully created function: hello with repo/hello:0.0.1" {
+		t.Fatalf("unexpected image success message: %q", got)
+	}
+	pbfFn := &models.Fn{Name: "hello-pbf", Annotations: map[string]interface{}{
+		annotationSourceType:   "PRE_BUILT_FUNCTIONS",
+		annotationPbfListingID: "ocid1.pbflisting.oc1..example",
+	}}
+	if got := buildCreateFnSuccessMessage(pbfFn); got != "Successfully created function: hello-pbf from PBF ocid1.pbflisting.oc1..example" {
+		t.Fatalf("unexpected PBF success message: %q", got)
+	}
+}
+
+func TestWithFuncFileV20180708AppliesPBFSource(t *testing.T) {
+	ff := &common.FuncFileV20180708{
+		Name:    "hello-pbf",
+		Version: "0.0.1",
+		Deploy: &common.FuncDeployConfig{
+			OCI: &common.OCIFunctionDeployConfig{
+				PBF: &common.OCIPBFSourceConfig{ListingID: "ocid1.pbflisting.oc1..example"},
+			},
+		},
+	}
+	fn := &models.Fn{}
+	if err := WithFuncFileV20180708(ff, fn); err != nil {
+		t.Fatalf("WithFuncFileV20180708() error = %v", err)
+	}
+	if got := fn.Annotations[annotationSourceType]; got != "PRE_BUILT_FUNCTIONS" {
+		t.Fatalf("expected PRE_BUILT_FUNCTIONS source type, got %#v", got)
+	}
+	if got := fn.Annotations[annotationPbfListingID]; got != "ocid1.pbflisting.oc1..example" {
+		t.Fatalf("expected pbf listing id annotation, got %#v", got)
+	}
+	if fn.Image != "" {
+		t.Fatalf("expected PBF-backed function to avoid image assignment during deploy/init flows, got %q", fn.Image)
+	}
+}
