@@ -151,7 +151,42 @@ deploy:
 
 When these OCI-specific flags are used with a non-Oracle provider or local Fn server workflows, Fn CLI accepts them and emits user-friendly warnings where the settings are not applicable.
 
-### Pre-Built Function create support
+### Pre-Built Function (PBF) support
+List available Pre-Built Functions:
+
+```sh
+fn list pbfs
+fn list pbfs --search Document
+fn list pbfs --trigger http
+fn list pbfs --output json
+```
+
+Get a specific PBF listing:
+
+```sh
+fn get pbfs <pbf-name-or-ocid>
+```
+
+List versions for a PBF:
+
+```sh
+fn list pbfs versions <pbf-name-or-ocid>
+fn list pbfs versions <pbf-name-or-ocid> --current
+```
+
+Get a specific PBF version:
+
+```sh
+fn get pbfs version <pbf-listing-version-ocid>
+```
+
+List supported PBF trigger names:
+
+```sh
+fn list pbfs triggers
+fn list pbfs triggers http
+```
+
 Create a function from a Pre-Built Function (PBF) listing OCID:
 
 ```sh
@@ -164,7 +199,42 @@ For PBF create flows:
 - Fn CLI automatically resolves the minimum required memory from the current PBF version when possible
 - if you specify `--memory`, it must be greater than or equal to the PBF minimum requirement
 
-Current limitation: `--pbf` support is currently focused on `fn create function` and is not yet persisted through `func.yaml` / deploy flows.
+Persist a PBF-backed function definition using `fn init`:
+
+```sh
+fn init --name hello-pbf --pbf <pbf-listing-ocid>
+```
+
+Example `func.yaml` for a PBF-backed function:
+
+```yaml
+deploy:
+  oci:
+    pbf:
+      listing_id: <pbf-listing-ocid>
+```
+
+Deploy a persisted PBF-backed function:
+
+```sh
+fn deploy --app <app-name>
+```
+
+For PBF-backed deploys, Fn CLI skips image build/push/sign flows and creates or updates the function using PBF source details instead.
+
+Inspect/list output also surfaces PBF-backed functions:
+
+```sh
+fn inspect function <app-name> <function-name>
+fn list functions <app-name>
+```
+
+`fn list functions` includes a `SOURCE` column, for example:
+
+```text
+NAME          IMAGE   SOURCE                                      ID
+hello-pbf             pbf:<pbf-listing-ocid>                     <function-ocid>
+```
 
 ### Detached invoke examples
 Invoke a function in detached mode:

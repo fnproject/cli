@@ -87,10 +87,16 @@ type OCIProvisionedConcurrencyConfig struct {
 	Count    *int   `yaml:"count,omitempty" json:"count,omitempty"`
 }
 
+// OCIPBFSourceConfig stores Pre-Built Function source details for OCI Functions.
+type OCIPBFSourceConfig struct {
+	ListingID string `yaml:"listing_id,omitempty" json:"listing_id,omitempty"`
+}
+
 // OCIFunctionDeployConfig stores OCI-specific deploy configuration for a function.
 type OCIFunctionDeployConfig struct {
 	ProvisionedConcurrency *OCIProvisionedConcurrencyConfig `yaml:"provisioned_concurrency,omitempty" json:"provisioned_concurrency,omitempty"`
 	DetachedMode           *OCIDetachedModeConfig           `yaml:"detached_mode,omitempty" json:"detached_mode,omitempty"`
+	PBF                    *OCIPBFSourceConfig              `yaml:"pbf,omitempty" json:"pbf,omitempty"`
 	FreeformTags           map[string]string                `yaml:"freeform_tags,omitempty" json:"freeform_tags,omitempty"`
 	DefinedTags            OCIDefinedTags                   `yaml:"defined_tags,omitempty" json:"defined_tags,omitempty"`
 }
@@ -439,6 +445,9 @@ func (ff *FuncFileV20180708) HasOCIManagedFunctionSettings() bool {
 	if len(oci.FreeformTags) > 0 || len(oci.DefinedTags) > 0 {
 		return true
 	}
+	if oci.PBF != nil && strings.TrimSpace(oci.PBF.ListingID) != "" {
+		return true
+	}
 
 	return false
 }
@@ -459,6 +468,9 @@ func (ff *FuncFileV20180708) OCIManagedFunctionSettingNames() []string {
 		settings = append(settings, "detached_mode")
 	}
 	settings = append(settings, OCIManagedResourceTagSettingNames(ff)...)
+	if oci.PBF != nil && strings.TrimSpace(oci.PBF.ListingID) != "" {
+		settings = append(settings, "pbf")
+	}
 
 	return settings
 }

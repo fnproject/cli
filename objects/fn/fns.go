@@ -78,6 +78,22 @@ type provisionedConcurrencyView struct {
 	Count    *int   `json:"count,omitempty"`
 }
 
+type sourceDetailsView struct {
+	SourceType   string `json:"sourceType,omitempty"`
+	PbfListingID string `json:"pbfListingId,omitempty"`
+}
+
+func formatSourceDisplay(fn *models.Fn) string {
+	view := getSourceDetailsView(fn)
+	if view == nil {
+		return ""
+	}
+	if view.PbfListingID != "" {
+		return fmt.Sprintf("pbf:%s", view.PbfListingID)
+	}
+	return strings.ToLower(view.SourceType)
+}
+
 // SetProvisionedConcurrencyAnnotations adds the internal annotations used to
 // carry provisioned concurrency through the create payload into the OCI shim.
 func SetProvisionedConcurrencyAnnotations(fn *models.Fn, cfg *common.OCIProvisionedConcurrencyConfig) error {
@@ -382,7 +398,39 @@ func buildInspectFnMap(fn *models.Fn) (map[string]interface{}, error) {
 		}
 		inspect["provisionedConcurrency"] = pcValue
 	}
+	if source := getSourceDetailsView(fn); source != nil {
+		sourceData, err := json.Marshal(source)
+		if err != nil {
+			return nil, err
+		}
+		var sourceValue map[string]interface{}
+		if err := json.Unmarshal(sourceData, &sourceValue); err != nil {
+			return nil, err
+		}
+		inspect["sourceDetails"] = sourceValue
+	}
 	return inspect, nil
+}
+
+func getSourceDetailsView(fn *models.Fn) *sourceDetailsView {
+	if fn == nil || fn.Annotations == nil {
+		return nil
+	}
+	sourceTypeRaw, ok := fn.Annotations[annotationSourceType]
+	if !ok {
+		return nil
+	}
+	sourceType, ok := sourceTypeRaw.(string)
+	if !ok || strings.TrimSpace(sourceType) == "" {
+		return nil
+	}
+	view := &sourceDetailsView{SourceType: sourceType}
+	if listingRaw, ok := fn.Annotations[annotationPbfListingID]; ok {
+		if listingID, ok := listingRaw.(string); ok {
+			view.PbfListingID = listingID
+		}
+	}
+	return view
 }
 
 // WithSlash appends "/" to function path
@@ -413,12 +461,14 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 				ID                     string                      `json:"id"`
 				ProvisionedConcurrency *provisionedConcurrencyView `json:"provisionedConcurrency,omitempty"`
 				DetachedMode           *detachedModeView           `json:"detachedMode,omitempty"`
+				SourceDetails          *sourceDetailsView          `json:"sourceDetails,omitempty"`
 			}{
 				Name:                   fn.Name,
 				Image:                  fn.Image,
 				ID:                     fn.ID,
 				ProvisionedConcurrency: getProvisionedConcurrencyView(fn),
 				DetachedMode:           getDetachedModeView(fn),
+				SourceDetails:          getSourceDetailsView(fn),
 			})
 		}
 		b, err := json.MarshalIndent(newFns, "", "    ")
@@ -428,7 +478,7 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 		fmt.Fprint(os.Stdout, string(b))
 	} else {
 		w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
-		fmt.Fprint(w, "NAME", "\t", "IMAGE", "\t", "PC", "\t", "DETACHED_TIMEOUT", "\t", "DESTINATIONS", "\t", "ID", "\n")
+		fmt.Fprint(w, "NAME", "\t", "IMAGE", "\t", "SOURCE", "\t", "PC", "\t", "DETACHED_TIMEOUT", "\t", "DESTINATIONS", "\t", "ID", "\n")
 
 		for _, f := range fns {
 			view := getDetachedModeView(f)
@@ -436,7 +486,7 @@ func printFunctions(c *cli.Context, fns []*models.Fn) error {
 			if view != nil {
 				timeout = view.Timeout
 			}
-			fmt.Fprint(w, f.Name, "\t", f.Image, "\t", formatProvisionedConcurrencyDisplay(f), "\t", timeout, "\t", formatDetachedDestinations(f), "\t", f.ID, "\t", "\n")
+			fmt.Fprint(w, f.Name, "\t", f.Image, "\t", formatSourceDisplay(f), "\t", formatProvisionedConcurrencyDisplay(f), "\t", timeout, "\t", formatDetachedDestinations(f), "\t", f.ID, "\t", "\n")
 		}
 		if err := w.Flush(); err != nil {
 			return err
@@ -493,6 +543,22 @@ func formatProvisionedConcurrencyDisplay(fn *models.Fn) string {
 	default:
 		return strings.ToLower(view.Strategy)
 	}
+}
+
+func buildCreateFnSuccessMessage(fn *models.Fn) string {
+	if fn == nil {
+		return "Successfully created function"
+	}
+	if source := getSourceDetailsView(fn); source != nil && strings.EqualFold(source.SourceType, "PRE_BUILT_FUNCTIONS") {
+		if source.PbfListingID != "" {
+			return fmt.Sprintf("Successfully created function: %s from PBF %s", fn.Name, source.PbfListingID)
+		}
+		return fmt.Sprintf("Successfully created function: %s from PBF", fn.Name)
+	}
+	if strings.TrimSpace(fn.Image) != "" {
+		return fmt.Sprintf("Successfully created function: %s with %s", fn.Name, fn.Image)
+	}
+	return fmt.Sprintf("Successfully created function: %s", fn.Name)
 }
 
 func (f *fnsCmd) list(c *cli.Context) error {
@@ -606,7 +672,8 @@ func WithFuncFileV20180708(ff *common.FuncFileV20180708, fn *models.Fn) error {
 			return err
 		}
 	}
-	if ff.ImageNameV20180708() != "" { // args take precedence
+	isPBFSource := ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.PBF != nil && strings.TrimSpace(ff.Deploy.OCI.PBF.ListingID) != ""
+	if !isPBFSource && ff.ImageNameV20180708() != "" { // args take precedence
 		fn.Image = ff.ImageNameV20180708()
 	}
 	if ff.Timeout != nil {
@@ -627,6 +694,12 @@ func WithFuncFileV20180708(ff *common.FuncFileV20180708, fn *models.Fn) error {
 	}
 	if ff.Deploy != nil && ff.Deploy.OCI != nil {
 		fn.Annotations = common.ApplyOCIResourceTagsToAnnotations(fn.Annotations, ff.Deploy.OCI.FreeformTags, ff.Deploy.OCI.DefinedTags)
+		if ff.Deploy.OCI.PBF != nil {
+			fn.Image = ""
+			if err := setPBFSourceAnnotations(fn, ff.Deploy.OCI.PBF.ListingID); err != nil {
+				return err
+			}
+		}
 	}
 	// do something with triggers here
 
@@ -690,6 +763,23 @@ func resolvePBFMemory(memory uint64, minRequired *int64) (uint64, error) {
 		return 0, fmt.Errorf("--memory %d is below the minimum required for this PBF (%d MiB)", memory, minimum)
 	}
 	return memory, nil
+}
+
+// ResolvePBFMemoryForListing auto-selects or validates memory for a PBF-backed function.
+func ResolvePBFMemoryForListing(p provider.Provider, fn *models.Fn, listingID string) error {
+	if fn == nil || strings.TrimSpace(listingID) == "" {
+		return nil
+	}
+	minMemory, err := fetchCurrentPBFMemoryRequirement(p, listingID)
+	if err != nil {
+		return fmt.Errorf("unable to determine PBF memory requirements: %w", err)
+	}
+	resolvedMemory, err := resolvePBFMemory(fn.Memory, minMemory)
+	if err != nil {
+		return err
+	}
+	fn.Memory = resolvedMemory
+	return nil
 }
 
 func buildFunctionsManagementClient(oracleProvider *fnprovideroracle.OracleProvider) (*ocifunctions.FunctionsManagementClient, error) {
@@ -807,15 +897,9 @@ func (f *fnsCmd) create(c *cli.Context) error {
 		if err := setPBFSourceAnnotations(fn, pbfListingID); err != nil {
 			return err
 		}
-		minMemory, err := fetchCurrentPBFMemoryRequirement(f.provider, pbfListingID)
-		if err != nil {
-			return fmt.Errorf("unable to determine PBF memory requirements: %w", err)
-		}
-		resolvedMemory, err := resolvePBFMemory(fn.Memory, minMemory)
-		if err != nil {
+		if err := ResolvePBFMemoryForListing(f.provider, fn, pbfListingID); err != nil {
 			return err
 		}
-		fn.Memory = resolvedMemory
 	}
 	if pcConfig != nil {
 		if !common.IsOracleProvider(f.provider) {
@@ -890,7 +974,7 @@ func CreateFn(r *fnclient.Fn, appID string, fn *models.Fn) (*models.Fn, error) {
 		return nil, err
 	}
 
-	fmt.Println("Successfully created function:", resp.Payload.Name, "with", resp.Payload.Image)
+	fmt.Println(buildCreateFnSuccessMessage(resp.Payload))
 	return resp.Payload, nil
 }
 

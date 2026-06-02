@@ -355,7 +355,8 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	common.WarnIfOCIManagedFunctionSettingsUnsupported(os.Stderr, p.provider, funcfile.Name, funcfile)
 
 	oracleProvider, _ := getOracleProvider()
-	if oracleProvider != nil && oracleProvider.ImageCompartmentID != "" {
+	isPBFDeploy := funcfile.Deploy != nil && funcfile.Deploy.OCI != nil && funcfile.Deploy.OCI.PBF != nil && strings.TrimSpace(funcfile.Deploy.OCI.PBF.ListingID) != ""
+	if !isPBFDeploy && oracleProvider != nil && oracleProvider.ImageCompartmentID != "" {
 		// If the provider is Oracle and ImageCompartmentID is present, we need to deploy image to the ImageCompartmentID.
 		// The repository name should be unique throughout a tenancy. We check if a repository exists in the compartment and create it if it doesn't already exist.
 		// If the creation fails, it could be because the repository name aready exists in a different compartment.
@@ -393,36 +394,42 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 		// TODO: this whole funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
 	}
 
-	buildArgs := c.StringSlice("build-arg")
+	if !isPBFDeploy {
+		buildArgs := c.StringSlice("build-arg")
 
-	// In case of local ignore the architectures parameter
-	shape := ""
-	if !p.local && !p.localDebug {
-		// fetch the architectures
-		shape = app.Shape
-		if shape == "" {
-			shape = common.DefaultAppShape
-			app.Shape = shape
+		// In case of local ignore the architectures parameter
+		shape := ""
+		if !p.local && !p.localDebug {
+			// fetch the architectures
+			shape = app.Shape
+			if shape == "" {
+				shape = common.DefaultAppShape
+				app.Shape = shape
+			}
+
+			if _, ok := common.ShapeMap[shape]; !ok {
+				return errors.New(fmt.Sprintf("Invalid application : %s shape: %s", app.Name, shape))
+			}
 		}
 
-		if _, ok := common.ShapeMap[shape]; !ok {
-			return errors.New(fmt.Sprintf("Invalid application : %s shape: %s", app.Name, shape))
+		_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, shape, p.localDebug)
+		if err != nil {
+			return err
 		}
-	}
 
-	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, shape, p.localDebug)
-	if err != nil {
-		return err
-	}
-
-	if err := p.signImage(funcfile); err != nil {
-		return err
+		if err := p.signImage(funcfile); err != nil {
+			return err
+		}
 	}
 	return p.updateFunction(c, app.ID, funcfile)
 }
 
 func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.FuncFileV20180708) error {
-	fmt.Printf("Updating function %s using image %s...\n", ff.Name, ff.ImageNameV20180708())
+	if ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.PBF != nil && strings.TrimSpace(ff.Deploy.OCI.PBF.ListingID) != "" {
+		fmt.Printf("Updating function %s using PBF listing %s...\n", ff.Name, ff.Deploy.OCI.PBF.ListingID)
+	} else {
+		fmt.Printf("Updating function %s using image %s...\n", ff.Name, ff.ImageNameV20180708())
+	}
 	var detachedSeconds int
 	if ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.DetachedMode != nil && ff.Deploy.OCI.DetachedMode.Timeout != "" {
 		_, seconds, err := common.ParseDetachedTimeoutSpec(ff.Deploy.OCI.DetachedMode.Timeout)
@@ -440,6 +447,11 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 	fn := &models.Fn{}
 	if err := function.WithFuncFileV20180708(ff, fn); err != nil {
 		return fmt.Errorf("Error getting function with funcfile: %s", err)
+	}
+	if ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.PBF != nil {
+		if err := function.ResolvePBFMemoryForListing(p.provider, fn, ff.Deploy.OCI.PBF.ListingID); err != nil {
+			return err
+		}
 	}
 	if detachedSeconds > 0 && common.IsOracleProvider(p.provider) {
 		function.SetDetachedTimeoutAnnotation(fn, detachedSeconds)
