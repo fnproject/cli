@@ -55,6 +55,9 @@ func (s *appsShim) CreateApp(params *apps.CreateAppParams) (*apps.CreateAppOK, e
 		SyslogUrl:     params.Body.SyslogURL,
 		Shape:         shape,
 	}
+	if err := applyGeneratedOCIParityCreateApplicationDetails(&details, params.Body.Annotations); err != nil {
+		return nil, err
+	}
 
 	req := functions.CreateApplicationRequest{CreateApplicationDetails: details}
 
@@ -105,6 +108,7 @@ func (s *appsShim) ListApps(params *apps.ListAppsParams) (*apps.ListAppsOK, erro
 		Page:          params.Cursor,
 		DisplayName:   params.Name,
 	}
+	applyGeneratedOCIParityListApplicationsRequest(params, &req)
 
 	var applicationSummaries []functions.ApplicationSummary
 
@@ -183,11 +187,14 @@ func (s *appsShim) UpdateApp(params *apps.UpdateAppParams) (*apps.UpdateAppOK, e
 		DefinedTags:  definedTags,
 		SyslogUrl:    params.Body.SyslogURL,
 	}
+	if err := applyGeneratedOCIParityUpdateApplicationDetails(&details, params.Body.Annotations); err != nil {
+		return nil, err
+	}
 
 	req := functions.UpdateApplicationRequest{
 		ApplicationId:            &params.AppID,
 		UpdateApplicationDetails: details,
-		IfMatch:                  etag,
+		IfMatch:                  stringPtrOr(params.IfMatch, etag),
 	}
 
 	res, err := s.ociClient.UpdateApplication(ctxOrBackground(params.Context), req)

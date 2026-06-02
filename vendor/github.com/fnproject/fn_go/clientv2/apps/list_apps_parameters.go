@@ -56,7 +56,8 @@ func NewListAppsParamsWithHTTPClient(client *http.Client) *ListAppsParams {
 	}
 }
 
-/*ListAppsParams contains all the parameters to send to the API endpoint
+/*
+ListAppsParams contains all the parameters to send to the API endpoint
 for the list apps operation typically these are written to a http.Request
 */
 type ListAppsParams struct {
@@ -71,6 +72,31 @@ type ListAppsParams struct {
 
 	*/
 	Name *string
+	/*DisplayName
+	  OCI parity filter for display name.
+
+	*/
+	DisplayName *string
+	/*ID
+	  OCI parity filter for application OCID.
+
+	*/
+	ID *string
+	/*LifecycleState
+	  OCI parity filter for lifecycle state.
+
+	*/
+	LifecycleState *string
+	/*SortBy
+	  OCI parity sort field.
+
+	*/
+	SortBy *string
+	/*SortOrder
+	  OCI parity sort order.
+
+	*/
+	SortOrder *string
 	/*PerPage
 	  Number of results to return, defaults to 30. Max of 100.
 
@@ -132,6 +158,12 @@ func (o *ListAppsParams) WithName(name *string) *ListAppsParams {
 	return o
 }
 
+func (o *ListAppsParams) GetDisplayName() *string    { return o.DisplayName }
+func (o *ListAppsParams) GetID() *string             { return o.ID }
+func (o *ListAppsParams) GetLifecycleState() *string { return o.LifecycleState }
+func (o *ListAppsParams) GetSortBy() *string         { return o.SortBy }
+func (o *ListAppsParams) GetSortOrder() *string      { return o.SortOrder }
+
 // SetName adds the name to the list apps params
 func (o *ListAppsParams) SetName(name *string) {
 	o.Name = name
@@ -186,6 +218,66 @@ func (o *ListAppsParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Regi
 			}
 		}
 
+	}
+
+	if o.DisplayName != nil {
+		var qrDisplayName string
+		if o.DisplayName != nil {
+			qrDisplayName = *o.DisplayName
+		}
+		if qrDisplayName != "" {
+			if err := r.SetQueryParam("display_name", qrDisplayName); err != nil {
+				return err
+			}
+		}
+	}
+
+	if o.ID != nil {
+		var qrID string
+		if o.ID != nil {
+			qrID = *o.ID
+		}
+		if qrID != "" {
+			if err := r.SetQueryParam("id", qrID); err != nil {
+				return err
+			}
+		}
+	}
+
+	if o.LifecycleState != nil {
+		var qrLifecycleState string
+		if o.LifecycleState != nil {
+			qrLifecycleState = *o.LifecycleState
+		}
+		if qrLifecycleState != "" {
+			if err := r.SetQueryParam("lifecycle_state", qrLifecycleState); err != nil {
+				return err
+			}
+		}
+	}
+
+	if o.SortBy != nil {
+		var qrSortBy string
+		if o.SortBy != nil {
+			qrSortBy = *o.SortBy
+		}
+		if qrSortBy != "" {
+			if err := r.SetQueryParam("sort_by", qrSortBy); err != nil {
+				return err
+			}
+		}
+	}
+
+	if o.SortOrder != nil {
+		var qrSortOrder string
+		if o.SortOrder != nil {
+			qrSortOrder = *o.SortOrder
+		}
+		if qrSortOrder != "" {
+			if err := r.SetQueryParam("sort_order", qrSortOrder); err != nil {
+				return err
+			}
+		}
 	}
 
 	if o.PerPage != nil {

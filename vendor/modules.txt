@@ -16,8 +16,8 @@ github.com/davecgh/go-spew/spew
 # github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
 ## explicit
 github.com/fatih/color
-# github.com/fnproject/fn_go v0.8.10
-## explicit; go 1.17
+# github.com/fnproject/fn_go v0.8.11
+## explicit; go 1.24.0
 github.com/fnproject/fn_go
 github.com/fnproject/fn_go/client/version
 github.com/fnproject/fn_go/clientv2

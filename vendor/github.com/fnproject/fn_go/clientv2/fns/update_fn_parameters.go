@@ -57,7 +57,8 @@ func NewUpdateFnParamsWithHTTPClient(client *http.Client) *UpdateFnParams {
 	}
 }
 
-/*UpdateFnParams contains all the parameters to send to the API endpoint
+/*
+UpdateFnParams contains all the parameters to send to the API endpoint
 for the update fn operation typically these are written to a http.Request
 */
 type UpdateFnParams struct {
@@ -66,7 +67,11 @@ type UpdateFnParams struct {
 	  Function data to merge with current values.
 
 	*/
-	Body *modelsv2.Fn
+	Body                *modelsv2.Fn
+	IfMatch             string
+	WaitForState        string
+	MaxWaitSeconds      int64
+	WaitIntervalSeconds int64
 	/*FnID
 	  Opaque, unique Function ID.
 

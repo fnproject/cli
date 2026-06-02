@@ -57,7 +57,8 @@ func NewUpdateAppParamsWithHTTPClient(client *http.Client) *UpdateAppParams {
 	}
 }
 
-/*UpdateAppParams contains all the parameters to send to the API endpoint
+/*
+UpdateAppParams contains all the parameters to send to the API endpoint
 for the update app operation typically these are written to a http.Request
 */
 type UpdateAppParams struct {
@@ -66,7 +67,11 @@ type UpdateAppParams struct {
 	  Opaque, unique Application ID.
 
 	*/
-	AppID string
+	AppID               string
+	IfMatch             string
+	WaitForState        string
+	MaxWaitSeconds      int64
+	WaitIntervalSeconds int64
 	/*Body
 	  Application data to merge with current values.
 

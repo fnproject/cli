@@ -55,7 +55,8 @@ func NewDeleteAppParamsWithHTTPClient(client *http.Client) *DeleteAppParams {
 	}
 }
 
-/*DeleteAppParams contains all the parameters to send to the API endpoint
+/*
+DeleteAppParams contains all the parameters to send to the API endpoint
 for the delete app operation typically these are written to a http.Request
 */
 type DeleteAppParams struct {
@@ -64,7 +65,11 @@ type DeleteAppParams struct {
 	  Opaque, unique Application ID.
 
 	*/
-	AppID string
+	AppID               string
+	IfMatch             string
+	WaitForState        string
+	MaxWaitSeconds      int64
+	WaitIntervalSeconds int64
 
 	timeout    time.Duration
 	Context    context.Context

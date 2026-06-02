@@ -57,7 +57,8 @@ func NewCreateAppParamsWithHTTPClient(client *http.Client) *CreateAppParams {
 	}
 }
 
-/*CreateAppParams contains all the parameters to send to the API endpoint
+/*
+CreateAppParams contains all the parameters to send to the API endpoint
 for the create app operation typically these are written to a http.Request
 */
 type CreateAppParams struct {
@@ -66,7 +67,10 @@ type CreateAppParams struct {
 	  Application data to insert.
 
 	*/
-	Body *modelsv2.App
+	Body                *modelsv2.App
+	WaitForState        string
+	MaxWaitSeconds      int64
+	WaitIntervalSeconds int64
 
 	timeout    time.Duration
 	Context    context.Context

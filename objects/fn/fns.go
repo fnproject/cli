@@ -83,6 +83,70 @@ type sourceDetailsView struct {
 	PbfListingID string `json:"pbfListingId,omitempty"`
 }
 
+type fnFromJSON struct {
+	DisplayName         string                 `json:"displayName"`
+	Image               string                 `json:"image"`
+	MemoryInMBs         uint64                 `json:"memoryInMBs"`
+	Config              map[string]string      `json:"config"`
+	TimeoutInSeconds    *int32                 `json:"timeoutInSeconds"`
+	TraceConfig         map[string]interface{} `json:"traceConfig"`
+	FreeformTags        map[string]string      `json:"freeformTags"`
+	DefinedTags         common.OCIDefinedTags  `json:"definedTags"`
+	IfMatch             string                 `json:"ifMatch"`
+	WaitForState        string                 `json:"waitForState"`
+	MaxWaitSeconds      int                    `json:"maxWaitSeconds"`
+	WaitIntervalSeconds int                    `json:"waitIntervalSeconds"`
+}
+
+type fnDeleteFromJSON struct {
+	IfMatch             string `json:"ifMatch"`
+	WaitForState        string `json:"waitForState"`
+	MaxWaitSeconds      int    `json:"maxWaitSeconds"`
+	WaitIntervalSeconds int    `json:"waitIntervalSeconds"`
+}
+
+func applyFnFromJSON(fn *models.Fn, control *common.OCIRequestControl, input *fnFromJSON) {
+	if fn == nil || input == nil {
+		return
+	}
+	if strings.TrimSpace(fn.Name) == "" && strings.TrimSpace(input.DisplayName) != "" {
+		fn.Name = strings.TrimSpace(input.DisplayName)
+	}
+	if strings.TrimSpace(input.Image) != "" {
+		fn.Image = strings.TrimSpace(input.Image)
+	}
+	if input.MemoryInMBs > 0 {
+		fn.Memory = input.MemoryInMBs
+	}
+	if len(input.Config) > 0 {
+		fn.Config = input.Config
+	}
+	if input.TimeoutInSeconds != nil {
+		fn.Timeout = input.TimeoutInSeconds
+	}
+	fn.Annotations = common.ApplyOCIResourceTagsToAnnotations(fn.Annotations, input.FreeformTags, input.DefinedTags)
+	if fn.Annotations == nil {
+		fn.Annotations = map[string]interface{}{}
+	}
+	if input.TraceConfig != nil {
+		fn.Annotations[annotationOCIParityFnTraceConfig] = input.TraceConfig
+	}
+	if control != nil {
+		if control.IfMatch == "" {
+			control.IfMatch = strings.TrimSpace(input.IfMatch)
+		}
+		if control.WaitForState == "" {
+			control.WaitForState = strings.ToUpper(strings.TrimSpace(input.WaitForState))
+		}
+		if control.MaxWaitSeconds == 0 {
+			control.MaxWaitSeconds = input.MaxWaitSeconds
+		}
+		if control.WaitIntervalSeconds == 0 {
+			control.WaitIntervalSeconds = input.WaitIntervalSeconds
+		}
+	}
+}
+
 func formatSourceDisplay(fn *models.Fn) string {
 	view := getSourceDetailsView(fn)
 	if view == nil {
@@ -409,6 +473,11 @@ func buildInspectFnMap(fn *models.Fn) (map[string]interface{}, error) {
 		}
 		inspect["sourceDetails"] = sourceValue
 	}
+	if fn != nil && fn.Annotations != nil {
+		if trace, ok := fn.Annotations[annotationOCIParityFnTraceConfig]; ok {
+			inspect["traceConfig"] = trace
+		}
+	}
 	return inspect, nil
 }
 
@@ -580,6 +649,35 @@ func getFns(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.Fn, error) {
 		Context: context.Background(),
 		AppID:   &a.ID,
 	}
+	var fromJSON struct {
+		DisplayName    string `json:"displayName"`
+		ID             string `json:"id"`
+		LifecycleState string `json:"lifecycleState"`
+		SortBy         string `json:"sortBy"`
+		SortOrder      string `json:"sortOrder"`
+	}
+	if err := common.LoadCLIJSONInput(c.String("from-json"), &fromJSON); err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(fromJSON.DisplayName) != "" {
+		params.DisplayName = &fromJSON.DisplayName
+	}
+	if strings.TrimSpace(fromJSON.ID) != "" {
+		params.ID = &fromJSON.ID
+	}
+	if strings.TrimSpace(fromJSON.LifecycleState) != "" {
+		lifecycle := strings.TrimSpace(fromJSON.LifecycleState)
+		params.LifecycleState = &lifecycle
+	}
+	if strings.TrimSpace(fromJSON.SortBy) != "" {
+		sortBy := strings.TrimSpace(fromJSON.SortBy)
+		params.SortBy = &sortBy
+	}
+	if strings.TrimSpace(fromJSON.SortOrder) != "" {
+		sortOrder := strings.TrimSpace(fromJSON.SortOrder)
+		params.SortOrder = &sortOrder
+	}
+	ApplyGeneratedOCIParityFnListParams(c, params)
 
 	var resFns []*models.Fn
 	for {
@@ -838,6 +936,8 @@ func ApplyProvisionedConcurrency(p provider.Provider, fnID string, cfg *common.O
 }
 
 func (f *fnsCmd) create(c *cli.Context) error {
+	control := common.ExtractOCIRequestControl(c)
+	common.WarnUnsupportedOCIRequestControl(f.provider, control)
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 	pbfListingID := strings.TrimSpace(c.String("pbf"))
@@ -865,8 +965,16 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	fn := &models.Fn{}
 	fn.Name = fnName
 	fn.Image = c.Args().Get(2)
+	var fromJSON fnFromJSON
+	if err := common.LoadCLIJSONInput(c.String("from-json"), &fromJSON); err != nil {
+		return err
+	}
+	applyFnFromJSON(fn, &control, &fromJSON)
 
 	WithFlags(c, fn)
+	if err := ApplyGeneratedOCIParityFnFlags(c, fn); err != nil {
+		return err
+	}
 	annotations, err := common.ApplyOCIResourceTagFlagsToAnnotations(
 		fn.Annotations,
 		c.StringSlice("tag"),
@@ -945,12 +1053,22 @@ func (f *fnsCmd) create(c *cli.Context) error {
 		return err
 	}
 
-	_, err = CreateFn(f.client, a.ID, fn)
+	createdFn, err := CreateFnWithControl(f.client, a.ID, fn, control)
+	if err != nil {
+		return err
+	}
+	if err := common.WaitForFunctionState(f.provider, createdFn.ID, control.WaitForState, control.MaxWaitSeconds, control.WaitIntervalSeconds); err != nil {
+		return err
+	}
 	return err
 }
 
 // CreateFn request
 func CreateFn(r *fnclient.Fn, appID string, fn *models.Fn) (*models.Fn, error) {
+	return CreateFnWithControl(r, appID, fn, common.OCIRequestControl{})
+}
+
+func CreateFnWithControl(r *fnclient.Fn, appID string, fn *models.Fn, control common.OCIRequestControl) (*models.Fn, error) {
 	fn.AppID = appID
 	if fn.Image != "" {
 		err := common.ValidateTagImageName(fn.Image)
@@ -960,8 +1078,11 @@ func CreateFn(r *fnclient.Fn, appID string, fn *models.Fn) (*models.Fn, error) {
 	}
 
 	resp, err := r.Fns.CreateFn(&apifns.CreateFnParams{
-		Context: context.Background(),
-		Body:    fn,
+		Context:             context.Background(),
+		Body:                fn,
+		WaitForState:        control.WaitForState,
+		MaxWaitSeconds:      int64(control.MaxWaitSeconds),
+		WaitIntervalSeconds: int64(control.WaitIntervalSeconds),
 	})
 
 	if err != nil {
@@ -980,6 +1101,10 @@ func CreateFn(r *fnclient.Fn, appID string, fn *models.Fn) (*models.Fn, error) {
 
 // PutFn updates the fn with the given ID using the content of the provided fn
 func PutFn(f *fnclient.Fn, fnID string, fn *models.Fn) error {
+	return PutFnWithControl(f, fnID, fn, common.OCIRequestControl{})
+}
+
+func PutFnWithControl(f *fnclient.Fn, fnID string, fn *models.Fn, control common.OCIRequestControl) error {
 	if fn.Image != "" {
 		err := common.ValidateTagImageName(fn.Image)
 		if err != nil {
@@ -988,9 +1113,13 @@ func PutFn(f *fnclient.Fn, fnID string, fn *models.Fn) error {
 	}
 
 	_, err := f.Fns.UpdateFn(&apifns.UpdateFnParams{
-		Context: context.Background(),
-		FnID:    fnID,
-		Body:    fn,
+		Context:             context.Background(),
+		FnID:                fnID,
+		Body:                fn,
+		IfMatch:             control.IfMatch,
+		WaitForState:        control.WaitForState,
+		MaxWaitSeconds:      int64(control.MaxWaitSeconds),
+		WaitIntervalSeconds: int64(control.WaitIntervalSeconds),
 	})
 
 	if err != nil {
@@ -1040,6 +1169,8 @@ func GetFnByName(client *fnclient.Fn, appID, fnName string) (*models.Fn, error) 
 }
 
 func (f *fnsCmd) update(c *cli.Context) error {
+	control := common.ExtractOCIRequestControl(c)
+	common.WarnUnsupportedOCIRequestControl(f.provider, control)
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 	if strings.TrimSpace(c.String("pbf")) != "" {
@@ -1078,8 +1209,16 @@ func (f *fnsCmd) update(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	var fromJSON fnFromJSON
+	if err := common.LoadCLIJSONInput(c.String("from-json"), &fromJSON); err != nil {
+		return err
+	}
+	applyFnFromJSON(fn, &control, &fromJSON)
 
 	WithFlags(c, fn)
+	if err := ApplyGeneratedOCIParityFnFlags(c, fn); err != nil {
+		return err
+	}
 	annotations, err := common.ApplyOCIResourceTagFlagsToAnnotations(
 		fn.Annotations,
 		c.StringSlice("tag"),
@@ -1126,7 +1265,7 @@ func (f *fnsCmd) update(c *cli.Context) error {
 		}
 	}
 
-	err = PutFn(f.client, fn.ID, fn)
+	err = PutFnWithControl(f.client, fn.ID, fn, control)
 	if err != nil {
 		return err
 	}
@@ -1136,6 +1275,9 @@ func (f *fnsCmd) update(c *cli.Context) error {
 		} else if err := ApplyProvisionedConcurrency(f.provider, fn.ID, pcConfig); err != nil {
 			return err
 		}
+	}
+	if err := common.WaitForFunctionState(f.provider, fn.ID, control.WaitForState, control.MaxWaitSeconds, control.WaitIntervalSeconds); err != nil {
+		return err
 	}
 
 	fmt.Println(appName, fnName, "updated")
@@ -1295,6 +1437,24 @@ func (f *fnsCmd) inspect(c *cli.Context) error {
 }
 
 func (f *fnsCmd) delete(c *cli.Context) error {
+	control := common.ExtractOCIRequestControl(c)
+	common.WarnUnsupportedOCIRequestControl(f.provider, control)
+	var fromJSON fnDeleteFromJSON
+	if err := common.LoadCLIJSONInput(c.String("from-json"), &fromJSON); err != nil {
+		return err
+	}
+	if control.IfMatch == "" {
+		control.IfMatch = strings.TrimSpace(fromJSON.IfMatch)
+	}
+	if control.WaitForState == "" {
+		control.WaitForState = strings.ToUpper(strings.TrimSpace(fromJSON.WaitForState))
+	}
+	if control.MaxWaitSeconds == 0 {
+		control.MaxWaitSeconds = fromJSON.MaxWaitSeconds
+	}
+	if control.WaitIntervalSeconds == 0 {
+		control.WaitIntervalSeconds = fromJSON.WaitIntervalSeconds
+	}
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
 
@@ -1334,9 +1494,16 @@ func (f *fnsCmd) delete(c *cli.Context) error {
 
 	params := apifns.NewDeleteFnParams()
 	params.FnID = fn.ID
+	params.IfMatch = control.IfMatch
+	params.WaitForState = control.WaitForState
+	params.MaxWaitSeconds = int64(control.MaxWaitSeconds)
+	params.WaitIntervalSeconds = int64(control.WaitIntervalSeconds)
 	_, err = f.client.Fns.DeleteFn(params)
 
 	if err != nil {
+		return err
+	}
+	if err := common.WaitForFunctionState(f.provider, fn.ID, control.WaitForState, control.MaxWaitSeconds, control.WaitIntervalSeconds); err != nil {
 		return err
 	}
 

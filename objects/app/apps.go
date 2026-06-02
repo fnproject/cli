@@ -17,6 +17,7 @@
 package app
 
 import (
+	ocifunctions "github.com/oracle/oci-go-sdk/v65/functions"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -45,6 +46,98 @@ const (
 type appsCmd struct {
 	provider provider.Provider
 	client   *fnclient.Fn
+}
+
+type appFromJSON struct {
+	DisplayName             string                            `json:"displayName"`
+	Config                  map[string]string                 `json:"config"`
+	SyslogURL               *string                           `json:"syslogUrl"`
+	Shape                   string                            `json:"shape"`
+	SubnetIds               []string                          `json:"subnetIds"`
+	FreeformTags            map[string]string                 `json:"freeformTags"`
+	DefinedTags             common.OCIDefinedTags             `json:"definedTags"`
+	TraceConfig             map[string]interface{}            `json:"traceConfig"`
+	NetworkSecurityGroupIds []string                          `json:"networkSecurityGroupIds"`
+	ImagePolicyConfig       map[string]interface{}            `json:"imagePolicyConfig"`
+	SecurityAttributes      map[string]map[string]interface{} `json:"securityAttributes"`
+	IfMatch                 string                            `json:"ifMatch"`
+	WaitForState            string                            `json:"waitForState"`
+	MaxWaitSeconds          int                               `json:"maxWaitSeconds"`
+	WaitIntervalSeconds     int                               `json:"waitIntervalSeconds"`
+}
+
+type appDeleteFromJSON struct {
+	IfMatch             string `json:"ifMatch"`
+	WaitForState        string `json:"waitForState"`
+	MaxWaitSeconds      int    `json:"maxWaitSeconds"`
+	WaitIntervalSeconds int    `json:"waitIntervalSeconds"`
+}
+
+type appChangeCompartmentFromJSON struct {
+	CompartmentID       string `json:"compartmentId"`
+	IfMatch             string `json:"ifMatch"`
+	WaitForState        string `json:"waitForState"`
+	MaxWaitSeconds      int    `json:"maxWaitSeconds"`
+	WaitIntervalSeconds int    `json:"waitIntervalSeconds"`
+}
+
+func applyAppFromJSON(app *modelsv2.App, control *common.OCIRequestControl, input *appFromJSON) {
+	if app == nil || input == nil {
+		return
+	}
+	if strings.TrimSpace(app.Name) == "" && strings.TrimSpace(input.DisplayName) != "" {
+		app.Name = strings.TrimSpace(input.DisplayName)
+	}
+	if len(input.Config) > 0 {
+		app.Config = input.Config
+	}
+	if input.SyslogURL != nil {
+		app.SyslogURL = input.SyslogURL
+	}
+	if input.Shape != "" {
+		app.Shape = input.Shape
+	}
+	app.Annotations = common.ApplyOCIResourceTagsToAnnotations(app.Annotations, input.FreeformTags, input.DefinedTags)
+	if app.Annotations == nil {
+		app.Annotations = map[string]interface{}{}
+	}
+	if len(input.SubnetIds) > 0 {
+		values := make([]interface{}, 0, len(input.SubnetIds))
+		for _, id := range input.SubnetIds {
+			values = append(values, strings.TrimSpace(id))
+		}
+		app.Annotations[annotationSubnet] = values
+	}
+	if input.TraceConfig != nil {
+		app.Annotations[annotationOCIParityTraceConfig] = input.TraceConfig
+	}
+	if len(input.NetworkSecurityGroupIds) > 0 {
+		values := make([]interface{}, 0, len(input.NetworkSecurityGroupIds))
+		for _, id := range input.NetworkSecurityGroupIds {
+			values = append(values, strings.TrimSpace(id))
+		}
+		app.Annotations[annotationOCIParityNetworkSecurityGroupIds] = values
+	}
+	if input.ImagePolicyConfig != nil {
+		app.Annotations[annotationOCIParityImagePolicyConfig] = input.ImagePolicyConfig
+	}
+	if input.SecurityAttributes != nil {
+		app.Annotations[annotationOCIParitySecurityAttributes] = input.SecurityAttributes
+	}
+	if control != nil {
+		if control.IfMatch == "" {
+			control.IfMatch = strings.TrimSpace(input.IfMatch)
+		}
+		if control.WaitForState == "" {
+			control.WaitForState = strings.ToUpper(strings.TrimSpace(input.WaitForState))
+		}
+		if control.MaxWaitSeconds == 0 {
+			control.MaxWaitSeconds = input.MaxWaitSeconds
+		}
+		if control.WaitIntervalSeconds == 0 {
+			control.WaitIntervalSeconds = input.WaitIntervalSeconds
+		}
+	}
 }
 
 func printApps(c *cli.Context, apps []*modelsv2.App) error {
@@ -90,6 +183,35 @@ func (a *appsCmd) list(c *cli.Context) error {
 // getApps returns an array of all apps in the given context and client
 func getApps(c *cli.Context, client *fnclient.Fn) ([]*modelsv2.App, error) {
 	params := &apiapps.ListAppsParams{Context: context.Background()}
+	var fromJSON struct {
+		DisplayName    string `json:"displayName"`
+		ID             string `json:"id"`
+		LifecycleState string `json:"lifecycleState"`
+		SortBy         string `json:"sortBy"`
+		SortOrder      string `json:"sortOrder"`
+	}
+	if err := common.LoadCLIJSONInput(c.String("from-json"), &fromJSON); err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(fromJSON.DisplayName) != "" {
+		params.DisplayName = &fromJSON.DisplayName
+	}
+	if strings.TrimSpace(fromJSON.ID) != "" {
+		params.ID = &fromJSON.ID
+	}
+	if strings.TrimSpace(fromJSON.LifecycleState) != "" {
+		lifecycle := strings.TrimSpace(fromJSON.LifecycleState)
+		params.LifecycleState = &lifecycle
+	}
+	if strings.TrimSpace(fromJSON.SortBy) != "" {
+		sortBy := strings.TrimSpace(fromJSON.SortBy)
+		params.SortBy = &sortBy
+	}
+	if strings.TrimSpace(fromJSON.SortOrder) != "" {
+		sortOrder := strings.TrimSpace(fromJSON.SortOrder)
+		params.SortOrder = &sortOrder
+	}
+	ApplyGeneratedOCIParityAppListParams(c, params)
 	var resApps []*modelsv2.App
 	for {
 		resp, err := client.Apps.ListApps(params)
@@ -158,6 +280,9 @@ func appWithFlags(c *cli.Context, app *modelsv2.App) error {
 		return err
 	}
 	app.Annotations = annotations
+	if err := ApplyGeneratedOCIParityAppFlags(c, app); err != nil {
+		return err
+	}
 	if err := setSubnetIDAnnotations(app, c.StringSlice("subnet-id")); err != nil {
 		return err
 	}
@@ -228,9 +353,16 @@ func validateSubnetIDCreateRequired(p provider.Provider, app *modelsv2.App) erro
 }
 
 func (a *appsCmd) create(c *cli.Context) error {
+	control := common.ExtractOCIRequestControl(c)
+	common.WarnUnsupportedOCIRequestControl(a.provider, control)
 	app := &modelsv2.App{
 		Name: c.Args().Get(0),
 	}
+	var fromJSON appFromJSON
+	if err := common.LoadCLIJSONInput(c.String("from-json"), &fromJSON); err != nil {
+		return err
+	}
+	applyAppFromJSON(app, &control, &fromJSON)
 
 	if err := appWithFlags(c, app); err != nil {
 		return err
@@ -252,15 +384,28 @@ func (a *appsCmd) create(c *cli.Context) error {
 	if err := validateSubnetIDCreateRequired(a.provider, app); err != nil {
 		return err
 	}
-	_, err := CreateApp(a.client, app)
+	createdApp, err := CreateAppWithControl(a.client, app, control)
+	if err != nil {
+		return err
+	}
+	if err := common.WaitForAppState(a.provider, createdApp.ID, control.WaitForState, control.MaxWaitSeconds, control.WaitIntervalSeconds); err != nil {
+		return err
+	}
 	return err
 }
 
 // CreateApp creates a new app using the given client
 func CreateApp(a *fnclient.Fn, app *modelsv2.App) (*modelsv2.App, error) {
+	return CreateAppWithControl(a, app, common.OCIRequestControl{})
+}
+
+func CreateAppWithControl(a *fnclient.Fn, app *modelsv2.App, control common.OCIRequestControl) (*modelsv2.App, error) {
 	resp, err := a.Apps.CreateApp(&apiapps.CreateAppParams{
-		Context: context.Background(),
-		Body:    app,
+		Context:             context.Background(),
+		Body:                app,
+		WaitForState:        control.WaitForState,
+		MaxWaitSeconds:      int64(control.MaxWaitSeconds),
+		WaitIntervalSeconds: int64(control.WaitIntervalSeconds),
 	})
 
 	if err != nil {
@@ -278,11 +423,18 @@ func CreateApp(a *fnclient.Fn, app *modelsv2.App) (*modelsv2.App, error) {
 
 func (a *appsCmd) update(c *cli.Context) error {
 	appName := c.Args().First()
+	control := common.ExtractOCIRequestControl(c)
+	common.WarnUnsupportedOCIRequestControl(a.provider, control)
 
 	app, err := GetAppByName(a.client, appName)
 	if err != nil {
 		return err
 	}
+	var fromJSON appFromJSON
+	if err := common.LoadCLIJSONInput(c.String("from-json"), &fromJSON); err != nil {
+		return err
+	}
+	applyAppFromJSON(app, &control, &fromJSON)
 
 	if err := validateSubnetIDUpdateSupported(a.provider, c.StringSlice("subnet-id")); err != nil {
 		return err
@@ -292,7 +444,11 @@ func (a *appsCmd) update(c *cli.Context) error {
 		return err
 	}
 
-	if _, err = PutApp(a.client, app.ID, app); err != nil {
+	updatedApp, err := PutAppWithControl(a.client, app.ID, app, control)
+	if err != nil {
+		return err
+	}
+	if err := common.WaitForAppState(a.provider, updatedApp.ID, control.WaitForState, control.MaxWaitSeconds, control.WaitIntervalSeconds); err != nil {
 		return err
 	}
 
@@ -433,6 +589,24 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 
 func (a *appsCmd) delete(c *cli.Context) error {
 	appName := c.Args().First()
+	control := common.ExtractOCIRequestControl(c)
+	common.WarnUnsupportedOCIRequestControl(a.provider, control)
+	var fromJSON appDeleteFromJSON
+	if err := common.LoadCLIJSONInput(c.String("from-json"), &fromJSON); err != nil {
+		return err
+	}
+	if control.IfMatch == "" {
+		control.IfMatch = strings.TrimSpace(fromJSON.IfMatch)
+	}
+	if control.WaitForState == "" {
+		control.WaitForState = strings.ToUpper(strings.TrimSpace(fromJSON.WaitForState))
+	}
+	if control.MaxWaitSeconds == 0 {
+		control.MaxWaitSeconds = fromJSON.MaxWaitSeconds
+	}
+	if control.WaitIntervalSeconds == 0 {
+		control.WaitIntervalSeconds = fromJSON.WaitIntervalSeconds
+	}
 	if appName == "" {
 		//return errors.New("App name required to delete")
 	}
@@ -472,8 +646,12 @@ func (a *appsCmd) delete(c *cli.Context) error {
 	}
 
 	_, err = a.client.Apps.DeleteApp(&apiapps.DeleteAppParams{
-		Context: context.Background(),
-		AppID:   app.ID,
+		Context:             context.Background(),
+		AppID:               app.ID,
+		IfMatch:             control.IfMatch,
+		WaitForState:        control.WaitForState,
+		MaxWaitSeconds:      int64(control.MaxWaitSeconds),
+		WaitIntervalSeconds: int64(control.WaitIntervalSeconds),
 	})
 
 	if err != nil {
@@ -483,17 +661,94 @@ func (a *appsCmd) delete(c *cli.Context) error {
 		}
 		return err
 	}
+	if err := common.WaitForAppState(a.provider, app.ID, control.WaitForState, control.MaxWaitSeconds, control.WaitIntervalSeconds); err != nil {
+		return err
+	}
 
 	fmt.Println("App", appName, "deleted")
 	return nil
 }
 
+func (a *appsCmd) changeCompartment(c *cli.Context) error {
+	control := common.ExtractOCIRequestControl(c)
+	common.WarnUnsupportedOCIRequestControl(a.provider, control)
+	var fromJSON appChangeCompartmentFromJSON
+	if err := common.LoadCLIJSONInput(c.String("from-json"), &fromJSON); err != nil {
+		return err
+	}
+	compartmentID := strings.TrimSpace(c.String("compartment-id"))
+	if compartmentID == "" {
+		compartmentID = strings.TrimSpace(fromJSON.CompartmentID)
+	}
+	if compartmentID == "" {
+		return fmt.Errorf("compartment id is required")
+	}
+	if control.IfMatch == "" {
+		control.IfMatch = strings.TrimSpace(fromJSON.IfMatch)
+	}
+	if control.WaitForState == "" {
+		control.WaitForState = strings.ToUpper(strings.TrimSpace(fromJSON.WaitForState))
+	}
+	if control.MaxWaitSeconds == 0 {
+		control.MaxWaitSeconds = fromJSON.MaxWaitSeconds
+	}
+	if control.WaitIntervalSeconds == 0 {
+		control.WaitIntervalSeconds = fromJSON.WaitIntervalSeconds
+	}
+	if !common.IsOracleProvider(a.provider) {
+		return fmt.Errorf("change-compartment is only supported with an oracle provider")
+	}
+	appName := c.Args().First()
+	appObj, err := GetAppByName(a.client, appName)
+	if err != nil {
+		return err
+	}
+	mgmtClient, err := common.BuildOCIManagementClient(a.provider)
+	if err != nil {
+		return err
+	}
+	if mgmtClient == nil {
+		return fmt.Errorf("unable to build OCI Functions management client")
+	}
+	req := ocifunctions.ChangeApplicationCompartmentRequest{
+		ApplicationId: &appObj.ID,
+		ChangeApplicationCompartmentDetails: ocifunctions.ChangeApplicationCompartmentDetails{
+			CompartmentId: &compartmentID,
+		},
+		IfMatch: stringPtr(control.IfMatch),
+	}
+	_, err = mgmtClient.ChangeApplicationCompartment(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	if err := common.WaitForAppState(a.provider, appObj.ID, control.WaitForState, control.MaxWaitSeconds, control.WaitIntervalSeconds); err != nil {
+		return err
+	}
+	fmt.Printf("App %s moved to compartment %s\n", appName, compartmentID)
+	return nil
+}
+
+func stringPtr(value string) *string {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	return &value
+}
+
 // PutApp updates the app with the given ID using the content of the provided app
 func PutApp(a *fnclient.Fn, appID string, app *modelsv2.App) (*modelsv2.App, error) {
+	return PutAppWithControl(a, appID, app, common.OCIRequestControl{})
+}
+
+func PutAppWithControl(a *fnclient.Fn, appID string, app *modelsv2.App, control common.OCIRequestControl) (*modelsv2.App, error) {
 	resp, err := a.Apps.UpdateApp(&apiapps.UpdateAppParams{
-		Context: context.Background(),
-		AppID:   appID,
-		Body:    app,
+		Context:             context.Background(),
+		AppID:               appID,
+		Body:                app,
+		IfMatch:             control.IfMatch,
+		WaitForState:        control.WaitForState,
+		MaxWaitSeconds:      int64(control.MaxWaitSeconds),
+		WaitIntervalSeconds: int64(control.WaitIntervalSeconds),
 	})
 
 	if err != nil {
