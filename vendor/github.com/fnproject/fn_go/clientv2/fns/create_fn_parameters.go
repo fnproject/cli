@@ -57,7 +57,8 @@ func NewCreateFnParamsWithHTTPClient(client *http.Client) *CreateFnParams {
 	}
 }
 
-/*CreateFnParams contains all the parameters to send to the API endpoint
+/*
+CreateFnParams contains all the parameters to send to the API endpoint
 for the create fn operation typically these are written to a http.Request
 */
 type CreateFnParams struct {
@@ -66,7 +67,10 @@ type CreateFnParams struct {
 	  Function data to insert.
 
 	*/
-	Body *modelsv2.Fn
+	Body                *modelsv2.Fn
+	WaitForState        string
+	MaxWaitSeconds      int64
+	WaitIntervalSeconds int64
 
 	timeout    time.Duration
 	Context    context.Context

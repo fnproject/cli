@@ -85,6 +85,9 @@ func (s *fnsShim) CreateFn(params *fns.CreateFnParams) (*fns.CreateFnOK, error) 
 		DefinedTags:                  definedTags,
 		TimeoutInSeconds:             parseTimeout(params.Body.Timeout),
 	}
+	if err := applyGeneratedOCIParityCreateFunctionDetails(&details, params.Body.Annotations); err != nil {
+		return nil, err
+	}
 	if detachedTimeoutSeconds, err := parseDetachedTimeoutAnnotation(params.Body.Annotations); err != nil {
 		return nil, err
 	} else if detachedTimeoutSeconds != nil {
@@ -93,8 +96,12 @@ func (s *fnsShim) CreateFn(params *fns.CreateFnParams) (*fns.CreateFnOK, error) 
 	if successDestination, failureDestination, err := parseDestinationAnnotations(params.Body.Annotations); err != nil {
 		return nil, err
 	} else {
-		details.SuccessDestination = successDestination
-		details.FailureDestination = failureDestination
+		if successDestination != nil {
+			details.SuccessDestination = successDestination
+		}
+		if failureDestination != nil {
+			details.FailureDestination = failureDestination
+		}
 	}
 
 	req := functions.CreateFunctionRequest{CreateFunctionDetails: details}
@@ -111,6 +118,7 @@ func (s *fnsShim) CreateFn(params *fns.CreateFnParams) (*fns.CreateFnOK, error) 
 
 func (s *fnsShim) DeleteFn(params *fns.DeleteFnParams) (*fns.DeleteFnNoContent, error) {
 	req := functions.DeleteFunctionRequest{FunctionId: &params.FnID}
+	req.IfMatch = stringPtr(params.IfMatch)
 
 	_, err := s.ociClient.DeleteFunction(ctxOrBackground(params.Context), req)
 	if err != nil {
@@ -146,6 +154,7 @@ func (s *fnsShim) ListFns(params *fns.ListFnsParams) (*fns.ListFnsOK, error) {
 		Page:          params.Cursor,
 		DisplayName:   params.Name,
 	}
+	applyGeneratedOCIParityListFunctionsRequest(params, &req)
 
 	var functionSummaries []functions.FunctionSummary
 
@@ -243,6 +252,9 @@ func (s *fnsShim) UpdateFn(params *fns.UpdateFnParams) (*fns.UpdateFnOK, error) 
 		DefinedTags:      definedTags,
 		TimeoutInSeconds: parseTimeout(params.Body.Timeout),
 	}
+	if err := applyGeneratedOCIParityUpdateFunctionDetails(&details, params.Body.Annotations); err != nil {
+		return nil, err
+	}
 	if detachedTimeoutSeconds, err := parseDetachedTimeoutAnnotation(params.Body.Annotations); err != nil {
 		return nil, err
 	} else if detachedTimeoutSeconds != nil {
@@ -251,14 +263,18 @@ func (s *fnsShim) UpdateFn(params *fns.UpdateFnParams) (*fns.UpdateFnOK, error) 
 	if successDestination, failureDestination, err := parseDestinationAnnotations(params.Body.Annotations); err != nil {
 		return nil, err
 	} else {
-		details.SuccessDestination = successDestination
-		details.FailureDestination = failureDestination
+		if successDestination != nil {
+			details.SuccessDestination = successDestination
+		}
+		if failureDestination != nil {
+			details.FailureDestination = failureDestination
+		}
 	}
 
 	req := functions.UpdateFunctionRequest{
 		FunctionId:            &params.FnID,
 		UpdateFunctionDetails: details,
-		IfMatch:               etag,
+		IfMatch:               stringPtrOr(params.IfMatch, etag),
 	}
 
 	res, err := s.ociClient.UpdateFunction(ctxOrBackground(params.Context), req)
@@ -523,6 +539,7 @@ func ociFnToV2(ociFn functions.Function) *modelsv2.Fn {
 	addProvisionedConcurrencyAnnotations(annotations, ociFn.ProvisionedConcurrencyConfig)
 	addTagAnnotations(annotations, ociFn.FreeformTags, ociFn.DefinedTags)
 	addSourceDetailsAnnotations(annotations, ociFn.SourceDetails)
+	addTraceConfigAnnotation(annotations, ociFn.TraceConfig)
 	if ociFn.DetachedModeTimeoutInSeconds != nil {
 		annotations[annotationDetachedTimeoutSeconds] = *ociFn.DetachedModeTimeoutInSeconds
 	}
@@ -570,6 +587,7 @@ func ociFnSummaryToV2(ociFnSummary functions.FunctionSummary) *modelsv2.Fn {
 	addProvisionedConcurrencyAnnotations(annotations, ociFnSummary.ProvisionedConcurrencyConfig)
 	addTagAnnotations(annotations, ociFnSummary.FreeformTags, ociFnSummary.DefinedTags)
 	addSourceDetailsAnnotations(annotations, ociFnSummary.SourceDetails)
+	addTraceConfigAnnotation(annotations, ociFnSummary.TraceConfig)
 	if ociFnSummary.DetachedModeTimeoutInSeconds != nil {
 		annotations[annotationDetachedTimeoutSeconds] = *ociFnSummary.DetachedModeTimeoutInSeconds
 	}
@@ -649,5 +667,18 @@ func addSourceDetailsAnnotations(annotations map[string]interface{}, sourceDetai
 		if typed.PbfListingId != nil {
 			annotations[annotationPbfListingID] = *typed.PbfListingId
 		}
+	}
+}
+
+func addTraceConfigAnnotation(annotations map[string]interface{}, traceConfig *functions.FunctionTraceConfig) {
+	if annotations == nil || traceConfig == nil {
+		return
+	}
+	trace := map[string]interface{}{}
+	if traceConfig.IsEnabled != nil {
+		trace["isEnabled"] = *traceConfig.IsEnabled
+	}
+	if len(trace) > 0 {
+		annotations[annotationOCIParityFnTraceConfig] = trace
 	}
 }

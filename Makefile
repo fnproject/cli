@@ -4,6 +4,10 @@ all: dep build
 build: 
 	go build -o fn
 
+generate-oci-parity:
+	@if [ -z "$(SPEC)" ]; then echo "SPEC is required. Usage: make generate-oci-parity SPEC=/absolute/path/to/functions-api-spec.yaml"; exit 1; fi
+	go run ./tools/oci_parity_gen --spec "$(SPEC)"
+
 install:
 	go build -o ${GOPATH}/bin/fn
 

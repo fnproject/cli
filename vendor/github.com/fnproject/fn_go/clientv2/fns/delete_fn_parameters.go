@@ -55,7 +55,8 @@ func NewDeleteFnParamsWithHTTPClient(client *http.Client) *DeleteFnParams {
 	}
 }
 
-/*DeleteFnParams contains all the parameters to send to the API endpoint
+/*
+DeleteFnParams contains all the parameters to send to the API endpoint
 for the delete fn operation typically these are written to a http.Request
 */
 type DeleteFnParams struct {
@@ -64,7 +65,11 @@ type DeleteFnParams struct {
 	  Opaque, unique Function ID.
 
 	*/
-	FnID string
+	FnID                string
+	IfMatch             string
+	WaitForState        string
+	MaxWaitSeconds      int64
+	WaitIntervalSeconds int64
 
 	timeout    time.Duration
 	Context    context.Context

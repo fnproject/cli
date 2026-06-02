@@ -11,10 +11,10 @@ import (
 func TestGetDetachedModeView(t *testing.T) {
 	fn := &models.Fn{Annotations: map[string]interface{}{
 		annotationDetachedTimeoutSeconds: 1200,
-		annotationSuccessDestinationKind:  "STREAM",
-		annotationSuccessDestinationOCID:  "ocid1.stream.oc1..abc",
-		annotationFailureDestinationKind:  "NOTIFICATIONS",
-		annotationFailureDestinationOCID:  "ocid1.onstopic.oc1..abc",
+		annotationSuccessDestinationKind: "STREAM",
+		annotationSuccessDestinationOCID: "ocid1.stream.oc1..abc",
+		annotationFailureDestinationKind: "NOTIFICATIONS",
+		annotationFailureDestinationOCID: "ocid1.onstopic.oc1..abc",
 	}}
 	view := getDetachedModeView(fn)
 	if view == nil {
@@ -34,8 +34,8 @@ func TestGetDetachedModeView(t *testing.T) {
 func TestBuildInspectFnMapIncludesDetachedMode(t *testing.T) {
 	fn := &models.Fn{Annotations: map[string]interface{}{
 		annotationDetachedTimeoutSeconds: 1200,
-		annotationSuccessDestinationKind:  "STREAM",
-		annotationSuccessDestinationOCID:  "ocid1.stream.oc1..abc",
+		annotationSuccessDestinationKind: "STREAM",
+		annotationSuccessDestinationOCID: "ocid1.stream.oc1..abc",
 	}}
 	inspect, err := buildInspectFnMap(fn)
 	if err != nil {
@@ -61,8 +61,8 @@ func TestBuildInspectFnMapIncludesDetachedMode(t *testing.T) {
 func TestBuildInspectFnMapSupportsNestedDetachedModeQuery(t *testing.T) {
 	fn := &models.Fn{Annotations: map[string]interface{}{
 		annotationDetachedTimeoutSeconds: 1200,
-		annotationSuccessDestinationKind:  "STREAM",
-		annotationSuccessDestinationOCID:  "ocid1.stream.oc1..abc",
+		annotationSuccessDestinationKind: "STREAM",
+		annotationSuccessDestinationOCID: "ocid1.stream.oc1..abc",
 	}}
 	inspect, err := buildInspectFnMap(fn)
 	if err != nil {
@@ -75,5 +75,32 @@ func TestBuildInspectFnMapSupportsNestedDetachedModeQuery(t *testing.T) {
 	}
 	if value != "20m" {
 		t.Fatalf("expected timeout 20m, got %#v", value)
+	}
+}
+
+func TestBuildInspectFnMapIncludesTraceConfig(t *testing.T) {
+	fn := &models.Fn{Annotations: map[string]interface{}{
+		annotationOCIParityFnTraceConfig: map[string]interface{}{
+			"isEnabled": true,
+		},
+	}}
+	inspect, err := buildInspectFnMap(fn)
+	if err != nil {
+		t.Fatalf("buildInspectFnMap() error = %v", err)
+	}
+	trace, ok := inspect["traceConfig"]
+	if !ok {
+		t.Fatal("expected traceConfig field in inspect map")
+	}
+	data, err := json.Marshal(trace)
+	if err != nil {
+		t.Fatalf("failed to marshal traceConfig: %v", err)
+	}
+	var got map[string]interface{}
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("failed to unmarshal traceConfig: %v", err)
+	}
+	if got["isEnabled"] != true {
+		t.Fatalf("expected isEnabled=true in traceConfig, got %#v", got["isEnabled"])
 	}
 }

@@ -25,6 +25,54 @@ import (
 	"github.com/urfave/cli"
 )
 
+func createFnCommandFlags() []cli.Flag {
+	flags := append([]cli.Flag{}, FnFlags...)
+	flags = append(flags,
+		cli.StringFlag{Name: "from-json", Usage: "Provide operation input as inline JSON or file://path"},
+		cli.StringFlag{Name: "wait-for-state", Usage: "Wait until the function reaches the given lifecycle state"},
+		cli.IntFlag{Name: "max-wait-seconds", Usage: "Maximum seconds to wait for the requested lifecycle state"},
+		cli.IntFlag{Name: "wait-interval-seconds", Usage: "Polling interval in seconds while waiting for lifecycle state"},
+	)
+	flags = append(flags, GeneratedOCIParityCreateUpdateFnFlags()...)
+	return flags
+}
+
+func listFnCommandFlags() []cli.Flag {
+	flags := []cli.Flag{
+		cli.StringFlag{Name: "cursor", Usage: "pagination cursor"},
+		cli.Int64Flag{Name: "n", Usage: "number of functions to return", Value: int64(100)},
+		cli.StringFlag{Name: "output", Usage: "Output format (json)", Value: ""},
+		cli.StringFlag{Name: "from-json", Usage: "Provide operation input as inline JSON or file://path"},
+	}
+	flags = append(flags, GeneratedOCIParityListFnFlags()...)
+	return flags
+}
+
+func deleteFnCommandFlags() []cli.Flag {
+	return []cli.Flag{
+		cli.BoolFlag{Name: "force, f", Usage: "Forces this delete (you will not be asked if you wish to continue with the delete)"},
+		cli.BoolFlag{Name: "recursive, r", Usage: "Delete this function and all associated resources (can fail part way through execution after deleting some resources without the ability to undo)"},
+		cli.StringFlag{Name: "from-json", Usage: "Provide operation input as inline JSON or file://path"},
+		cli.StringFlag{Name: "if-match", Usage: "Apply optimistic concurrency control using the provided etag"},
+		cli.StringFlag{Name: "wait-for-state", Usage: "Wait until the function reaches the given lifecycle state"},
+		cli.IntFlag{Name: "max-wait-seconds", Usage: "Maximum seconds to wait for the requested lifecycle state"},
+		cli.IntFlag{Name: "wait-interval-seconds", Usage: "Polling interval in seconds while waiting for lifecycle state"},
+	}
+}
+
+func updateFnCommandFlags() []cli.Flag {
+	flags := append([]cli.Flag{}, updateFnFlags...)
+	flags = append(flags,
+		cli.StringFlag{Name: "from-json", Usage: "Provide operation input as inline JSON or file://path"},
+		cli.StringFlag{Name: "if-match", Usage: "Apply optimistic concurrency control using the provided etag"},
+		cli.StringFlag{Name: "wait-for-state", Usage: "Wait until the function reaches the given lifecycle state"},
+		cli.IntFlag{Name: "max-wait-seconds", Usage: "Maximum seconds to wait for the requested lifecycle state"},
+		cli.IntFlag{Name: "wait-interval-seconds", Usage: "Polling interval in seconds while waiting for lifecycle state"},
+	)
+	flags = append(flags, GeneratedOCIParityCreateUpdateFnFlags()...)
+	return flags
+}
+
 // Create function command
 func Create() cli.Command {
 	f := fnsCmd{}
@@ -46,7 +94,7 @@ func Create() cli.Command {
 		},
 		ArgsUsage: "<app-name> <function-name> [image]",
 		Action:    f.create,
-		Flags:     FnFlags,
+		Flags:     createFnCommandFlags(),
 		BashComplete: func(c *cli.Context) {
 			if len(c.Args()) == 0 {
 				app.BashCompleteApps(c)
@@ -76,22 +124,7 @@ func List() cli.Command {
 		},
 		ArgsUsage: "<app-name>",
 		Action:    f.list,
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "cursor",
-				Usage: "pagination cursor",
-			},
-			cli.Int64Flag{
-				Name:  "n",
-				Usage: "number of functions to return",
-				Value: int64(100),
-			},
-			cli.StringFlag{
-				Name:  "output",
-				Usage: "Output format (json)",
-				Value: "",
-			},
-		},
+		Flags:     listFnCommandFlags(),
 		BashComplete: func(c *cli.Context) {
 			switch len(c.Args()) {
 			case 0:
@@ -122,6 +155,7 @@ func Delete() cli.Command {
 		},
 		ArgsUsage: "<app-name> <function-name>",
 		Action:    f.delete,
+		Flags:     deleteFnCommandFlags(),
 		BashComplete: func(c *cli.Context) {
 			switch len(c.Args()) {
 			case 0:
@@ -129,16 +163,6 @@ func Delete() cli.Command {
 			case 1:
 				BashCompleteFns(c)
 			}
-		},
-		Flags: []cli.Flag{
-			cli.BoolFlag{
-				Name:  "force, f",
-				Usage: "Forces this delete (you will not be asked if you wish to continue with the delete)",
-			},
-			cli.BoolFlag{
-				Name:  "recursive, r",
-				Usage: "Delete this function and all associated resources (can fail part way through execution after deleting some resources without the ability to undo)",
-			},
 		},
 	}
 }
@@ -219,7 +243,7 @@ func Update() cli.Command {
 		},
 		ArgsUsage: "<app-name> <function-name>",
 		Action:    f.update,
-		Flags:     updateFnFlags,
+		Flags:     updateFnCommandFlags(),
 		BashComplete: func(c *cli.Context) {
 			switch len(c.Args()) {
 			case 0:

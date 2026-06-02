@@ -44,7 +44,7 @@ func Create() cli.Command {
 		},
 		ArgsUsage: "<app-name>",
 		Action:    a.create,
-		Flags: []cli.Flag{
+		Flags: append([]cli.Flag{
 			cli.StringSliceFlag{
 				Name:  "config",
 				Usage: "Application configuration",
@@ -73,7 +73,11 @@ func Create() cli.Command {
 				Name:  "subnet-id",
 				Usage: "Subnet OCID for OCI Functions applications (can be specified multiple times; maps to oracle.com/oci/subnetIds)",
 			},
-		},
+			cli.StringFlag{Name: "from-json", Usage: "Provide operation input as inline JSON or file://path"},
+			cli.StringFlag{Name: "wait-for-state", Usage: "Wait until the application reaches the given lifecycle state"},
+			cli.IntFlag{Name: "max-wait-seconds", Usage: "Maximum seconds to wait for the requested lifecycle state"},
+			cli.IntFlag{Name: "wait-interval-seconds", Usage: "Polling interval in seconds while waiting for lifecycle state"},
+		}, GeneratedOCIParityCreateUpdateAppFlags()...),
 	}
 }
 
@@ -96,7 +100,7 @@ func List() cli.Command {
 			return nil
 		},
 		Action: a.list,
-		Flags: []cli.Flag{
+		Flags: append([]cli.Flag{
 			cli.StringFlag{
 				Name:  "cursor",
 				Usage: "Pagination cursor",
@@ -110,7 +114,11 @@ func List() cli.Command {
 				Name:  "output",
 				Usage: "Output format (json)",
 			},
-		},
+			cli.StringFlag{
+				Name:  "from-json",
+				Usage: "Provide operation input as inline JSON or file://path",
+			},
+		}, GeneratedOCIParityListAppFlags()...),
 	}
 }
 
@@ -149,6 +157,47 @@ func Delete() cli.Command {
 				Name:  "recursive, r",
 				Usage: "Delete this app and all associated resources (can fail part way through execution after deleting some resources without the ability to undo)",
 			},
+			cli.StringFlag{Name: "from-json", Usage: "Provide operation input as inline JSON or file://path"},
+			cli.StringFlag{Name: "if-match", Usage: "Apply optimistic concurrency control using the provided etag"},
+			cli.StringFlag{Name: "wait-for-state", Usage: "Wait until the application reaches the given lifecycle state"},
+			cli.IntFlag{Name: "max-wait-seconds", Usage: "Maximum seconds to wait for the requested lifecycle state"},
+			cli.IntFlag{Name: "wait-interval-seconds", Usage: "Polling interval in seconds while waiting for lifecycle state"},
+		},
+	}
+}
+
+// ChangeCompartment app command
+func ChangeCompartment() cli.Command {
+	a := appsCmd{}
+	return cli.Command{
+		Name:        "app",
+		Usage:       "Move an OCI Functions application to another compartment",
+		Category:    "MANAGEMENT COMMAND",
+		Description: "This command moves an OCI Functions application to another compartment in the same tenancy.",
+		Aliases:     []string{"apps", "a"},
+		Before: func(c *cli.Context) error {
+			provider, err := client.CurrentProvider()
+			if err != nil {
+				return err
+			}
+			a.provider = provider
+			a.client = provider.APIClientv2()
+			return nil
+		},
+		ArgsUsage: "<app-name>",
+		Action:    a.changeCompartment,
+		Flags: []cli.Flag{
+			cli.StringFlag{Name: "compartment-id", Usage: "Target compartment OCID"},
+			cli.StringFlag{Name: "from-json", Usage: "Provide operation input as inline JSON or file://path"},
+			cli.StringFlag{Name: "if-match", Usage: "Apply optimistic concurrency control using the provided etag"},
+			cli.StringFlag{Name: "wait-for-state", Usage: "Wait until the application reaches the given lifecycle state"},
+			cli.IntFlag{Name: "max-wait-seconds", Usage: "Maximum seconds to wait for the requested lifecycle state"},
+			cli.IntFlag{Name: "wait-interval-seconds", Usage: "Polling interval in seconds while waiting for lifecycle state"},
+		},
+		BashComplete: func(c *cli.Context) {
+			if len(c.Args()) == 0 {
+				BashCompleteApps(c)
+			}
 		},
 	}
 }
@@ -223,7 +272,7 @@ func Update() cli.Command {
 		},
 		ArgsUsage: "<app-name>",
 		Action:    a.update,
-		Flags: []cli.Flag{
+		Flags: append([]cli.Flag{
 			cli.StringSliceFlag{
 				Name:  "config,c",
 				Usage: "Application configuration",
@@ -268,7 +317,12 @@ func Update() cli.Command {
 				Name:  "subnet-id",
 				Usage: "Subnet OCID for OCI Functions applications (accepted for non-Oracle providers; Oracle-backed update currently not supported)",
 			},
-		},
+			cli.StringFlag{Name: "from-json", Usage: "Provide operation input as inline JSON or file://path"},
+			cli.StringFlag{Name: "if-match", Usage: "Apply optimistic concurrency control using the provided etag"},
+			cli.StringFlag{Name: "wait-for-state", Usage: "Wait until the application reaches the given lifecycle state"},
+			cli.IntFlag{Name: "max-wait-seconds", Usage: "Maximum seconds to wait for the requested lifecycle state"},
+			cli.IntFlag{Name: "wait-interval-seconds", Usage: "Polling interval in seconds while waiting for lifecycle state"},
+		}, GeneratedOCIParityCreateUpdateAppFlags()...),
 		BashComplete: func(c *cli.Context) {
 			args := c.Args()
 			if len(args) == 0 {

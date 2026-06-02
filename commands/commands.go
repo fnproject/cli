@@ -37,6 +37,7 @@ var Commands = Cmd{
 	"build":        BuildCommand(),
 	"build-server": BuildServerCommand(),
 	"bump":         common.BumpCommand(),
+	"change-compartment": ChangeCompartmentCommand(),
 	"watch":        WatchCommand(),
 	"invoke":       InvokeCommand(),
 	"configure":    ConfigureCommand(),
