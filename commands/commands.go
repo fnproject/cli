@@ -23,7 +23,7 @@ import (
 	"github.com/fnproject/cli/objects/app"
 	"github.com/fnproject/cli/objects/context"
 	"github.com/fnproject/cli/objects/fn"
-	"github.com/fnproject/cli/objects/pbf"
+	"github.com/fnproject/cli/objects/runtime"
 	"github.com/fnproject/cli/objects/server"
 	"github.com/fnproject/cli/objects/trigger"
 	"github.com/urfave/cli"
@@ -55,6 +55,7 @@ var Commands = Cmd{
 	"unset":        UnsetCommand(),
 	"update":       UpdateCommand(),
 	"use":          UseCommand(),
+	"work-request": WorkRequestCommand(),
 }
 
 var CreateCmds = Cmd{
@@ -99,7 +100,7 @@ var DeleteCmds = Cmd{
 
 var GetCmds = Cmd{
 	"config": ConfigCommand("get"),
-	"pbfs":   pbf.Get(),
+	"latest-runtime-version": runtime.GetLatestRuntimeVersion(),
 }
 
 var InspectCmds = Cmd{
@@ -113,9 +114,10 @@ var ListCmds = Cmd{
 	"config":    ConfigCommand("list"),
 	"apps":      app.List(),
 	"functions": fn.List(),
-	"pbfs":      pbf.List(),
 	"triggers":  trigger.List(),
 	"contexts":  context.List(),
+	"runtimes":  runtime.ListRuntimes(),
+	"runtime-versions": runtime.ListRuntimeVersions(),
 }
 
 var UnsetCmds = Cmd{

@@ -27,6 +27,8 @@ type ContextFile struct {
 	ContextProvider string `yaml:"provider" json:"provider"`
 	EnvFnAPIURL     string `yaml:"api-url" json:"apiUrl"`
 	EnvFnRegistry   string `yaml:"registry" json:"registry"`
+	ObjectStorageBucketName string `yaml:"object_storage_bucket_name" json:"objectStorageBucketName"`
+	ObjectStorageNamespace  string `yaml:"namespace" json:"namespace"`
 }
 
 // NewContextFile creates a new instance of the context YAML file

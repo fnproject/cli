@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -34,6 +35,7 @@ import (
 
 	client "github.com/fnproject/cli/client"
 	common "github.com/fnproject/cli/common"
+	config "github.com/fnproject/cli/config"
 	apps "github.com/fnproject/cli/objects/app"
 	function "github.com/fnproject/cli/objects/fn"
 	trigger "github.com/fnproject/cli/objects/trigger"
@@ -43,6 +45,7 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/artifacts"
 	ociCommon "github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/keymanagement"
+	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
 
@@ -113,15 +116,14 @@ type deploycmd struct {
 	clientV2 *v2Client.Fn
 	provider fnprovider.Provider
 
-	appName    string
-	createApp  bool
-	wd         string
-	local      bool
-	localDebug bool
-	noCache    bool
-	registry   string
-	all        bool
-	noBump     bool
+	appName   string
+	createApp bool
+	wd        string
+	local     bool
+	noCache   bool
+	registry  string
+	all       bool
+	noBump    bool
 }
 
 func (p *deploycmd) flags() []cli.Flag {
@@ -150,11 +152,6 @@ func (p *deploycmd) flags() []cli.Flag {
 			Name:        "local, skip-push", // todo: deprecate skip-push
 			Usage:       "Do not push Docker built images onto Docker Hub - useful for local development.",
 			Destination: &p.local,
-		},
-		cli.BoolFlag{
-			Name:        "local-debug",
-			Usage:       "Build function image with remote debug options and deploy to local. It won't push Docker built images onto Docker Hub - useful for debugging in local development.",
-			Destination: &p.localDebug,
 		},
 		cli.StringFlag{
 			Name:        "registry",
@@ -352,11 +349,14 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	if funcfile.Name == "" {
 		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
 	}
+
+	if funcfile.Code_only {
+		return p.deployCodeOnlyFunc(c, app, funcfilePath, funcfile)
+	}
 	common.WarnIfOCIManagedFunctionSettingsUnsupported(os.Stderr, p.provider, funcfile.Name, funcfile)
 
 	oracleProvider, _ := getOracleProvider()
-	isPBFDeploy := funcfile.Deploy != nil && funcfile.Deploy.OCI != nil && funcfile.Deploy.OCI.PBF != nil && strings.TrimSpace(funcfile.Deploy.OCI.PBF.ListingID) != ""
-	if !isPBFDeploy && oracleProvider != nil && oracleProvider.ImageCompartmentID != "" {
+	if oracleProvider != nil && oracleProvider.ImageCompartmentID != "" {
 		// If the provider is Oracle and ImageCompartmentID is present, we need to deploy image to the ImageCompartmentID.
 		// The repository name should be unique throughout a tenancy. We check if a repository exists in the compartment and create it if it doesn't already exist.
 		// If the creation fails, it could be because the repository name aready exists in a different compartment.
@@ -394,86 +394,148 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 		// TODO: this whole funcfile handling needs some love, way too confusing. Only bump makes permanent changes to it.
 	}
 
-	if !isPBFDeploy {
-		buildArgs := c.StringSlice("build-arg")
+	buildArgs := c.StringSlice("build-arg")
 
-		// In case of local ignore the architectures parameter
-		shape := ""
-		if !p.local && !p.localDebug {
-			// fetch the architectures
-			shape = app.Shape
-			if shape == "" {
-				shape = common.DefaultAppShape
-				app.Shape = shape
-			}
-
-			if _, ok := common.ShapeMap[shape]; !ok {
-				return errors.New(fmt.Sprintf("Invalid application : %s shape: %s", app.Name, shape))
-			}
+	// In case of local ignore the architectures parameter
+	shape := ""
+	if !p.local {
+		// fetch the architectures
+		shape = app.Shape
+		if shape == "" {
+			shape = common.DefaultAppShape
+			app.Shape = shape
 		}
 
-		_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, shape, p.localDebug)
-		if err != nil {
-			return err
+		if _, ok := common.ShapeMap[shape]; !ok {
+			return errors.New(fmt.Sprintf("Invalid application : %s shape: %s", app.Name, shape))
 		}
+	}
 
-		if err := p.signImage(funcfile); err != nil {
-			return err
-		}
+	_, err := common.BuildFuncV20180708(common.IsVerbose(), funcfilePath, funcfile, buildArgs, p.noCache, shape, false)
+	if err != nil {
+		return err
+	}
+
+	if err := p.signImage(funcfile); err != nil {
+		return err
 	}
 	return p.updateFunction(c, app.ID, funcfile)
 }
 
-func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.FuncFileV20180708) error {
-	if ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.PBF != nil && strings.TrimSpace(ff.Deploy.OCI.PBF.ListingID) != "" {
-		fmt.Printf("Updating function %s using PBF listing %s...\n", ff.Name, ff.Deploy.OCI.PBF.ListingID)
-	} else {
-		fmt.Printf("Updating function %s using image %s...\n", ff.Name, ff.ImageNameV20180708())
-	}
-	var detachedSeconds int
-	if ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.DetachedMode != nil && ff.Deploy.OCI.DetachedMode.Timeout != "" {
-		_, seconds, err := common.ParseDetachedTimeoutSpec(ff.Deploy.OCI.DetachedMode.Timeout)
+func (p *deploycmd) deployCodeOnlyFunc(c *cli.Context, app *models.App, funcfilePath string, funcfile *common.FuncFileV20180708) error {
+	if !p.noBump {
+		funcfile2, err := common.BumpItV20180708(funcfilePath, common.Patch)
 		if err != nil {
 			return err
 		}
-		detachedSeconds = seconds
+		funcfile.Version = funcfile2.Version
 	}
-	if ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.ProvisionedConcurrency != nil {
-		if err := common.ValidateProvisionedConcurrencyConfig(ff.Deploy.OCI.ProvisionedConcurrency); err != nil {
+
+	dir := filepath.Dir(funcfilePath)
+	archivePath, err := buildCodeOnlyArchive(dir, funcfile, app.Shape)
+	if err != nil {
+		return err
+	}
+
+	fn := &models.Fn{}
+	if err := function.WithFuncFileV20180708(funcfile, fn); err != nil {
+		return fmt.Errorf("Error getting function with funcfile: %s", err)
+	}
+	fn.Name = funcfile.Name
+	fn.CodeOnly = true
+	fn.Handler = strings.TrimSpace(funcfile.Handler)
+	if funcfile.Runtime_config != nil {
+		fn.RuntimeName = strings.TrimSpace(funcfile.Runtime_config.Runtime_name)
+		fn.RuntimeVersionID = strings.TrimSpace(funcfile.Runtime_config.Runtime_version_id)
+		fn.RuntimeConfigType = normalizeRuntimeConfigTypeForDeploy(funcfile.Runtime_config.Type)
+	}
+
+	bucket, namespace, configured, err := resolveCodeOnlyDeployTargetFromContext()
+	if err != nil {
+		return err
+	}
+	if configured {
+		objectName, err := pushCodeOnlyArchive(funcfile)
+		if err != nil {
+			return err
+		}
+		fn.SourceType = "object-storage"
+		fn.SourceBucketName = bucket
+		fn.SourceNamespace = namespace
+		fn.SourceObjectName = objectName
+		fn.SourceObjectVersion = ""
+	} else {
+		archiveBytes, err := ioutil.ReadFile(archivePath)
+		if err != nil {
+			return err
+		}
+		fn.SourceType = "direct"
+		fn.SourceFile = archivePath
+		fn.SourceArchive = archiveBytes
+	}
+
+	return p.upsertCodeOnlyFunction(app.ID, fn)
+}
+
+func (p *deploycmd) upsertCodeOnlyFunction(appID string, fn *models.Fn) error {
+	fnRes, err := function.GetFnByName(p.clientV2, appID, fn.Name)
+	if _, ok := err.(function.NameNotFoundError); ok {
+		created, err := function.CreateFn(p.clientV2, appID, fn)
+		if err != nil {
+			return err
+		}
+		fn.ID = created.ID
+	} else if err != nil {
+		return err
+	} else {
+		fn.ID = fnRes.ID
+		if err := function.PutFn(p.clientV2, fn.ID, fn); err != nil {
 			return err
 		}
 	}
+	return nil
+}
+
+func normalizeRuntimeConfigTypeForDeploy(value string) string {
+	v := strings.ToLower(strings.TrimSpace(value))
+	switch v {
+	case "function-update", "function_update":
+		return "FUNCTION_UPDATE"
+	case "manual":
+		return "MANUAL"
+	default:
+		return strings.ToUpper(strings.ReplaceAll(v, "-", "_"))
+	}
+}
+
+func resolveCodeOnlyDeployTargetFromContext() (bucket, namespace string, configured bool, err error) {
+	contextName := viper.GetString(config.CurrentContext)
+	contextPath := filepath.Join(config.GetHomeDir(), ".fn", "contexts", contextName+".yaml")
+	ctxFile, err := config.NewContextFile(contextPath)
+	if err != nil {
+		return "", "", false, err
+	}
+	bucket = strings.TrimSpace(ctxFile.ObjectStorageBucketName)
+	namespace = strings.TrimSpace(ctxFile.ObjectStorageNamespace)
+	configured = bucket != "" && namespace != ""
+	return bucket, namespace, configured, nil
+}
+
+func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.FuncFileV20180708) error {
+	fmt.Printf("Updating function %s using image %s...\n", ff.Name, ff.ImageNameV20180708())
 
 	fn := &models.Fn{}
 	if err := function.WithFuncFileV20180708(ff, fn); err != nil {
 		return fmt.Errorf("Error getting function with funcfile: %s", err)
 	}
-	if ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.PBF != nil {
-		if err := function.ResolvePBFMemoryForListing(p.provider, fn, ff.Deploy.OCI.PBF.ListingID); err != nil {
-			return err
-		}
-	}
-	if detachedSeconds > 0 && common.IsOracleProvider(p.provider) {
-		function.SetDetachedTimeoutAnnotation(fn, detachedSeconds)
-	}
-	if common.IsOracleProvider(p.provider) && ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.DetachedMode != nil {
-		function.SetDestinationAnnotations(fn, ff.Deploy.OCI.DetachedMode.OnSuccess, ff.Deploy.OCI.DetachedMode.OnFailure)
-	}
-	created := false
 
 	fnRes, err := function.GetFnByName(p.clientV2, appID, ff.Name)
 	if _, ok := err.(function.NameNotFoundError); ok {
 		fn.Name = ff.Name
-		if ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.ProvisionedConcurrency != nil && common.IsOracleProvider(p.provider) {
-			if err := function.SetProvisionedConcurrencyAnnotations(fn, ff.Deploy.OCI.ProvisionedConcurrency); err != nil {
-				return err
-			}
-		}
 		fn, err = function.CreateFn(p.clientV2, appID, fn)
 		if err != nil {
 			return err
 		}
-		created = true
 	} else if err != nil {
 		// probably service is down or something...
 		return err
@@ -510,11 +572,6 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 					return err
 				}
 			}
-		}
-	}
-	if !created && ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.ProvisionedConcurrency != nil && common.IsOracleProvider(p.provider) {
-		if err := function.ApplyProvisionedConcurrency(p.provider, fn.ID, ff.Deploy.OCI.ProvisionedConcurrency); err != nil {
-			return err
 		}
 	}
 	return nil

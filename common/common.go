@@ -222,6 +222,9 @@ func imageStampFuncFileV20180708(fpath string, funcfile *FuncFileV20180708) (*Fu
 	dockerfile := filepath.Join(dir, "Dockerfile")
 
 	// detect if build and run image both are absent and runtime is not docker then update them
+	if funcfile.Code_only {
+		return funcfile, nil
+	}
 	if !Exists(dockerfile) && funcfile.Runtime != FuncfileDockerRuntime && funcfile.Build_image == "" && funcfile.Run_image == "" {
 
 		helper := langs.GetLangHelper(funcfile.Runtime)
@@ -367,6 +370,9 @@ func containerEngineBuild(verbose bool, fpath string, ff *FuncFile, buildArgs []
 }
 
 func containerEngineBuildV20180708(verbose bool, fpath string, ff *FuncFileV20180708, buildArgs []string, noCache bool, shape string, localDebug bool) error {
+	if ff.Code_only {
+		return nil
+	}
 	containerEngineType, err := GetContainerEngineType()
 	if err != nil {
 		return err

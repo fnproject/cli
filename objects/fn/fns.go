@@ -35,9 +35,10 @@ import (
 	"github.com/fnproject/fn_go/modelsv2"
 	models "github.com/fnproject/fn_go/modelsv2"
 	"github.com/fnproject/fn_go/provider"
-	fnprovideroracle "github.com/fnproject/fn_go/provider/oracle"
+	"github.com/fnproject/fn_go/provider/oracle"
 	"github.com/jmoiron/jsonq"
-	ocifunctions "github.com/oracle/oci-go-sdk/v65/functions"
+	ociCommon "github.com/oracle/oci-go-sdk/v65/common"
+	ociFunctions "github.com/oracle/oci-go-sdk/v65/functions"
 	"github.com/urfave/cli"
 )
 
@@ -214,292 +215,118 @@ var FnFlags = []cli.Flag{
 		Name:  "image",
 		Usage: "Function image",
 	},
-	cli.StringFlag{
-		Name:  "pbf",
-		Usage: "Create the function from a Pre-Built Function listing OCID",
-	},
-	cli.StringFlag{
-		Name:  "provisioned-concurrency",
-		Usage: "Set OCI provisioned concurrency using 'none' or 'constant:<count>'",
+	cli.BoolFlag{
+		Name:  "code-only",
+		Usage: "Create a code-only function using archive source details and runtime configuration",
 	},
 	cli.StringFlag{
-		Name:  "detached-timeout",
-		Usage: "Set OCI detached mode timeout using a duration like 20m or 1h",
+		Name:  "source-type",
+		Usage: "Code-only source type: direct or object-storage",
 	},
 	cli.StringFlag{
-		Name:  "on-success",
-		Usage: "Set OCI detached success destination using <stream|queue|notifications>:<ocid>",
+		Name:  "source-file",
+		Usage: "Path to a zip archive for direct code-only source upload",
 	},
 	cli.StringFlag{
-		Name:  "on-failure",
-		Usage: "Set OCI detached failure destination using <stream|queue|notifications>:<ocid>",
+		Name:  "bucket-name",
+		Usage: "Object Storage bucket name for code-only source",
+	},
+	cli.StringFlag{
+		Name:  "namespace",
+		Usage: "Object Storage namespace for code-only source",
+	},
+	cli.StringFlag{
+		Name:  "object-name",
+		Usage: "Object Storage object name for code-only source",
+	},
+	cli.StringFlag{
+		Name:  "object-version-id",
+		Usage: "Object Storage object version id for code-only source",
+	},
+	cli.StringFlag{
+		Name:  "runtime-config-type",
+		Usage: "Runtime configuration type for code-only creation: function-update or manual",
+	},
+	cli.StringFlag{
+		Name:  "runtime-name",
+		Usage: "Runtime name for code-only creation",
+	},
+	cli.StringFlag{
+		Name:  "runtime-version-id",
+		Usage: "Runtime version OCID for manual runtime configuration",
+	},
+	cli.StringFlag{
+		Name:  "handler",
+		Usage: "Handler for code-only archive functions",
 	},
 }
-var updateFnFlags = append(append([]cli.Flag{}, FnFlags...),
-	cli.StringSliceFlag{
-		Name:  "remove-tag",
-		Usage: "Remove a freeform tag by key (can be specified multiple times)",
-	},
-	cli.StringSliceFlag{
-		Name:  "remove-defined-tag",
-		Usage: "Remove a defined tag by namespace.key (can be specified multiple times)",
-	},
-	cli.BoolFlag{
-		Name:  "clear-tags",
-		Usage: "Clear all freeform and defined tags",
-	},
-	cli.BoolFlag{
-		Name:  "clear-freeform-tags",
-		Usage: "Clear all freeform tags",
-	},
-	cli.BoolFlag{
-		Name:  "clear-defined-tags",
-		Usage: "Clear all defined tags",
-	},
-	cli.BoolFlag{
-		Name:  "clear-on-success",
-		Usage: "Clear OCI detached success destination",
-	},
-	cli.BoolFlag{
-		Name:  "clear-on-failure",
-		Usage: "Clear OCI detached failure destination",
-	},
-)
 
-type clearDestinationRequest struct {
-	Success bool
-	Failure bool
+type codeOnlyUpdateOptions struct {
+	codeOnly          bool
+	sourceType        string
+	sourceFile        string
+	bucketName        string
+	namespace         string
+	objectName        string
+	objectVersionID   string
+	runtimeConfigType string
+	runtimeName       string
+	runtimeVersionID  string
+	handler           string
 }
 
-func warnUnsupportedDetachedTimeout() {
-	fmt.Fprintln(os.Stderr, "Warning: --detached-timeout is only supported with an oracle provider and will be ignored.")
+type codeOnlyCreateOptions struct {
+	codeOnly          bool
+	sourceType        string
+	sourceFile        string
+	bucketName        string
+	namespace         string
+	objectName        string
+	objectVersionID   string
+	runtimeConfigType string
+	runtimeName       string
+	runtimeVersionID  string
+	handler           string
 }
 
-func SetDetachedTimeoutAnnotation(fn *models.Fn, seconds int) {
-	if fn == nil || seconds <= 0 {
-		return
-	}
-	if fn.Annotations == nil {
-		fn.Annotations = make(map[string]interface{})
-	}
-	fn.Annotations[annotationDetachedTimeoutSeconds] = seconds
-}
-
-func warnUnsupportedDestination(flagName string) {
-	fmt.Fprintf(os.Stderr, "Warning: %s is only supported with an oracle provider and will be ignored.\n", flagName)
-}
-
-func validateDestinationFlagCombination(c *cli.Context) (*clearDestinationRequest, error) {
-	clearReq := &clearDestinationRequest{
-		Success: c.Bool("clear-on-success"),
-		Failure: c.Bool("clear-on-failure"),
-	}
-	if clearReq.Success && strings.TrimSpace(c.String("on-success")) != "" {
-		return nil, fmt.Errorf("--on-success and --clear-on-success cannot be used together")
-	}
-	if clearReq.Failure && strings.TrimSpace(c.String("on-failure")) != "" {
-		return nil, fmt.Errorf("--on-failure and --clear-on-failure cannot be used together")
-	}
-	return clearReq, nil
-}
-
-func SetDestinationAnnotations(fn *models.Fn, onSuccess, onFailure *common.OCIDestination) {
-	if fn == nil {
-		return
-	}
-	if fn.Annotations == nil {
-		fn.Annotations = make(map[string]interface{})
-	}
-	if onSuccess != nil {
-		fn.Annotations[annotationSuccessDestinationKind] = strings.ToUpper(onSuccess.Type)
-		fn.Annotations[annotationSuccessDestinationOCID] = onSuccess.OCID
-	}
-	if onFailure != nil {
-		fn.Annotations[annotationFailureDestinationKind] = strings.ToUpper(onFailure.Type)
-		fn.Annotations[annotationFailureDestinationOCID] = onFailure.OCID
+func readCodeOnlyCreateOptions(c *cli.Context) codeOnlyCreateOptions {
+	return codeOnlyCreateOptions{
+		codeOnly:          c.Bool("code-only"),
+		sourceType:        strings.TrimSpace(c.String("source-type")),
+		sourceFile:        strings.TrimSpace(c.String("source-file")),
+		bucketName:        strings.TrimSpace(c.String("bucket-name")),
+		namespace:         strings.TrimSpace(c.String("namespace")),
+		objectName:        strings.TrimSpace(c.String("object-name")),
+		objectVersionID:   strings.TrimSpace(c.String("object-version-id")),
+		runtimeConfigType: strings.TrimSpace(c.String("runtime-config-type")),
+		runtimeName:       strings.TrimSpace(c.String("runtime-name")),
+		runtimeVersionID:  strings.TrimSpace(c.String("runtime-version-id")),
+		handler:           strings.TrimSpace(c.String("handler")),
 	}
 }
 
-func SetClearDestinationAnnotations(fn *models.Fn, clearSuccess, clearFailure bool) {
-	if fn == nil || (!clearSuccess && !clearFailure) {
-		return
-	}
-	if fn.Annotations == nil {
-		fn.Annotations = make(map[string]interface{})
-	}
-	if clearSuccess {
-		fn.Annotations[annotationSuccessDestinationKind] = "NONE"
-		fn.Annotations[annotationSuccessDestinationOCID] = ""
-	}
-	if clearFailure {
-		fn.Annotations[annotationFailureDestinationKind] = "NONE"
-		fn.Annotations[annotationFailureDestinationOCID] = ""
+func (o codeOnlyCreateOptions) enabled() bool {
+	return o.codeOnly || o.sourceType != "" || o.sourceFile != "" || o.bucketName != "" || o.namespace != "" || o.objectName != "" || o.objectVersionID != "" || o.runtimeConfigType != "" || o.runtimeName != "" || o.runtimeVersionID != "" || o.handler != ""
+}
+
+func readCodeOnlyUpdateOptions(c *cli.Context) codeOnlyUpdateOptions {
+	return codeOnlyUpdateOptions{
+		codeOnly:          c.Bool("code-only"),
+		sourceType:        strings.TrimSpace(c.String("source-type")),
+		sourceFile:        strings.TrimSpace(c.String("source-file")),
+		bucketName:        strings.TrimSpace(c.String("bucket-name")),
+		namespace:         strings.TrimSpace(c.String("namespace")),
+		objectName:        strings.TrimSpace(c.String("object-name")),
+		objectVersionID:   strings.TrimSpace(c.String("object-version-id")),
+		runtimeConfigType: strings.TrimSpace(c.String("runtime-config-type")),
+		runtimeName:       strings.TrimSpace(c.String("runtime-name")),
+		runtimeVersionID:  strings.TrimSpace(c.String("runtime-version-id")),
+		handler:           strings.TrimSpace(c.String("handler")),
 	}
 }
 
-func formatDetachedTimeout(seconds int) string {
-	if seconds <= 0 {
-		return ""
-	}
-	d := time.Duration(seconds) * time.Second
-	if d%time.Hour == 0 {
-		return fmt.Sprintf("%dh", int(d/time.Hour))
-	}
-	if d%time.Minute == 0 {
-		return fmt.Sprintf("%dm", int(d/time.Minute))
-	}
-	return fmt.Sprintf("%ds", seconds)
-}
-
-func parseDetachedTimeoutFromAnnotations(fn *models.Fn) string {
-	if fn == nil || fn.Annotations == nil {
-		return ""
-	}
-	raw, ok := fn.Annotations[annotationDetachedTimeoutSeconds]
-	if !ok {
-		return ""
-	}
-	switch typed := raw.(type) {
-	case int:
-		return formatDetachedTimeout(typed)
-	case int32:
-		return formatDetachedTimeout(int(typed))
-	case int64:
-		return formatDetachedTimeout(int(typed))
-	case float64:
-		return formatDetachedTimeout(int(typed))
-	default:
-		return ""
-	}
-}
-
-func parseDetachedDestinationFromAnnotations(fn *models.Fn, kindKey, ocidKey string) *detachedDestinationView {
-	if fn == nil || fn.Annotations == nil {
-		return nil
-	}
-	kindRaw, ok := fn.Annotations[kindKey]
-	if !ok {
-		return nil
-	}
-	kind, ok := kindRaw.(string)
-	if !ok || strings.TrimSpace(kind) == "" {
-		return nil
-	}
-	ocidRaw, ok := fn.Annotations[ocidKey]
-	if !ok {
-		return &detachedDestinationView{Type: strings.ToLower(kind)}
-	}
-	ocid, ok := ocidRaw.(string)
-	if !ok {
-		return &detachedDestinationView{Type: strings.ToLower(kind)}
-	}
-	return &detachedDestinationView{Type: strings.ToLower(kind), OCID: ocid}
-}
-
-func getDetachedModeView(fn *models.Fn) *detachedModeView {
-	timeout := parseDetachedTimeoutFromAnnotations(fn)
-	onSuccess := parseDetachedDestinationFromAnnotations(fn, annotationSuccessDestinationKind, annotationSuccessDestinationOCID)
-	onFailure := parseDetachedDestinationFromAnnotations(fn, annotationFailureDestinationKind, annotationFailureDestinationOCID)
-	if timeout == "" && onSuccess == nil && onFailure == nil {
-		return nil
-	}
-	return &detachedModeView{Timeout: timeout, OnSuccess: onSuccess, OnFailure: onFailure}
-}
-
-func formatDetachedDestination(view *detachedDestinationView) string {
-	if view == nil {
-		return ""
-	}
-	if view.OCID == "" {
-		return view.Type
-	}
-	return fmt.Sprintf("%s:%s", view.Type, view.OCID)
-}
-
-func formatDetachedDestinations(fn *models.Fn) string {
-	view := getDetachedModeView(fn)
-	if view == nil {
-		return ""
-	}
-	parts := []string{}
-	if view.OnSuccess != nil {
-		parts = append(parts, "success="+formatDetachedDestination(view.OnSuccess))
-	}
-	if view.OnFailure != nil {
-		parts = append(parts, "failure="+formatDetachedDestination(view.OnFailure))
-	}
-	return strings.Join(parts, ",")
-}
-
-func buildInspectFnMap(fn *models.Fn) (map[string]interface{}, error) {
-	data, err := json.Marshal(fn)
-	if err != nil {
-		return nil, err
-	}
-	inspect := map[string]interface{}{}
-	if err := json.Unmarshal(data, &inspect); err != nil {
-		return nil, err
-	}
-	if detached := getDetachedModeView(fn); detached != nil {
-		detachedData, err := json.Marshal(detached)
-		if err != nil {
-			return nil, err
-		}
-		var detachedValue map[string]interface{}
-		if err := json.Unmarshal(detachedData, &detachedValue); err != nil {
-			return nil, err
-		}
-		inspect["detachedMode"] = detachedValue
-	}
-	if pc := getProvisionedConcurrencyView(fn); pc != nil {
-		pcData, err := json.Marshal(pc)
-		if err != nil {
-			return nil, err
-		}
-		var pcValue map[string]interface{}
-		if err := json.Unmarshal(pcData, &pcValue); err != nil {
-			return nil, err
-		}
-		inspect["provisionedConcurrency"] = pcValue
-	}
-	if source := getSourceDetailsView(fn); source != nil {
-		sourceData, err := json.Marshal(source)
-		if err != nil {
-			return nil, err
-		}
-		var sourceValue map[string]interface{}
-		if err := json.Unmarshal(sourceData, &sourceValue); err != nil {
-			return nil, err
-		}
-		inspect["sourceDetails"] = sourceValue
-	}
-	if fn != nil && fn.Annotations != nil {
-		if trace, ok := fn.Annotations[annotationOCIParityFnTraceConfig]; ok {
-			inspect["traceConfig"] = trace
-		}
-	}
-	return inspect, nil
-}
-
-func getSourceDetailsView(fn *models.Fn) *sourceDetailsView {
-	if fn == nil || fn.Annotations == nil {
-		return nil
-	}
-	sourceTypeRaw, ok := fn.Annotations[annotationSourceType]
-	if !ok {
-		return nil
-	}
-	sourceType, ok := sourceTypeRaw.(string)
-	if !ok || strings.TrimSpace(sourceType) == "" {
-		return nil
-	}
-	view := &sourceDetailsView{SourceType: sourceType}
-	if listingRaw, ok := fn.Annotations[annotationPbfListingID]; ok {
-		if listingID, ok := listingRaw.(string); ok {
-			view.PbfListingID = listingID
-		}
-	}
-	return view
+func (o codeOnlyUpdateOptions) enabled() bool {
+	return o.codeOnly || o.sourceType != "" || o.sourceFile != "" || o.bucketName != "" || o.namespace != "" || o.objectName != "" || o.objectVersionID != "" || o.runtimeConfigType != "" || o.runtimeName != "" || o.runtimeVersionID != "" || o.handler != ""
 }
 
 // WithSlash appends "/" to function path
@@ -940,27 +767,7 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	common.WarnUnsupportedOCIRequestControl(f.provider, control)
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
-	pbfListingID := strings.TrimSpace(c.String("pbf"))
-	pcConfig, err := common.ParseProvisionedConcurrencySpec(c.String("provisioned-concurrency"))
-	if err != nil {
-		return err
-	}
-	_, detachedSeconds, err := common.ParseDetachedTimeoutSpec(c.String("detached-timeout"))
-	if err != nil {
-		return err
-	}
-	onSuccess, err := common.ParseOCIDestinationSpec("--on-success", c.String("on-success"))
-	if err != nil {
-		return err
-	}
-	onFailure, err := common.ParseOCIDestinationSpec("--on-failure", c.String("on-failure"))
-	if err != nil {
-		return err
-	}
-	clearReq, err := validateDestinationFlagCombination(c)
-	if err != nil {
-		return err
-	}
+	codeOnly := readCodeOnlyCreateOptions(c)
 
 	fn := &models.Fn{}
 	fn.Name = fnName
@@ -992,10 +799,11 @@ func (f *fnsCmd) create(c *cli.Context) error {
 	if fn.Name == "" {
 		return errors.New("fnName path is missing")
 	}
-	if fn.Image != "" && pbfListingID != "" {
-		return errors.New("--image and --pbf cannot be used together")
-	}
-	if fn.Image == "" && pbfListingID == "" {
+	if codeOnly.enabled() {
+		if err := applyCodeOnlyCreateOptions(f.provider, fn, codeOnly); err != nil {
+			return err
+		}
+	} else if fn.Image == "" {
 		return errors.New("no image specified")
 	}
 	if pbfListingID != "" {
@@ -1095,7 +903,11 @@ func CreateFnWithControl(r *fnclient.Fn, appID string, fn *models.Fn, control co
 		return nil, err
 	}
 
-	fmt.Println(buildCreateFnSuccessMessage(resp.Payload))
+	if fn.CodeOnly || resp.Payload.Image == "" {
+		fmt.Println("Successfully created code-only function:", resp.Payload.Name)
+	} else {
+		fmt.Println("Successfully created function:", resp.Payload.Name, "with", resp.Payload.Image)
+	}
 	return resp.Payload, nil
 }
 
@@ -1173,9 +985,7 @@ func (f *fnsCmd) update(c *cli.Context) error {
 	common.WarnUnsupportedOCIRequestControl(f.provider, control)
 	appName := c.Args().Get(0)
 	fnName := c.Args().Get(1)
-	if strings.TrimSpace(c.String("pbf")) != "" {
-		return errors.New("--pbf is only supported when creating a function")
-	}
+	codeOnly := readCodeOnlyUpdateOptions(c)
 
 	pcConfig, err := common.ParseProvisionedConcurrencySpec(c.String("provisioned-concurrency"))
 	if err != nil {
@@ -1216,18 +1026,13 @@ func (f *fnsCmd) update(c *cli.Context) error {
 	applyFnFromJSON(fn, &control, &fromJSON)
 
 	WithFlags(c, fn)
-	if err := ApplyGeneratedOCIParityFnFlags(c, fn); err != nil {
-		return err
+	if codeOnly.enabled() {
+		if err := applyCodeOnlyUpdateOptions(f.provider, fn, codeOnly); err != nil {
+			return err
+		}
 	}
-	annotations, err := common.ApplyOCIResourceTagFlagsToAnnotations(
-		fn.Annotations,
-		c.StringSlice("tag"),
-		c.StringSlice("defined-tag"),
-		c.StringSlice("remove-tag"),
-		c.StringSlice("remove-defined-tag"),
-		c.Bool("clear-freeform-tags") || c.Bool("clear-tags"),
-		c.Bool("clear-defined-tags") || c.Bool("clear-tags"),
-	)
+
+	err = PutFn(f.client, fn.ID, fn)
 	if err != nil {
 		return err
 	}
@@ -1508,5 +1313,345 @@ func (f *fnsCmd) delete(c *cli.Context) error {
 	}
 
 	fmt.Println("Function", fnName, "deleted")
+	return nil
+}
+
+func applyCodeOnlyCreateOptions(p provider.Provider, fn *models.Fn, opts codeOnlyCreateOptions) error {
+	if fn.Image != "" {
+		return fmt.Errorf("Specify either an image or --code-only options, not both")
+	}
+	if !opts.codeOnly {
+		return fmt.Errorf("--code-only is required when specifying code-only source or runtime flags")
+	}
+	sourceType, err := normalizeSourceType(opts.sourceType)
+	if err != nil {
+		return err
+	}
+	mode, err := normalizeRuntimeConfigType(opts.runtimeConfigType)
+	if err != nil {
+		return err
+	}
+	if sourceType == "" {
+		return fmt.Errorf("--source-type is required for code-only create")
+	}
+	if mode == "" {
+		return fmt.Errorf("--runtime-config-type is required for code-only create")
+	}
+	if opts.runtimeName == "" {
+		return fmt.Errorf("--runtime-name is required for code-only create")
+	}
+	if requiresHandlerForRuntime(opts.runtimeName) && opts.handler == "" {
+		return fmt.Errorf("--handler is required for runtime %s", opts.runtimeName)
+	}
+	if err := validateHandlerForRuntime(opts.runtimeName, opts.handler); err != nil {
+		return err
+	}
+	if err := validateCodeOnlySourceOptions(sourceType, opts); err != nil {
+		return err
+	}
+	if err := validateRuntimeConfig(p, mode, opts.runtimeName, opts.runtimeVersionID); err != nil {
+		return err
+	}
+
+	fn.CodeOnly = true
+	fn.Image = ""
+	fn.SourceType = sourceType
+	fn.SourceFile = opts.sourceFile
+	fn.SourceBucketName = opts.bucketName
+	fn.SourceNamespace = opts.namespace
+	fn.SourceObjectName = opts.objectName
+	fn.SourceObjectVersion = opts.objectVersionID
+	fn.RuntimeConfigType = mode
+	fn.RuntimeName = opts.runtimeName
+	fn.RuntimeVersionID = opts.runtimeVersionID
+	fn.Handler = opts.handler
+
+	if sourceType == "direct" {
+		archive, err := os.ReadFile(opts.sourceFile)
+		if err != nil {
+			return fmt.Errorf("failed to read --source-file %s: %w", opts.sourceFile, err)
+		}
+		fn.SourceArchive = archive
+	}
+
+	return nil
+}
+
+func normalizeSourceType(value string) (string, error) {
+	v := strings.ToLower(strings.TrimSpace(value))
+	switch v {
+	case "":
+		return "", nil
+	case "direct":
+		return "direct", nil
+	case "object-storage", "object_storage", "objectstorage":
+		return "object-storage", nil
+	default:
+		return "", fmt.Errorf("unsupported --source-type %q. Supported values are direct and object-storage", value)
+	}
+}
+
+func normalizeRuntimeConfigType(value string) (string, error) {
+	v := strings.ToLower(strings.TrimSpace(value))
+	switch v {
+	case "":
+		return "", nil
+	case "function-update", "function_update":
+		return "FUNCTION_UPDATE", nil
+	case "manual":
+		return "MANUAL", nil
+	default:
+		return "", fmt.Errorf("unsupported --runtime-config-type %q. Supported values are function-update and manual", value)
+	}
+}
+
+func validateCodeOnlySourceOptions(sourceType string, opts codeOnlyCreateOptions) error {
+	switch sourceType {
+	case "direct":
+		if opts.sourceFile == "" {
+			return fmt.Errorf("--source-file is required when --source-type=direct")
+		}
+		if opts.bucketName != "" || opts.namespace != "" || opts.objectName != "" || opts.objectVersionID != "" {
+			return fmt.Errorf("Object Storage flags cannot be used when --source-type=direct")
+		}
+	case "object-storage":
+		if opts.bucketName == "" || opts.namespace == "" || opts.objectName == "" {
+			return fmt.Errorf("--bucket-name, --namespace, and --object-name are required when --source-type=object-storage")
+		}
+		if opts.sourceFile != "" {
+			return fmt.Errorf("--source-file cannot be used when --source-type=object-storage")
+		}
+	}
+	return nil
+}
+
+func validateRuntimeConfig(p provider.Provider, mode, runtimeName, runtimeVersionID string) error {
+	if strings.TrimSpace(runtimeName) != "" {
+		if err := validateRuntimeName(p, runtimeName); err != nil {
+			return err
+		}
+	}
+	switch mode {
+	case "FUNCTION_UPDATE":
+		if runtimeVersionID != "" {
+			return fmt.Errorf("--runtime-version-id is only valid for manual runtime configuration")
+		}
+	case "MANUAL":
+		if runtimeVersionID == "" {
+			return fmt.Errorf("--runtime-version-id is required when --runtime-config-type=manual")
+		}
+		if err := validateRuntimeVersionMatchesRuntime(p, runtimeName, runtimeVersionID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateRuntimeName(p provider.Provider, runtimeName string) error {
+	ociProvider, ok := p.(*oracle.OracleProvider)
+	if !ok || ociProvider == nil {
+		return fmt.Errorf("runtime validation requires an oracle provider")
+	}
+	client, err := ociFunctions.NewFunctionsManagementClientWithConfigurationProvider(ociProvider.ConfigurationProvider)
+	if err != nil {
+		return err
+	}
+	if ociProvider.FnApiUrl != nil {
+		client.Host = ociProvider.FnApiUrl.String()
+	} else {
+		region, err := ociProvider.ConfigurationProvider.Region()
+		if err != nil {
+			return err
+		}
+		client.SetRegion(region)
+	}
+	request := ociFunctions.ListFunctionsRuntimesRequest{}
+	for {
+		response, err := client.ListFunctionsRuntimes(context.Background(), request)
+		if err != nil {
+			return err
+		}
+		for _, item := range response.Items {
+			if item.Name == nil || strings.TrimSpace(*item.Name) != runtimeName {
+				continue
+			}
+			if item.LifecycleState != ociFunctions.FunctionsRuntimeLifecycleStateActive {
+				return fmt.Errorf("runtime %s is not active", runtimeName)
+			}
+			return nil
+		}
+		if response.OpcNextPage == nil {
+			break
+		}
+		request.Page = response.OpcNextPage
+	}
+	return fmt.Errorf("runtime %s does not exist", runtimeName)
+}
+
+func validateRuntimeVersionMatchesRuntime(p provider.Provider, runtimeName, runtimeVersionID string) error {
+	ociProvider, ok := p.(*oracle.OracleProvider)
+	if !ok || ociProvider == nil {
+		return fmt.Errorf("runtime version validation requires an oracle provider")
+	}
+	client, err := ociFunctions.NewFunctionsManagementClientWithConfigurationProvider(ociProvider.ConfigurationProvider)
+	if err != nil {
+		return err
+	}
+	if ociProvider.FnApiUrl != nil {
+		client.Host = ociProvider.FnApiUrl.String()
+	} else {
+		region, err := ociProvider.ConfigurationProvider.Region()
+		if err != nil {
+			return err
+		}
+		client.SetRegion(region)
+	}
+	request := ociFunctions.ListFunctionsRuntimeVersionsRequest{
+		FunctionsRuntimeName:      &runtimeName,
+		FunctionsRuntimeVersionId: &runtimeVersionID,
+		Limit:                     ociCommon.Int(1),
+	}
+	response, err := client.ListFunctionsRuntimeVersions(context.Background(), request)
+	if err != nil {
+		return err
+	}
+	if len(response.Items) == 0 {
+		return fmt.Errorf("runtime version %s does not belong to runtime %s", runtimeVersionID, runtimeName)
+	}
+	if response.Items[0].LifecycleState != ociFunctions.FunctionsRuntimeVersionLifecycleStateActive {
+		return fmt.Errorf("runtime version %s is not active for runtime %s", runtimeVersionID, runtimeName)
+	}
+	return nil
+}
+
+func requiresHandlerForRuntime(runtimeName string) bool {
+	baseRuntime := strings.ToLower(strings.TrimSpace(runtimeName))
+	for _, sep := range []string{".", "-"} {
+		if idx := strings.Index(baseRuntime, sep); idx != -1 {
+			baseRuntime = baseRuntime[:idx]
+			break
+		}
+	}
+	return strings.HasPrefix(baseRuntime, "java") || strings.HasPrefix(baseRuntime, "python") || strings.HasPrefix(baseRuntime, "node")
+}
+
+func validateHandlerForRuntime(runtimeName, handler string) error {
+	baseRuntime := strings.ToLower(strings.TrimSpace(runtimeName))
+	for _, sep := range []string{".", "-"} {
+		if idx := strings.Index(baseRuntime, sep); idx != -1 {
+			baseRuntime = baseRuntime[:idx]
+			break
+		}
+	}
+	h := strings.TrimSpace(handler)
+	if h == "" {
+		return nil
+	}
+	switch {
+	case strings.HasPrefix(baseRuntime, "python"):
+		if strings.Contains(h, ":") || strings.Count(h, ".") != 1 {
+			return fmt.Errorf("handler for runtime %s must be in the format <fileName>.<function>", runtimeName)
+		}
+	case strings.HasPrefix(baseRuntime, "java"):
+		if !strings.Contains(h, "::") {
+			return fmt.Errorf("handler for runtime %s must be in the format <class>::<method>", runtimeName)
+		}
+	case strings.HasPrefix(baseRuntime, "node"):
+		if strings.Contains(h, ":") || strings.Count(h, ".") != 1 {
+			return fmt.Errorf("handler for runtime %s must be in the format <fileName>.<function>", runtimeName)
+		}
+	}
+	return nil
+}
+
+func applyCodeOnlyUpdateOptions(p provider.Provider, fn *models.Fn, opts codeOnlyUpdateOptions) error {
+	if fn.Image != "" {
+		return fmt.Errorf("Specify either an image update or code-only update flags, not both")
+	}
+	if !opts.codeOnly {
+		return fmt.Errorf("--code-only is required when specifying code-only update flags")
+	}
+
+	sourceType, err := normalizeSourceType(opts.sourceType)
+	if err != nil {
+		return err
+	}
+	mode, err := normalizeRuntimeConfigType(opts.runtimeConfigType)
+	if err != nil {
+		return err
+	}
+
+	if sourceType != "" {
+		if err := validateCodeOnlySourceOptions(sourceType, codeOnlyCreateOptions{
+			codeOnly:        true,
+			sourceType:      sourceType,
+			sourceFile:      opts.sourceFile,
+			bucketName:      opts.bucketName,
+			namespace:       opts.namespace,
+			objectName:      opts.objectName,
+			objectVersionID: opts.objectVersionID,
+		}); err != nil {
+			return err
+		}
+	}
+
+	if mode != "" {
+		if opts.runtimeName == "" {
+			return fmt.Errorf("--runtime-name is required when changing --runtime-config-type")
+		}
+		if err := validateRuntimeConfig(p, mode, opts.runtimeName, opts.runtimeVersionID); err != nil {
+			return err
+		}
+	}
+
+	effectiveRuntimeName := opts.runtimeName
+	if effectiveRuntimeName == "" {
+		effectiveRuntimeName = fn.RuntimeName
+	}
+	if effectiveRuntimeName != "" && requiresHandlerForRuntime(effectiveRuntimeName) {
+		effectiveHandler := strings.TrimSpace(opts.handler)
+		if effectiveHandler == "" {
+			effectiveHandler = strings.TrimSpace(fn.Handler)
+		}
+		if effectiveHandler == "" && (sourceType != "" || mode != "") {
+			return fmt.Errorf("--handler is required for runtime %s", effectiveRuntimeName)
+		}
+		if err := validateHandlerForRuntime(effectiveRuntimeName, effectiveHandler); err != nil {
+			return err
+		}
+	}
+
+	fn.CodeOnly = true
+	fn.Image = ""
+	if sourceType != "" {
+		fn.SourceType = sourceType
+		fn.SourceFile = opts.sourceFile
+		fn.SourceBucketName = opts.bucketName
+		fn.SourceNamespace = opts.namespace
+		fn.SourceObjectName = opts.objectName
+		fn.SourceObjectVersion = opts.objectVersionID
+		if sourceType == "direct" {
+			archive, err := os.ReadFile(opts.sourceFile)
+			if err != nil {
+				return fmt.Errorf("failed to read --source-file %s: %w", opts.sourceFile, err)
+			}
+			fn.SourceArchive = archive
+		} else {
+			fn.SourceArchive = nil
+		}
+	}
+	if mode != "" {
+		fn.RuntimeConfigType = mode
+		fn.RuntimeName = opts.runtimeName
+		fn.RuntimeVersionID = opts.runtimeVersionID
+	}
+	if opts.handler != "" {
+		fn.Handler = opts.handler
+	}
+
+	if sourceType == "" && mode == "" && opts.handler == "" {
+		return fmt.Errorf("no code-only update fields were provided")
+	}
+
 	return nil
 }
