@@ -558,26 +558,16 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "\t")
+	inspectData, err := buildAppInspectData(app)
+	if err != nil {
+		return fmt.Errorf("Could not build app inspect data: %v", err)
+	}
 
 	if prop == "" {
-		enc.Encode(app)
+		enc.Encode(inspectData)
 		return nil
 	}
-
-	// TODO: we really need to marshal it here just to
-	// unmarshal as map[string]interface{}?
-	data, err := json.Marshal(app)
-	if err != nil {
-		return fmt.Errorf("Could not marshal app: %v", err)
-	}
-
-	var inspect map[string]interface{}
-	err = json.Unmarshal(data, &inspect)
-	if err != nil {
-		return fmt.Errorf("Could not unmarshal data: %v", err)
-	}
-
-	jq := jsonq.NewQuery(inspect)
+	jq := jsonq.NewQuery(inspectData)
 	field, err := jq.Interface(strings.Split(prop, ".")...)
 	if err != nil {
 		return fmt.Errorf("Failed to inspect field %v", prop)
@@ -585,6 +575,37 @@ func (a *appsCmd) inspect(c *cli.Context) error {
 	enc.Encode(field)
 
 	return nil
+}
+
+func buildAppInspectData(app *modelsv2.App) (map[string]interface{}, error) {
+	data, err := json.Marshal(app)
+	if err != nil {
+		return nil, err
+	}
+
+	inspect := map[string]interface{}{}
+	if err := json.Unmarshal(data, &inspect); err != nil {
+		return nil, err
+	}
+
+	if app == nil || app.Annotations == nil {
+		return inspect, nil
+	}
+
+	if v, ok := app.Annotations[annotationOCIParityTraceConfig]; ok {
+		inspect["traceConfig"] = v
+	}
+	if v, ok := app.Annotations[annotationOCIParityNetworkSecurityGroupIds]; ok {
+		inspect["networkSecurityGroupIds"] = v
+	}
+	if v, ok := app.Annotations[annotationOCIParityImagePolicyConfig]; ok {
+		inspect["imagePolicyConfig"] = v
+	}
+	if v, ok := app.Annotations[annotationOCIParitySecurityAttributes]; ok {
+		inspect["securityAttributes"] = v
+	}
+
+	return inspect, nil
 }
 
 func (a *appsCmd) delete(c *cli.Context) error {

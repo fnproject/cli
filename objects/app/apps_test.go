@@ -1,6 +1,7 @@
 package app
 
 import (
+	"reflect"
 	"net/url"
 	"testing"
 
@@ -8,6 +9,57 @@ import (
 	defaultprovider "github.com/fnproject/fn_go/provider/defaultprovider"
 	fnprovideroracle "github.com/fnproject/fn_go/provider/oracle"
 )
+
+func TestBuildAppInspectDataIncludesOCIParityFields(t *testing.T) {
+	app := &modelsv2.App{
+		Name: "parity-app",
+		Annotations: map[string]interface{}{
+			annotationOCIParityTraceConfig: map[string]interface{}{
+				"isEnabled": true,
+			},
+			annotationOCIParityNetworkSecurityGroupIds: []interface{}{"ocid1.nsg.oc1..aaaa"},
+			annotationOCIParityImagePolicyConfig: map[string]interface{}{
+				"isPolicyEnabled": true,
+			},
+			annotationOCIParitySecurityAttributes: map[string]interface{}{
+				"oracle-zpr": map[string]interface{}{
+					"MaxEgressCount": map[string]interface{}{
+						"value": "42",
+						"mode":  "enforce",
+					},
+				},
+			},
+		},
+	}
+
+	inspectData, err := buildAppInspectData(app)
+	if err != nil {
+		t.Fatalf("buildAppInspectData() error = %v", err)
+	}
+
+	if _, ok := inspectData["traceConfig"]; !ok {
+		t.Fatalf("expected traceConfig in inspect output, got %#v", inspectData)
+	}
+	if _, ok := inspectData["networkSecurityGroupIds"]; !ok {
+		t.Fatalf("expected networkSecurityGroupIds in inspect output, got %#v", inspectData)
+	}
+	if _, ok := inspectData["imagePolicyConfig"]; !ok {
+		t.Fatalf("expected imagePolicyConfig in inspect output, got %#v", inspectData)
+	}
+	if _, ok := inspectData["securityAttributes"]; !ok {
+		t.Fatalf("expected securityAttributes in inspect output, got %#v", inspectData)
+	}
+
+	gotNSGs, ok := inspectData["networkSecurityGroupIds"].([]interface{})
+	if !ok || len(gotNSGs) != 1 || gotNSGs[0] != "ocid1.nsg.oc1..aaaa" {
+		t.Fatalf("unexpected networkSecurityGroupIds value: %#v", inspectData["networkSecurityGroupIds"])
+	}
+
+	gotTrace, ok := inspectData["traceConfig"].(map[string]interface{})
+	if !ok || !reflect.DeepEqual(gotTrace, map[string]interface{}{"isEnabled": true}) {
+		t.Fatalf("unexpected traceConfig value: %#v", inspectData["traceConfig"])
+	}
+}
 
 func TestSetSubnetIDAnnotations(t *testing.T) {
 	app := &modelsv2.App{}
