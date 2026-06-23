@@ -1,6 +1,7 @@
 package shim
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/fnproject/fn_go/clientv2/apps"
@@ -243,6 +244,7 @@ func ociAppToV2(ociApp functions.Application) *modelsv2.App {
 	annotations := make(map[string]interface{})
 	annotations[annotationCompartmentId] = *ociApp.CompartmentId
 	annotations[annotationSubnet] = ociSubnetsToAnnotationValue(ociApp.SubnetIds)
+	addGeneratedOCIParityAppAnnotationsFromApplication(annotations, ociApp)
 	addTagAnnotations(annotations, ociApp.FreeformTags, ociApp.DefinedTags)
 
 	return &modelsv2.App{
@@ -255,6 +257,42 @@ func ociAppToV2(ociApp functions.Application) *modelsv2.App {
 		SyslogURL:   ociApp.SyslogUrl,
 		UpdatedAt:   strfmt.DateTime(ociApp.TimeUpdated.Time),
 	}
+}
+
+func addGeneratedOCIParityAppAnnotationsFromApplication(annotations map[string]interface{}, app functions.Application) {
+	if annotations == nil {
+		return
+	}
+	if app.TraceConfig != nil {
+		if raw := marshalToMap(app.TraceConfig); raw != nil {
+			annotations[annotationOCIParityTraceConfig] = raw
+		}
+	}
+	if len(app.NetworkSecurityGroupIds) > 0 {
+		annotations[annotationOCIParityNetworkSecurityGroupIds] = ociSubnetsToAnnotationValue(app.NetworkSecurityGroupIds)
+	}
+	if app.ImagePolicyConfig != nil {
+		if raw := marshalToMap(app.ImagePolicyConfig); raw != nil {
+			annotations[annotationOCIParityImagePolicyConfig] = raw
+		}
+	}
+	if len(app.SecurityAttributes) > 0 {
+		if raw := marshalToMap(app.SecurityAttributes); raw != nil {
+			annotations[annotationOCIParitySecurityAttributes] = raw
+		}
+	}
+}
+
+func marshalToMap(v interface{}) map[string]interface{} {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return nil
+	}
+	var out map[string]interface{}
+	if err := json.Unmarshal(data, &out); err != nil {
+		return nil
+	}
+	return out
 }
 
 func ociAppSummaryToV2(ociAppSummary functions.ApplicationSummary) *modelsv2.App {
