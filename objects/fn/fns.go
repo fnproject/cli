@@ -1279,6 +1279,9 @@ func (f *fnsCmd) update(c *cli.Context) error {
 	if err := common.WaitForFunctionState(f.provider, fn.ID, control.WaitForState, control.MaxWaitSeconds, control.WaitIntervalSeconds); err != nil {
 		return err
 	}
+	if err := common.InvalidateInvokeEndpointCacheForFunction(f.provider, appName, fnName); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: unable to invalidate invoke endpoint cache: %v\n", err)
+	}
 
 	fmt.Println(appName, fnName, "updated")
 	return nil
@@ -1505,6 +1508,9 @@ func (f *fnsCmd) delete(c *cli.Context) error {
 	}
 	if err := common.WaitForFunctionState(f.provider, fn.ID, control.WaitForState, control.MaxWaitSeconds, control.WaitIntervalSeconds); err != nil {
 		return err
+	}
+	if err := common.InvalidateInvokeEndpointCacheForFunction(f.provider, appName, fnName); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: unable to invalidate invoke endpoint cache: %v\n", err)
 	}
 
 	fmt.Println("Function", fnName, "deleted")
