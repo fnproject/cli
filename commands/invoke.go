@@ -47,6 +47,13 @@ type invokeCmd struct {
 	client   *clientv2.Fn
 }
 
+var (
+	getInvokeAppByName     = app.GetAppByName
+	getInvokeFnByName      = fn.GetFnByName
+	invokeFunction         = client.Invoke
+	newInvokeEndpointCache = common.NewDefaultInvokeEndpointCache
+)
+
 // InvokeFnFlags used to invoke and fn
 var InvokeFnFlags = []cli.Flag{
 	cli.StringFlag{
@@ -77,6 +84,16 @@ var InvokeFnFlags = []cli.Flag{
 		Name:  "fn-invoke-type",
 		Usage: "Invoke type for Oracle Functions: sync or detached",
 	},
+	cli.BoolFlag{
+		Name:  common.NoInvokeEndpointCacheFlag,
+		Usage: "Do not use the local function invoke endpoint cache",
+	},
+	cli.DurationFlag{
+		Name:   common.InvokeEndpointCacheTTLFlag,
+		Usage:  "How long to cache function invoke endpoints resolved by app and function name",
+		Value:  common.DefaultInvokeEndpointCacheTTL,
+		EnvVar: common.InvokeEndpointCacheTTLEnvVar,
+	},
 }
 
 var InvokeDetachedFnFlags = []cli.Flag{
@@ -104,6 +121,16 @@ var InvokeDetachedFnFlags = []cli.Flag{
 		Name:  "is-dry-run",
 		Usage: "Send the invocation as a dry run without executing the function when supported by the server",
 	},
+	cli.BoolFlag{
+		Name:  common.NoInvokeEndpointCacheFlag,
+		Usage: "Do not use the local function invoke endpoint cache",
+	},
+	cli.DurationFlag{
+		Name:   common.InvokeEndpointCacheTTLFlag,
+		Usage:  "How long to cache function invoke endpoints resolved by app and function name",
+		Value:  common.DefaultInvokeEndpointCacheTTL,
+		EnvVar: common.InvokeEndpointCacheTTLEnvVar,
+	},
 }
 
 // InvokeCommand returns call cli.command
@@ -122,15 +149,15 @@ func InvokeCommand() cli.Command {
 			cl.client = cl.provider.APIClientv2()
 			return nil
 		},
-		ArgsUsage:   "[app-name] [function-name]",
-		Flags:       InvokeFnFlags,
+		ArgsUsage: "[app-name] [function-name]",
+		Flags:     InvokeFnFlags,
 		Subcommands: []cli.Command{
 			{
-				Name:        "detached",
-				Usage:       "\tInvoke a remote function in detached mode",
-				ArgsUsage:   "[app-name] [function-name]",
-				Flags:       InvokeDetachedFnFlags,
-				Action:      cl.InvokeDetached,
+				Name:      "detached",
+				Usage:     "\tInvoke a remote function in detached mode",
+				ArgsUsage: "[app-name] [function-name]",
+				Flags:     InvokeDetachedFnFlags,
+				Action:    cl.InvokeDetached,
 				BashComplete: func(c *cli.Context) {
 					switch len(c.Args()) {
 					case 0:
@@ -169,7 +196,6 @@ func (cl *invokeCmd) invoke(c *cli.Context, forcedInvokeType string) error {
 	invokeURL := c.String("endpoint")
 
 	if invokeURL == "" {
-
 		appName := c.Args().Get(0)
 		fnName := c.Args().Get(1)
 
@@ -177,18 +203,10 @@ func (cl *invokeCmd) invoke(c *cli.Context, forcedInvokeType string) error {
 			return errors.New("missing app and function name")
 		}
 
-		app, err := app.GetAppByName(cl.client, appName)
+		var err error
+		invokeURL, err = cl.resolveInvokeEndpoint(c, appName, fnName)
 		if err != nil {
 			return err
-		}
-		fn, err := fn.GetFnByName(cl.client, app.ID, fnName)
-		if err != nil {
-			return err
-		}
-		var ok bool
-		invokeURL, ok = fn.Annotations[FnInvokeEndpointAnnotation].(string)
-		if !ok {
-			return fmt.Errorf("Fn invoke url annotation not present, %s", FnInvokeEndpointAnnotation)
 		}
 	}
 	content := stdin()
@@ -215,14 +233,14 @@ func (cl *invokeCmd) invoke(c *cli.Context, forcedInvokeType string) error {
 		}
 	}
 
-	resp, err := client.Invoke(cl.provider,
+	resp, err := invokeFunction(cl.provider,
 		client.InvokeRequest{
-			URL:         invokeURL,
-			Content:     content,
-			Env:         c.StringSlice("e"),
-			ContentType: contentType,
-			FnIntent:    fnIntent,
-			IsDryRun:    c.Bool("is-dry-run"),
+			URL:          invokeURL,
+			Content:      content,
+			Env:          c.StringSlice("e"),
+			ContentType:  contentType,
+			FnIntent:     fnIntent,
+			IsDryRun:     c.Bool("is-dry-run"),
 			FnInvokeType: invokeType,
 		},
 	)
@@ -240,6 +258,42 @@ func (cl *invokeCmd) invoke(c *cli.Context, forcedInvokeType string) error {
 	// TODO we should have a 'raw' option to output the raw http request, it may be useful, idk
 
 	return nil
+}
+
+func (cl *invokeCmd) resolveInvokeEndpoint(c *cli.Context, appName, fnName string) (string, error) {
+	cacheEnabled := !c.Bool(common.NoInvokeEndpointCacheFlag)
+	cacheTTL := c.Duration(common.InvokeEndpointCacheTTLFlag)
+	cacheKey := common.NewInvokeEndpointCacheKey(cl.provider, appName, fnName)
+
+	if cacheEnabled && cacheTTL > 0 {
+		endpoint, ok, err := newInvokeEndpointCache().Get(cacheKey, cacheTTL)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: ignoring invoke endpoint cache: %v\n", err)
+		} else if ok {
+			return endpoint, nil
+		}
+	}
+
+	appObj, err := getInvokeAppByName(cl.client, appName)
+	if err != nil {
+		return "", err
+	}
+	fnObj, err := getInvokeFnByName(cl.client, appObj.ID, fnName)
+	if err != nil {
+		return "", err
+	}
+	invokeURL, ok := fnObj.Annotations[FnInvokeEndpointAnnotation].(string)
+	if !ok {
+		return "", fmt.Errorf("Fn invoke url annotation not present, %s", FnInvokeEndpointAnnotation)
+	}
+
+	if cacheEnabled && cacheTTL > 0 {
+		if err := newInvokeEndpointCache().Put(cacheKey, invokeURL); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: unable to update invoke endpoint cache: %v\n", err)
+		}
+	}
+
+	return invokeURL, nil
 }
 
 func outputJSON(output io.Writer, resp *http.Response) {

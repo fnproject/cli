@@ -421,7 +421,13 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 			return err
 		}
 	}
-	return p.updateFunction(c, app.ID, funcfile)
+	if err := p.updateFunction(c, app.ID, funcfile); err != nil {
+		return err
+	}
+	if err := common.InvalidateInvokeEndpointCacheForFunction(p.provider, app.Name, funcfile.Name); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: unable to invalidate invoke endpoint cache: %v\n", err)
+	}
+	return nil
 }
 
 func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.FuncFileV20180708) error {

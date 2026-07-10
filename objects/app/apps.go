@@ -17,10 +17,10 @@
 package app
 
 import (
-	ocifunctions "github.com/oracle/oci-go-sdk/v65/functions"
 	"encoding/json"
 	"errors"
 	"fmt"
+	ocifunctions "github.com/oracle/oci-go-sdk/v65/functions"
 	"os"
 	"text/tabwriter"
 
@@ -684,6 +684,9 @@ func (a *appsCmd) delete(c *cli.Context) error {
 	}
 	if err := common.WaitForAppState(a.provider, app.ID, control.WaitForState, control.MaxWaitSeconds, control.WaitIntervalSeconds); err != nil {
 		return err
+	}
+	if err := common.InvalidateInvokeEndpointCacheForApp(a.provider, appName); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: unable to invalidate invoke endpoint cache: %v\n", err)
 	}
 
 	fmt.Println("App", appName, "deleted")
