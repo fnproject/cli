@@ -133,6 +133,9 @@ func (lh *GoLangHelper) GenerateBoilerplate(path string) error {
 	}
 	modFile := "go.mod"
 	fdkVersion, _ := lh.GetLatestFDKVersion()
+	if strings.TrimSpace(fdkVersion) == "" {
+		fdkVersion = defaultGoFDKVersion
+	}
 	if err := ioutil.WriteFile(modFile, []byte(fmt.Sprintf(modBoilerplate, fdkVersion)), os.FileMode(0644)); err != nil {
 		return err
 	}
@@ -181,8 +184,11 @@ func myHandler(ctx context.Context, in io.Reader, out io.Writer) {
 	modBoilerplate = `
 module func
 
+go 1.23
+
 require github.com/fnproject/fdk-go %s
 `
+	defaultGoFDKVersion = "v0.1.9"
 )
 
 func (h *GoLangHelper) FixImagesOnInit() bool {
