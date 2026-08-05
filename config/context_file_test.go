@@ -60,6 +60,14 @@ func TestContextFile(t *testing.T) {
 			if actual.EnvFnRegistry != tst.expected.EnvFnRegistry {
 				t.Fatalf("EnvFnRegistry: expected '%s', but got '%s'", tst.expected.EnvFnRegistry, actual.EnvFnRegistry)
 			}
+
+			if actual.ObjectStorageBucketName != tst.expected.ObjectStorageBucketName {
+				t.Fatalf("ObjectStorageBucketName: expected '%s', but got '%s'", tst.expected.ObjectStorageBucketName, actual.ObjectStorageBucketName)
+			}
+
+			if actual.ObjectStorageNamespace != tst.expected.ObjectStorageNamespace {
+				t.Fatalf("ObjectStorageNamespace: expected '%s', but got '%s'", tst.expected.ObjectStorageNamespace, actual.ObjectStorageNamespace)
+			}
 		})
 	}
 }
@@ -73,11 +81,15 @@ func prepareTestFiles(folder string) ([]testCase, error) {
 			contents: `
 api-url: http://localhost:8080
 provider: default
-registry: "someregistry"`,
+registry: "someregistry"
+object_storage_bucket_name: "code-only-test-files"
+namespace: "oracledevnamespace"`,
 			expected: &ContextFile{
-				ContextProvider: "default",
-				EnvFnAPIURL:     "http://localhost:8080",
-				EnvFnRegistry:   "someregistry",
+				ContextProvider:         "default",
+				EnvFnAPIURL:             "http://localhost:8080",
+				EnvFnRegistry:           "someregistry",
+				ObjectStorageBucketName: "code-only-test-files",
+				ObjectStorageNamespace:  "oracledevnamespace",
 			},
 		},
 	}
