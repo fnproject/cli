@@ -40,7 +40,7 @@ var runtimes = []string{
 	"node24",
 	"python",
 	"python3.12",
-	"python3.11",
+	"python3.9",
 	"dotnet",
 	"dotnet9.0",
 	"dotnet8.0",

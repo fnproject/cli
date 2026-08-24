@@ -46,7 +46,7 @@ var Runtimes = []struct {
 	{"ruby3.3", ""},
 	{"python", ""},
 	{"python3.12", ""},
-	{"python3.11", ""},
+	{"python3.9", ""},
 }
 
 func TestFnInitWithBoilerplateBuildsRuns(t *testing.T) {

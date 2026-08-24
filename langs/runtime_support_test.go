@@ -9,6 +9,7 @@ func TestDefaultRuntimeVersions(t *testing.T) {
 	}{
 		{runtime: "node", want: "node24"},
 		{runtime: "java", want: "java21"},
+		{runtime: "python", want: "python3.12"},
 	}
 
 	for _, tt := range tests {
@@ -87,5 +88,25 @@ func TestJava21Images(t *testing.T) {
 	}
 	if runImage != "fnproject/fn-java-fdk:jre21-1.2.3" {
 		t.Fatalf("expected java21 run image %q, got %q", "fnproject/fn-java-fdk:jre21-1.2.3", runImage)
+	}
+}
+
+func TestPython312Images(t *testing.T) {
+	helper := &PythonLangHelper{Version: "3.12"}
+
+	buildImage, err := helper.BuildFromImage()
+	if err != nil {
+		t.Fatalf("BuildFromImage() returned error: %v", err)
+	}
+	runImage, err := helper.RunFromImage()
+	if err != nil {
+		t.Fatalf("RunFromImage() returned error: %v", err)
+	}
+
+	if buildImage != "fnproject/python:3.12-dev" {
+		t.Fatalf("expected python3.12 build image %q, got %q", "fnproject/python:3.12-dev", buildImage)
+	}
+	if runImage != "fnproject/python:3.12" {
+		t.Fatalf("expected python3.12 run image %q, got %q", "fnproject/python:3.12", runImage)
 	}
 }

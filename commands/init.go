@@ -173,7 +173,7 @@ func langsList() string {
 }
 
 func deprecatedPythonRuntime(runtime string) bool {
-	return runtime == "python3.8.5" || runtime == "python3.7.1" || runtime == "python3.9" || runtime == "python3.8"
+	return runtime == "python3.8.5" || runtime == "python3.7.1" || runtime == "python3.11" || runtime == "python3.8"
 }
 
 // InitCommand returns init cli.command
