@@ -1,16 +1,29 @@
 
 # Releases
-## Unreleased
+## v 0.6.64
 
-* Enabling support for node24
-* Enabling support for java21
-* Add OCI Functions provisioned concurrency support to Fn CLI, including CLI flag parsing, `func.yaml` persistence, deploy/update handling, inspect/list output, and OCI shim mappings.
-* Add OCI Functions detached / long-running configuration support, including detached timeout and success/failure destinations persisted via `func.yaml` and applied through deploy/update flows.
+* Enabling support for python3.9 and removing support for python3.11
+
+## v 0.6.57
+
 * Add detached invoke support for OCI Functions in Fn CLI, including:
   * `fn invoke detached <app-name> <function-name>`
   * `--fn-invoke-type detached`
   * `--fn-intent`
   * `--is-dry-run`
+
+## v 0.6.54
+
+* Add OCI Functions detached / long-running configuration support, including detached timeout and success/failure destinations persisted via `func.yaml` and applied through deploy/update flows.
+
+## v 0.6.53
+
+* Add OCI Functions provisioned concurrency support to Fn CLI, including CLI flag parsing, `func.yaml` persistence, deploy/update handling, inspect/list output, and OCI shim mappings.
+
+## v 0.6.51
+
+* Enabling support for node24
+* Enabling support for java21
 
 ## v 0.6.47
 
