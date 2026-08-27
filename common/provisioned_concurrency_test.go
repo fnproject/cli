@@ -14,6 +14,7 @@ func TestParseProvisionedConcurrencySpec(t *testing.T) {
 		{name: "empty", spec: "", wantNil: true},
 		{name: "none", spec: "none", strategy: ProvisionedConcurrencyStrategyNone},
 		{name: "none case insensitive", spec: "NoNe", strategy: ProvisionedConcurrencyStrategyNone},
+		{name: "constant minimum for 256 MB function", spec: "constant:20", strategy: ProvisionedConcurrencyStrategyConstant, wantCount: 20},
 		{name: "constant", spec: "constant:40", strategy: ProvisionedConcurrencyStrategyConstant, wantCount: 40},
 		{name: "constant with spaces", spec: " constant:80 ", strategy: ProvisionedConcurrencyStrategyConstant, wantCount: 80},
 		{name: "invalid missing count", spec: "constant", wantErr: true},

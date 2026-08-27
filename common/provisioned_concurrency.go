@@ -9,7 +9,10 @@ import (
 const (
 	ProvisionedConcurrencyStrategyNone     = "NONE"
 	ProvisionedConcurrencyStrategyConstant = "CONSTANT"
-	ProvisionedConcurrencyCountStep        = 40
+	// OCI Functions requires every provisioned concurrency count to be a
+	// multiple of 10. The function memory determines any stricter minimum and
+	// increment, so that validation must remain service-side.
+	ProvisionedConcurrencyCountStep = 10
 )
 
 // ValidateProvisionedConcurrencyConfig validates OCI provisioned concurrency values
