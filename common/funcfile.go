@@ -95,10 +95,10 @@ type OCIPBFSourceConfig struct {
 // OCIFunctionDeployConfig stores OCI-specific deploy configuration for a function.
 type OCIFunctionDeployConfig struct {
 	ProvisionedConcurrency *OCIProvisionedConcurrencyConfig `yaml:"provisioned_concurrency,omitempty" json:"provisioned_concurrency,omitempty"`
-	DetachedMode           *OCIDetachedModeConfig           `yaml:"detached_mode,omitempty" json:"detached_mode,omitempty"`
-	PBF                    *OCIPBFSourceConfig              `yaml:"pbf,omitempty" json:"pbf,omitempty"`
-	FreeformTags           map[string]string                `yaml:"freeform_tags,omitempty" json:"freeform_tags,omitempty"`
-	DefinedTags            OCIDefinedTags                   `yaml:"defined_tags,omitempty" json:"defined_tags,omitempty"`
+	DetachedMode           *OCIDetachedModeConfig          `yaml:"detached_mode,omitempty" json:"detached_mode,omitempty"`
+	PBF                    *OCIPBFSourceConfig             `yaml:"pbf,omitempty" json:"pbf,omitempty"`
+	FreeformTags           map[string]string               `yaml:"freeform_tags,omitempty" json:"freeform_tags,omitempty"`
+	DefinedTags            OCIDefinedTags                  `yaml:"defined_tags,omitempty" json:"defined_tags,omitempty"`
 }
 
 // FuncDeployConfig stores deploy-time configuration sections in func.yaml.
@@ -154,6 +154,7 @@ type FuncFileV20180708 struct {
 
 	Name         string `yaml:"name,omitempty" json:"name,omitempty"`
 	Version      string `yaml:"version,omitempty" json:"version,omitempty"`
+	Code_only    bool   `yaml:"code_only,omitempty" json:"code_only,omitempty"`
 	Runtime      string `yaml:"runtime,omitempty" json:"runtime,omitempty"`
 	Build_image  string `yaml:"build_image,omitempty" json:"build_image,omitempty"` // Image to use as base for building
 	Run_image    string `yaml:"run_image,omitempty" json:"run_image,omitempty"`     // Image to use for running
@@ -173,8 +174,17 @@ type FuncFileV20180708 struct {
 
 	Build []string `yaml:"build,omitempty" json:"build,omitempty"`
 
+	Runtime_config *RuntimeConfigV20180708 `yaml:"runtime_config,omitempty" json:"runtime_config,omitempty"`
+	Handler        string                  `yaml:"handler,omitempty" json:"handler,omitempty"`
+
 	Expects  Expects   `yaml:"expects,omitempty" json:"expects,omitempty"`
 	Triggers []Trigger `yaml:"triggers,omitempty" json:"triggers,omitempty"`
+}
+
+type RuntimeConfigV20180708 struct {
+	Type              string `yaml:"type,omitempty" json:"type,omitempty"`
+	Runtime_name      string `yaml:"runtime_name,omitempty" json:"runtime_name,omitempty"`
+	Runtime_version_id string `yaml:"runtime_version_id,omitempty" json:"runtime_version_id,omitempty"`
 }
 
 // Trigger represents a trigger for a FuncFileV20180708
@@ -351,7 +361,7 @@ func ParseFuncFileV20180708(path string) (ff *FuncFileV20180708, err error) {
 		return nil, errUnexpectedFileFormat
 	}
 
-	if err == nil && ff.Schema_version != V20180708 {
+	if err == nil && ff.Schema_version != V20180708 && ff.Schema_version != V20260325 {
 		// todo: we should maybe not assume this, but it's more useful than saying 'version mismatch' for users...
 		return nil, fmt.Errorf("unsupported func.yaml version, please use the migrate command to update your function metadata")
 	}
@@ -436,11 +446,15 @@ func (ff *FuncFileV20180708) HasOCIManagedFunctionSettings() bool {
 	}
 
 	oci := ff.Deploy.OCI
-	if oci.ProvisionedConcurrency != nil && (oci.ProvisionedConcurrency.Strategy != "" || oci.ProvisionedConcurrency.Count != nil) {
-		return true
+	if oci.ProvisionedConcurrency != nil {
+		if oci.ProvisionedConcurrency.Strategy != "" || oci.ProvisionedConcurrency.Count != nil {
+			return true
+		}
 	}
-	if oci.DetachedMode != nil && (oci.DetachedMode.Timeout != "" || oci.DetachedMode.OnSuccess != nil || oci.DetachedMode.OnFailure != nil) {
-		return true
+	if oci.DetachedMode != nil {
+		if oci.DetachedMode.Timeout != "" || oci.DetachedMode.OnSuccess != nil || oci.DetachedMode.OnFailure != nil {
+			return true
+		}
 	}
 	if len(oci.FreeformTags) > 0 || len(oci.DefinedTags) > 0 {
 		return true
