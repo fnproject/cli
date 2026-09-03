@@ -52,17 +52,18 @@ const (
 	EnvFnRegistry = "registry"
 	EnvFnContext  = "context"
 
-	OCI_CLI_AUTH_ENV_VAR                  = "OCI_CLI_AUTH"
-	OCI_CLI_CLOUDSHELL_ENV_VAR            = "OCI_CLI_CLOUD_SHELL"
-	OCI_CLOUDSHELL_OS_NAME                = "Oracle Linux Server"
-	OCI_CLOUDSHELL_OL8_VERSION_IDENTIFIER = "el8"
-	DEFAULT_LINUX_OS_RELEASE_FILE_PATH    = "/etc/os-release"
-	OCI_CLI_AUTH_INSTANCE_PRINCIPAL       = "instance_principal"
-	OCI_CLI_AUTH_INSTANCE_OBO_USER        = "instance_obo_user"
-	DefaultContainerEngineType            = "docker"
+	OCI_CLI_AUTH_ENV_VAR               = "OCI_CLI_AUTH"
+	OCI_CLI_CLOUDSHELL_ENV_VAR         = "OCI_CLI_CLOUD_SHELL"
+	OCI_CLOUDSHELL_OS_NAME             = "Oracle Linux Server"
+	OCI_CLOUDSHELL_OL8_PLATFORM_ID     = "platform:el8"
+	OCI_CLOUDSHELL_OL9_PLATFORM_ID     = "platform:el9"
+	DEFAULT_LINUX_OS_RELEASE_FILE_PATH = "/etc/os-release"
+	OCI_CLI_AUTH_INSTANCE_PRINCIPAL    = "instance_principal"
+	OCI_CLI_AUTH_INSTANCE_OBO_USER     = "instance_obo_user"
+	DefaultContainerEngineType         = "docker"
 )
 
-var EnvIsOL8CloudShell bool = false
+var EnvIsCloudShell bool = false
 
 var defaultRootConfigContents = &ContextMap{CurrentContext: "default", CurrentCliVersion: Version, ContainerEngineType: DefaultContainerEngineType}
 
@@ -209,21 +210,26 @@ func ensureConfiguration() error {
 		}
 	}
 
-	// This check is specific for running fn-cli on Oracle Cloud Shell based on OL8
+	// Cloud Shell uses Podman through its Docker-compatible command on both OL8 and OL9.
 	if os.Getenv(OCI_CLI_CLOUDSHELL_ENV_VAR) == "True" {
 		osrelease, err := Parse(DEFAULT_LINUX_OS_RELEASE_FILE_PATH)
 		if err != nil {
 			return fmt.Errorf("failed to parse /etc/os-relese file: %v", err)
 		}
 
-		if osrelease.Name == OCI_CLOUDSHELL_OS_NAME {
-			if strings.Contains(osrelease.PlatformID, OCI_CLOUDSHELL_OL8_VERSION_IDENTIFIER) {
-				EnvIsOL8CloudShell = true
-			}
-		}
+		EnvIsCloudShell = isCloudShellOS(osrelease)
 	}
 
 	return nil
+}
+
+func isCloudShellOS(osrelease *OSRelease) bool {
+	if osrelease.Name != OCI_CLOUDSHELL_OS_NAME {
+		return false
+	}
+
+	return osrelease.PlatformID == OCI_CLOUDSHELL_OL8_PLATFORM_ID ||
+		osrelease.PlatformID == OCI_CLOUDSHELL_OL9_PLATFORM_ID
 }
 
 // GetContextsPath : Returns the path to the contexts directory.
