@@ -548,8 +548,8 @@ func RunBuild(verbose bool, dir, imageName, dockerfile string, buildArgs []strin
 				targetPlatform := strings.Join(platform, " ")
 				fmt.Println("TargetedPlatform: ", targetPlatform+"HostPlatform: ", hostedPlatform)
 				if targetPlatform != hostedPlatform {
-					if config.EnvIsOL8CloudShell {
-						done <- fmt.Errorf("OL8 CloudShell does not support cross-compilation and multi-arch functions builds. Please ensure the architecture of your App matches the CloudShell architecture.")
+					if config.EnvIsCloudShell {
+						done <- fmt.Errorf("Cloud Shell does not support cross-compilation or multi-architecture function builds. Ensure that your application architecture matches the Cloud Shell architecture.")
 						return
 					}
 					err := initializeContainerBuilder(containerEngineType, mappedArchitectures)
@@ -630,7 +630,7 @@ func containerEngineVersionCheck(containerEngineType string) error {
 	if err != nil {
 		return fmt.Errorf("could not check %v version: %v", containerEngineType, err)
 	}
-	if containerEngineType == "docker" && !config.EnvIsOL8CloudShell {
+	if containerEngineType == "docker" && !config.EnvIsCloudShell {
 		vMin, err := semver.NewVersion(MinRequiredDockerVersion)
 		if err != nil {
 			return fmt.Errorf("our bad, sorry... please make an issue, detailed error: %v", err)
