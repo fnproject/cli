@@ -6,8 +6,6 @@ import (
 	"testing"
 )
 
-// This test is written for testing the parsing of file /etc/os-release on OL8 Cloud Shell
-// Please modify the test-case when we move to OL8+ on cloudshell
 func TestParse(t *testing.T) {
 
 	var path = "os-release-test"
@@ -20,7 +18,28 @@ func TestParse(t *testing.T) {
 	switch true {
 	case osrelease.Name != "Oracle Linux Server":
 		t.Errorf("Test failed on NAME: want 'Oracle Linux Server', got '%s'\n", osrelease.Name)
-	case osrelease.PlatformID != "platform:el8":
-		t.Errorf("Test failed on PLATFORM_ID: want 'platform:el8', got '%s'\n", osrelease.PlatformID)
+	case osrelease.PlatformID != OCI_CLOUDSHELL_OL9_PLATFORM_ID:
+		t.Errorf("Test failed on PLATFORM_ID: want '%s', got '%s'\n", OCI_CLOUDSHELL_OL9_PLATFORM_ID, osrelease.PlatformID)
+	}
+}
+
+func TestIsCloudShellOS(t *testing.T) {
+	tests := []struct {
+		name      string
+		osrelease OSRelease
+		want      bool
+	}{
+		{"OL8 Cloud Shell", OSRelease{Name: OCI_CLOUDSHELL_OS_NAME, PlatformID: OCI_CLOUDSHELL_OL8_PLATFORM_ID}, true},
+		{"OL9 Cloud Shell", OSRelease{Name: OCI_CLOUDSHELL_OS_NAME, PlatformID: OCI_CLOUDSHELL_OL9_PLATFORM_ID}, true},
+		{"unsupported Oracle Linux version", OSRelease{Name: OCI_CLOUDSHELL_OS_NAME, PlatformID: "platform:el10"}, false},
+		{"different operating system", OSRelease{Name: "Other Linux", PlatformID: OCI_CLOUDSHELL_OL9_PLATFORM_ID}, false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := isCloudShellOS(&test.osrelease); got != test.want {
+				t.Errorf("isCloudShellOS() = %t, want %t", got, test.want)
+			}
+		})
 	}
 }
