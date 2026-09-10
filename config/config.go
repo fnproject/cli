@@ -32,6 +32,8 @@ import (
 )
 
 const (
+	OCRImagePrefix = "container-registry.oracle.com/oci_functions/"
+
 	rootConfigPathName = ".fn"
 
 	contextsPathName                       = "contexts"

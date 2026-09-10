@@ -23,6 +23,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/fnproject/cli/config"
 )
 
 type GoLangHelper struct {
@@ -49,11 +51,11 @@ func (lh *GoLangHelper) Extensions() []string {
 }
 
 func (lh *GoLangHelper) BuildFromImage() (string, error) {
-	return fmt.Sprintf("fnproject/go:%s-dev", lh.Version), nil
+	return fmt.Sprintf(config.OCRImagePrefix+"go:%s-dev", lh.Version), nil
 }
 
 func (lh *GoLangHelper) RunFromImage() (string, error) {
-	return fmt.Sprintf("fnproject/go:%s", lh.Version), nil
+	return fmt.Sprintf(config.OCRImagePrefix+"go:%s", lh.Version), nil
 }
 
 func (h *GoLangHelper) DockerfileBuildCmds(localDebug bool) []string {

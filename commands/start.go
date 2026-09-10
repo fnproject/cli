@@ -53,7 +53,7 @@ func StartCommand() cli.Command {
 			},
 			cli.StringFlag{
 				Name:  "version",
-				Usage: "Specify a specific fnproject/fnserver version to run, ex: '1.2.3'.",
+				Usage: "Specify a specific Fn server version to run, ex: '1.2.3'.",
 				Value: "latest",
 			},
 			cli.IntFlag{
@@ -143,7 +143,7 @@ func start(c *cli.Context) error {
 	cmd.Stderr = os.Stderr
 	err := cmd.Start()
 	if err != nil {
-		log.Fatalln("Starting command failed:", err)
+		return fmt.Errorf("could not start Fn server image %s: %w", image, err)
 	}
 
 	done := make(chan error, 1)
@@ -153,6 +153,7 @@ func start(c *cli.Context) error {
 	// catch ctrl-c and kill
 	sigC := make(chan os.Signal, 2)
 	signal.Notify(sigC, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigC)
 
 	log.Println("¡¡¡ 'fn start' should NOT be used for PRODUCTION !!! see https://github.com/fnproject/fn-helm/")
 
@@ -167,8 +168,9 @@ func start(c *cli.Context) error {
 			}
 		case err := <-done:
 			if err != nil {
-				log.Println("Error: processed finished with error", err)
+				return fmt.Errorf("could not run Fn server image %s: %w", image, err)
 			}
+			return nil
 		}
 		return err
 	}

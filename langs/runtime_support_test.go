@@ -1,6 +1,10 @@
 package langs
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/fnproject/cli/config"
+)
 
 func TestDefaultRuntimeVersions(t *testing.T) {
 	tests := []struct {
@@ -63,11 +67,11 @@ func TestNode24Images(t *testing.T) {
 		t.Fatalf("RunFromImage() returned error: %v", err)
 	}
 
-	if buildImage != "fnproject/node:24-dev" {
-		t.Fatalf("expected node24 build image %q, got %q", "fnproject/node:24-dev", buildImage)
+	if buildImage != config.OCRImagePrefix+"node:24-dev" {
+		t.Fatalf("expected node24 build image %q, got %q", config.OCRImagePrefix+"node:24-dev", buildImage)
 	}
-	if runImage != "fnproject/node:24" {
-		t.Fatalf("expected node24 run image %q, got %q", "fnproject/node:24", runImage)
+	if runImage != config.OCRImagePrefix+"node:24" {
+		t.Fatalf("expected node24 run image %q, got %q", config.OCRImagePrefix+"node:24", runImage)
 	}
 }
 
@@ -83,11 +87,11 @@ func TestJava21Images(t *testing.T) {
 		t.Fatalf("RunFromImage() returned error: %v", err)
 	}
 
-	if buildImage != "fnproject/fn-java-fdk-build:jdk21-1.2.3" {
-		t.Fatalf("expected java21 build image %q, got %q", "fnproject/fn-java-fdk-build:jdk21-1.2.3", buildImage)
+	if buildImage != config.OCRImagePrefix+"fn-java-fdk-build:jdk21-1.2.3" {
+		t.Fatalf("expected java21 build image %q, got %q", config.OCRImagePrefix+"fn-java-fdk-build:jdk21-1.2.3", buildImage)
 	}
-	if runImage != "fnproject/fn-java-fdk:jre21-1.2.3" {
-		t.Fatalf("expected java21 run image %q, got %q", "fnproject/fn-java-fdk:jre21-1.2.3", runImage)
+	if runImage != config.OCRImagePrefix+"fn-java-fdk:jre21-1.2.3" {
+		t.Fatalf("expected java21 run image %q, got %q", config.OCRImagePrefix+"fn-java-fdk:jre21-1.2.3", runImage)
 	}
 }
 
@@ -103,10 +107,10 @@ func TestPython312Images(t *testing.T) {
 		t.Fatalf("RunFromImage() returned error: %v", err)
 	}
 
-	if buildImage != "fnproject/python:3.12-dev" {
-		t.Fatalf("expected python3.12 build image %q, got %q", "fnproject/python:3.12-dev", buildImage)
+	if buildImage != config.OCRImagePrefix+"python:3.12-dev" {
+		t.Fatalf("expected python3.12 build image %q, got %q", config.OCRImagePrefix+"python:3.12-dev", buildImage)
 	}
-	if runImage != "fnproject/python:3.12" {
-		t.Fatalf("expected python3.12 run image %q, got %q", "fnproject/python:3.12", runImage)
+	if runImage != config.OCRImagePrefix+"python:3.12" {
+		t.Fatalf("expected python3.12 run image %q, got %q", config.OCRImagePrefix+"python:3.12", runImage)
 	}
 }

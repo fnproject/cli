@@ -289,6 +289,3 @@ You can add more ignore rules by creating a `.fnignore` file in the watched dire
 ### Build from source
 See [CONTRIBUTING](https://github.com/fnproject/cli/blob/master/CONTRIBUTING.md) for instructions to build the CLI from source.
 
-
-
-
