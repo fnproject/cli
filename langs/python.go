@@ -24,6 +24,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/fnproject/cli/config"
 )
 
 // PythonLangHelper - python-specific init helper
@@ -80,11 +82,11 @@ func (h *PythonLangHelper) Extensions() []string {
 }
 
 func (h *PythonLangHelper) BuildFromImage() (string, error) {
-	return fmt.Sprintf("fnproject/python:%s-dev", h.Version), nil
+	return fmt.Sprintf(config.OCRImagePrefix+"python:%s-dev", h.Version), nil
 }
 
 func (h *PythonLangHelper) RunFromImage() (string, error) {
-	return fmt.Sprintf("fnproject/python:%s", h.Version), nil
+	return fmt.Sprintf(config.OCRImagePrefix+"python:%s", h.Version), nil
 }
 
 func (h *PythonLangHelper) Entrypoint() (string, error) {

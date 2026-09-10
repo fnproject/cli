@@ -22,6 +22,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/fnproject/cli/config"
 )
 
 var dotnetToFrameworkVersionMap = map[string]string{
@@ -56,12 +58,12 @@ func (lh *DotnetLangHelper) Extensions() []string {
 
 func (lh *DotnetLangHelper) BuildFromImage() (string, error) {
 	fdkVersion, _ := lh.GetLatestFDKVersion()
-	return fmt.Sprintf("fnproject/dotnet:%s-%s-dev", lh.Version, fdkVersion), nil
+	return fmt.Sprintf(config.OCRImagePrefix+"dotnet:%s-%s-dev", lh.Version, fdkVersion), nil
 }
 
 func (lh *DotnetLangHelper) RunFromImage() (string, error) {
 	fdkVersion, _ := lh.GetLatestFDKVersion()
-	return fmt.Sprintf("fnproject/dotnet:%s-%s", lh.Version, fdkVersion), nil
+	return fmt.Sprintf(config.OCRImagePrefix+"dotnet:%s-%s", lh.Version, fdkVersion), nil
 }
 
 func (h *DotnetLangHelper) DockerfileBuildCmds(localDebug bool) []string {

@@ -32,6 +32,9 @@ import (
 )
 
 const (
+	// OCRImagePrefix is the namespace, including the trailing slash, for Fn-provided images.
+	OCRImagePrefix = "container-registry.oracle.com/oci_functions/"
+
 	rootConfigPathName = ".fn"
 
 	contextsPathName                       = "contexts"

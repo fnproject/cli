@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	"github.com/fnproject/cli/common"
+	"github.com/fnproject/cli/config"
 	"github.com/fnproject/cli/testharness"
 )
 
@@ -129,7 +130,7 @@ func TestSettingTimeoutWorks(t *testing.T) {
 	h.Fn("invoke", appName, "another").AssertSuccess()
 }
 
-//Memory doesn't seem to get persisted/returned
+// Memory doesn't seem to get persisted/returned
 func TestSettingMemoryWorks(t *testing.T) {
 	t.Parallel()
 
@@ -180,8 +181,8 @@ func TestFuncYamlWithOCIManagedSettingsParsesInHarness(t *testing.T) {
 		Version:        "0.0.1",
 		Runtime:        "go",
 		Entrypoint:     "./func",
-		Build_image:    "fnproject/go:dev",
-		Run_image:      "fnproject/go",
+		Build_image:    config.OCRImagePrefix + "go:1.24-dev",
+		Run_image:      config.OCRImagePrefix + "go:1.24",
 		Deploy: &common.FuncDeployConfig{
 			OCI: &common.OCIFunctionDeployConfig{
 				ProvisionedConcurrency: &common.OCIProvisionedConcurrencyConfig{

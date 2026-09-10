@@ -17,18 +17,18 @@
 package test
 
 import (
+	"github.com/fnproject/cli/config"
 	"github.com/fnproject/cli/testharness"
 	"testing"
 )
 
-const dockerFile = `FROM golang:latest
-FROM fnproject/go:dev as build-stage
+const dockerFile = `FROM ` + config.OCRImagePrefix + `go:1.24-dev as build-stage
 WORKDIR /function
 WORKDIR /go/src/func/
 ENV GO111MODULE=on
 COPY . .
 RUN go build -o func -v
-FROM fnproject/go
+FROM ` + config.OCRImagePrefix + `go:1.24
 WORKDIR /function
 COPY --from=build-stage /go/src/func/func /function/
 ENTRYPOINT ["./func"]
