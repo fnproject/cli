@@ -1,6 +1,7 @@
 package common
 
 import (
+	"github.com/fnproject/cli/config"
 	"path/filepath"
 	"testing"
 )
@@ -17,26 +18,26 @@ func TestImageStampFuncFileV20180708UsesExpectedRuntimeVersion(t *testing.T) {
 		{
 			name:      "legacy node runtime uses fallback version",
 			runtime:   "node",
-			wantBuild: "fnproject/node:22-dev",
-			wantRun:   "fnproject/node:22",
+			wantBuild: config.OCRImagePrefix + "node:22-dev",
+			wantRun:   config.OCRImagePrefix + "node:22",
 		},
 		{
 			name:      "explicit node24 runtime keeps requested version",
 			runtime:   "node24",
-			wantBuild: "fnproject/node:24-dev",
-			wantRun:   "fnproject/node:24",
+			wantBuild: config.OCRImagePrefix + "node:24-dev",
+			wantRun:   config.OCRImagePrefix + "node:24",
 		},
 		{
 			name:      "legacy java runtime uses fallback version",
 			runtime:   "java",
-			wantBuild: "fnproject/fn-java-fdk-build:jdk17-1.2.3",
-			wantRun:   "fnproject/fn-java-fdk:jre17-1.2.3",
+			wantBuild: config.OCRImagePrefix + "fn-java-fdk-build:jdk17-1.2.3",
+			wantRun:   config.OCRImagePrefix + "fn-java-fdk:jre17-1.2.3",
 		},
 		{
 			name:      "explicit java21 runtime keeps requested version",
 			runtime:   "java21",
-			wantBuild: "fnproject/fn-java-fdk-build:jdk21-1.2.3",
-			wantRun:   "fnproject/fn-java-fdk:jre21-1.2.3",
+			wantBuild: config.OCRImagePrefix + "fn-java-fdk-build:jdk21-1.2.3",
+			wantRun:   config.OCRImagePrefix + "fn-java-fdk:jre21-1.2.3",
 		},
 	}
 

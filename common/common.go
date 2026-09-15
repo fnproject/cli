@@ -54,7 +54,7 @@ import (
 
 // Global docker variables.
 const (
-	FunctionsDockerImage      = "fnproject/fnserver"
+	FunctionsDockerImage      = config.OCRImagePrefix + "fnserver"
 	FuncfileDockerRuntime     = "docker"
 	MinRequiredDockerVersion  = "17.5.0"
 	BuildxBuilderInstance     = "oci_fn_builder"
@@ -1262,30 +1262,27 @@ func PullImage(image string) error {
 	cmd := ShellCommander(containerEngineType, args...)
 	cmd.SetStdOut(os.Stdout)
 	cmd.SetStdErr(os.Stderr)
-	err = cmd.Start()
-	if err != nil {
-		log.Fatalln("Starting command failed:", err)
+
+	// Register before starting so cancellation cannot miss a running pull.
+	sigC := make(chan os.Signal, 2)
+	signal.Notify(sigC, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigC)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("could not start %s pull for %s: %w", containerEngineType, image, err)
 	}
 
 	done := make(chan error, 1)
-	go func() {
-		done <- cmd.Wait()
-	}()
-	// catch ctrl-c and kill
-	sigC := make(chan os.Signal, 2)
-	signal.Notify(sigC, os.Interrupt, syscall.SIGTERM)
+	go func() { done <- cmd.Wait() }()
 	select {
 	case <-sigC:
-		log.Println("Interrupt caught, exiting")
-		err = cmd.Kill()
-		if err != nil {
-			log.Println("Error: could not kill process")
+		if err := cmd.Kill(); err != nil {
+			return fmt.Errorf("could not cancel pull for %s: %w", image, err)
 		}
+		<-done
+		return fmt.Errorf("pull cancelled for %s", image)
 	case err := <-done:
 		if err != nil {
-			log.Println("Processed finished with error:", err)
-		} else {
-			log.Println("Process finished gracefully")
+			return fmt.Errorf("%s pull failed for %s: %w", containerEngineType, image, err)
 		}
 	}
 	return nil

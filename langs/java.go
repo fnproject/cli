@@ -29,6 +29,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/fnproject/cli/config"
 )
 
 // JavaLangHelper provides a set of helper methods for the lifecycle of Java Maven projects
@@ -63,13 +65,13 @@ func (h *JavaLangHelper) BuildFromImage() (string, error) {
 	}
 
 	if h.Version == "8" {
-		return fmt.Sprintf("fnproject/fn-java-fdk-build:%s", fdkVersion), nil
+		return fmt.Sprintf(config.OCRImagePrefix+"fn-java-fdk-build:%s", fdkVersion), nil
 	} else if h.Version == "11" {
-		return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk11-%s", fdkVersion), nil
+		return fmt.Sprintf(config.OCRImagePrefix+"fn-java-fdk-build:jdk11-%s", fdkVersion), nil
 	} else if h.Version == "17" {
-		return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk17-%s", fdkVersion), nil
+		return fmt.Sprintf(config.OCRImagePrefix+"fn-java-fdk-build:jdk17-%s", fdkVersion), nil
 	} else if h.Version == "21" {
-		return fmt.Sprintf("fnproject/fn-java-fdk-build:jdk21-%s", fdkVersion), nil
+		return fmt.Sprintf(config.OCRImagePrefix+"fn-java-fdk-build:jdk21-%s", fdkVersion), nil
 	} else {
 		return "", fmt.Errorf("unsupported java version %s", h.Version)
 	}
@@ -82,13 +84,13 @@ func (h *JavaLangHelper) RunFromImage() (string, error) {
 		return "", err
 	}
 	if h.Version == "8" {
-		return fmt.Sprintf("fnproject/fn-java-fdk:%s", fdkVersion), nil
+		return fmt.Sprintf(config.OCRImagePrefix+"fn-java-fdk:%s", fdkVersion), nil
 	} else if h.Version == "11" {
-		return fmt.Sprintf("fnproject/fn-java-fdk:jre11-%s", fdkVersion), nil
+		return fmt.Sprintf(config.OCRImagePrefix+"fn-java-fdk:jre11-%s", fdkVersion), nil
 	} else if h.Version == "17" {
-		return fmt.Sprintf("fnproject/fn-java-fdk:jre17-%s", fdkVersion), nil
+		return fmt.Sprintf(config.OCRImagePrefix+"fn-java-fdk:jre17-%s", fdkVersion), nil
 	} else if h.Version == "21" {
-		return fmt.Sprintf("fnproject/fn-java-fdk:jre21-%s", fdkVersion), nil
+		return fmt.Sprintf(config.OCRImagePrefix+"fn-java-fdk:jre21-%s", fdkVersion), nil
 	} else {
 		return "", fmt.Errorf("unsupported java version %s", h.Version)
 	}

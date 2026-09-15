@@ -23,6 +23,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/fnproject/cli/config"
 )
 
 type RubyLangHelper struct {
@@ -50,10 +52,10 @@ func (h *RubyLangHelper) CustomMemory() uint64 {
 	return 0
 }
 func (h *RubyLangHelper) BuildFromImage() (string, error) {
-	return fmt.Sprintf("fnproject/ruby:%s-dev", h.Version), nil
+	return fmt.Sprintf(config.OCRImagePrefix+"ruby:%s-dev", h.Version), nil
 }
 func (h *RubyLangHelper) RunFromImage() (string, error) {
-	return fmt.Sprintf("fnproject/ruby:%s", h.Version), nil
+	return fmt.Sprintf(config.OCRImagePrefix+"ruby:%s", h.Version), nil
 }
 
 func (h *RubyLangHelper) DockerfileBuildCmds(localDebug bool) []string {
