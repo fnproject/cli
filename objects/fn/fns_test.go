@@ -2,13 +2,46 @@ package fn
 
 import (
 	"encoding/json"
+	"flag"
 	"net/url"
 	"testing"
 
 	"github.com/fnproject/cli/common"
 	models "github.com/fnproject/fn_go/modelsv2"
 	defaultprovider "github.com/fnproject/fn_go/provider/defaultprovider"
+	"github.com/urfave/cli"
 )
+
+func TestWithFlagsPreservesConfigWhenConfigFlagIsOmitted(t *testing.T) {
+	set := flag.NewFlagSet("test", flag.ContinueOnError)
+	config := cli.StringSlice{}
+	set.Var(&config, "config", "")
+	ctx := cli.NewContext(nil, set, nil)
+	fn := &models.Fn{Config: map[string]string{"EXISTING": "value"}}
+
+	WithFlags(ctx, fn)
+
+	if got := fn.Config["EXISTING"]; got != "value" || len(fn.Config) != 1 {
+		t.Fatalf("WithFlags() replaced existing config without --config: %#v", fn.Config)
+	}
+}
+
+func TestWithFlagsReplacesConfigWhenConfigFlagIsSupplied(t *testing.T) {
+	set := flag.NewFlagSet("test", flag.ContinueOnError)
+	config := cli.StringSlice{}
+	set.Var(&config, "config", "")
+	if err := set.Set("config", "NEW=value"); err != nil {
+		t.Fatalf("setting config flag: %v", err)
+	}
+	ctx := cli.NewContext(nil, set, nil)
+	fn := &models.Fn{Config: map[string]string{"EXISTING": "value"}}
+
+	WithFlags(ctx, fn)
+
+	if got := fn.Config["NEW"]; got != "value" || len(fn.Config) != 1 {
+		t.Fatalf("WithFlags() did not apply --config: %#v", fn.Config)
+	}
+}
 
 func TestApplyProvisionedConcurrencyNoopForNilOrNonOracleProvider(t *testing.T) {
 	count := 40

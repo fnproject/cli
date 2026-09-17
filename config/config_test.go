@@ -18,12 +18,42 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
 	"github.com/fnproject/fn_go"
 	"github.com/fnproject/fn_go/provider"
 )
+
+func TestAtomicwriteReplacesFileAndRemovesTempFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	if err := os.WriteFile(path, []byte("current-context: default\n"), 0600); err != nil {
+		t.Fatalf("creating config file: %v", err)
+	}
+
+	want := ContextMap{CurrentContext: "prod"}
+	if err := atomicwrite(path, &want); err != nil {
+		t.Fatalf("atomicwrite() error: %v", err)
+	}
+
+	got, err := DecodeYAMLFile(path)
+	if err != nil {
+		t.Fatalf("reading replaced config file: %v", err)
+	}
+	if !reflect.DeepEqual(*got, want) {
+		t.Fatalf("config = %#v, want %#v", *got, want)
+	}
+
+	files, err := filepath.Glob(path + "*")
+	if err != nil {
+		t.Fatalf("finding temporary files: %v", err)
+	}
+	if len(files) != 1 || files[0] != path {
+		t.Fatalf("temporary config files were not cleaned up: %v", files)
+	}
+}
 
 func TestDefaultContextConfigContents(t *testing.T) {
 	tests := []struct {
