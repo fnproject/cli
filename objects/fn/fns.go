@@ -746,7 +746,12 @@ func WithFlags(c *cli.Context, fn *models.Fn) {
 		fn.Memory = m
 	}
 
-	fn.Config = common.ExtractConfig(c.StringSlice("config"))
+	// Updates begin with the function returned by the service. Preserve its
+	// configuration unless the caller explicitly provided --config; OCI treats
+	// an empty config map as clearing all function-level environment variables.
+	if c.IsSet("config") {
+		fn.Config = common.ExtractConfig(c.StringSlice("config"))
+	}
 
 	if len(c.StringSlice("annotation")) > 0 {
 		fn.Annotations = common.ExtractAnnotations(c)
