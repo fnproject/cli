@@ -11,6 +11,8 @@ import (
 
 func NewMockFunctionsManagementClientBasic(ctrl *gomock.Controller) FunctionsManagementClient {
 	m := NewMockFunctionsManagementClient(ctrl)
+	var storedApplication *functions.Application
+	var storedFunction *functions.Function
 
 	// CreateApplication
 	m.EXPECT().
@@ -57,27 +59,29 @@ func NewMockFunctionsManagementClientBasic(ctrl *gomock.Controller) FunctionsMan
 		).
 		DoAndReturn(
 			func(ctx context.Context, request functions.GetApplicationRequest) (functions.GetApplicationResponse, error) {
+				if storedApplication != nil {
+					return functions.GetApplicationResponse{Application: *storedApplication}, nil
+				}
 				compartment := "GetApplicationCompartment"
 				displayName := "GetApplicationDisplayName"
 				syslogUrl := "GetApplicationSyslogUrl"
-				return functions.GetApplicationResponse{
-					Application: functions.Application{
-						Id:             request.ApplicationId,
-						CompartmentId:  &compartment,
-						DisplayName:    &displayName,
-						LifecycleState: functions.ApplicationLifecycleStateActive,
-						Config: map[string]string{
-							"GetApplicationKey1": "GetApplicationValue1",
-							"GetApplicationKey2": "GetApplicationValue2",
-						},
-						SubnetIds:    []string{"GetApplicationSubnet"},
-						SyslogUrl:    &syslogUrl,
-						FreeformTags: nil,
-						DefinedTags:  nil,
-						TimeCreated:  &common.SDKTime{Time: time.Now()},
-						TimeUpdated:  &common.SDKTime{Time: time.Now()},
+				storedApplication = &functions.Application{
+					Id:             request.ApplicationId,
+					CompartmentId:  &compartment,
+					DisplayName:    &displayName,
+					LifecycleState: functions.ApplicationLifecycleStateActive,
+					Config: map[string]string{
+						"GetApplicationKey1": "GetApplicationValue1",
+						"GetApplicationKey2": "GetApplicationValue2",
 					},
-				}, nil
+					SubnetIds:    []string{"GetApplicationSubnet"},
+					SyslogUrl:    &syslogUrl,
+					FreeformTags: nil,
+					DefinedTags:  nil,
+					TimeCreated:  &common.SDKTime{Time: time.Now()},
+					TimeUpdated:  &common.SDKTime{Time: time.Now()},
+				}
+				return functions.GetApplicationResponse{Application: *storedApplication}, nil
 			},
 		).
 		AnyTimes()
@@ -137,35 +141,31 @@ func NewMockFunctionsManagementClientBasic(ctrl *gomock.Controller) FunctionsMan
 		).
 		DoAndReturn(
 			func(ctx context.Context, request functions.UpdateApplicationRequest) (functions.UpdateApplicationResponse, error) {
-				id := "UpdateApplicationId"
-				compartment := "UpdateApplicationCompartment"
-				displayName := "UpdateApplicationDisplayName"
-				config := map[string]string{
-					"UpdateApplicationKey1": "UpdateApplicationValue1",
-					"UpdateApplicationKey2": "UpdateApplicationValue2",
+				if storedApplication == nil {
+					compartment := "UpdateApplicationCompartment"
+					displayName := "UpdateApplicationDisplayName"
+					syslogURL := "OriginalApplicationSyslogUrl"
+					storedApplication = &functions.Application{
+						Id: request.ApplicationId, CompartmentId: &compartment, DisplayName: &displayName,
+						LifecycleState: functions.ApplicationLifecycleStateActive,
+						Config:         map[string]string{"UpdateApplicationKey1": "UpdateApplicationValue1", "UpdateApplicationKey2": "UpdateApplicationValue2"},
+						SubnetIds:      []string{"UpdateApplicationSubnet"}, SyslogUrl: &syslogURL,
+						TimeCreated: &common.SDKTime{Time: time.Now()}, TimeUpdated: &common.SDKTime{Time: time.Now()},
+					}
 				}
 				if request.Config != nil {
-					config = request.Config
+					storedApplication.Config = request.Config
 				}
-				syslogUrl := "OriginalApplicationSyslogUrl"
 				if request.SyslogUrl != nil {
-					syslogUrl = *request.SyslogUrl
+					storedApplication.SyslogUrl = request.SyslogUrl
 				}
-				return functions.UpdateApplicationResponse{
-					Application: functions.Application{
-						Id:             &id,
-						CompartmentId:  &compartment,
-						DisplayName:    &displayName,
-						LifecycleState: functions.ApplicationLifecycleStateActive,
-						Config:         config,
-						SubnetIds:      []string{"UpdateApplicationSubnet"},
-						SyslogUrl:      &syslogUrl,
-						FreeformTags:   nil,
-						DefinedTags:    nil,
-						TimeCreated:    &common.SDKTime{Time: time.Now()},
-						TimeUpdated:    &common.SDKTime{Time: time.Now()},
-					},
-				}, nil
+				if request.FreeformTags != nil {
+					storedApplication.FreeformTags = request.FreeformTags
+				}
+				if request.DefinedTags != nil {
+					storedApplication.DefinedTags = request.DefinedTags
+				}
+				return functions.UpdateApplicationResponse{}, nil
 			},
 		).
 		AnyTimes()
@@ -181,23 +181,29 @@ func NewMockFunctionsManagementClientBasic(ctrl *gomock.Controller) FunctionsMan
 				id := "CreateFunctionId"
 				compartment := "CreateFunctionCompartment"
 				invokeEndpoint := "CreateFunctionInvokeEndpoint"
+				var image *string
+				var digest *string
+				if src, ok := request.SourceDetails.(functions.CreateContainerImageFunctionSourceDetails); ok {
+					image = src.Image
+					digest = src.ImageDigest
+				}
 				return functions.CreateFunctionResponse{
 					Function: functions.Function{
-						Id:               &id,
-						ApplicationId:    request.ApplicationId,
-						CompartmentId:    &compartment,
-						DisplayName:      request.DisplayName,
-						LifecycleState:   functions.FunctionLifecycleStateActive,
-						Image:            request.Image,
-						ImageDigest:      request.ImageDigest,
-						MemoryInMBs:      request.MemoryInMBs,
-						TimeoutInSeconds: request.TimeoutInSeconds,
-						InvokeEndpoint:   &invokeEndpoint,
-						Config:           request.Config,
-						FreeformTags:     request.FreeformTags,
-						DefinedTags:      request.DefinedTags,
-						TimeCreated:      &common.SDKTime{Time: time.Now()},
-						TimeUpdated:      &common.SDKTime{Time: time.Now()},
+						Id:                           &id,
+						ApplicationId:                request.ApplicationId,
+						CompartmentId:                &compartment,
+						DisplayName:                  request.DisplayName,
+						LifecycleState:               functions.FunctionLifecycleStateActive,
+						SourceDetails:                functions.ContainerImageFunctionSourceDetails{Image: image, ImageDigest: digest},
+						MemoryInMBs:                  request.MemoryInMBs,
+						TimeoutInSeconds:             request.TimeoutInSeconds,
+						InvokeEndpoint:               &invokeEndpoint,
+						Config:                       request.Config,
+						ProvisionedConcurrencyConfig: functions.NoneProvisionedConcurrencyConfig{},
+						FreeformTags:                 request.FreeformTags,
+						DefinedTags:                  request.DefinedTags,
+						TimeCreated:                  &common.SDKTime{Time: time.Now()},
+						TimeUpdated:                  &common.SDKTime{Time: time.Now()},
 					},
 				}, nil
 			},
@@ -221,6 +227,9 @@ func NewMockFunctionsManagementClientBasic(ctrl *gomock.Controller) FunctionsMan
 		).
 		DoAndReturn(
 			func(ctx context.Context, request functions.GetFunctionRequest) (functions.GetFunctionResponse, error) {
+				if storedFunction != nil {
+					return functions.GetFunctionResponse{Function: *storedFunction}, nil
+				}
 				application := "GetFunctionApplication"
 				compartment := "GetFunctionCompartment"
 				displayName := "GetFunctionDisplayName"
@@ -230,29 +239,27 @@ func NewMockFunctionsManagementClientBasic(ctrl *gomock.Controller) FunctionsMan
 				timeout := 30
 				pcCount := 5
 				invokeEndpoint := "GetFunctionInvokeEndpoint"
-				return functions.GetFunctionResponse{
-					Function: functions.Function{
-						Id:                           request.FunctionId,
-						ApplicationId:                &application,
-						CompartmentId:                &compartment,
-						DisplayName:                  &displayName,
-						LifecycleState:               functions.FunctionLifecycleStateActive,
-						Image:                        &image,
-						ImageDigest:                  &digest,
-						MemoryInMBs:                  &memory,
-						TimeoutInSeconds:             &timeout,
-						ProvisionedConcurrencyConfig: functions.ConstantProvisionedConcurrencyConfig{Count: &pcCount},
-						InvokeEndpoint:               &invokeEndpoint,
-						Config: map[string]string{
-							"GetFunctionKey1": "GetFunctionValue1",
-							"GetFunctionKey2": "GetFunctionValue2",
-						},
-						FreeformTags: nil,
-						DefinedTags:  nil,
-						TimeCreated:  &common.SDKTime{Time: time.Now()},
-						TimeUpdated:  &common.SDKTime{Time: time.Now()},
+				storedFunction = &functions.Function{
+					Id:                           request.FunctionId,
+					ApplicationId:                &application,
+					CompartmentId:                &compartment,
+					DisplayName:                  &displayName,
+					LifecycleState:               functions.FunctionLifecycleStateActive,
+					SourceDetails:                functions.ContainerImageFunctionSourceDetails{Image: &image, ImageDigest: &digest},
+					MemoryInMBs:                  &memory,
+					TimeoutInSeconds:             &timeout,
+					ProvisionedConcurrencyConfig: functions.ConstantProvisionedConcurrencyConfig{Count: &pcCount},
+					InvokeEndpoint:               &invokeEndpoint,
+					Config: map[string]string{
+						"GetFunctionKey1": "GetFunctionValue1",
+						"GetFunctionKey2": "GetFunctionValue2",
 					},
-				}, nil
+					FreeformTags: nil,
+					DefinedTags:  nil,
+					TimeCreated:  &common.SDKTime{Time: time.Now()},
+					TimeUpdated:  &common.SDKTime{Time: time.Now()},
+				}
+				return functions.GetFunctionResponse{Function: *storedFunction}, nil
 			},
 		).
 		AnyTimes()
@@ -312,56 +319,48 @@ func NewMockFunctionsManagementClientBasic(ctrl *gomock.Controller) FunctionsMan
 		).
 		DoAndReturn(
 			func(ctx context.Context, request functions.UpdateFunctionRequest) (functions.UpdateFunctionResponse, error) {
-				id := "UpdateFunctionId"
-				application := "UpdateFunctionApplication"
-				compartment := "UpdateFunctionCompartment"
-				displayName := "UpdateFunctionDisplayName"
-				invokeEndpoint := "UpdateFunctionInvokeEndpoint"
-				config := map[string]string{
-					"UpdateFunctionKey1": "UpdateFunctionValue1",
-					"UpdateFunctionKey2": "UpdateFunctionValue2",
-				}
-				if request.Config != nil {
-					config = request.Config
-				}
-				image := "OriginalFunctionImage"
-				if request.Image != nil {
-					image = *request.Image
-				}
-				digest := "OriginalFunctionDigest"
-				if request.ImageDigest != nil {
-					digest = *request.ImageDigest
-					if digest == "" {
-						return functions.UpdateFunctionResponse{}, fmt.Errorf("invalid image digest")
+				if storedFunction == nil {
+					application, compartment, displayName := "UpdateFunctionApplication", "UpdateFunctionCompartment", "UpdateFunctionDisplayName"
+					image, digest, invokeEndpoint := "OriginalFunctionImage", "OriginalFunctionDigest", "UpdateFunctionInvokeEndpoint"
+					memory, timeout := int64(128), 30
+					storedFunction = &functions.Function{
+						Id: request.FunctionId, ApplicationId: &application, CompartmentId: &compartment, DisplayName: &displayName,
+						LifecycleState: functions.FunctionLifecycleStateActive,
+						SourceDetails:  functions.ContainerImageFunctionSourceDetails{Image: &image, ImageDigest: &digest},
+						MemoryInMBs:    &memory, TimeoutInSeconds: &timeout, InvokeEndpoint: &invokeEndpoint,
+						Config:      map[string]string{"UpdateFunctionKey1": "UpdateFunctionValue1", "UpdateFunctionKey2": "UpdateFunctionValue2"},
+						TimeCreated: &common.SDKTime{Time: time.Now()}, TimeUpdated: &common.SDKTime{Time: time.Now()},
 					}
 				}
-				memory := int64(128)
+				if src, ok := request.SourceDetails.(functions.UpdateContainerImageFunctionSourceDetails); ok && src.ImageDigest != nil && *src.ImageDigest == "" {
+					return functions.UpdateFunctionResponse{}, fmt.Errorf("invalid image digest")
+				}
+				if request.Config != nil {
+					storedFunction.Config = request.Config
+				}
 				if request.MemoryInMBs != nil {
-					memory = *request.MemoryInMBs
+					storedFunction.MemoryInMBs = request.MemoryInMBs
 				}
-				timeout := 30
 				if request.TimeoutInSeconds != nil {
-					timeout = *request.TimeoutInSeconds
+					storedFunction.TimeoutInSeconds = request.TimeoutInSeconds
 				}
-				return functions.UpdateFunctionResponse{
-					Function: functions.Function{
-						Id:               &id,
-						ApplicationId:    &application,
-						CompartmentId:    &compartment,
-						DisplayName:      &displayName,
-						LifecycleState:   functions.FunctionLifecycleStateActive,
-						Image:            &image,
-						ImageDigest:      &digest,
-						MemoryInMBs:      &memory,
-						TimeoutInSeconds: &timeout,
-						InvokeEndpoint:   &invokeEndpoint,
-						Config:           config,
-						FreeformTags:     nil,
-						DefinedTags:      nil,
-						TimeCreated:      &common.SDKTime{Time: time.Now()},
-						TimeUpdated:      &common.SDKTime{Time: time.Now()},
-					},
-				}, nil
+				if src, ok := request.SourceDetails.(functions.UpdateContainerImageFunctionSourceDetails); ok {
+					current, _ := storedFunction.SourceDetails.(functions.ContainerImageFunctionSourceDetails)
+					if src.Image != nil {
+						current.Image = src.Image
+					}
+					if src.ImageDigest != nil {
+						current.ImageDigest = src.ImageDigest
+					}
+					storedFunction.SourceDetails = current
+				}
+				if request.FreeformTags != nil {
+					storedFunction.FreeformTags = request.FreeformTags
+				}
+				if request.DefinedTags != nil {
+					storedFunction.DefinedTags = request.DefinedTags
+				}
+				return functions.UpdateFunctionResponse{}, nil
 			},
 		).
 		AnyTimes()
@@ -401,8 +400,7 @@ func newBasicFunctionSummary(n int, application *string) functions.FunctionSumma
 		ApplicationId:                application,
 		DisplayName:                  &displayName,
 		LifecycleState:               functions.FunctionLifecycleStateActive,
-		Image:                        &image,
-		ImageDigest:                  &digest,
+		SourceDetails:                functions.ContainerImageFunctionSourceDetails{Image: &image, ImageDigest: &digest},
 		MemoryInMBs:                  &memory,
 		TimeoutInSeconds:             &timeout,
 		ProvisionedConcurrencyConfig: functions.ConstantProvisionedConcurrencyConfig{Count: &pcCount},

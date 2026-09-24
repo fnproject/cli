@@ -25,6 +25,9 @@ type Fn struct {
 	// App ID.
 	AppID string `json:"app_id,omitempty"`
 
+	// Whether the function uses a managed runtime and archive source instead of a container image.
+	CodeOnly bool `json:"code_only,omitempty"`
+
 	// Function configuration key values.
 	Config map[string]string `json:"config,omitempty"`
 
@@ -32,6 +35,9 @@ type Fn struct {
 	// Read Only: true
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
+
+	// Entrypoint handler for a managed-runtime function.
+	Handler string `json:"handler,omitempty"`
 
 	// Unique identifier
 	// Read Only: true
@@ -49,6 +55,15 @@ type Fn struct {
 	// Unique name for this function.
 	Name string `json:"name,omitempty"`
 
+	// Managed runtime configuration type. Supported values are FUNCTION_UPDATE and MANUAL.
+	RuntimeConfigType string `json:"runtime_config_type,omitempty"`
+
+	// Managed runtime name.
+	RuntimeName string `json:"runtime_name,omitempty"`
+
+	// Managed runtime version OCID when runtime_config_type is MANUAL.
+	RuntimeVersionID string `json:"runtime_version_id,omitempty"`
+
 	// Valid values are "GENERIC_X86", "GENERIC_ARM" and "GENERIC_X86_ARM". Default is "GENERIC_X86". Setting this to "GENERIC_X86", will run the functions in the application on X86 processor architecture.
 	// Setting this to "GENERIC_ARM", will run the functions in the application on ARM processor architecture.
 	// When set to "GENERIC_X86_ARM", functions in the application are run on either X86 or ARM processor architecture.
@@ -57,6 +72,28 @@ type Fn struct {
 	//
 	// Enum: [GENERIC_X86 GENERIC_ARM GENERIC_X86_ARM]
 	Shape string `json:"shape,omitempty"`
+
+	// Base64-encoded archive bytes for a direct archive source.
+	// Format: byte
+	SourceArchive strfmt.Base64 `json:"source_archive,omitempty"`
+
+	// Object Storage bucket containing the archive source.
+	SourceBucketName string `json:"source_bucket_name,omitempty"`
+
+	// Local archive file path for a direct archive source.
+	SourceFile string `json:"source_file,omitempty"`
+
+	// Object Storage namespace containing the archive source.
+	SourceNamespace string `json:"source_namespace,omitempty"`
+
+	// Object Storage object name for the archive source.
+	SourceObjectName string `json:"source_object_name,omitempty"`
+
+	// Optional Object Storage object version ID for the archive source.
+	SourceObjectVersionID string `json:"source_object_version_id,omitempty"`
+
+	// Archive source type. Supported values are direct and object-storage.
+	SourceType string `json:"source_type,omitempty"`
 
 	// Timeout for executions of a function. Value in Seconds.
 	Timeout *int32 `json:"timeout,omitempty"`

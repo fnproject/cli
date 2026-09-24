@@ -40,11 +40,11 @@ func versionCMD(c *cli.Context) error {
 		return err
 	}
 
-	ver := config.GetVersion("latest")
-	if ver == "" {
-		ver = "Client version: " + config.Version
+	// Always print embedded client version first so preview/custom builds are visible.
+	fmt.Println("Client version: " + config.Version)
+	if latestMsg := config.GetVersion("latest"); latestMsg != "" {
+		fmt.Println("Version check: " + latestMsg)
 	}
-	fmt.Println(ver)
 
 	versionClient := provider.VersionClient()
 	v, err := versionClient.GetVersion(nil)
