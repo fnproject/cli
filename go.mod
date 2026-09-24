@@ -3,21 +3,22 @@ module github.com/fnproject/cli
 require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/fatih/color v0.0.0-20170926111411-5df930a27be2
-	github.com/fnproject/fn_go v0.8.11
+	github.com/fnproject/fn_go v0.8.12-0.20260924155317-5597b2439288
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/ghodss/yaml v1.0.0
 	github.com/giantswarm/semver-bump v0.0.0-20140912095342-88e6c9f2fe39
 	github.com/go-openapi/runtime v0.19.23
+	github.com/gofrs/flock v0.10.0
 	github.com/jmoiron/jsonq v0.0.0-20150511023944-e874b168d07e
 	github.com/mattn/go-isatty v0.0.3
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.2
-	github.com/oracle/oci-go-sdk/v65 v65.113.0
+	github.com/oracle/oci-go-sdk/v65 v65.126.0
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli v1.20.0
 	github.com/xeipuuv/gojsonschema v0.0.0-20180618132009-1d523034197f
-	golang.org/x/sys v0.38.0
+	golang.org/x/sys v0.45.0
 	gopkg.in/yaml.v2 v2.3.0
 )
 
@@ -35,8 +36,6 @@ require (
 	github.com/go-openapi/strfmt v0.19.8 // indirect
 	github.com/go-openapi/swag v0.19.11 // indirect
 	github.com/go-openapi/validate v0.19.12 // indirect
-	github.com/go-stack/stack v1.8.0 // indirect
-	github.com/gofrs/flock v0.10.0 // indirect
 	github.com/golang/mock v1.4.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/juju/errgo v0.0.0-20140925100237-08cceb5d0b53 // indirect
@@ -45,7 +44,7 @@ require (
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/pelletier/go-toml v1.7.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/sony/gobreaker v0.5.0 // indirect
+	github.com/sony/gobreaker/v2 v2.4.0 // indirect
 	github.com/spf13/afero v1.1.2 // indirect
 	github.com/spf13/cast v1.3.0 // indirect
 	github.com/spf13/jwalterweatherman v1.0.0 // indirect
@@ -56,10 +55,10 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	go.mongodb.org/mongo-driver v1.17.7 // indirect
-	golang.org/x/crypto v0.45.0 // indirect
-	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/term v0.37.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/crypto v0.52.0 // indirect
+	golang.org/x/net v0.54.0 // indirect
+	golang.org/x/term v0.43.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

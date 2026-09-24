@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -34,6 +35,7 @@ import (
 
 	client "github.com/fnproject/cli/client"
 	common "github.com/fnproject/cli/common"
+	config "github.com/fnproject/cli/config"
 	apps "github.com/fnproject/cli/objects/app"
 	function "github.com/fnproject/cli/objects/fn"
 	trigger "github.com/fnproject/cli/objects/trigger"
@@ -43,6 +45,7 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/artifacts"
 	ociCommon "github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/keymanagement"
+	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
 
@@ -57,6 +60,8 @@ type Message struct {
 	RepositoryName   string `mandatory:"true" json:"repositoryName"`
 	SigningAlgorithm string `mandatory:"true" json:"signingAlgorithm"`
 }
+
+const annotationLifecycleState = "oracle.com/oci/lifecycleState"
 
 var RegionsWithOldKMSEndpoints = map[ociCommon.Region]struct{}{
 	ociCommon.RegionPHX:           {},
@@ -352,6 +357,10 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	if funcfile.Name == "" {
 		funcfile.Name = filepath.Base(filepath.Dir(funcfilePath)) // todo: should probably make a copy of ff before changing it
 	}
+
+	if funcfile.Code_only {
+		return p.deployCodeOnlyFunc(c, app, funcfilePath, funcfile)
+	}
 	common.WarnIfOCIManagedFunctionSettingsUnsupported(os.Stderr, p.provider, funcfile.Name, funcfile)
 
 	oracleProvider, _ := getOracleProvider()
@@ -430,6 +439,108 @@ func (p *deploycmd) deployFuncV20180708(c *cli.Context, app *models.App, funcfil
 	return nil
 }
 
+func (p *deploycmd) deployCodeOnlyFunc(c *cli.Context, app *models.App, funcfilePath string, funcfile *common.FuncFileV20180708) error {
+	if !p.noBump {
+		funcfile2, err := common.BumpItV20180708(funcfilePath, common.Patch)
+		if err != nil {
+			return err
+		}
+		funcfile.Version = funcfile2.Version
+	}
+
+	dir := filepath.Dir(funcfilePath)
+	archivePath, err := buildCodeOnlyArchive(dir, funcfile, app.Shape)
+	if err != nil {
+		return err
+	}
+
+	fn := &models.Fn{}
+	if err := function.WithFuncFileV20180708(funcfile, fn); err != nil {
+		return fmt.Errorf("Error getting function with funcfile: %s", err)
+	}
+	fn.Name = funcfile.Name
+	fn.CodeOnly = true
+	fn.Handler = strings.TrimSpace(funcfile.Handler)
+	if funcfile.Runtime_config != nil {
+		fn.RuntimeName = strings.TrimSpace(funcfile.Runtime_config.Runtime_name)
+		fn.RuntimeVersionID = strings.TrimSpace(funcfile.Runtime_config.Runtime_version_id)
+		fn.RuntimeConfigType = normalizeRuntimeConfigTypeForDeploy(funcfile.Runtime_config.Type)
+	}
+
+	bucket, namespace, configured, err := resolveCodeOnlyDeployTargetFromContext()
+	if err != nil {
+		return err
+	}
+	if configured {
+		objectName, err := pushCodeOnlyArchive(funcfile)
+		if err != nil {
+			return err
+		}
+		fn.SourceType = "object-storage"
+		fn.SourceBucketName = bucket
+		fn.SourceNamespace = namespace
+		fn.SourceObjectName = objectName
+		fn.SourceObjectVersionID = ""
+	} else {
+		archiveBytes, err := ioutil.ReadFile(archivePath)
+		if err != nil {
+			return err
+		}
+		fn.SourceType = "direct"
+		fn.SourceFile = archivePath
+		fn.SourceArchive = archiveBytes
+	}
+
+	return p.upsertCodeOnlyFunction(app.ID, fn)
+}
+
+func (p *deploycmd) upsertCodeOnlyFunction(appID string, fn *models.Fn) error {
+	fnRes, err := function.GetFnByName(p.clientV2, appID, fn.Name)
+	if _, ok := err.(function.NameNotFoundError); ok {
+		created, err := function.CreateFn(p.clientV2, appID, fn)
+		if err != nil {
+			return err
+		}
+		fn.ID = created.ID
+	} else if err != nil {
+		return err
+	} else {
+		if isFunctionLifecycleFailed(fnRes) {
+			return fmt.Errorf("deployment of function failed because it is in failed state")
+		}
+		fn.ID = fnRes.ID
+		if err := function.PutFn(p.clientV2, fn.ID, fn); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func normalizeRuntimeConfigTypeForDeploy(value string) string {
+	v := strings.ToLower(strings.TrimSpace(value))
+	switch v {
+	case "function-update", "function_update":
+		return "FUNCTION_UPDATE"
+	case "manual":
+		return "MANUAL"
+	default:
+		return strings.ToUpper(strings.ReplaceAll(v, "-", "_"))
+	}
+}
+
+func resolveCodeOnlyDeployTargetFromContext() (bucket, namespace string, configured bool, err error) {
+	contextName := viper.GetString(config.CurrentContext)
+	contextPath := filepath.Join(config.GetHomeDir(), ".fn", "contexts", contextName+".yaml")
+	ctxFile, err := config.NewContextFile(contextPath)
+	if err != nil {
+		return "", "", false, err
+	}
+	bucket = strings.TrimSpace(ctxFile.ObjectStorageBucketName)
+	namespace = strings.TrimSpace(ctxFile.ObjectStorageNamespace)
+	configured = bucket != "" && namespace != ""
+	return bucket, namespace, configured, nil
+}
+
 func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.FuncFileV20180708) error {
 	if ff.Deploy != nil && ff.Deploy.OCI != nil && ff.Deploy.OCI.PBF != nil && strings.TrimSpace(ff.Deploy.OCI.PBF.ListingID) != "" {
 		fmt.Printf("Updating function %s using PBF listing %s...\n", ff.Name, ff.Deploy.OCI.PBF.ListingID)
@@ -484,6 +595,9 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 		// probably service is down or something...
 		return err
 	} else {
+		if isFunctionLifecycleFailed(fnRes) {
+			return fmt.Errorf("deployment of function failed because it is in failed state")
+		}
 		fn.ID = fnRes.ID
 		err = function.PutFn(p.clientV2, fn.ID, fn)
 		if err != nil {
@@ -524,6 +638,21 @@ func (p *deploycmd) updateFunction(c *cli.Context, appID string, ff *common.Func
 		}
 	}
 	return nil
+}
+
+func isFunctionLifecycleFailed(fn *models.Fn) bool {
+	if fn == nil || fn.Annotations == nil {
+		return false
+	}
+	raw, ok := fn.Annotations[annotationLifecycleState]
+	if !ok {
+		return false
+	}
+	state, ok := raw.(string)
+	if !ok {
+		return false
+	}
+	return strings.EqualFold(strings.TrimSpace(state), "FAILED")
 }
 
 func getOracleProvider() (*oracle.OracleProvider, error) {

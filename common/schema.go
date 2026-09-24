@@ -26,7 +26,8 @@ import (
 
 const (
 	V20180708         = 20180708
-	LatestYamlVersion = V20180708
+	V20260325         = 20260325
+	LatestYamlVersion = V20260325
 )
 
 const V20180708Schema = `{

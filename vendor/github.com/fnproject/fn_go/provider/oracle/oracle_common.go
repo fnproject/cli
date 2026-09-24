@@ -80,6 +80,7 @@ type OracleProvider struct {
 
 	// ConfigurationProvider is the OCI configuration provider for signing requests
 	ConfigurationProvider common.ConfigurationProvider
+	oboToken              string
 
 	ociClient functions.FunctionsManagementClient
 }
@@ -173,9 +174,30 @@ func InsecureRoundTripper(roundTripper http.RoundTripper) http.RoundTripper {
 func (op *OracleProvider) APIClientv2() *clientv2.Fn {
 	return &clientv2.Fn{
 		Apps:     shim.NewAppsShim(op.ociClient, op.CompartmentID),
-		Fns:      shim.NewFnsShim(op.ociClient),
+		Fns:      shim.NewFnsShim(op.ociClient, op.newWorkRequestManagementClient),
 		Triggers: shim.NewTriggersShim(),
 	}
+}
+
+func (op *OracleProvider) newWorkRequestManagementClient() (*functions.WorkRequestManagementClient, error) {
+	var (
+		workRequestClient functions.WorkRequestManagementClient
+		err               error
+	)
+	if op.oboToken != "" {
+		workRequestClient, err = functions.NewWorkRequestManagementClientWithOboToken(op.ConfigurationProvider, op.oboToken)
+	} else {
+		workRequestClient, err = functions.NewWorkRequestManagementClientWithConfigurationProvider(op.ConfigurationProvider)
+	}
+	if err != nil {
+		return nil, err
+	}
+	workRequestClient.Host = op.FnApiUrl.String()
+	if op.DisableCerts {
+		c := workRequestClient.HTTPClient.(*http.Client)
+		c.Transport = InsecureRoundTripper(c.Transport)
+	}
+	return &workRequestClient, nil
 }
 
 func (op *OracleProvider) APIURL() *url.URL {
