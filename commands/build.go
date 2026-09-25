@@ -167,6 +167,9 @@ func buildCodeOnlyArchive(dir string, ff *common.FuncFileV20180708, shape string
 	if err := validateCodeOnlyBuildTooling(dir, ff); err != nil {
 		return "", err
 	}
+	if err := buildJavaCodeOnlyProject(dir, ff); err != nil {
+		return "", err
+	}
 	archivePath := filepath.Join(dir, fmt.Sprintf("%s.%s.zip", ff.Name, ff.Version))
 	if err := createCodeOnlyZipArchive(dir, archivePath, ff, shape); err != nil {
 		return "", err
@@ -178,8 +181,8 @@ func validateCodeOnlyBuildTooling(dir string, ff *common.FuncFileV20180708) erro
 	baseRuntime := detectCodeOnlyBaseRuntime(dir, ff)
 	switch {
 	case strings.HasPrefix(baseRuntime, "java"):
-		if _, err := exec.LookPath("mvn"); err != nil {
-			return fmt.Errorf("%s runtime selected, but Maven was not found in PATH. Install Maven and rerun `fn build`, or choose a different runtime", buildRuntimeDisplayName(baseRuntime))
+		if _, err := javaCodeOnlyMavenBinary(baseRuntime); err != nil {
+			return err
 		}
 	case strings.HasPrefix(baseRuntime, "python"):
 		if _, err := findFirstTool("python3", "python"); err != nil {
@@ -197,14 +200,46 @@ func validateCodeOnlyBuildTooling(dir string, ff *common.FuncFileV20180708) erro
 	return nil
 }
 
-func createCodeOnlyZipArchive(dir, archivePath string, ff *common.FuncFileV20180708, shape string) error {
-	if err := os.RemoveAll(archivePath); err != nil {
-		return err
+func buildJavaCodeOnlyProject(dir string, ff *common.FuncFileV20180708) error {
+	baseRuntime := detectCodeOnlyBaseRuntime(dir, ff)
+	if !strings.HasPrefix(baseRuntime, "java") {
+		return nil
 	}
-	archiveFile, err := os.Create(archivePath)
+
+	mvnBin, err := javaCodeOnlyMavenBinary(baseRuntime)
 	if err != nil {
 		return err
 	}
+	cmd := exec.Command(mvnBin, "package")
+	cmd.Dir = dir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("java code-only build failed while running `mvn package`: %w", err)
+	}
+	return nil
+}
+
+func javaCodeOnlyMavenBinary(baseRuntime string) (string, error) {
+	mvnBin, err := exec.LookPath("mvn")
+	if err != nil {
+		return "", fmt.Errorf("%s runtime selected, but Maven was not found in PATH. Install Maven and rerun `fn build`, or choose a different runtime", buildRuntimeDisplayName(baseRuntime))
+	}
+	return mvnBin, nil
+}
+
+func createCodeOnlyZipArchive(dir, archivePath string, ff *common.FuncFileV20180708, shape string) error {
+	archiveFile, err := os.CreateTemp(dir, "."+filepath.Base(archivePath)+"-*")
+	if err != nil {
+		return err
+	}
+	temporaryArchivePath := archiveFile.Name()
+	removeTemporaryArchive := true
+	defer func() {
+		if removeTemporaryArchive {
+			_ = os.Remove(temporaryArchivePath)
+		}
+	}()
 	defer archiveFile.Close()
 
 	zipWriter := zip.NewWriter(archiveFile)
@@ -215,7 +250,7 @@ func createCodeOnlyZipArchive(dir, archivePath string, ff *common.FuncFileV20180
 		if err != nil {
 			return err
 		}
-		if path == archivePath {
+		if path == archivePath || path == temporaryArchivePath {
 			return nil
 		}
 		rel, err := filepath.Rel(dir, path)
@@ -243,10 +278,18 @@ func createCodeOnlyZipArchive(dir, archivePath string, ff *common.FuncFileV20180
 		return err
 	}
 
-	return zipWriter.Close()
+	if err := zipWriter.Close(); err != nil {
+		return err
+	}
+	if err := archiveFile.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(temporaryArchivePath, archivePath); err != nil {
+		return err
+	}
+	removeTemporaryArchive = false
+	return nil
 }
-
-
 func addCodeOnlyArchiveContents(zipWriter *zip.Writer, dir string, paths []string, ff *common.FuncFileV20180708, shape string) error {
 	baseRuntime := detectCodeOnlyBaseRuntime(dir, ff)
 	if strings.HasPrefix(baseRuntime, "go") {
@@ -306,8 +349,6 @@ func detectCodeOnlyBaseRuntime(dir string, ff *common.FuncFileV20180708) string 
 	}
 	return ""
 }
-
-
 func addNodeCodeOnlyArchiveContents(zipWriter *zip.Writer, dir string, ff *common.FuncFileV20180708, shape string) error {
 	functionDir := filepath.Join(dir, "function")
 	if !common.Exists(functionDir) {

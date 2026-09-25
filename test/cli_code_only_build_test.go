@@ -49,6 +49,12 @@ func containsEntry(entries []string, target string) bool {
 	return false
 }
 
+func configureFakeMaven(h *testharness.CLIHarness) {
+	h.MkDir("bin")
+	h.WithFile("bin/mvn", "#!/bin/sh\nexit 0\n", 0755)
+	h.WithEnv("PATH", "bin:/usr/bin:/bin")
+}
+
 func TestCodeOnlyBuild(t *testing.T) {
 	buildHarness := testharness.Create(t)
 	t.Cleanup(buildHarness.Cleanup)
@@ -75,7 +81,7 @@ handler: hello_world.handler
 		h.MkDir("function")
 		h.WithFile("function/hello_world.py", "def handler(ctx, data=None):\n    return 'ok'\n", 0644)
 
-		h.Fn("build").AssertFailed().AssertStderrContains("code-only build requires --app")
+		h.Fn("build").AssertFailed().AssertStderrContains("code-only build requires --app so the target application shape can be used for packaging")
 	})
 
 	t.Run("python code-only build should create a versioned archive with function root and exclude func.yaml", func(t *testing.T) {
@@ -384,6 +390,7 @@ handler: com.example.fn.HelloFunction::handleRequest
 `, common.LatestYamlVersion), 0644)
 		h.MkDir("target")
 		h.WithFile("target/my-function.jar", "fake-jar-content", 0644)
+		configureFakeMaven(h)
 
 		res := h.Fn("build", "--app", buildAppName).AssertSuccess().AssertStdoutContains("Code-only function packaged successfully:")
 		archivePath := archivePathFromBuildOutput(t, res.Stdout)
@@ -416,6 +423,7 @@ handler: com.example.fn.HelloFunction::handleRequest
 		h.WithFile("target/my-function.jar", "fake-jar-content", 0644)
 		h.MkDir("resources")
 		h.WithFile("resources/config.json", "{}", 0644)
+		configureFakeMaven(h)
 
 		res := h.Fn("build", "--app", buildAppName).AssertSuccess().AssertStdoutContains("Code-only function packaged successfully:")
 		archivePath := archivePathFromBuildOutput(t, res.Stdout)
@@ -446,6 +454,7 @@ handler: com.example.fn.HelloFunction::handleRequest
 `, common.LatestYamlVersion), 0644)
 		h.WithFile("one.jar", "jar1", 0644)
 		h.WithFile("two.JAR", "jar2", 0644)
+		configureFakeMaven(h)
 
 		h.Fn("build", "--app", buildAppName).AssertFailed().AssertStderrContains("java code-only build requires exactly one .jar file")
 	})
@@ -466,6 +475,7 @@ runtime_config:
   runtime_name: java
 handler: com.example.fn.HelloFunction::handleRequest
 `, common.LatestYamlVersion), 0644)
+		configureFakeMaven(h)
 
 		h.Fn("build", "--app", buildAppName).AssertFailed().AssertStderrContains("java code-only build requires exactly one .jar file")
 	})

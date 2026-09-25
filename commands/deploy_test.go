@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,6 +10,23 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
+
+func TestClarifyInvalidCodeOnlyRuntimeName(t *testing.T) {
+	t.Run("replaces the service runtime validation message", func(t *testing.T) {
+		err := clarifyInvalidCodeOnlyRuntimeName(errors.New("Invalid java"), "java")
+		want := "Invalid runtime name 'java'. To check supported runtimes, run `fn list runtimes`."
+		if err == nil || err.Error() != want {
+			t.Fatalf("error = %v, want %q", err, want)
+		}
+	})
+
+	t.Run("preserves other service errors", func(t *testing.T) {
+		original := errors.New("Invalid handler")
+		if got := clarifyInvalidCodeOnlyRuntimeName(original, "java"); got != original {
+			t.Fatalf("error = %v, want original error", got)
+		}
+	})
+}
 
 func TestNormalizeRuntimeConfigTypeForDeploy(t *testing.T) {
 	tests := []struct {
