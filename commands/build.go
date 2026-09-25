@@ -198,13 +198,17 @@ func validateCodeOnlyBuildTooling(dir string, ff *common.FuncFileV20180708) erro
 }
 
 func createCodeOnlyZipArchive(dir, archivePath string, ff *common.FuncFileV20180708, shape string) error {
-	if err := os.RemoveAll(archivePath); err != nil {
-		return err
-	}
-	archiveFile, err := os.Create(archivePath)
+	archiveFile, err := os.CreateTemp(dir, "."+filepath.Base(archivePath)+"-*")
 	if err != nil {
 		return err
 	}
+	temporaryArchivePath := archiveFile.Name()
+	removeTemporaryArchive := true
+	defer func() {
+		if removeTemporaryArchive {
+			_ = os.Remove(temporaryArchivePath)
+		}
+	}()
 	defer archiveFile.Close()
 
 	zipWriter := zip.NewWriter(archiveFile)
@@ -215,7 +219,7 @@ func createCodeOnlyZipArchive(dir, archivePath string, ff *common.FuncFileV20180
 		if err != nil {
 			return err
 		}
-		if path == archivePath {
+		if path == archivePath || path == temporaryArchivePath {
 			return nil
 		}
 		rel, err := filepath.Rel(dir, path)
@@ -243,10 +247,18 @@ func createCodeOnlyZipArchive(dir, archivePath string, ff *common.FuncFileV20180
 		return err
 	}
 
-	return zipWriter.Close()
+	if err := zipWriter.Close(); err != nil {
+		return err
+	}
+	if err := archiveFile.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(temporaryArchivePath, archivePath); err != nil {
+		return err
+	}
+	removeTemporaryArchive = false
+	return nil
 }
-
-
 func addCodeOnlyArchiveContents(zipWriter *zip.Writer, dir string, paths []string, ff *common.FuncFileV20180708, shape string) error {
 	baseRuntime := detectCodeOnlyBaseRuntime(dir, ff)
 	if strings.HasPrefix(baseRuntime, "go") {
@@ -306,8 +318,6 @@ func detectCodeOnlyBaseRuntime(dir string, ff *common.FuncFileV20180708) string 
 	}
 	return ""
 }
-
-
 func addNodeCodeOnlyArchiveContents(zipWriter *zip.Writer, dir string, ff *common.FuncFileV20180708, shape string) error {
 	functionDir := filepath.Join(dir, "function")
 	if !common.Exists(functionDir) {

@@ -75,7 +75,7 @@ handler: hello_world.handler
 		h.MkDir("function")
 		h.WithFile("function/hello_world.py", "def handler(ctx, data=None):\n    return 'ok'\n", 0644)
 
-		h.Fn("build").AssertFailed().AssertStderrContains("code-only build requires --app")
+		h.Fn("build").AssertFailed().AssertStderrContains("code-only build requires --app so the target application shape can be used for packaging")
 	})
 
 	t.Run("python code-only build should create a versioned archive with function root and exclude func.yaml", func(t *testing.T) {
