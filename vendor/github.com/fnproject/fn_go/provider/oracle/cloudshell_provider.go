@@ -130,6 +130,7 @@ func NewCSProvider(configSource provider.ConfigSource, passphraseSource provider
 		CompartmentID:         compartmentID,
 		ImageCompartmentID:    configSource.GetString(CfgImageCompartmentID),
 		ConfigurationProvider: configProvider,
+		oboToken:              csConfig.delegationToken,
 		ociClient:             ociClient,
 	}, nil
 }

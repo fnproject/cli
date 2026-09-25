@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/fnproject/cli/common"
@@ -11,6 +12,54 @@ import (
 	defaultprovider "github.com/fnproject/fn_go/provider/defaultprovider"
 	"github.com/urfave/cli"
 )
+
+func TestValidateCodeOnlyHandler(t *testing.T) {
+	tests := []struct {
+		runtime string
+		handler string
+		wantErr string
+	}{
+		{runtime: "python311.ol9", handler: "hello_world.handler"},
+		{runtime: "python311.ol9", handler: "hello_world:handler", wantErr: "<fileName>.<function>"},
+		{runtime: "java21.ol10", handler: "com.example.Handler::handle"},
+		{runtime: "java21.ol10", handler: "com.example.Handler.handle", wantErr: "<class>::<method>"},
+		{runtime: "node22", handler: "func.js"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.runtime+"/"+tt.handler, func(t *testing.T) {
+			err := validateCodeOnlyHandler(tt.runtime, tt.handler)
+			if tt.wantErr == "" && err != nil {
+				t.Fatalf("validateCodeOnlyHandler() error = %v", err)
+			}
+			if tt.wantErr != "" && (err == nil || !strings.Contains(err.Error(), tt.wantErr)) {
+				t.Fatalf("validateCodeOnlyHandler() error = %v, want substring %q", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestCodeOnlyCreateValidatesHandlerBeforeReadingArchive(t *testing.T) {
+	fn := &models.Fn{}
+	err := applyCodeOnlyCreateOptions(nil, fn, codeOnlyCreateOptions{
+		codeOnly:          true,
+		sourceType:        "direct",
+		sourceFile:        "/path/that/does/not/exist.zip",
+		runtimeConfigType: "function-update",
+		runtimeName:       "python311.ol9",
+		handler:           "hello_world:handler",
+	})
+	if err == nil || !strings.Contains(err.Error(), "<fileName>.<function>") {
+		t.Fatalf("applyCodeOnlyCreateOptions() error = %v, want handler-format error", err)
+	}
+}
+
+func TestCodeOnlyUpdateRequiresFieldsBeforeCheckingImageMode(t *testing.T) {
+	err := applyCodeOnlyUpdateOptions(nil, &models.Fn{Image: "repo/example:1.0.0"}, codeOnlyUpdateOptions{codeOnly: true})
+	if err == nil || !strings.Contains(err.Error(), "no code-only update fields were provided") {
+		t.Fatalf("applyCodeOnlyUpdateOptions() error = %v, want no-fields error", err)
+	}
+}
 
 func TestWithFlagsPreservesConfigWhenConfigFlagIsOmitted(t *testing.T) {
 	set := flag.NewFlagSet("test", flag.ContinueOnError)
