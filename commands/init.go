@@ -88,7 +88,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 		},
 		cli.StringFlag{
 			Name:        "runtime-config-type",
-			Usage:       "Set the runtime configuration type for managed runtimes. Required for code-only functions.",
+			Usage:       "Set how a code-only function chooses its runtime version. Valid values: \"function-update\" (use the current version of the selected runtime) or \"manual\" (pin a specific runtime version in func.yaml). Required for code-only functions.",
 			Destination: &a.runtimeConfigType,
 		},
 		cli.StringFlag{

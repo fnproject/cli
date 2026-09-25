@@ -491,7 +491,27 @@ func (p *deploycmd) deployCodeOnlyFunc(c *cli.Context, app *models.App, funcfile
 		fn.SourceArchive = archiveBytes
 	}
 
-	return p.upsertCodeOnlyFunction(app.ID, fn)
+	if err := p.upsertCodeOnlyFunction(app.ID, fn); err != nil {
+		return clarifyInvalidCodeOnlyRuntimeName(err, fn.RuntimeName)
+	}
+
+	return nil
+}
+
+// clarifyInvalidCodeOnlyRuntimeName replaces the otherwise opaque validation
+// message returned by the service when a code-only runtime name is not
+// supported. Other service errors are intentionally returned unchanged.
+func clarifyInvalidCodeOnlyRuntimeName(err error, runtimeName string) error {
+	runtimeName = strings.TrimSpace(runtimeName)
+	if runtimeName == "" || err == nil {
+		return err
+	}
+
+	if strings.TrimSpace(err.Error()) == fmt.Sprintf("Invalid %s", runtimeName) {
+		return fmt.Errorf("Invalid runtime name '%s'. To check supported runtimes, run `fn list runtimes`.", runtimeName)
+	}
+
+	return err
 }
 
 func (p *deploycmd) upsertCodeOnlyFunction(appID string, fn *models.Fn) error {
