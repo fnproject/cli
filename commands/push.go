@@ -196,7 +196,7 @@ func objectStorageHostFromFnAPIURL(fnAPIURL *url.URL) (string, error) {
 		return "", fmt.Errorf("unable to derive Object Storage host from Functions API host %s", fnAPIURL.Host)
 	}
 	region := hostParts[1]
-	domain := strings.Join(hostParts[3:], ".")
+	domain := strings.Join(hostParts[2:], ".")
 	if region == "" || domain == "" {
 		return "", fmt.Errorf("unable to derive Object Storage host from Functions API host %s", fnAPIURL.Host)
 	}
