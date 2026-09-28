@@ -58,7 +58,7 @@ func (c *runtimeCmd) listRuntimes(cliCtx *cli.Context) error {
 // managed runtime names are returned unchanged.
 func ResolveCodeOnlyRuntimeName(name string) (string, error) {
 	requestedName := strings.TrimSpace(name)
-	alias := strings.ToLower(requestedName)
+	alias := codeOnlyRuntimeAlias(requestedName)
 	if !isCodeOnlyRuntimeAlias(alias) {
 		return requestedName, nil
 	}
@@ -82,7 +82,7 @@ func ResolveCodeOnlyRuntimeName(name string) (string, error) {
 // SelectCodeOnlyRuntimeName selects the active managed runtime with the latest
 // deprecation date for a code-only language alias.
 func SelectCodeOnlyRuntimeName(alias string, items []functions.FunctionsRuntimeSummary) (string, error) {
-	alias = strings.ToLower(strings.TrimSpace(alias))
+	alias = codeOnlyRuntimeAlias(alias)
 	if !isCodeOnlyRuntimeAlias(alias) {
 		return "", fmt.Errorf("unsupported code-only runtime alias %q", alias)
 	}
@@ -104,21 +104,50 @@ func SelectCodeOnlyRuntimeName(alias string, items []functions.FunctionsRuntimeS
 }
 
 func isCodeOnlyRuntimeAlias(name string) bool {
-	switch name {
-	case "java", "go", "node", "python":
-		return true
-	default:
+	for _, language := range []string{"java", "go", "node", "python"} {
+		if name == language {
+			return true
+		}
+		if strings.HasPrefix(name, language) && allDigits(strings.TrimPrefix(name, language)) {
+			return true
+		}
+	}
+	return false
+}
+
+func codeOnlyRuntimeAlias(name string) string {
+	var alias strings.Builder
+	for _, r := range strings.ToLower(strings.TrimSpace(name)) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			alias.WriteRune(r)
+		}
+	}
+	return alias.String()
+}
+
+func allDigits(value string) bool {
+	if value == "" {
 		return false
 	}
+	for _, r := range value {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func codeOnlyRuntimeMatchesAlias(alias string, item functions.FunctionsRuntimeSummary) bool {
+	alias = codeOnlyRuntimeAlias(alias)
 	name := strings.ToLower(strings.TrimSpace(stringValue(item.Name)))
-	if alias == "go" {
+	if strings.HasPrefix(alias, "go") {
 		return name == "ol9"
 	}
-	language := strings.ToLower(strings.TrimSpace(stringValue(item.Language)))
-	return language == alias || strings.HasPrefix(language, alias+" ")
+	language := codeOnlyRuntimeAlias(stringValue(item.Language))
+	if alias == "java" || alias == "node" || alias == "python" {
+		return strings.HasPrefix(language, alias)
+	}
+	return language == alias
 }
 
 func codeOnlyRuntimePreferred(candidate, current functions.FunctionsRuntimeSummary) bool {

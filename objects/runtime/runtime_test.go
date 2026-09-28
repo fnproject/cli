@@ -22,10 +22,14 @@ func TestSelectCodeOnlyRuntimeName(t *testing.T) {
 	}
 
 	for alias, want := range map[string]string{
-		"java":   "java22.ol9",
-		"node":   "node24.ol9",
-		"python": "python312.ol9",
-		"go":     "ol9",
+		"java":       "java22.ol9",
+		"java21":     "java21.ol9",
+		"node":       "node24.ol9",
+		"node24":     "node24.ol9",
+		"python":     "python312.ol9",
+		"python3.12": "python312.ol9",
+		"go":         "ol9",
+		"go1.24":     "ol9",
 	} {
 		got, err := SelectCodeOnlyRuntimeName(alias, items)
 		if err != nil {
