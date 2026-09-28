@@ -297,7 +297,7 @@ handler: func.js
 		appName := h.NewAppName()
 		funcName := h.NewFuncName(appName)
 		dirName := funcName + "_dir"
-		h.Fn("init", "--code-only", "--runtime", "go", "--runtime-config-type", "function-update", "--name", funcName, dirName).AssertSuccess()
+		h.Fn("init", "--code-only", "--runtime-name", "ol9", "--runtime-config-type", "function-update", "--name", funcName, dirName).AssertSuccess()
 
 		h.Cd(dirName)
 		res := h.Fn("build", "--app", buildAppName).AssertSuccess().AssertStdoutContains("Code-only function packaged successfully:")
