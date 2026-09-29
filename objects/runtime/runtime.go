@@ -53,15 +53,12 @@ func (c *runtimeCmd) listRuntimes(cliCtx *cli.Context) error {
 	return printRuntimes(cliCtx, items)
 }
 
-// ResolveCodeOnlyRuntimeName resolves a code-only language alias to the active
+// ResolveCodeOnlyRuntimeName resolves a code-only language alias to an active
 // managed runtime name available from the configured Functions service. Explicit
-// managed runtime names are returned unchanged.
+// managed runtime names are also validated before they are written to func.yaml.
 func ResolveCodeOnlyRuntimeName(name string) (string, error) {
 	requestedName := strings.TrimSpace(name)
 	alias := codeOnlyRuntimeAlias(requestedName)
-	if !isCodeOnlyRuntimeAlias(alias) {
-		return requestedName, nil
-	}
 
 	provider, err := client.CurrentProvider()
 	if err != nil {
@@ -76,7 +73,25 @@ func ResolveCodeOnlyRuntimeName(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return SelectCodeOnlyRuntimeName(alias, items)
+	if isCodeOnlyRuntimeAlias(alias) {
+		return SelectCodeOnlyRuntimeName(alias, items)
+	}
+	return ValidateCodeOnlyRuntimeName(requestedName, items)
+}
+
+// ValidateCodeOnlyRuntimeName ensures an explicitly supplied managed runtime
+// name is active in the configured Functions service.
+func ValidateCodeOnlyRuntimeName(name string, items []functions.FunctionsRuntimeSummary) (string, error) {
+	requestedName := strings.TrimSpace(name)
+	for _, item := range items {
+		if item.LifecycleState != functions.FunctionsRuntimeLifecycleStateActive ||
+			!strings.EqualFold(strings.TrimSpace(stringValue(item.Name)), requestedName) {
+			continue
+		}
+		return stringValue(item.Name), nil
+	}
+
+	return "", fmt.Errorf("no active managed runtime named %q; run `fn list runtimes` to view supported runtimes", requestedName)
 }
 
 // SelectCodeOnlyRuntimeName selects the active managed runtime with the latest

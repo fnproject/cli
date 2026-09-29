@@ -48,6 +48,24 @@ func TestSelectCodeOnlyRuntimeNameReturnsHelpfulErrorWhenNoMatch(t *testing.T) {
 	}
 }
 
+func TestValidateCodeOnlyRuntimeName(t *testing.T) {
+	items := []functions.FunctionsRuntimeSummary{
+		runtimeSummary("java21.ol9", "java 21", "2027-01-17T14:20:50Z", functions.FunctionsRuntimeLifecycleStateActive),
+		runtimeSummary("java22.ol9", "java 22", "2029-12-31T23:59:59Z", functions.FunctionsRuntimeLifecycleStateInactive),
+	}
+
+	got, err := ValidateCodeOnlyRuntimeName("JAVA21.OL9", items)
+	if err != nil || got != "java21.ol9" {
+		t.Fatalf("ValidateCodeOnlyRuntimeName() = %q, %v; want java21.ol9, nil", got, err)
+	}
+
+	_, err = ValidateCodeOnlyRuntimeName("jvaa22", items)
+	want := "no active managed runtime named \"jvaa22\"; run `fn list runtimes` to view supported runtimes"
+	if err == nil || err.Error() != want {
+		t.Fatalf("error = %v, want %q", err, want)
+	}
+}
+
 func runtimeSummary(name, language, deprecated string, state functions.FunctionsRuntimeLifecycleStateEnum) functions.FunctionsRuntimeSummary {
 	deprecationTime, err := time.Parse(time.RFC3339, deprecated)
 	if err != nil {
