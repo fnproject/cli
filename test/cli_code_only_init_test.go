@@ -50,7 +50,7 @@ func TestCodeOnlyInit(t *testing.T) {
 		}
 	})
 
-	t.Run("`fn init --code-only --runtime go` should generate code-only func.yaml and go boilerplate", func(t *testing.T) {
+	t.Run("`fn init --code-only --runtime-name ol9` should generate code-only func.yaml and go boilerplate", func(t *testing.T) {
 		t.Parallel()
 		h := testharness.Create(t)
 		defer h.Cleanup()
@@ -58,7 +58,7 @@ func TestCodeOnlyInit(t *testing.T) {
 		appName := h.NewAppName()
 		funcName := h.NewFuncName(appName)
 		dirName := funcName + "_dir"
-		h.Fn("init", "--code-only", "--runtime", "go", "--runtime-config-type", "function-update", "--name", funcName, dirName).AssertSuccess()
+		h.Fn("init", "--code-only", "--runtime-name", "ol9", "--runtime-config-type", "function-update", "--name", funcName, dirName).AssertSuccess()
 
 		h.Cd(dirName)
 		yamlFile := h.GetYamlFile("func.yaml")
@@ -69,8 +69,8 @@ func TestCodeOnlyInit(t *testing.T) {
 		if yamlFile.Runtime_config == nil {
 			t.Fatal("runtime_config was not set in func.yaml")
 		}
-		if yamlFile.Runtime_config.Runtime_name != "go" {
-			t.Fatalf("runtime_config.runtime_name was %q, expected go", yamlFile.Runtime_config.Runtime_name)
+		if yamlFile.Runtime_config.Runtime_name != "ol9" {
+			t.Fatalf("runtime_config.runtime_name was %q, expected ol9", yamlFile.Runtime_config.Runtime_name)
 		}
 		if yamlFile.Handler != "" {
 			t.Fatalf("handler was %q, expected empty for go", yamlFile.Handler)
@@ -80,13 +80,13 @@ func TestCodeOnlyInit(t *testing.T) {
 		}
 	})
 
-	t.Run("`fn init --code-only --runtime java` should require Maven", func(t *testing.T) {
+	t.Run("`fn init --code-only --runtime-name java21.ol9` should require Maven", func(t *testing.T) {
 		t.Parallel()
 		h := testharness.Create(t)
 		defer h.Cleanup()
 
 		h.WithEnv("PATH", "/usr/bin:/bin")
-		h.Fn("init", "--code-only", "--runtime", "java", "--runtime-config-type", "function-update", "hello-java").AssertFailed().AssertStderrContains("Maven was not found in PATH")
+		h.Fn("init", "--code-only", "--runtime-name", "java21.ol9", "--runtime-config-type", "function-update", "hello-java").AssertFailed().AssertStderrContains("Maven was not found in PATH")
 	})
 }
 

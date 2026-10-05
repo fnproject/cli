@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	cliClient "github.com/fnproject/cli/client"
 	appobj "github.com/fnproject/cli/objects/app"
@@ -28,6 +29,12 @@ type workRequestStatusView struct {
 	Status        string
 	Error         string
 	RecentLogs    []string
+}
+
+type workRequestErrorView struct {
+	Timestamp string
+	Code      string
+	Message   string
 }
 
 func WorkRequestCommand() cli.Command {
@@ -68,6 +75,18 @@ func WorkRequestCommand() cli.Command {
 				},
 				Action: cmd.status,
 			},
+			{
+				Name:      "error",
+				Usage:     "\tList errors reported by a Functions work request",
+				ArgsUsage: "<work-request-id|function-name>",
+				Flags: []cli.Flag{
+					cli.StringFlag{
+						Name:  "app",
+						Usage: "App name when resolving the latest work request for a function name",
+					},
+				},
+				Action: cmd.listErrors,
+			},
 		},
 	}
 }
@@ -90,6 +109,23 @@ func (w *workRequestCmd) status(c *cli.Context) error {
 		return err
 	}
 	printWorkRequestStatusView(view)
+	return nil
+}
+
+func (w *workRequestCmd) listErrors(c *cli.Context) error {
+	target := strings.TrimSpace(c.Args().First())
+	if target == "" {
+		return errors.New("work request id or function name is required")
+	}
+	workRequestID, _, err := w.resolveWorkRequestTarget(c, target)
+	if err != nil {
+		return err
+	}
+	items, err := w.loadWorkRequestErrors(workRequestID)
+	if err != nil {
+		return err
+	}
+	printWorkRequestErrors(workRequestID, items)
 	return nil
 }
 
@@ -187,6 +223,43 @@ func (w *workRequestCmd) loadWorkRequestStatus(workRequestID, functionHint strin
 	return view, nil
 }
 
+func (w *workRequestCmd) loadWorkRequestErrors(workRequestID string) ([]workRequestErrorView, error) {
+	wrClient, err := buildCLIWorkRequestClient(w.provider)
+	if err != nil {
+		return nil, err
+	}
+
+	const pageSize = 50
+	request := ociFunctions.ListWorkRequestErrorsRequest{
+		WorkRequestId: &workRequestID,
+		Limit:         intPointer(pageSize),
+		SortBy:        ociFunctions.ListWorkRequestErrorsSortByTimestamp,
+		SortOrder:     ociFunctions.ListWorkRequestErrorsSortOrderDesc,
+	}
+	var result []workRequestErrorView
+	for {
+		response, err := wrClient.ListWorkRequestErrors(context.Background(), request)
+		if err != nil {
+			return nil, err
+		}
+		for _, item := range response.Items {
+			view := workRequestErrorView{
+				Code:    optionalString(item.Code),
+				Message: optionalString(item.Message),
+			}
+			if item.Timestamp != nil {
+				view.Timestamp = item.Timestamp.Time.Format(time.RFC3339)
+			}
+			result = append(result, view)
+		}
+		if response.OpcNextPage == nil || strings.TrimSpace(*response.OpcNextPage) == "" {
+			break
+		}
+		request.Page = response.OpcNextPage
+	}
+	return result, nil
+}
+
 func buildCLIWorkRequestClient(provider *fnprovider.OracleProvider) (*ociFunctions.WorkRequestManagementClient, error) {
 	client, err := ociFunctions.NewWorkRequestManagementClientWithConfigurationProvider(provider.ConfigurationProvider)
 	if err != nil {
@@ -275,6 +348,32 @@ func printWorkRequestStatusView(view *workRequestStatusView) {
 			fmt.Printf("- %s\n", entry)
 		}
 	}
+}
+
+func printWorkRequestErrors(workRequestID string, items []workRequestErrorView) {
+	fmt.Printf("Work Request: %s\n", workRequestID)
+	if len(items) == 0 {
+		fmt.Println("No errors found.")
+		return
+	}
+	fmt.Println("Errors:")
+	for _, item := range items {
+		prefix := ""
+		if item.Timestamp != "" {
+			prefix = item.Timestamp + " "
+		}
+		if item.Code != "" {
+			prefix += item.Code + ": "
+		}
+		fmt.Printf("- %s%s\n", prefix, item.Message)
+	}
+}
+
+func optionalString(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }
 
 func intPointer(v int) *int {
