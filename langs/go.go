@@ -186,7 +186,7 @@ func myHandler(ctx context.Context, in io.Reader, out io.Writer) {
 	modBoilerplate = `
 module func
 
-go 1.23
+go 1.24
 
 require github.com/fnproject/fdk-go %s
 `
