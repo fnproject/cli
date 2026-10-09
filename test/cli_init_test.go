@@ -18,15 +18,17 @@ package test
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/testharness"
-	"testing"
 )
 
 var runtimes = []string{
 	"go",
 	"go1.24",
-	"go1.23",
+	"go1.25",
+	"go1.26",
 	"java",
 	"java8",
 	"java11",

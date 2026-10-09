@@ -36,8 +36,9 @@ const FnContainerDebugPort = 5678
 func init() {
 	registerHelper(&DotnetLangHelper{Version: "9.0"})
 	registerHelper(&DotnetLangHelper{Version: "8.0"})
+	registerHelper(&GoLangHelper{Version: "1.26"})
+	registerHelper(&GoLangHelper{Version: "1.25"})
 	registerHelper(&GoLangHelper{Version: "1.24"})
-	registerHelper(&GoLangHelper{Version: "1.23"})
 	// order matter, 'java' will pick up the first JavaLangHelper
 	registerHelper(&JavaLangHelper{Version: "21"})
 	registerHelper(&JavaLangHelper{Version: "17"})
