@@ -66,6 +66,27 @@ func TestValidateCodeOnlyRuntimeName(t *testing.T) {
 	}
 }
 
+func TestIsExplicitCodeOnlyRuntimeName(t *testing.T) {
+	for name, want := range map[string]bool{
+		"ol9":              true,
+		"OL8":              true,
+		"java21.ol9":       true,
+		"node24.ol9":       true,
+		"python311.ol9":    true,
+		"java21":           true,
+		"go":               false,
+		"java":             false,
+		"python":           false,
+		"jvaa21.ol9":       false,
+		"java21.al2023":    false,
+		"java21.ol9.extra": false,
+	} {
+		if got := isExplicitCodeOnlyRuntimeName(name); got != want {
+			t.Fatalf("isExplicitCodeOnlyRuntimeName(%q) = %t, want %t", name, got, want)
+		}
+	}
+}
+
 func runtimeSummary(name, language, deprecated string, state functions.FunctionsRuntimeLifecycleStateEnum) functions.FunctionsRuntimeSummary {
 	deprecationTime, err := time.Parse(time.RFC3339, deprecated)
 	if err != nil {

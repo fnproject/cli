@@ -66,7 +66,18 @@ func ResolveCodeOnlyRuntimeName(name string) (string, error) {
 	}
 	ociProvider, ok := provider.(*oracle.OracleProvider)
 	if !ok || ociProvider == nil {
-		return "", fmt.Errorf("runtime alias %q requires an oracle provider", requestedName)
+		// `fn init` is intentionally usable before a context has been configured.
+		// A fully-qualified managed runtime can be written to func.yaml without
+		// consulting the service; it will be validated when the function is
+		// created or deployed. Language aliases, on the other hand, need runtime
+		// discovery to select the currently supported runtime.
+		if isExplicitCodeOnlyRuntimeName(requestedName) {
+			return requestedName, nil
+		}
+		if isCodeOnlyRuntimeAlias(alias) {
+			return "", fmt.Errorf("runtime alias %q requires an oracle provider so Fn CLI can select an active managed runtime", requestedName)
+		}
+		return "", fmt.Errorf("unsupported code-only runtime name %q; run `fn list runtimes` to view supported runtimes", requestedName)
 	}
 
 	items, err := listFunctionsRuntimes(ociProvider)
@@ -126,6 +137,29 @@ func isCodeOnlyRuntimeAlias(name string) bool {
 		if strings.HasPrefix(name, language) && allDigits(strings.TrimPrefix(name, language)) {
 			return true
 		}
+	}
+	return false
+}
+
+// isExplicitCodeOnlyRuntimeName reports whether name has the managed-runtime
+// form used by the code-only service. These names can be used by `fn init`
+// without an OCI context because no selection or service lookup is needed.
+func isExplicitCodeOnlyRuntimeName(name string) bool {
+	name = strings.ToLower(strings.TrimSpace(name))
+	if name == "ol8" || name == "ol9" {
+		return true
+	}
+
+	for _, language := range []string{"java", "node", "python"} {
+		if !strings.HasPrefix(name, language) {
+			continue
+		}
+		versionAndOS := strings.TrimPrefix(name, language)
+		version, osName, hasOS := strings.Cut(versionAndOS, ".")
+		if !allDigits(version) {
+			return false
+		}
+		return !hasOS || osName == "ol8" || osName == "ol9"
 	}
 	return false
 }
