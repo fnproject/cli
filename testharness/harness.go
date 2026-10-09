@@ -469,6 +469,11 @@ func (h *CLIHarness) Cd(s string) {
 	h.pushHistoryf("cd %s", h.cwd)
 
 }
+
+// WorkingDir returns the directory used for subsequent commands.
+func (h *CLIHarness) WorkingDir() string {
+	return h.cwd
+}
 func (h *CLIHarness) pushHistoryf(s string, args ...interface{}) {
 	h.history = append(h.history, fmt.Sprintf(s, args...))
 }

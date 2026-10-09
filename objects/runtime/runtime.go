@@ -45,9 +45,177 @@ func (c *runtimeCmd) listRuntimes(cliCtx *cli.Context) error {
 		return err
 	}
 
-	client, err := newFunctionsClient(ociProvider)
+	items, err := listFunctionsRuntimes(ociProvider)
 	if err != nil {
 		return err
+	}
+
+	return printRuntimes(cliCtx, items)
+}
+
+// ResolveCodeOnlyRuntimeName resolves a code-only language alias to an active
+// managed runtime name available from the configured Functions service. Explicit
+// managed runtime names are also validated before they are written to func.yaml.
+func ResolveCodeOnlyRuntimeName(name string) (string, error) {
+	requestedName := strings.TrimSpace(name)
+	alias := codeOnlyRuntimeAlias(requestedName)
+
+	provider, err := client.CurrentProvider()
+	if err != nil {
+		return "", err
+	}
+	ociProvider, ok := provider.(*oracle.OracleProvider)
+	if !ok || ociProvider == nil {
+		// `fn init` is intentionally usable before a context has been configured.
+		// A fully-qualified managed runtime can be written to func.yaml without
+		// consulting the service; it will be validated when the function is
+		// created or deployed. Language aliases, on the other hand, need runtime
+		// discovery to select the currently supported runtime.
+		if isExplicitCodeOnlyRuntimeName(requestedName) {
+			return requestedName, nil
+		}
+		if isCodeOnlyRuntimeAlias(alias) {
+			return "", fmt.Errorf("runtime alias %q requires an oracle provider so Fn CLI can select an active managed runtime", requestedName)
+		}
+		return "", fmt.Errorf("unsupported code-only runtime name %q; run `fn list runtimes` to view supported runtimes", requestedName)
+	}
+
+	items, err := listFunctionsRuntimes(ociProvider)
+	if err != nil {
+		return "", err
+	}
+	if isCodeOnlyRuntimeAlias(alias) {
+		return SelectCodeOnlyRuntimeName(alias, items)
+	}
+	return ValidateCodeOnlyRuntimeName(requestedName, items)
+}
+
+// ValidateCodeOnlyRuntimeName ensures an explicitly supplied managed runtime
+// name is active in the configured Functions service.
+func ValidateCodeOnlyRuntimeName(name string, items []functions.FunctionsRuntimeSummary) (string, error) {
+	requestedName := strings.TrimSpace(name)
+	for _, item := range items {
+		if item.LifecycleState != functions.FunctionsRuntimeLifecycleStateActive ||
+			!strings.EqualFold(strings.TrimSpace(stringValue(item.Name)), requestedName) {
+			continue
+		}
+		return stringValue(item.Name), nil
+	}
+
+	return "", fmt.Errorf("no active managed runtime named %q; run `fn list runtimes` to view supported runtimes", requestedName)
+}
+
+// SelectCodeOnlyRuntimeName selects the active managed runtime with the latest
+// deprecation date for a code-only language alias.
+func SelectCodeOnlyRuntimeName(alias string, items []functions.FunctionsRuntimeSummary) (string, error) {
+	alias = codeOnlyRuntimeAlias(alias)
+	if !isCodeOnlyRuntimeAlias(alias) {
+		return "", fmt.Errorf("unsupported code-only runtime alias %q", alias)
+	}
+
+	var selected *functions.FunctionsRuntimeSummary
+	for i := range items {
+		item := &items[i]
+		if item.LifecycleState != functions.FunctionsRuntimeLifecycleStateActive || !codeOnlyRuntimeMatchesAlias(alias, *item) {
+			continue
+		}
+		if selected == nil || codeOnlyRuntimePreferred(*item, *selected) {
+			selected = item
+		}
+	}
+	if selected == nil || selected.Name == nil || strings.TrimSpace(*selected.Name) == "" {
+		return "", fmt.Errorf("no active managed runtime found for language %q; run `fn list runtimes` to view supported runtimes", alias)
+	}
+	return *selected.Name, nil
+}
+
+func isCodeOnlyRuntimeAlias(name string) bool {
+	for _, language := range []string{"java", "go", "node", "python"} {
+		if name == language {
+			return true
+		}
+		if strings.HasPrefix(name, language) && allDigits(strings.TrimPrefix(name, language)) {
+			return true
+		}
+	}
+	return false
+}
+
+// isExplicitCodeOnlyRuntimeName reports whether name has the managed-runtime
+// form used by the code-only service. These names can be used by `fn init`
+// without an OCI context because no selection or service lookup is needed.
+func isExplicitCodeOnlyRuntimeName(name string) bool {
+	name = strings.ToLower(strings.TrimSpace(name))
+	if name == "ol8" || name == "ol9" {
+		return true
+	}
+
+	for _, language := range []string{"java", "node", "python"} {
+		if !strings.HasPrefix(name, language) {
+			continue
+		}
+		versionAndOS := strings.TrimPrefix(name, language)
+		version, osName, hasOS := strings.Cut(versionAndOS, ".")
+		if !allDigits(version) {
+			return false
+		}
+		return !hasOS || osName == "ol8" || osName == "ol9"
+	}
+	return false
+}
+
+func codeOnlyRuntimeAlias(name string) string {
+	var alias strings.Builder
+	for _, r := range strings.ToLower(strings.TrimSpace(name)) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			alias.WriteRune(r)
+		}
+	}
+	return alias.String()
+}
+
+func allDigits(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, r := range value {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func codeOnlyRuntimeMatchesAlias(alias string, item functions.FunctionsRuntimeSummary) bool {
+	alias = codeOnlyRuntimeAlias(alias)
+	name := strings.ToLower(strings.TrimSpace(stringValue(item.Name)))
+	if strings.HasPrefix(alias, "go") {
+		return name == "ol9"
+	}
+	language := codeOnlyRuntimeAlias(stringValue(item.Language))
+	if alias == "java" || alias == "node" || alias == "python" {
+		return strings.HasPrefix(language, alias)
+	}
+	return language == alias
+}
+
+func codeOnlyRuntimePreferred(candidate, current functions.FunctionsRuntimeSummary) bool {
+	if candidate.TimeDeprecated != nil && current.TimeDeprecated != nil {
+		if !candidate.TimeDeprecated.Equal(current.TimeDeprecated.Time) {
+			return candidate.TimeDeprecated.After(current.TimeDeprecated.Time)
+		}
+	} else if candidate.TimeDeprecated != nil {
+		return true
+	} else if current.TimeDeprecated != nil {
+		return false
+	}
+	return stringValue(candidate.Name) > stringValue(current.Name)
+}
+
+func listFunctionsRuntimes(ociProvider *oracle.OracleProvider) ([]functions.FunctionsRuntimeSummary, error) {
+	client, err := newFunctionsClient(ociProvider)
+	if err != nil {
+		return nil, err
 	}
 
 	request := functions.ListFunctionsRuntimesRequest{}
@@ -55,7 +223,7 @@ func (c *runtimeCmd) listRuntimes(cliCtx *cli.Context) error {
 	for {
 		response, err := client.ListFunctionsRuntimes(context.Background(), request)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		items = append(items, response.Items...)
 		if response.OpcNextPage == nil {
@@ -63,8 +231,7 @@ func (c *runtimeCmd) listRuntimes(cliCtx *cli.Context) error {
 		}
 		request.Page = response.OpcNextPage
 	}
-
-	return printRuntimes(cliCtx, items)
+	return items, nil
 }
 
 func (c *runtimeCmd) listRuntimeVersions(cliCtx *cli.Context) error {
