@@ -94,7 +94,13 @@ func (h *PythonLangHelper) Entrypoint() (string, error) {
 }
 
 func (h *PythonLangHelper) DockerfileBuildCmds(localDebug bool) []string {
-	var r []string
+	// Function builds can run either locally or in a managed build environment.
+	// Default to public PyPI, while allowing --build-arg PIP_INDEX_URL to select
+	// an approved package index when required.
+	r := []string{
+		"ARG PIP_INDEX_URL=https://pypi.org/simple",
+		"ENV PIP_INDEX_URL=${PIP_INDEX_URL}",
+	}
 
 	pip_cmd := `RUN pip3 install --target /python/ --no-cache --no-cache-dir`
 	if localDebug {

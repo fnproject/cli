@@ -349,6 +349,8 @@ var dotnetFuncFile = FuncFileV20180708{
 const (
 	pythonDebugDockerfile = `FROM fnproject/python:3.12-dev as build-stage
 WORKDIR /function
+ARG PIP_INDEX_URL=https://pypi.org/simple
+ENV PIP_INDEX_URL=${PIP_INDEX_URL}
 RUN pip3 install --target /python/ --no-cache --no-cache-dir debugpy
 RUN rm -rf /python/bin
 ADD . /function/
@@ -363,6 +365,8 @@ ENTRYPOINT ["python3.12", "-m", "debugpy", "--listen", "0.0.0.0:5678", "--wait-f
 `
 	pythonDockerfile = `FROM fnproject/python:3.12-dev as build-stage
 WORKDIR /function
+ARG PIP_INDEX_URL=https://pypi.org/simple
+ENV PIP_INDEX_URL=${PIP_INDEX_URL}
 ADD . /function/
 RUN rm -fr /function/.pip_cache
 FROM fnproject/python:3.12
