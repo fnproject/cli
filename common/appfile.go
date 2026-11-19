@@ -92,5 +92,33 @@ func decodeAppfileYAML(path string) (*AppFile, error) {
 	}
 	ff := &AppFile{}
 	err = yaml.Unmarshal(b, ff)
-	return ff, err
+	if err != nil {
+		return ff, err
+	}
+	// yaml.v2 decodes nested maps as map[interface{}]interface{}, which the
+	// API clients cannot use (e.g. oracle.com/oci/definedTags), so convert
+	// them to map[string]interface{} like app.json would give.
+	for k, v := range ff.Annotations {
+		ff.Annotations[k] = normalizeYAMLValue(v)
+	}
+	return ff, nil
+}
+
+func normalizeYAMLValue(v interface{}) interface{} {
+	switch t := v.(type) {
+	case map[interface{}]interface{}:
+		m := make(map[string]interface{}, len(t))
+		for k, v2 := range t {
+			m[fmt.Sprint(k)] = normalizeYAMLValue(v2)
+		}
+		return m
+	case []interface{}:
+		out := make([]interface{}, len(t))
+		for i, item := range t {
+			out[i] = normalizeYAMLValue(item)
+		}
+		return out
+	default:
+		return v
+	}
 }
