@@ -149,6 +149,32 @@ func TestPrintWorkRequestStatusView(t *testing.T) {
 	}
 }
 
+func TestPrintWorkRequestErrors(t *testing.T) {
+	output := captureStdout(t, func() {
+		printWorkRequestErrors("ocid1.functionsworkrequest.oc1..exampleuniqueID", []workRequestErrorView{
+			{Timestamp: "2026-10-05T12:00:00Z", Code: "InvalidParameter", Message: "Invalid runtime"},
+		})
+	})
+	for _, check := range []string{
+		"Work Request: ocid1.functionsworkrequest.oc1..exampleuniqueID",
+		"Errors:",
+		"- 2026-10-05T12:00:00Z InvalidParameter: Invalid runtime",
+	} {
+		if !strings.Contains(output, check) {
+			t.Fatalf("expected output to contain %q, got: %s", check, output)
+		}
+	}
+}
+
+func TestPrintWorkRequestErrorsWhenEmpty(t *testing.T) {
+	output := captureStdout(t, func() {
+		printWorkRequestErrors("ocid1.functionsworkrequest.oc1..exampleuniqueID", nil)
+	})
+	if !strings.Contains(output, "No errors found.") {
+		t.Fatalf("expected empty-error message, got: %s", output)
+	}
+}
+
 func TestWorkRequestCommandRegistration(t *testing.T) {
 	cmd := WorkRequestCommand()
 	if cmd.Name != "work-request" {
@@ -157,8 +183,14 @@ func TestWorkRequestCommandRegistration(t *testing.T) {
 	if len(cmd.Subcommands) == 0 {
 		t.Fatal("expected work-request command to have subcommands")
 	}
-	if cmd.Subcommands[0].Name != "status" {
-		t.Fatalf("first subcommand name = %q, want %q", cmd.Subcommands[0].Name, "status")
+	subcommands := map[string]bool{}
+	for _, subcommand := range cmd.Subcommands {
+		subcommands[subcommand.Name] = true
+	}
+	for _, want := range []string{"status", "error"} {
+		if !subcommands[want] {
+			t.Fatalf("expected %q work-request subcommand", want)
+		}
 	}
 
 	registered, ok := Commands["work-request"]
