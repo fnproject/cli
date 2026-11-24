@@ -8,7 +8,7 @@ We welcome all contributions
 1. Fork the repo
 2. Fix an issue or create an issue and fix it
 3. Create a Pull Request that fixes the issue
-4. Sign the [CLA](http://www.oracle.com/technetwork/community/oca-486395.html)
+4. Sign the Oracle Contributor Agreement. See https://oca.opensource.oracle.com for more information.
 5. Once processed, our CLA bot will automatically clear the CLA check on the PR
 6. Good Job! Thanks for being awesome!
 
