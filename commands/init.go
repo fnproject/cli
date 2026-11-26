@@ -47,6 +47,7 @@ import (
 	"github.com/fnproject/cli/common"
 	"github.com/fnproject/cli/langs"
 	function "github.com/fnproject/cli/objects/fn"
+	runtimecmd "github.com/fnproject/cli/objects/runtime"
 	modelsV2 "github.com/fnproject/fn_go/modelsv2"
 	"github.com/urfave/cli"
 )
@@ -83,7 +84,7 @@ func initFlags(a *initFnCmd) []cli.Flag {
 		},
 		cli.StringFlag{
 			Name:        "runtime-name",
-			Usage:       "Specify the managed runtime name (e.g. python39.ol9) for code-only functions.",
+			Usage:       "Specify a managed runtime name (e.g. python312.ol9), or a code-only language alias (java, go, node, python) resolved from available runtimes.",
 			Destination: &a.runtimeName,
 		},
 		cli.StringFlag{
@@ -295,6 +296,21 @@ func (a *initFnCmd) init(c *cli.Context) error {
 		}
 		if deprecatedPythonRuntime(runtime) {
 			return fmt.Errorf("Runtime %s is no more supported for new apps. Please use python or %s runtime for new apps.", runtime, runtime[:strings.LastIndex(runtime, ".")])
+		}
+	}
+	if codeOnlyInit {
+		requestedRuntimeName := runtime
+		if requestedRuntimeName == "" {
+			requestedRuntimeName = a.runtimeName
+		}
+		resolvedRuntimeName, err := runtimecmd.ResolveCodeOnlyRuntimeName(requestedRuntimeName)
+		if err != nil {
+			return err
+		}
+		if runtime != "" {
+			runtime = resolvedRuntimeName
+		} else {
+			a.runtimeName = resolvedRuntimeName
 		}
 	}
 
@@ -568,7 +584,6 @@ func (a *initFnCmd) precheckTooling() error {
 	return precheckToolingForRuntime(runtime)
 }
 
-
 func precheckToolingForRuntime(runtime string) error {
 	runtimeName, requiredTool, candidates := runtimeToolRequirement(runtime)
 	if requiredTool == "" {
@@ -737,6 +752,12 @@ func createJavaCodeOnlyBoilerplate(path, runtimeName string) (bool, error) {
 	helper := langs.GetLangHelper(runtimeName)
 	if helper == nil {
 		helper = langs.GetLangHelper(baseRuntimeFromName(runtimeName))
+	}
+	if helper == nil {
+		// A managed Java runtime can be introduced before this CLI gains a
+		// version-specific helper. The current Java template remains compatible
+		// with newer Java runtimes.
+		helper = langs.GetLangHelper("java")
 	}
 	if helper == nil || !helper.HasBoilerplate() {
 		return false, nil

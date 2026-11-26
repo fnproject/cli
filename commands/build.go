@@ -167,6 +167,9 @@ func buildCodeOnlyArchive(dir string, ff *common.FuncFileV20180708, shape string
 	if err := validateCodeOnlyBuildTooling(dir, ff); err != nil {
 		return "", err
 	}
+	if err := buildCodeOnlyProject(dir, ff, shape); err != nil {
+		return "", err
+	}
 	archivePath := filepath.Join(dir, fmt.Sprintf("%s.%s.zip", ff.Name, ff.Version))
 	if err := createCodeOnlyZipArchive(dir, archivePath, ff, shape); err != nil {
 		return "", err
@@ -174,11 +177,26 @@ func buildCodeOnlyArchive(dir string, ff *common.FuncFileV20180708, shape string
 	return archivePath, nil
 }
 
+func buildCodeOnlyProject(dir string, ff *common.FuncFileV20180708, shape string) error {
+	baseRuntime := detectCodeOnlyBaseRuntime(dir, ff)
+	switch {
+	case strings.HasPrefix(baseRuntime, "java"):
+		return buildJavaCodeOnlyProject(dir, ff)
+	case strings.HasPrefix(baseRuntime, "python"):
+		return buildPythonCodeOnlyProject(dir, ff)
+	case strings.HasPrefix(baseRuntime, "node"):
+		return buildNodeCodeOnlyProject(dir, ff)
+	case strings.HasPrefix(baseRuntime, "go"):
+		return buildGoCodeOnlyProject(dir, shape)
+	}
+	return nil
+}
+
 func validateCodeOnlyBuildTooling(dir string, ff *common.FuncFileV20180708) error {
 	baseRuntime := detectCodeOnlyBaseRuntime(dir, ff)
 	switch {
 	case strings.HasPrefix(baseRuntime, "java"):
-		if _, err := exec.LookPath("mvn"); err != nil {
+		if _, err := findFirstTool("mvn"); err != nil {
 			return fmt.Errorf("%s runtime selected, but Maven was not found in PATH. Install Maven and rerun `fn build`, or choose a different runtime", buildRuntimeDisplayName(baseRuntime))
 		}
 	case strings.HasPrefix(baseRuntime, "python"):
@@ -193,6 +211,78 @@ func validateCodeOnlyBuildTooling(dir string, ff *common.FuncFileV20180708) erro
 		if _, err := findFirstTool("node"); err != nil {
 			return fmt.Errorf("Node.js runtime selected, but Node.js was not found in PATH. Install Node.js and rerun `fn build`, or choose a different runtime")
 		}
+	}
+	return nil
+}
+
+func buildJavaCodeOnlyProject(dir string, ff *common.FuncFileV20180708) error {
+	baseRuntime := detectCodeOnlyBaseRuntime(dir, ff)
+	if !strings.HasPrefix(baseRuntime, "java") {
+		return nil
+	}
+
+	mvnBin, err := findFirstTool("mvn")
+	if err != nil {
+		return fmt.Errorf("%s runtime selected, but Maven was not found in PATH. Install Maven and rerun `fn build`, or choose a different runtime", buildRuntimeDisplayName(baseRuntime))
+	}
+	cmd := exec.Command(mvnBin, "package")
+	cmd.Dir = dir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("java code-only build failed while running `mvn package`: %w", err)
+	}
+	return nil
+}
+
+func buildPythonCodeOnlyProject(dir string, ff *common.FuncFileV20180708) error {
+	baseRuntime := detectCodeOnlyBaseRuntime(dir, ff)
+	if !strings.HasPrefix(baseRuntime, "python") {
+		return nil
+	}
+
+	pythonBin, err := findFirstTool("python3", "python")
+	if err != nil {
+		return fmt.Errorf("Python runtime selected, but Python was not found in PATH. Install Python and rerun `fn build`, or choose a different runtime")
+	}
+	targetDir := filepath.Join(dir, "python")
+	if common.Exists(filepath.Join(dir, "requirements.txt")) {
+		cmd := exec.Command(pythonBin, "-m", "pip", "install", "--target", targetDir, "--no-cache-dir", "-r", "requirements.txt")
+		cmd.Dir = dir
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("python code-only build failed while installing requirements: %w", err)
+		}
+	}
+	if common.Exists(filepath.Join(dir, "setup.py")) {
+		cmd := exec.Command(pythonBin, "-m", "pip", "install", "--target", targetDir, "--no-cache-dir", ".")
+		cmd.Dir = dir
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("python code-only build failed while installing the local package: %w", err)
+		}
+	}
+	return nil
+}
+
+func buildNodeCodeOnlyProject(dir string, ff *common.FuncFileV20180708) error {
+	baseRuntime := detectCodeOnlyBaseRuntime(dir, ff)
+	if !strings.HasPrefix(baseRuntime, "node") || !common.Exists(filepath.Join(dir, "package.json")) || common.Exists(filepath.Join(dir, "node_modules")) {
+		return nil
+	}
+
+	npmBin, err := findFirstTool("npm")
+	if err != nil {
+		return fmt.Errorf("node.js code-only build requires npm to install @fnproject/fdk dependencies")
+	}
+	cmd := exec.Command(npmBin, "install", "--omit=dev")
+	cmd.Dir = dir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("node.js code-only build failed while running `npm install --omit=dev`: %w", err)
 	}
 	return nil
 }
@@ -325,19 +415,6 @@ func addNodeCodeOnlyArchiveContents(zipWriter *zip.Writer, dir string, ff *commo
 	}
 	packageJSON := filepath.Join(dir, "package.json")
 	nodeModulesDir := filepath.Join(dir, "node_modules")
-	if common.Exists(packageJSON) && !common.Exists(nodeModulesDir) {
-		npmBin, err := findFirstTool("npm")
-		if err != nil {
-			return fmt.Errorf("node.js code-only build requires npm to install @fnproject/fdk dependencies")
-		}
-		npmInstall := exec.Command(npmBin, "install", "--omit=dev")
-		npmInstall.Dir = dir
-		npmInstall.Stdout = os.Stdout
-		npmInstall.Stderr = os.Stderr
-		if err := npmInstall.Run(); err != nil {
-			return err
-		}
-	}
 	if err := addDirectoryToZip(zipWriter, functionDir, "function"); err != nil {
 		return err
 	}
@@ -571,9 +648,6 @@ func addGoCodeOnlyArchiveContents(zipWriter *zip.Writer, dir string, ff *common.
 	architectures := codeOnlyGoTargetArchitectures(shape)
 	if len(architectures) == 1 {
 		binaryPath := filepath.Join(dir, "func")
-		if err := buildGoCodeOnlyBinary(dir, binaryPath, architectures[0]); err != nil {
-			return err
-		}
 		if err := addFileToZip(zipWriter, binaryPath, "func"); err != nil {
 			return err
 		}
@@ -592,9 +666,6 @@ func addGoCodeOnlyArchiveContents(zipWriter *zip.Writer, dir string, ff *common.
 			return err
 		}
 		binaryPath := filepath.Join(archDir, "func")
-		if err := buildGoCodeOnlyBinary(dir, binaryPath, arch); err != nil {
-			return err
-		}
 		if err := addFileToZip(zipWriter, binaryPath, filepath.ToSlash(filepath.Join(segment, "func"))); err != nil {
 			return err
 		}
@@ -603,6 +674,23 @@ func addGoCodeOnlyArchiveContents(zipWriter *zip.Writer, dir string, ff *common.
 			if err := addDirectoryToZip(zipWriter, resourcesDir, filepath.ToSlash(filepath.Join(segment, "resources"))); err != nil {
 				return err
 			}
+		}
+	}
+	return nil
+}
+
+func buildGoCodeOnlyProject(dir, shape string) error {
+	architectures := codeOnlyGoTargetArchitectures(shape)
+	for _, arch := range architectures {
+		binaryPath := filepath.Join(dir, "func")
+		if len(architectures) > 1 {
+			binaryPath = filepath.Join(dir, goCodeOnlyArchiveSegment(arch), "func")
+			if err := os.MkdirAll(filepath.Dir(binaryPath), 0755); err != nil {
+				return err
+			}
+		}
+		if err := buildGoCodeOnlyBinary(dir, binaryPath, arch); err != nil {
+			return fmt.Errorf("go code-only build failed for %s: %w", arch, err)
 		}
 	}
 	return nil
@@ -634,9 +722,9 @@ func goCodeOnlyArchiveSegment(arch string) string {
 func buildGoCodeOnlyBinary(dir, outputPath, arch string) error {
 	goBin := resolveGoBinary()
 	env := withEnvOverrides(os.Environ(), map[string]string{
-		"GOOS":       "linux",
-		"GOARCH":     arch,
-		"GOFLAGS":    "-mod=mod",
+		"GOOS":        "linux",
+		"GOARCH":      arch,
+		"GOFLAGS":     "-mod=mod",
 		"GOTOOLCHAIN": "go1.24.0+auto",
 	})
 

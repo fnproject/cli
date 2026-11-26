@@ -260,9 +260,30 @@ func main() {
 	if err != nil {
 		// TODO: this doesn't seem to get called even when an error returns from a command, but maybe urfave is doing a non zero exit anyways? nope: https://github.com/urfave/cli/issues/610
 		fmt.Fprintf(os.Stderr, color.Bold("\nFn:")+" %v", err)
+		if hint := workRequestFailureHint(err); hint != "" {
+			fmt.Fprint(os.Stderr, hint)
+		}
 		fmt.Fprint(os.Stderr, color.Italic("\n\nSee ")+"'"+color.BrightCyan("fn <command> --help")+"'"+color.Italic(" for more information."))
 		fmt.Fprintf(os.Stderr, " Client version: %s\n", config.Version)
 		os.Exit(1)
 	}
 
+}
+
+func workRequestFailureHint(err error) string {
+	if err == nil {
+		return ""
+	}
+	message := err.Error()
+	if !strings.Contains(message, "work request") || !strings.Contains(message, "ended with status") {
+		return ""
+	}
+
+	for _, field := range strings.Fields(message) {
+		workRequestID := strings.Trim(field, ".,:;()[]{}")
+		if strings.HasPrefix(strings.ToLower(workRequestID), "ocid1.") && strings.Contains(strings.ToLower(workRequestID), "workrequest.") {
+			return fmt.Sprintf("\n\nFor all work-request errors, run:\n  fn work-request error %s\n\nFor errors and recent diagnostic logs, run:\n  fn work-request status %s", workRequestID, workRequestID)
+		}
+	}
+	return ""
 }
